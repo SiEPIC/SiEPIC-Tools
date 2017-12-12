@@ -55,7 +55,7 @@ class Waveguide(pya.PCellDeclarationHelper):
 
   def transformation_from_shape(self, layout, shape, layer):
 #    return pya.Trans(shape.bbox().center())
-    return pya.Trans(0,0)
+    return pya.Trans(pya.Trans.R0 ,0,0)
 
   def parameters_from_shape(self, layout, shape, layer):
     self._param_values = []

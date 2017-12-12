@@ -163,7 +163,7 @@ else:
             # Record a transaction, to enable "undo"
             lv.transaction("Object snapping")
             # Move the selected object
-            trans = pya.Trans(dx12,dy12)
+            trans = pya.Trans(pya.Trans.R0, dx12,dy12)
             o_selection.inst().transform(trans)
             # Record a transaction, to enable "undo"
             lv.commit()

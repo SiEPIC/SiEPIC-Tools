@@ -152,7 +152,7 @@ for i in range(len(sweep_wgL)):
 
   # Label for automated measurements, laser on Port 2, detectors on Ports 1, 3, 4
   wg_length = wgL0 + wg_loops * 4 * wgL
-  t = pya.Trans(x*dbu, 127*1*dbu)
+  t = pya.Trans(pya.Trans.R0, x*dbu, 127*1*dbu)
   text = pya.Text ("opt_in_%s_1550_PCM_PCM_StraightWGloss%s%s" % (pol.upper(), int(wg_length), pol.upper()), t)
   shape = cell.shapes(TextLayerN).insert(text)
   shape.text_size = 3*dbu

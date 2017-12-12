@@ -128,7 +128,7 @@ for i in range(len(sweep_gap)):
   cell.insert(pya.CellInstArray(GC_imported, t, pya.Point(0,127*dbu), pya.Point(0,0), 4, 1))
 
   # Label for automated measurements, laser on Port 2, detectors on Ports 1, 3, 4
-  t = pya.Trans(x*dbu, 127*2*dbu)
+  t = pya.Trans(pya.Trans.R0, x*dbu, 127*2*dbu)
   text = pya.Text ("opt_in_%s_1550_device_RingDouble%sr%sg%s" % (pol.upper(), pol.upper(),r,int(round(g*1000))), t)
   shape = cell.shapes(TextLayerN).insert(text)
   shape.text_size = 3*dbu

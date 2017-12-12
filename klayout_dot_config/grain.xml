@@ -5,8 +5,8 @@
  <api-version>0.25</api-version>
  <title>SiEPIC Tools</title>
  <doc>A library providing a range of tools for designing Silcon Electronic-Photonic Integrated Circuits</doc>
- <doc-url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/trunk/README.md</doc-url>
- <url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/trunk/klayout_dot_config</url>
+ <doc-url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/tags/v2.0.3/README.md</doc-url>
+ <url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/tags/v2.0.3/klayout_dot_config</url>
  <author>Lukas Chrostowski, Jaspreet Jhoja, Mustafa Hammood, Brett Poulsen</author>
  <author-contact>lukasc@ece.ubc.ca, jaspreetj@ece.ubc.ca, mustafa@ece.ubc.ca, bpoulse@uwo.ca</author-contact>
 </salt-grain>

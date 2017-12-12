@@ -237,7 +237,7 @@ def main_func():
       print ( points_L2)
       L2 = layout_waveguide_abs(cell, LayerSi, points_L2, wg_width, wg_bend_radius)
       # Label for automated measurements, laser on Port 2, detectors on Ports 1, 3, 4
-      t = pya.Trans((space*n)*dbu, gc_y_coord*dbu)
+      t = pya.Trans(pya.Trans.R0, (space*n)*dbu, gc_y_coord*dbu)
       text = pya.Text ("opt_in_TE_1550_device_MZI"+str(n), t)
       shape = cell.shapes(TextLayerN).insert(text)
       shape.text_size = 3*dbu

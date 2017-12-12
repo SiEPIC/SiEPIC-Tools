@@ -378,7 +378,7 @@ for o in object_selection:
         wg_path = points_to_Dpath( points_mult(path_to_points(path_obj),dbu), wg_width)
         param = { "npoints": points_per_circle(radius), "radius": radius, "path": wg_path, "layer": LayerSi }
         pcell = ly.create_cell(Waveguide_Type, Waveguide_Lib, param )
-        t = pya.Trans(0, 0)
+        t = pya.Trans(pya.Trans.R0, 0, 0)
         new_cell = cell.insert(pya.CellInstArray(pcell.cell_index(), t))
         
         # Leave the newly created waveguide selected, to make it obvious to the user.
