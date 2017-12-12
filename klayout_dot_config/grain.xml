@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <salt-grain>
- <name>siepic-tools</name>
+ <name>siepic_tools</name>
  <version>2.0.3</version>
  <api-version>0.25</api-version>
  <title>SiEPIC Tools</title>
