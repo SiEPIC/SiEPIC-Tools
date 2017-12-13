@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <salt-grain>
- <name>siepic_tools</name>
- <version>2.0.3</version>
+ <name>siepic_tools_dev</name>
+ <version>0</version>
  <api-version>0.25</api-version>
- <title>SiEPIC Tools</title>
- <doc>A library providing a range of tools for designing Silcon Electronic-Photonic Integrated Circuits</doc>
- <doc-url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/tags/v2.0.3/README.md</doc-url>
- <url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/tags/v2.0.3/klayout_dot_config</url>
- <author>Lukas Chrostowski, Jaspreet Jhoja, Mustafa Hammood, Brett Poulsen</author>
- <author-contact>lukasc@ece.ubc.ca, jaspreetj@ece.ubc.ca, mustafa@ece.ubc.ca, bpoulse@uwo.ca</author-contact>
+ <title>SiEPIC Tools Development</title>
+ <doc>An alpha library providing a range of tools for designing Silicon Electronic-Photonic Integrated Circuits. This library is NOT stable. Stable releases should be installed via the library siepic_tools</doc>
+ <doc-url>https://github.com/lukasc-ubc/SiEPIC-Tools/blob/master/README.md</doc-url>
+ <url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/branches/development/klayout_dot_config</url>
+ <author>Lukas Chrostowski, Jaspreet Jhoja, Mustafa Hammood, Brett Poulsen, Jonas Flueckiger, Rounak Singh Narde, Chris Luzeqin, Nathan Smith, Stefan Preble, Claudio Alarcon-Reyes</author>
+ <author-contact>GitHub: lukasc-ubc, jaspreetj, mustafacc, bpoulse, jfluecki, rounaksingh, luzeqin, nsmith5, StefanPreble, clalarco</author-contact>
 </salt-grain>

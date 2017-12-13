@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Python script
+# JSLAB_PCells
+
+"""
+by Brett Poulsen (c) 2017
+
+This Python file implements a library called "JSLAB_PCells" 
+
+*******
+PCells:
+*******
+
+1) Heterogeneous Photonic Crystal Line Defect Waveguide
+
+Also includes additional functions:
+
+1) code for waveguide bends:
+def layout_waveguide_abs(cell, layer, points, w, radius):
+def layout_waveguide_rel(cell, layer, start_point, points, w, radius):
+
+2) function for making polygon text
+def layout_pgtext(cell, layer, x, y, text, mag):
+
+3) functions for inspecting PCell parameters
+def PCell_get_parameter_list ( cell_name, library_name ):
+def PCell_get_parameters ( pcell ):
+
+
+NOTE: after changing the code, the macro needs to be rerun to install the new
+implementation. The macro is also set to "auto run" to install the PCell 
+when KLayout is run.
+
+"""
+
+import pya
+import math
+
+#import numpy as n
+MODULE_NUMPY = False
+
+dbu = 0.001
+
+# Create aliases for KLayout Python API methods:
+Box = pya.Box
+Point = pya.Point
+Polygon = pya.Polygon
+Text = pya.Text
+Trans = pya.Trans
+ComplexTrans = pya.ICplxTrans
+LayerInfo = pya.LayerInfo
+
+class Hetero_Photonic_Crystal(pya.PCellDeclarationHelper):
+
+  def __init__(self):
+    # Important: initialize the super class
+    super(Hetero_Photonic_Crystal, self).__init__()
+    from math import sqrt
+    # declare the parameters
+    self.param("lattice", self.TypeDouble, "Lattice Size", default = 0.35*1.55)
+    self.param("radius", self.TypeDouble, "Hole Radius", default = (0.35*1.55*sqrt(3)-0.5)/2)
+    self.param("nx", self.TypeDouble, "Number of basis cells in the X direction", default = 10)
+    self.param("ny", self.TypeDouble, "Number of basis cells in the Y direction", default = 4)
+    self.param("pitch", self.TypeDouble, "Pitch", default = 1)
+    self.param("wg_width_strip", self.TypeDouble, "Waveguide width at strip end (microns)", default = 0.5)   
+    self.param("layer", self.TypeLayer, "Layer", default = LayerInfo(1, 0))
+    self.param("pinrec", self.TypeLayer, "PinRec Layer", default = LayerInfo(69, 0))
+    self.param("devrec", self.TypeLayer, "DevRec Layer", default = LayerInfo(68, 0))
+
+  def display_text_impl(self):
+    # Provide a descriptive text for the cell
+    return "circle_%.3f" % \
+    (self.radius)
+  
+  def coerce_parameters_impl(self):
+    pass
+
+  def can_create_from_shape(self, layout, shape, layer):
+    return False
+
+  def produce_impl(self):
+  
+    from math import pi, cos, sin, log, sqrt
+  
+    # fetch the parameters
+    dbu = self.layout.dbu
+    ly = self.layout
+    shapes = self.cell.shapes
+    ny = int(self.ny)
+    nx = int(self.nx)
+    ax = self.lattice*sqrt(3)/2/dbu
+    ay = self.lattice/dbu
+    w = self.wg_width_strip/dbu
+    p = self.pitch
+    LayerSi = self.layer
+    LayerSiN = ly.layer(LayerSi)
+    LayerSiSPN = ly.layer(LayerSiSP)
+    LayerPinRecN = ly.layer(self.pinrec)
+    LayerDevRecN = ly.layer(self.devrec)
+    LayerTextN = ly.layer(LayerText)
+
+    # Create input and output waveguide 
+    param = { "wg_width": w, "wg_length": nx*ax+4.0/dbu, "layer": LayerSi }
+    pcell = ly.create_cell("Waveguide_Straight", "SiEPIC-EBeam PCells", param )
+    trans = Trans(0, 0)
+    self.cell.insert(pya.CellInstArray(pcell.cell_index(), trans))
+
+    # Create Photonic Crystal
+    for i in range(0,nx):
+      angle = 0 if i%2==0 else 180
+      pts = []
+      
+      pts.append(Point.from_dpoint(pya.DPoint(-ax/2, -ay*(ny+2))))
+      for j in range(-ny, ny+1):
+        pitch = ((((1-p)/(1+p))*cos(i*2*pi/nx)+1)*(1+p)/2) if i%2==0 else ((((1-p)/(1+p))*cos((i+1)*2*pi/nx)+1)*(1+p)/2)
+        if j!=0:
+          pts=pts+arc(self.cell, -ax/2, j*ay, pitch*self.radius/dbu, 270, 90)
+      pts.append(Point.from_dpoint(pya.DPoint(-ax/2, ay*(ny+2))))
+     
+      pts.append(Point.from_dpoint(pya.DPoint(ax/2, ay*(ny+2))))      
+      for j in range(-ny, ny+1):
+        pitch = ((((1-p)/(1+p))*cos(i*2*pi/nx)+1)*(1+p)/2) if i%2!=0 else ((((1-p)/(1+p))*cos((i+1)*2*pi/nx)+1)*(1+p)/2)
+        if j!=0:
+          if j&lt;0:
+            pts=pts+arc(self.cell, ax/2, -j*ay+ay*0.5, pitch*self.radius/dbu, 90, 270)
+          else:
+            pts=pts+arc(self.cell, ax/2, -j*ay-ay*0.5, pitch*self.radius/dbu, 90, 270)
+      pts.append(Point.from_dpoint(pya.DPoint(ax/2, -ay*(ny+2))))
+      
+      poly = Polygon(pts)
+      shapes(LayerSiN).insert(poly.transform(ComplexTrans(1, angle, False, -ax*(nx-1)/2+i*ax, 0)))
+
+class PC_Hex_Ring_Resonator_Edge(pya.PCellDeclarationHelper):
+
+  def __init__(self):
+    # Important: initialize the super class
+    super(PC_Hex_Ring_Resonator_Edge, self).__init__()
+    
+    # declare the parameters
+    self.param("a", self.TypeDouble, "Lattice Size (um)", default = 0.45)
+    self.param("r_h", self.TypeDouble, "Hole Radius (um)", default = 0.15)
+    self.param("m", self.TypeDouble, "Edge Width (um)", default = 0.95*0.45)
+    self.param("g", self.TypeDouble, "Coupler Gap (um)", default = 0.2)
+    self.param("n", self.TypeDouble, "Number of basis cells from corner to corner (odd)", default = 31)
+    self.param("r_s", self.TypeDouble, "Radius of Center Support (um)", default = 2)
+    self.param("e", self.TypeDouble, "Etch Distance (Added to Support, um)", default = 2)
+    self.param("layer", self.TypeLayer, "Layer", default = LayerInfo(1, 0))
+    self.param("pinrec", self.TypeLayer, "PinRec Layer", default = LayerInfo(69, 0))
+    self.param("devrec", self.TypeLayer, "DevRec Layer", default = LayerInfo(68, 0))
+
+  def display_text_impl(self):
+    # Provide a descriptive text for the cell
+    return "hex_pc_ring_res"
+  
+  def coerce_parameters_impl(self):
+    pass
+
+  def can_create_from_shape(self, layout, shape, layer):
+    return False
+
+  def produce_impl(self):
+  
+    from math import pi, cos, sin, tan, log, sqrt, ceil
+  
+    # fetch the parameters
+    dbu = self.layout.dbu
+    ly = self.layout
+    shapes = self.cell.shapes
+    a = self.a/dbu
+    r_h = self.r_h/dbu
+    m = self.m/dbu
+    g = self.g/dbu
+    n = int(self.n)
+    r_s = self.r_s/dbu
+    e = self.e/dbu
+    LayerSi = self.layer
+    LayerSiN = ly.layer(LayerSi)
+    LayerEt1N = ly.layer(pya.LayerInfo(2, 0))
+    LayerEt2N = ly.layer(pya.LayerInfo(3, 0))
+    LayerSiSPN = ly.layer(LayerSiSP)
+    LayerPinRecN = ly.layer(self.pinrec)
+    LayerDevRecN = ly.layer(self.devrec)
+    LayerTextN = ly.layer(LayerText)
+
+    a_r = pi*30/180
+    a_p = (n-1)*a/2+(m+r_h)/cos(a_r)
+
+    # Create Photonic Crystal Ring Resonator
+    poly = Polygon([Point(a_p*sin(a_r),a_p*cos(a_r)),
+                    Point(a_p,0),
+                    Point(a_p*sin(a_r),-a_p*cos(a_r)),
+                    Point(-a_p*sin(a_r),-a_p*cos(a_r)),
+                    Point(-a_p,0),
+                    Point(-a_p*sin(a_r),a_p*cos(a_r))])
+
+    # Create Photonic Crystal
+    for i in range(0,ceil(n/2)):
+      for j in range(0, n-i):
+        x = -a*(n-1)/2 + j*a + i*a/2
+        y = i*a*cos(a_r)
+        if(sqrt(x*x+y*y)&gt;(r_s+e)):
+          if(i==0):
+            poly.insert_hole(arc(self.cell, x, 0, r_h, 0, 360))
+          else:
+            poly.insert_hole(arc(self.cell, x, y, r_h, 0, 360))
+            poly.insert_hole(arc(self.cell, x, -y, r_h, 0, 360))
+            
+    shapes(LayerSiN).insert(poly)
+
+    # Create Area Around Resonator
+    gw = 2.0/dbu
+    ew = 10.0/dbu
+    pts = [Point(a_p*sin(a_r),(a_p)*cos(a_r)+g),
+           Point((a_p+g)*sin(a_r),(a_p)*cos(a_r)+g),
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r),a_p*cos(a_r)+g-2/dbu),
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r)+gw-g,a_p*cos(a_r)+g-2/dbu),
+           
+           Point((a_p+gw),0),
+           
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r)+gw-g,-(a_p*cos(a_r)+g-2/dbu)),
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r),-(a_p*cos(a_r)+g-2/dbu)),
+           Point((a_p+g)*sin(a_r),-((a_p)*cos(a_r)+g)),
+           Point(a_p*sin(a_r),-((a_p)*cos(a_r)+g)),
+           
+           Point(a_p*sin(a_r),-(a_p+ew)*cos(a_r)),
+           Point((a_p+ew)*sin(a_r),-(a_p+ew)*cos(a_r)),
+           
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew-4.45*tan(a_r)/dbu,-(a_p*cos(a_r)+g+2.45/dbu)),
+           Point((a_p+ew),-(a_p*cos(a_r)+g+2.45/dbu)),
+           Point((a_p+ew),-(a_p*cos(a_r)+g-2/dbu)),
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew,-(a_p*cos(a_r)+g-2/dbu)),
+           
+           Point((a_p+ew),0),
+           
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew,a_p*cos(a_r)+g-2/dbu),
+           Point((a_p+ew),a_p*cos(a_r)+g-2/dbu),
+           Point((a_p+ew),a_p*cos(a_r)+g+2.45/dbu),
+           Point((a_p+g)*sin(a_r)+gw*tan(a_r)-g+ew-4.45*tan(a_r)/dbu,a_p*cos(a_r)+g+2.45/dbu),
+           
+           Point((a_p+ew)*sin(a_r),(a_p+ew)*cos(a_r)),
+           Point(a_p*sin(a_r),(a_p+ew)*cos(a_r))]
+            
+    shapes(LayerEt2N).insert(Polygon(pts))
+    shapes(LayerEt2N).insert(Polygon(pts).transform(pya.Trans(90, False, pya.Point(0,0))))
+
+    # Create Photonic Crystal Coupler
+    c_l = a*(n-ceil(n/2))
+    
+    poly = Polygon([Point(-a_p*sin(a_r)-0.1/dbu, 0),
+                    Point(a_p*sin(a_r)+0.1/dbu, 0),
+                    Point(a_p*sin(a_r)+0.1/dbu, ew*cos(a_r)-g),
+                    Point(-a_p*sin(a_r)-0.1/dbu, ew*cos(a_r)-g)])
+
+    for i in range(0,14):
+      for j in range(0, (n-ceil(n/2)) + 1 if i%2==0 else (n-ceil(n/2))):
+        x = -c_l/2 + a*j if i%2==0 else -c_l/2 + a*j + a/2
+        y = m + r_h + i*a*cos(a_r)
+        poly.insert_hole(arc(self.cell, x, y, r_h, 0, 360))
+            
+    shapes(LayerSiN).insert(poly.transform(Trans(0,(a_p)*cos(a_r)+g)))
+    shapes(LayerSiN).insert(poly.transformed(pya.Trans(0, True, pya.Point(0,0))))
+    
+    poly = Polygon([Point((a_p+g)*sin(a_r),(a_p)*cos(a_r)+g),
+                    Point((a_p+ew),(a_p)*cos(a_r)+g),
+                    Point((a_p+ew),(a_p)*cos(a_r)+g+0.45/dbu),
+                    Point((a_p+g)*sin(a_r),(a_p)*cos(a_r)+g+0.45/dbu)])
+    
+    shapes(LayerSiN).insert(poly)
+    shapes(LayerSiN).insert(poly.transformed(pya.Trans(0, True, pya.Point(0,0))))
+    
+    poly = Polygon([Point(-(a_p+g)*sin(a_r),(a_p)*cos(a_r)+g),
+                    Point(-(a_p+ew),(a_p)*cos(a_r)+g),
+                    Point(-(a_p+ew),(a_p)*cos(a_r)+g+0.45/dbu),
+                    Point(-(a_p+g)*sin(a_r),(a_p)*cos(a_r)+g+0.45/dbu)])
+    
+    shapes(LayerSiN).insert(poly)
+    shapes(LayerSiN).insert(poly.transformed(pya.Trans(0, True, pya.Point(0,0))))
+    
+    poly = Polygon([Point((a_p+ew),(a_p+ew)*cos(a_r)),
+                    Point(-(a_p+ew),(a_p+ew)*cos(a_r)),
+                    Point(-(a_p+ew),-(a_p+ew)*cos(a_r)),
+                    Point((a_p+ew),-(a_p+ew)*cos(a_r))])
+    shapes(LayerDevRecN).insert(poly)
+    
+    # Pins on the coupler:
+    pin_length = 200
+
+    pin = pya.Path([Point(-pin_length/2, 0), Point(pin_length/2, 0)], 4.45/dbu)
+    t = Trans(-(a_p+ew),a_p*cos(a_r)+g+0.45/dbu/2)
+    pin_t = pin.transformed(t)
+    shapes(LayerPinRecN).insert(pin_t)
+    shape = shapes(LayerPinRecN).insert(Text ("pin1", t))
+    shape.text_size = 0.4/dbu
+    
+    pin = pya.Path([Point(-pin_length/2, 0), Point(pin_length/2, 0)], 4.45/dbu)
+    t = Trans((a_p+ew),a_p*cos(a_r)+g+0.45/dbu/2)
+    pin_t = pin.transformed(t)
+    shapes(LayerPinRecN).insert(pin_t)
+    shape = shapes(LayerPinRecN).insert(Text ("pin2", t))
+    shape.text_size = 0.4/dbu
+    
+    pin = pya.Path([Point(-pin_length/2, 0), Point(pin_length/2, 0)], 4.45/dbu)
+    t = Trans(-(a_p+ew),-(a_p*cos(a_r)+g+0.45/dbu/2))
+    pin_t = pin.transformed(t)
+    shapes(LayerPinRecN).insert(pin_t)
+    shape = shapes(LayerPinRecN).insert(Text ("pin3", t))
+    shape.text_size = 0.4/dbu
+    
+    pin = pya.Path([Point(-pin_length/2, 0), Point(pin_length/2, 0)], 4.45/dbu)
+    t = Trans((a_p+ew),-(a_p*cos(a_r)+g+0.45/dbu/2))
+    pin_t = pin.transformed(t)
+    shapes(LayerPinRecN).insert(pin_t)
+    shape = shapes(LayerPinRecN).insert(Text ("pin4", t))
+    shape.text_size = 0.4/dbu
+
+def arc(cell, x, y, r, theta_start, theta_stop):
+  from math import pi, cos, sin
+  dbu = cell.layout().dbu
+  circle_fraction = abs(theta_stop-theta_start) / 360.0
+  npoints = int(points_per_circle(r*dbu) * circle_fraction)
+  if npoints==0:
+    npoints = 1
+  da = 2 * pi / npoints * circle_fraction # increment, in radians
+  pts = []
+  th = theta_start / 360.0 * 2 * pi
+  for i in range(0, npoints+1):
+    pts.append(Point.from_dpoint(pya.DPoint((x+r*cos(i*da+th))/1, (y+r*sin(i*da+th))/1)))
+  return pts
+
+def layout_pgtext(cell, layer, x, y, text, mag):
+    # example usage:
+    # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    # layout_pgtext(cell, LayerInfo(10, 0), 0, 0, "test", 1)
+
+    # for the Text polygon:
+    textlib = pya.Library.library_by_name("Basic")
+    if textlib == None:
+      raise Exception("Unknown lib 'Basic'")
+
+    textpcell_decl = textlib.layout().pcell_declaration("TEXT");
+    if textpcell_decl == None:
+      raise Exception("Unknown PCell 'TEXT'")
+    param = { 
+      "text": text, 
+      "layer": layer, 
+      "mag": mag 
+    }
+    pv = []
+    for p in textpcell_decl.get_parameters():
+      if p.name in param:
+        pv.append(param[p.name])
+      else:
+        pv.append(p.default)
+    # "fake PCell code" 
+    text_cell = cell.layout().create_cell("Temp_text_cell")
+    textlayer_index = cell.layout().layer(layer)
+    textpcell_decl.produce(cell.layout(), [ textlayer_index ], pv, text_cell)
+
+    # fetch the database parameters
+    dbu = cell.layout().dbu
+    t = Trans(Trans.R0, x/dbu, y/dbu)
+    cell.insert(pya.CellInstArray(text_cell.cell_index(), t))
+    # flatten and delete polygon text cell
+    cell.flatten(True)
+
+    print("Done layout_pgtext")
+    
+def layout_arc_wg_dbu(cell, LayerSiN, x, y, r, w, theta_start, theta_stop):
+  # function to draw an arc of waveguide
+  # cell: layout cell to place the layout
+  # LayerSiN: which layer to use
+  # x, y: location of the origin
+  # r: radius
+  # w: waveguide width
+  # length units in dbu
+  # theta_start, theta_stop: angles for the arc
+  # angles in degrees
+
+  # example usage.  Places the ring layout in the presently selected cell.
+  # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+  # layout_Ring(cell, cell.layout().layer(LayerInfo(1, 0)), 0, 0, 10*1000, 0.5*1000, 0, 360)
+
+  from math import pi, cos, sin
+
+  dbu = cell.layout().dbu
+  
+  circle_fraction = abs(theta_stop-theta_start) / 360.0
+  npoints = int(points_per_circle(r*dbu) * circle_fraction)
+  if npoints==0:
+    npoints = 1
+  da = 2 * pi / npoints * circle_fraction # increment, in radians
+  pts = []
+  th = theta_start / 360.0 * 2 * pi
+  for i in range(0, npoints+1):
+    pts.append(Point.from_dpoint(pya.DPoint((x+(r+w/2)*cos(i*da+th))/1, (y+(r+w/2)*sin(i*da+th))/1)))
+  for i in range(npoints, -1, -1):
+    pts.append(Point.from_dpoint(pya.DPoint((x+(r-w/2)*cos(i*da+th))/1, (y+(r-w/2)*sin(i*da+th))/1)))
+  cell.shapes(LayerSiN).insert(Polygon(pts))
+  
+class JSLab(pya.Library):
+  """
+  The library where we will put the PCell into 
+  """
+
+  def __init__(self):
+
+    print("Initializing JSLab PCells library.")
+  
+    # Set the description
+    self.description = "JSLab PCells"
+    
+    # Create the PCell declarations
+
+    self.layout().register_pcell("Heterogeneous Photonic Crystal", Hetero_Photonic_Crystal())
+    self.layout().register_pcell("Photonic Crystal Hexagonal ", PC_Hex_Ring_Resonator_Edge())
+    # Register us with the name "JSLab PCells".
+    # If a library with that name already existed, it will be replaced then.
+    self.register("JSLab PCells")
+ 
+# Instantiate and register the library
+JSLab()</text>
+</klayout-macro>

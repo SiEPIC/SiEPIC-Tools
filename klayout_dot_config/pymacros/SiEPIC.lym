@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>'''#################################################################################
+SiEPIC installation and initalization
+
+Actions have explicit variable names due to a bug in the KLayout python library
+
+The bug has been reported and will hopefully be resolved so that this file can be changed
+to stop clogging up the namespace.
+
+'''#################################################################################
+
+import SiEPIC
+
+SiEPIC.setup.registerMenuItems()
+SiEPIC.setup.registerInterconnectToolbar()
+SiEPIC.setup.registerKeyBindings()
+
+# Determine whether we have Python 2 or Python 3
+import sys
+if sys.version_info[0] == 3:
+    # Python 3 code
+    pass
+elif sys.version_info[0] == 2:
+    # Python 2 code
+    pass</text>
+</klayout-macro>

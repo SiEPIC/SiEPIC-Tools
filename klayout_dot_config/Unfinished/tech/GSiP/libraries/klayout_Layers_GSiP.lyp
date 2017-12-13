@@ -372,7 +372,7 @@
   <width>3</width>
   <marked>false</marked>
   <animation>0</animation>
-  <name>FloorPlan</name>
+  <name>99_FloorPlan</name>
   <source>99/0@1</source>
  </properties>
  <properties>
@@ -417,7 +417,7 @@
   <width>3</width>
   <marked>false</marked>
   <animation>0</animation>
-  <name>Lumerical</name>
+  <name>733_Lumerical</name>
   <source>733/0@1</source>
  </properties>
  <properties>
