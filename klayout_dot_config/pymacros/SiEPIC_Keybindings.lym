@@ -146,7 +146,7 @@ module MyMacro
   RBA::Application.instance.set_config('guiding-shape-line-width','0')
   RBA::Application.instance.set_config('rdb-marker-color','#ff0000')
   RBA::Application.instance.set_config('rdb-marker-line-width','8')
-  RBA::Application.instance.set_config('default-layer-properties', File.join(RBA::Application.instance.application_data_path(), 'salt', 'siepic_tools', libraries','klayout_Layers_EBeam.lyp') )
+  RBA::Application.instance.set_config('default-layer-properties', File.join(RBA::Application.instance.application_data_path(), 'salt', 'siepic_tools', 'libraries','klayout_Layers_EBeam.lyp') )
 
   mw.message('*SiEPIC configuration complete - good luck on your design!',5000)
 
