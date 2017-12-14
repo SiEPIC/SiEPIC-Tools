@@ -84,12 +84,18 @@ class Waveguide(pya.PCellDeclarationHelper):
         radius = (self.radius/dbu + offset) if turn &gt; 0 else (self.radius/dbu - offset)
 
         pt_radius = radius
-        dis = pts[i-1].distance(pts[i])
-        if (dis &lt; pt_radius):
-          pt_radius = dis if i==1 else dis/2  
+        
+        dis = pts[i].distance(pts[i-1])
+        if (i==1 and dis &lt; pt_radius):
+          pt_radius = dis - TECHNOLOGY['dbu']
+        elif (dis &lt; 2*pt_radius):
+          pt_radius = dis/2
+        
         dis = pts[i].distance(pts[i+1])
-        if (dis &lt; pt_radius):
-          pt_radius = dis if i==len(pts)-2 else dis/2
+        if (i==len(pts)-2 and dis &lt; pt_radius):
+          pt_radius = dis - TECHNOLOGY['dbu']
+        elif (dis &lt; 2*pt_radius):
+          pt_radius = dis/2
 
         if(self.adiab):
           arc_pts = [pya.Point(-pt_radius, pt_radius) + pt for pt in arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), self.bezier)]
@@ -745,9 +751,9 @@ class GSiP(pya.Library):
 
     self.description = ""
 
-    import os
-    self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP.gds"))
-    [self.layout().rename_cell(i, self.layout().cell_name(i).replace('_', ' ')) for i in range(0, self.layout().cells())]
+    #import os
+    #self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP.gds"))
+    #[self.layout().rename_cell(i, self.layout().cell_name(i).replace('_', ' ')) for i in range(0, self.layout().cells())]
     
     self.layout().register_pcell("Lumerical INTERCONNECT Laser", LumericalINTERCONNECT_Laser())
     self.layout().register_pcell("Lumerical INTERCONNECT Detector", LumericalINTERCONNECT_Detector())
@@ -759,6 +765,5 @@ class GSiP(pya.Library):
     self.register("SiEPIC GSiP Library")
     
 GSiP()
-
  </text>
 </klayout-macro>

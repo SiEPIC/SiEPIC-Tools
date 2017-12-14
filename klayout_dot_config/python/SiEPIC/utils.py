@@ -144,7 +144,7 @@ def arc_bezier(radius, start, stop, bezier):
   for i in range(1, N):
     t = i*diff
     pts.append(pya.Point(-L,0) + pya.Point(t**3*xA + t**2*xB + t*xC + xD, t**3*yA + t**2*yB + t*yC + yD))
-  return pts
+  return [pt + pya.Point(L, -L) for pt in pts]
 
 #Take a list of points and create a polygon of width 'width' 
 def arc_to_waveguide(pts, width):
