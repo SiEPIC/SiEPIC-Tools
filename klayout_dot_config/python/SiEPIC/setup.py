@@ -266,4 +266,4 @@ def registerKeyBindings():
   pya.Application.instance().set_config('guiding-shape-line-width','0')
   pya.Application.instance().set_config('rdb-marker-color','#ff0000')
   pya.Application.instance().set_config('rdb-marker-line-width','8')
-  pya.Application.instance().set_config('default-layer-properties', os.path.join(pya.Application.instance().application_data_path(),'libraries','klayout_Layers_EBeam.lyp'))
+  pya.Application.instance().set_config('default-layer-properties', os.path.join(pya.Application.instance().application_data_path(),'salt','siepic_tools_dev','libraries','klayout_Layers_EBeam.lyp'))

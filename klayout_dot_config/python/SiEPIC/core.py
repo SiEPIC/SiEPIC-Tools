@@ -300,5 +300,5 @@ class MonteCarloGUI():
     self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
     ui_file.close
     
-  def exec(self):
+  def show(self):
     pass

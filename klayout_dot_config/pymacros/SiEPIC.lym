@@ -6,7 +6,7 @@
  <prolog/>
  <epilog/>
  <doc/>
- <autorun>true</autorun>
+ <autorun>false</autorun>
  <autorun-early>false</autorun-early>
  <shortcut/>
  <show-in-menu>false</show-in-menu>
@@ -15,12 +15,8 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text>'''#################################################################################
+
 SiEPIC installation and initalization
-
-Actions have explicit variable names due to a bug in the KLayout python library
-
-The bug has been reported and will hopefully be resolved so that this file can be changed
-to stop clogging up the namespace.
 
 '''#################################################################################
 
