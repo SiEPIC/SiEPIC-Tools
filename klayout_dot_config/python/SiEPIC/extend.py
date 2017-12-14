@@ -60,7 +60,7 @@ def is_manhattan(self):
 def radius_check(self, radius):
   points = self.get_points()
   lengths = [ points[i].distance(points[i-1]) for i, pt in enumerate(points) if i > 0]
-  return all((length >= radius) or (length == 0) for length in lengths)
+  return (lengths[0] >= radius) and (lengths[-1] >= radius) and all(length >= 2*radius for length in lengths if length != lengths[0] or length != lengths[-1])
 
 def remove_colinear_points(self):
   from .utils import pt_intersects_segment
@@ -68,8 +68,7 @@ def remove_colinear_points(self):
     pts = self.get_points()
   else:
     pts = self.get_dpoints()
-  pts = [pts[0]]+[pts[i] for i in range(1, len(pts)-1) if not pt_intersects_segment(pts[i+1], pts[i-1], pts[i])]+[pts[-1]]
-  self.points = pts
+  self.points = [pts[0]]+[pts[i] for i in range(1, len(pts)-1) if not pt_intersects_segment(pts[i+1], pts[i-1], pts[i])]+[pts[-1]]
   
 def translate_from_center(self, offset):
   from math import pi, cos, sin, acos, sqrt

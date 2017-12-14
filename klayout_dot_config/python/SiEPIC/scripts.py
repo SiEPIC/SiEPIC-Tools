@@ -39,12 +39,12 @@ def waveguide_from_path(params = None, cell = None):
       if not path.is_manhattan():
         warning.setText("Warning: Waveguide segments (first, last) are not Manhattan (vertical, horizontal).")
         warning.setInformativeText("Do you want to Proceed?")
-        if(warning.exec_() == pya.QMessageBox.Cancel):
+        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
           return
-      if not path.radius_check(params['radius']):
+      if not path.radius_check(params['radius']/TECHNOLOGY['dbu']):
         warning.setText("Warning: One of the waveguide segments has insufficient length to accommodate the desired bend radius.")
         warning.setInformativeText("Do you want to Proceed?")
-        if(warning.exec_() == pya.QMessageBox.Cancel):
+        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
           return
       
       path.snap(_globals.NET.refresh().pins)

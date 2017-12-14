@@ -6,7 +6,7 @@
  <prolog/>
  <epilog/>
  <doc/>
- <autorun>false</autorun>
+ <autorun>true</autorun>
  <autorun-early>false</autorun-early>
  <shortcut/>
  <show-in-menu>false</show-in-menu>
