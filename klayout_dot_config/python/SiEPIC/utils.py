@@ -5,7 +5,11 @@ def get_technology():
     technology = {}
     lv = pya.Application.instance().main_window().current_view()
     if lv == None:
-      raise Exception("No view selected")
+      # no layout open; return an default technology
+      print ("No view selected")
+      technology['Waveguide']='1/0'
+      return technology
+#      raise Exception("No view selected")
     
     technology['dbu'] = pya.Technology.technology_by_name(lv.active_cellview().technology).dbu
     itr = lv.begin_layers()
@@ -14,7 +18,11 @@ def get_technology():
         break
       else:
         layerInfo = itr.current().source.split('@')[0]
-        technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+        if layerInfo == '*/*':
+          # likely encoutered a layer group, skip it
+          pass
+        else:
+          technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
         itr.next()
     return technology
 

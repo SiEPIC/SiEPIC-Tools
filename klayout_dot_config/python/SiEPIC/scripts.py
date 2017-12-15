@@ -28,7 +28,7 @@ def waveguide_from_path(params = None, cell = None):
     if status is False: return
     if params is None: params = _globals.WG_GUI.get_parameters()  
     
-    selected_paths = select_paths(TECHNOLOGY['Si'], cell)
+    selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell)
     selection = []
   
     warning = pya.QMessageBox()
@@ -50,7 +50,7 @@ def waveguide_from_path(params = None, cell = None):
       path.snap(_globals.NET.refresh().pins)
       path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
       path.width = path.width * TECHNOLOGY['dbu']
-      pcell = ly.create_cell("Waveguide", "SiEPIC GSiP Library", { "path": path,
+      pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": path,
                                                                      "radius": params['radius'],
                                                                      "width": params['width'],
                                                                      "adiab": params['adiabatic'],
@@ -96,8 +96,8 @@ def waveguide_to_path(cell = None):
     path.width = 0.5/TECHNOLOGY['dbu']
     
     selection.append(pya.ObjectInstPath())
-    selection[-1].layer = ly.layer(TECHNOLOGY['LayerSi'])
-    selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['LayerSi'])).insert(path)
+    selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
+    selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path)
     selection[-1].top = obj.top
     selection[-1].cv_index = obj.cv_index
     
@@ -353,7 +353,7 @@ def auto_coord_extract():
     wdg = pya.QDialog(pya.Application.instance().main_window())
   
     wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
-    wdg.setWindowTitle("SiEPIC-EBeam-PDK: Automated measurement coordinate extraction")
+    wdg.setWindowTitle("SiEPIC-Tools: Automated measurement coordinate extraction")
   
     wdg.resize(1000, 500)
     wdg.move(1, 1)
