@@ -205,7 +205,11 @@ def registerKeyBindings():
   import os
 
   config = pya.Application.instance().get_config('key-bindings')
-  mapping = dict(item.split(":") for item in config.split(";"))
+  if config == '':
+    print('WARNING: get_config(key-bindings) returned null')
+    mapping = dict()
+  else:
+    mapping = dict(item.split(":") for item in config.split(";"))
   
   mapping['edit_menu.clear_all_rulers'] = "'Ctrl+K'"
   mapping['edit_menu.copy'] = "'Ctrl+C'"
