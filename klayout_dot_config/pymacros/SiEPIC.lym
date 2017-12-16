@@ -20,9 +20,9 @@ SiEPIC installation and initalization
 
 '''#################################################################################
 
-import builtins
+pya.Application.instance().main_window().message('SiEPIC initialization',5000)
+
 ACTIONS = []
-builtins.ACTIONS = ACTIONS
 
 # Determine whether we have Python 2 or Python 3
 import sys
@@ -48,15 +48,319 @@ else:
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
-    SiEPIC.setup = reload(SiEPIC.setup)
-    print('SiEPIC Reloaded')
+    print('Reloaded SiEPIC')
 
-pya.Application.instance().main_window().message('SiEPIC initialization',5000)
-SiEPIC.setup.registerMenuItems()
+'''#################################################################################
+
+SiEPIC Menu Bindings
+
+'''#################################################################################
+
+import os
+
+actionCount = 0
+path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'python', 'SiEPIC', 'files', 'INTERCONNECT_icon.png')
+menu = pya.Application.instance().main_window().menu()
+
+s1 = "siepic_menu"
+if not(menu.is_menu(s1)):
+    menu.insert_menu("help_menu",s1,"SiEPIC") 
+
+s2 = "install"
+if not(menu.is_menu(s1 + "." + s2)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + ".end" , s2, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.install.install_dependencies)
+ACTIONS[actionCount].title = "Install SiEPIC Dependencies"
+actionCount += 1
+
+s2 = "waveguides"
+if not(menu.is_menu(s1 + "." + s2)):
+    menu.insert_menu(s1 + ".end" , s2, "Waveguides")
+
+s3 = "path_to_wg"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_from_path)
+ACTIONS[actionCount].shortcut = 'W'
+ACTIONS[actionCount].title = "Path to Waveguide"
+actionCount += 1
+
+s3 = "wg_to_path"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_to_path)
+ACTIONS[actionCount].shortcut = 'Shift+W'
+ACTIONS[actionCount].title = "Waveguide to Path"
+actionCount += 1
+
+s3 = "measure_wg"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_length)
+ACTIONS[actionCount].shortcut = 'Alt+Shift+W'
+ACTIONS[actionCount].title = "Measure Waveguide Length"
+actionCount += 1
+
+s3 = "measure_wg_diff"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_length_diff)
+ACTIONS[actionCount].shortcut = 'Shift+D'
+ACTIONS[actionCount].title = "Measure Waveguide Length Difference"
+actionCount += 1
+
+s3 = "wg_heal"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_heal)
+ACTIONS[actionCount].shortcut = 'H'
+ACTIONS[actionCount].title = "Heal Waveguides"
+actionCount += 1
+
+s2 = "layout"
+if not(menu.is_menu(s1 + "." + s2)):
+    menu.insert_menu(s1 + ".end", s2, "Layout")
+
+s3 = "auto_route"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.auto_route)
+ACTIONS[actionCount].title = "Automated A* Routing"
+actionCount += 1
+
+s3 = "snap_component"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])  
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.snap_component)
+ACTIONS[actionCount].shortcut = 'Shift+O'
+ACTIONS[actionCount].title = "Snap Selected Component to Nearest Pins"
+actionCount += 1
+
+s3 = "delete_top_cells"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.delete_top_cells)
+ACTIONS[actionCount].title = "Delete Extra Top Cells"
+actionCount += 1
+
+s2 = "exlayout"
+if not(menu.is_menu(s1 + "." + s2)):
+    menu.insert_menu(s1 +".end", s2,"Example Layouts")
+
+s3 = "dbl_bus_ring_res"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.examples.dbl_bus_ring_res)
+ACTIONS[actionCount].title = "Double Bus Ring Resonator"
+actionCount += 1
+
+s3 = "mzi"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.examples.mzi)
+ACTIONS[actionCount].title = "12 TE Mach-Zehner Interferometers - Jaspreet Jhoja"
+actionCount += 1
+
+s2 = "verification"
+if not(menu.is_menu(s1 + "." + s2)):
+    menu.insert_menu(s1 + ".end", s2, "Verification")
+
+s3 = "compute_area"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.calculate_area)
+ACTIONS[actionCount].title = "Compute Area of Silicon Layers"
+actionCount += 1
+
+s3 = "calibreDRC"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.calibreDRC)
+ACTIONS[actionCount].title = "Remote Calibre DRC"
+actionCount += 1
+
+s3 = "auto_coord_extract"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.auto_coord_extract)
+ACTIONS[actionCount].title = "Automated Coordinate Extraction"
+actionCount += 1
+
+s3 = "layout_check"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.layout_check)
+ACTIONS[actionCount].shortcut = 'V'
+ACTIONS[actionCount].title = "Verification: Graphical Layout Check"
+actionCount += 1
+
+s3 = "text_netlist_check"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.scripts.text_netlist_check)
+ACTIONS[actionCount].shortcut = 'N'
+ACTIONS[actionCount].title = "Verification: Text and Netlist Generation"
+actionCount += 1
+
+s2 = "simulation"
+if not(menu.is_menu(s1 + "." + s2)):
+    menu.insert_menu(s1 + ".end", s2, "Simulation")
+
+s3 = "mc_sim"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.lumerical.interconnect.monte_carlo)
+ACTIONS[actionCount].title = "Monte Carlo Simulation"
+actionCount += 1
+
+s3 = "launch_lumerical"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.lumerical.interconnect.launch)
+ACTIONS[actionCount].title = "Launch Lumerical Interconnect"
+actionCount += 1
+
+s3 = "update_netlist"
+if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
+    ACTIONS.append(pya.Action())
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
+ACTIONS[actionCount].on_triggered(SiEPIC.lumerical.interconnect.update_netlist)
+ACTIONS[actionCount].title = "Update Netlist in Lumerical Inteconnect"
+actionCount += 1
+
 pya.Application.instance().main_window().message('SiEPIC Done menu items',5000)
-SiEPIC.setup.registerInterconnectToolbar()
+
+'''#################################################################################
+
+SiEPIC Toolbar Bindings
+
+'''#################################################################################
+
+if not(menu.is_menu("@toolbar.cir_sim")):
+    ACTIONS.append(pya.Action())
+    menu.insert_item("@toolbar.end", "cir_sim", ACTIONS[actionCount])
+ACTIONS[actionCount].title = "Circuit \nSimulation"
+ACTIONS[actionCount].on_triggered(SiEPIC.lumerical.interconnect.launch)
+ACTIONS[actionCount].icon = path
+actionCount += 1
+
+if not(menu.is_menu("@toolbar.cir_sim.mc_sim")):
+    ACTIONS.append(pya.Action())
+    menu.insert_item("@toolbar.cir_sim.end", "mc_sim", ACTIONS[actionCount])
+ACTIONS[actionCount].title = "INTERCONNECT Monte Carlo Simulations"
+ACTIONS[actionCount].on_triggered(SiEPIC.lumerical.interconnect.monte_carlo)
+ACTIONS[actionCount].icon = path
+actionCount += 1
+
+if not(menu.is_menu("@toolbar.cir_sim.launch_lumerical")):
+    ACTIONS.append(pya.Action())
+    menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", ACTIONS[actionCount])
+ACTIONS[actionCount].title = "INTERCONNECT Circuit Simulation"
+ACTIONS[actionCount].on_triggered(SiEPIC.lumerical.interconnect.launch)
+ACTIONS[actionCount].icon = path
+actionCount += 1
+
+if not(menu.is_menu("@toolbar.cir_sim.update_netlist")):
+    ACTIONS.append(pya.Action())
+    menu.insert_item("@toolbar.cir_sim.end", "update_netlist", ACTIONS[actionCount])
+ACTIONS[actionCount].title = "INTERCONNECT Update Netlist"
+ACTIONS[actionCount].on_triggered(SiEPIC.lumerical.interconnect.update_netlist)
+ACTIONS[actionCount].icon = path
+
 pya.Application.instance().main_window().message('SiEPIC Done Circuit simulation button',5000)
-SiEPIC.setup.registerKeyBindings()
+
+'''#################################################################################
+
+SiEPIC Hotkeys and Preferences
+
+'''#################################################################################
+
+config = pya.Application.instance().get_config('key-bindings')
+if config == '':
+    print('WARNING: get_config(key-bindings) returned null')
+    mapping = dict()
+else:
+    mapping = dict(item.split(":") for item in config.split(";"))
+
+mapping['edit_menu.clear_all_rulers'] = "'Ctrl+K'"
+mapping['edit_menu.copy'] = "'Ctrl+C'"
+mapping['edit_menu.cut'] = "'Ctrl+X'"
+mapping['edit_menu.paste'] = "'Ctrl+V'"
+mapping['edit_menu.redo'] = "'Ctrl+Y'"
+mapping['edit_menu.undo'] = "'Ctrl+Z'"
+mapping['edit_menu.delete'] = "'Del'"
+#  mapping['edit_menu.duplicate'] = "'Ctrl+B'"
+mapping['edit_menu.mode_menu.move'] = "'M'"
+mapping['edit_menu.mode_menu.ruler'] = "'R'"
+mapping['edit_menu.mode_menu.select'] = "'S'"
+mapping['edit_menu.mode_menu.box'] = "'B'"
+mapping['edit_menu.mode_menu.instance'] = "'I'"
+mapping['edit_menu.mode_menu.partial'] = "'L'"
+mapping['edit_menu.mode_menu.path'] = "'P'"
+mapping['edit_menu.mode_menu.polygon'] = "'G'"
+mapping['edit_menu.mode_menu.text'] = "'X'"
+mapping['edit_menu.select_menu.select_all'] = "'Ctrl+A'"
+mapping['edit_menu.show_properties'] = "'Q'"
+mapping['edit_menu.edit_options'] = "'E'"
+mapping['edit_menu.selection_menu.change_layer'] = "'Shift+L'"
+mapping['edit_menu.selection_menu.sel_flip_x'] = "'Shift+H'"
+mapping['edit_menu.selection_menu.sel_flip_y'] = "'Shift+V'"
+mapping['edit_menu.selection_menu.sel_move'] = "'Ctrl+M'"
+#  mapping['edit_menu.selection_menu.size'] = "'Z'"
+#  mapping['edit_menu.selection_menu.tap'] = "''"
+
+mapping['file_menu.new_layout'] = "'Ctrl+N'"
+mapping['file_menu.close'] = "'Ctrl+W'"
+mapping['file_menu.open_new_panel'] = "'Ctrl+O'"
+mapping['file_menu.open_same_panel'] = "'Ctrl+Shift+O'"
+mapping['file_menu.save'] = "'Ctrl+S'"
+mapping['file_menu.save_as'] = "'Ctrl+Shift+S'"
+mapping['file_menu.screenshot'] = "'F12'"
+#  mapping['file_menu.setup'] = "'F4'"
+
+mapping['macros_menu.macro_development'] = "'F5'"
+
+mapping['zoom_menu.max_hier'] = "'Shift+F'"
+mapping['zoom_menu.select_current_cell'] = "'Shift+S'" # Display > Show as new top
+mapping['zoom_menu.zoom_fit'] = "'F'"
+mapping['zoom_menu.zoom_fit_sel'] = "'Shift+F2'"
+mapping['zoom_menu.zoom_in'] = "'Return'"
+mapping['zoom_menu.zoom_out'] = "'Shift+Return'"
+
+# turn the hash back into a config string
+config = ''.join('{}:{};'.format(key, val) for key, val in sorted(mapping.items()))[:-1]
+pya.Application.instance().set_config('key-bindings', config)
+pya.Application.instance().set_config('edit-connect-angle-mode','ortho')
+pya.Application.instance().set_config('edit-inst-angle','0')
+pya.Application.instance().set_config('edit-move-angle-mode','diagonal')
+pya.Application.instance().set_config('edit-snap-to-objects','true')
+pya.Application.instance().set_config('grid-micron','0.01')
+pya.Application.instance().set_config('edit-top-level-selection','true')
+pya.Application.instance().set_config('inst-color','#ffcdcd')
+pya.Application.instance().set_config('text-font','3')
+pya.Application.instance().set_config('guiding-shape-line-width','0')
+pya.Application.instance().set_config('rdb-marker-color','#ff0000')
+pya.Application.instance().set_config('rdb-marker-line-width','8')
+pya.Application.instance().set_config('default-layer-properties', os.path.join(os.path.realpath(__file__), '..', 'libraries', 'klayout_Layers_EBeam.lyp'))
+
 pya.Application.instance().main_window().message('SiEPIC Done key bindings',5000)
 
 pya.Application.instance().main_window().message('SiEPIC initialization complete.',5000)
