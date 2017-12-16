@@ -83,7 +83,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_from_path)
-ACTIONS[actionCount].shortcut = 'W'
 ACTIONS[actionCount].title = "Path to Waveguide"
 actionCount += 1
 
@@ -92,7 +91,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_to_path)
-ACTIONS[actionCount].shortcut = 'Shift+W'
 ACTIONS[actionCount].title = "Waveguide to Path"
 actionCount += 1
 
@@ -101,7 +99,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_length)
-ACTIONS[actionCount].shortcut = 'Alt+Shift+W'
 ACTIONS[actionCount].title = "Measure Waveguide Length"
 actionCount += 1
 
@@ -110,7 +107,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_length_diff)
-ACTIONS[actionCount].shortcut = 'Shift+D'
 ACTIONS[actionCount].title = "Measure Waveguide Length Difference"
 actionCount += 1
 
@@ -119,7 +115,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.waveguide_heal)
-ACTIONS[actionCount].shortcut = 'H'
 ACTIONS[actionCount].title = "Heal Waveguides"
 actionCount += 1
 
@@ -140,7 +135,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])  
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.snap_component)
-ACTIONS[actionCount].shortcut = 'Shift+O'
 ACTIONS[actionCount].title = "Snap Selected Component to Nearest Pins"
 actionCount += 1
 
@@ -205,7 +199,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.layout_check)
-ACTIONS[actionCount].shortcut = 'V'
 ACTIONS[actionCount].title = "Verification: Graphical Layout Check"
 actionCount += 1
 
@@ -214,7 +207,6 @@ if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
     ACTIONS.append(pya.Action())
     menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[actionCount])
 ACTIONS[actionCount].on_triggered(SiEPIC.scripts.text_netlist_check)
-ACTIONS[actionCount].shortcut = 'N'
 ACTIONS[actionCount].title = "Verification: Text and Netlist Generation"
 actionCount += 1
 
@@ -344,6 +336,15 @@ mapping['zoom_menu.zoom_fit'] = "'F'"
 mapping['zoom_menu.zoom_fit_sel'] = "'Shift+F2'"
 mapping['zoom_menu.zoom_in'] = "'Return'"
 mapping['zoom_menu.zoom_out'] = "'Shift+Return'"
+
+mapping['siepic_menu.waveguides.path_to_wg'] = "'W'"
+mapping['siepic_menu.waveguides.wg_to_path'] = "'Shift+W'"
+mapping['siepic_menu.waveguides.measure_wg'] = "'Alt+Shift+W'"
+mapping['siepic_menu.waveguides.measure_wg_diff'] = "'Shift+D'"
+mapping['siepic_menu.waveguides.wg_heal'] = "'H'"
+mapping['siepic_menu.waveguides.snap_component'] = "'Shift+O'"
+mapping['siepic_menu.verification.layout_check'] = "'V'"
+mapping['siepic_menu.verification.text_netlist_check'] = "'N'"
 
 # turn the hash back into a config string
 config = ''.join('{}:{};'.format(key, val) for key, val in sorted(mapping.items()))[:-1]
