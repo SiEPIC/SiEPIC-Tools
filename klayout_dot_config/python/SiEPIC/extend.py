@@ -112,6 +112,7 @@ def translate_from_center(self, offset):
     
 def snap(self, pins):
   from .utils import angle_vector, get_technology
+  from . import _globals
   from math import pi
   TECHNOLOGY = get_technology()
     
@@ -331,6 +332,8 @@ def print_parameter_values(self):
 def find_pins(self):
   from .utils import get_technology
   from .core import Pin
+  from . import _globals
+
   TECHNOLOGY = get_technology()
   pins = []
   it = self.begin_shapes_rec(TECHNOLOGY['PinRec'])

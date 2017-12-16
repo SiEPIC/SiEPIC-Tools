@@ -44,6 +44,8 @@ class Net():
     self.pins = set()
 
     from .utils import get_technology
+    from . import _globals
+    
     TECHNOLOGY = get_technology()
     it = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['PinRec']))
     while not(it.at_end()):

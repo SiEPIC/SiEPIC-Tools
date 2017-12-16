@@ -1,5 +1,38 @@
 import pya
 
+
+# Read the layer table for a given technology.
+def get_technology_by_name(tech_name):
+    technology = {}
+    technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
+    lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
+    file = open(lyp_file, 'r') 
+    layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
+    file.close()
+     
+    for k in layer_dict:
+      layerInfo = k['source'].split('@')[0]
+      if 'group-members' in k:
+        # encoutered a layer group, look inside:
+        j = k['group-members']
+        if 'name' in j:
+          layerInfo = j['source'].split('@')[0]
+          technology[j['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+        else:
+          for j in k['group-members']:
+            print(j['source'])
+            layerInfo = j['source'].split('@')[0]
+            technology[j['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+      else:
+        technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+    return technology
+# end of get_technology_by_name(tech_name)
+# test example: give it a name of a technology, e.g., GSiP
+# print(get_technology_by_name('EBeam'))
+# print(get_technology_by_name('GSiP'))
+
+
+
 #Keeps SiEPIC global variables and libraries consistent with technology of current layout
 def get_technology():
     technology = {}
@@ -7,6 +40,7 @@ def get_technology():
     if lv == None:
       # no layout open; return an default technology
       print ("No view selected")
+      technology['dbu']=0.001
       technology['Waveguide']='1/0'
       return technology
 #      raise Exception("No view selected")
@@ -116,6 +150,8 @@ def angle_trunc(a, trunc):
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
 def points_per_circle(radius):
   from math import acos, pi, ceil
+  from .utils import get_technology
+  import SiEPIC
   TECHNOLOGY = get_technology()
   err = 1e3*TECHNOLOGY['dbu']/2
   return int(ceil(2*pi/acos(2 * (1 - err / radius)**2 - 1))) if radius > 0.1 else 100
@@ -123,13 +159,17 @@ def points_per_circle(radius):
 #Create an arc spanning from start to stop in degrees
 def arc(radius, start, stop):
   from math import pi, cos, sin
-  start = start*pi/180
-  stop = stop*pi/180
-
-  da = 2*pi/points_per_circle(radius)
-  n = int(abs(stop-start)/da)
+  from .utils import points_per_circle
+  circle_fraction = abs(start-stop) / 360.0
+  n = int(points_per_circle(radius) * circle_fraction)
   if n == 0: n = 1
+  # need to make sure that the increment exactly matches the start & stop
+  da = 2 * pi / n * circle_fraction # increment, in radians
+  start = start*pi/180.0
+  stop = stop*pi/180.0
+  
   return [pya.Point.from_dpoint(pya.DPoint(radius*cos(start+i*da), radius*sin(start+i*da))) for i in range(0, n+1) ]
+
 
 #Create a bezier curve. While there are parameters for start and stop in degrees, this is currently only implemented for 90 degree bends
 def arc_bezier(radius, start, stop, bezier):
@@ -156,7 +196,7 @@ def arc_bezier(radius, start, stop, bezier):
 
 #Take a list of points and create a polygon of width 'width' 
 def arc_to_waveguide(pts, width):
-  return pya.Polygon(translate_from_normal(pts, -width/2) + translate_from_normal(pts, width/2)[::-1])
+  return pya.Polygon(translate_from_normal(pts, -width/2.) + translate_from_normal(pts, width/2.)[::-1])
 
 #Translate each point by its normal a distance 'trans'
 def translate_from_normal(pts, trans):
@@ -168,7 +208,7 @@ def translate_from_normal(pts, trans):
   
   for i in range(1, len(pts)-1):
     dpt = (pts[i+1]-pts[i-1])*(2/d)
-    tpts.append(pts[i] + pya.Point(-dpt.y, dpt.x)*(trans/2/dpt.abs()))
+    tpts.append(pts[i] + pya.Point(-dpt.y, dpt.x)*(trans/1/dpt.abs()))
     
   a = angle_vector(pts[-1]-pts[-2])*pi/180 + (pi/2 if trans > 0 else -pi/2)
   tpts.append(pts[-1] + pya.Point(abs(trans)*cos(a), abs(trans)*sin(a)))
@@ -225,3 +265,34 @@ try:
 except NameError:
   def advance_iterator(it):
     return it.next()
+    
+
+# XML to Dict parser, from:
+# https://stackoverflow.com/questions/2148119/how-to-convert-an-xml-string-to-a-dictionary-in-python/10077069
+from collections import defaultdict
+def etree_to_dict(t):
+    d = {t.tag: {} if t.attrib else None}
+    children = list(t)
+    if children:
+        dd = defaultdict(list)
+        for dc in map(etree_to_dict, children):
+            for k, v in dc.items():
+                dd[k].append(v)
+        d = {t.tag: {k:v[0] if len(v) == 1 else v for k, v in dd.items()}}
+    if t.attrib:
+        d[t.tag].update(('@' + k, v) for k, v in t.attrib.items())
+    if t.text:
+        text = t.text.strip()
+        if children or t.attrib:
+            if text:
+              d[t.tag]['#text'] = text
+        else:
+            d[t.tag] = text
+    return d
+
+def xml_to_dict(t):
+  from xml.etree import cElementTree as ET
+  e = ET.XML(t)
+  return etree_to_dict(e)
+  
+    
