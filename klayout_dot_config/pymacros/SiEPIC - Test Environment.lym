@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+import SiEPIC, pya
+
+'''
+#################################################################################
+
+This file is useful to use when debugging code. Breakpoints do not get registered
+from within the module. To test code, define it in this file and import all modules 
+explicitly. The changes will persist as modules are Singleton-like (only imported once).
+
+Run to redefine functions/class methods
+
+#################################################################################
+
+Example 1:
+
+def arc_test():
+  return [pya.Point(0,0)]
+
+from SiEPIC import utils
+utils.arc = arc_test
+
+*run macro*
+*continue using Klayout as normal*
+
+#################################################F################################
+'''
+</text>
+</klayout-macro>
