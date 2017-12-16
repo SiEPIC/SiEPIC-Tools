@@ -147,105 +147,23 @@ def snap(self, pins):
 # Path Extension
 #################################################################################
 
-if hasattr(pya.Path, "get_points"):
-  warning.setText("Warning: The function 'to_points' in the class 'Path', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Path.get_points = get_points
-  
-if hasattr(pya.Path, "get_dpoints"):
-  warning.setText("Warning: The function 'to_dpoints' in the class 'Path', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Path.get_dpoints = get_dpoints
-
-if hasattr(pya.Path, "is_manhattan"):
-  warning.setText("Warning: The function 'is_manhattan' in the class 'Path', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Path.is_manhattan = is_manhattan
-  
-if hasattr(pya.Path, "radius_check"):
-  warning.setText("Warning: The function 'radius_check' in the class 'Path', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Path.radius_check = radius_check
-
-if hasattr(pya.Path, "remove_colinear_points"):
-  warning.setText("Warning: The function 'remove_colinear_points' in the class 'Path', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Path.remove_colinear_points = remove_colinear_points
-
-if hasattr(pya.Path, "translate_from_center"):
-  warning.setText("Warning: The function 'translate_from_center' in the class 'Path', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Path.translate_from_center = translate_from_center
-
-if hasattr(pya.Path, "snap"):
-  warning.setText("Warning: The function 'snap' in the class 'Path', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Path.snap = snap;
 
 # DPath Extension
 #################################################################################
-  
-if hasattr(pya.DPath, "get_points"):
-  warning.setText("Warning: The function 'to_points' in the class 'DPath', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
+
   pya.DPath.get_points = get_points
-  
-if hasattr(pya.DPath, "get_dpoints"):
-  warning.setText("Warning: The function 'to_dpoints' in the class 'DPath', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPath.get_dpoints = get_dpoints
-
-if hasattr(pya.DPath, "is_manhattan"):
-  warning.setText("Warning: The function 'is_manhattan' in the class 'DPath', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPath.is_manhattan = is_manhattan
-  
-if hasattr(pya.DPath, "radius_check"):
-  warning.setText("Warning: The function 'radius_check' in the class 'DPath', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPath.radius_check = radius_check
-
-if hasattr(pya.DPath, "remove_colinear_points"):
-  warning.setText("Warning: The function 'remove_colinear_points' in the class 'DPath', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPath.remove_colinear_points = remove_colinear_points
-
-if hasattr(pya.DPath, "translate_from_center"):
-  warning.setText("Warning: The function 'translate_from_center' in the class 'DPath', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPath.translate_from_center = translate_from_center
-
-if hasattr(pya.DPath, "snap"):
-  warning.setText("Warning: The function 'snap' in the class 'DPath', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPath.snap = snap;
 
 #################################################################################
@@ -263,34 +181,12 @@ def get_dpoints(self):
 
 #################################################################################
 
-if hasattr(pya.Polygon, "get_points"):
-  warning.setText("Warning: The function 'to_points' in the class 'Polygon', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Polygon.get_points = get_points;
-  
-if hasattr(pya.Polygon, "get_dpoints"):
-  warning.setText("Warning: The function 'to_dpoints' in the class 'Polygon', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Polygon.get_dpoints = get_dpoints;
 
 #################################################################################
 
-if hasattr(pya.DPolygon, "get_points"):
-  warning.setText("Warning: The function 'to_points' in the class 'DPolygon', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPolygon.get_points = get_points;
-  
-if hasattr(pya.DPolygon, "get_dpoints"):
-  warning.setText("Warning: The function 'to_dpoints' in the class 'DPolygon', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.DPolygon.get_dpoints = get_dpoints;
 
 #################################################################################
@@ -309,11 +205,6 @@ def print_parameter_list(self):
 
 #################################################################################
 
-if hasattr(pya.PCellDeclarationHelper, "print_parameter_list"):
-  warning.setText("Warning: The function 'print_parameter_list' in the class 'PCellDeclarationHelper', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.PCellDeclarationHelper.print_parameter_list = print_parameter_list
   
 #################################################################################
@@ -367,23 +258,6 @@ def find_pin(self, name):
 
 #################################################################################
 
-if hasattr(pya.Cell, "print_parameter_values"):
-  warning.setText("Warning: The function 'get_parameter_values' in the class 'Cell', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Cell.print_parameter_values = print_parameter_values
-  
-if hasattr(pya.Cell, "find_pin"):
-  warning.setText("Warning: The function 'find_pin' in the class 'Cell', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Cell.find_pin = find_pin
-
-if hasattr(pya.Cell, "find_pins"):
-  warning.setText("Warning: The function 'find_pins' in the class 'Cell', is already implemented in the KLayout Library.\n\
-Redefining might cause instability and will not be performed.")
-  warning.exec_()
-else:
   pya.Cell.find_pins = find_pins

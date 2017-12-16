@@ -36,12 +36,12 @@ def get_technology_by_name(tech_name):
 #Keeps SiEPIC global variables and libraries consistent with technology of current layout
 def get_technology():
     technology = {}
+    technology['Waveguide'] = pya.LayerInfo(1, 0)
     lv = pya.Application.instance().main_window().current_view()
     if lv == None:
       # no layout open; return an default technology
       print ("No view selected")
       technology['dbu']=0.001
-      technology['Waveguide']='1/0'
       return technology
 #      raise Exception("No view selected")
     

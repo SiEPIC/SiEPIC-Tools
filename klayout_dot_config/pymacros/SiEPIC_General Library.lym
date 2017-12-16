@@ -99,7 +99,7 @@ class Waveguide(pya.PCellDeclarationHelper):
         
         dis = pts[i].distance(pts[i+1])
         if (i==len(pts)-2 and dis &lt; pt_radius):
-          pt_radius = dis - TECHNOLOGY['dbu']
+          pt_radius = dis
         elif (dis &lt; 2*pt_radius):
           pt_radius = dis/2
 

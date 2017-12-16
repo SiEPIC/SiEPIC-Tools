@@ -1,10 +1,9 @@
 import pya
 
-
-  
 def registerMenuItems():
-  from . import scripts, examples, lumerical, _globals, install
-  
+  global ACTIONS
+  from . import scripts, examples, lumerical, install
+
   menu = pya.Application.instance().main_window().menu()
   s1 = "siepic_menu"
   if not(menu.is_menu(s1)):
@@ -12,10 +11,10 @@ def registerMenuItems():
 
   s2 = "install"
   if not(menu.is_menu(s1 + "." + s2)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(install.install_dependencies)
-    _globals.ACTIONS[-1].title = "Install SiEPIC Dependencies"
-    menu.insert_item(s1 + ".end" , s2, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(install.install_dependencies)
+    ACTIONS[-1].title = "Install SiEPIC Dependencies"
+    menu.insert_item(s1 + ".end" , s2, ACTIONS[-1])
 
   s2 = "waveguides"
   if not(menu.is_menu(s1 + "." + s2)):
@@ -23,43 +22,43 @@ def registerMenuItems():
   
   s3 = "path_to_wg"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.waveguide_from_path)
-    _globals.ACTIONS[-1].shortcut = 'W'
-    _globals.ACTIONS[-1].title = "Path to Waveguide"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.waveguide_from_path)
+    ACTIONS[-1].shortcut = 'W'
+    ACTIONS[-1].title = "Path to Waveguide"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s3 = "wg_to_path"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.waveguide_to_path)
-    _globals.ACTIONS[-1].shortcut = 'Shift+W'
-    _globals.ACTIONS[-1].title = "Waveguide to Path"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.waveguide_to_path)
+    ACTIONS[-1].shortcut = 'Shift+W'
+    ACTIONS[-1].title = "Waveguide to Path"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
     
   s3 = "measure_wg"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.waveguide_length)
-    _globals.ACTIONS[-1].shortcut = 'Alt+Shift+W'
-    _globals.ACTIONS[-1].title = "Measure Waveguide Length"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.waveguide_length)
+    ACTIONS[-1].shortcut = 'Alt+Shift+W'
+    ACTIONS[-1].title = "Measure Waveguide Length"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s3 = "measure_wg_diff"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.waveguide_length_diff)
-    _globals.ACTIONS[-1].shortcut = 'Shift+D'
-    _globals.ACTIONS[-1].title = "Measure Waveguide Length Difference"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.waveguide_length_diff)
+    ACTIONS[-1].shortcut = 'Shift+D'
+    ACTIONS[-1].title = "Measure Waveguide Length Difference"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
     
   s3 = "wg_heal"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.waveguide_heal)
-    _globals.ACTIONS[-1].shortcut = 'H'
-    _globals.ACTIONS[-1].title = "Heal Waveguides"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.waveguide_heal)
+    ACTIONS[-1].shortcut = 'H'
+    ACTIONS[-1].title = "Heal Waveguides"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
    
   s2 = "layout"
   if not(menu.is_menu(s1 + "." + s2)):
@@ -67,25 +66,25 @@ def registerMenuItems():
   
   s3 = "auto_route"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.auto_route)
-    _globals.ACTIONS[-1].title = "Automated A* Routing"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.auto_route)
+    ACTIONS[-1].title = "Automated A* Routing"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
     
   s3 = "snap_component"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.snap_component)
-    _globals.ACTIONS[-1].shortcut = 'Shift+O'
-    _globals.ACTIONS[-1].title = "Snap Selected Component to Nearest Pins"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])  
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.snap_component)
+    ACTIONS[-1].shortcut = 'Shift+O'
+    ACTIONS[-1].title = "Snap Selected Component to Nearest Pins"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])  
   
   s3 = "delete_top_cells"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.delete_top_cells)
-    _globals.ACTIONS[-1].title = "Delete Extra Top Cells"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.delete_top_cells)
+    ACTIONS[-1].title = "Delete Extra Top Cells"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s2 = "exlayout"
   if not(menu.is_menu(s1 + "." + s2)):
@@ -93,17 +92,17 @@ def registerMenuItems():
     
   s3 = "dbl_bus_ring_res"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(examples.dbl_bus_ring_res)
-    _globals.ACTIONS[-1].title = "Double Bus Ring Resonator"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(examples.dbl_bus_ring_res)
+    ACTIONS[-1].title = "Double Bus Ring Resonator"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s3 = "mzi"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(examples.mzi)
-    _globals.ACTIONS[-1].title = "12 TE Mach-Zehner Interferometers - Jaspreet Jhoja"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(examples.mzi)
+    ACTIONS[-1].title = "12 TE Mach-Zehner Interferometers - Jaspreet Jhoja"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s2 = "verification"
   if not(menu.is_menu(s1 + "." + s2)):
@@ -111,40 +110,40 @@ def registerMenuItems():
   
   s3 = "compute_area"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.calculate_area)
-    _globals.ACTIONS[-1].title = "Compute Area of Silicon Layers"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.calculate_area)
+    ACTIONS[-1].title = "Compute Area of Silicon Layers"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
     
   s3 = "calibreDRC"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.calibreDRC)
-    _globals.ACTIONS[-1].title = "Remote Calibre DRC"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.calibreDRC)
+    ACTIONS[-1].title = "Remote Calibre DRC"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s3 = "auto_coord_extract"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.auto_coord_extract)
-    _globals.ACTIONS[-1].title = "Automated Coordinate Extraction"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.auto_coord_extract)
+    ACTIONS[-1].title = "Automated Coordinate Extraction"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s3 = "layout_check"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.layout_check)
-    _globals.ACTIONS[-1].shortcut = 'V'
-    _globals.ACTIONS[-1].title = "Verification: Graphical Layout Check"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.layout_check)
+    ACTIONS[-1].shortcut = 'V'
+    ACTIONS[-1].title = "Verification: Graphical Layout Check"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
     
   s3 = "text_netlist_check"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(scripts.text_netlist_check)
-    _globals.ACTIONS[-1].shortcut = 'N'
-    _globals.ACTIONS[-1].title = "Verification: Text and Netlist Generation"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(scripts.text_netlist_check)
+    ACTIONS[-1].shortcut = 'N'
+    ACTIONS[-1].title = "Verification: Text and Netlist Generation"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s2 = "simulation"
   if not(menu.is_menu(s1 + "." + s2)):
@@ -152,59 +151,56 @@ def registerMenuItems():
     
   s3 = "mc_sim"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(lumerical.interconnect.monte_carlo)
-    _globals.ACTIONS[-1].title = "Monte Carlo Simulation"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(lumerical.interconnect.monte_carlo)
+    ACTIONS[-1].title = "Monte Carlo Simulation"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
   
   s3 = "launch_lumerical"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(lumerical.interconnect.launch)
-    _globals.ACTIONS[-1].title = "Launch Lumerical Interconnect"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(lumerical.interconnect.launch)
+    ACTIONS[-1].title = "Launch Lumerical Interconnect"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
     
   s3 = "update_netlist"
   if not(menu.is_menu(s1 + "." + s2 + "." + s3)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(lumerical.interconnect.update_netlist)
-    _globals.ACTIONS[-1].title = "Update Netlist in Lumerical Inteconnect"
-    menu.insert_item(s1 + "." + s2 + ".end" , s3, _globals.ACTIONS[-1])
+    ACTIONS.append(pya.Action())
+    ACTIONS[-1].on_triggered(lumerical.interconnect.update_netlist)
+    ACTIONS[-1].title = "Update Netlist in Lumerical Inteconnect"
+    menu.insert_item(s1 + "." + s2 + ".end" , s3, ACTIONS[-1])
 
 def registerInterconnectToolbar():
   import os
+  global ACTIONS
   from .lumerical import interconnect
-  from . import _globals
   
   menu = pya.Application.instance().main_window().menu()
   path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "INTERCONNECT_icon.png")
   
-  _globals.ACTIONS.append(pya.Action())
-  _globals.ACTIONS[-1].title = "Circuit \nSimulation"
-  _globals.ACTIONS[-1].on_triggered(interconnect.launch)
-  _globals.ACTIONS[-1].icon = path
-  menu.insert_item("@toolbar.end", "cir_sim", _globals.ACTIONS[-1])
+  ACTIONS.append(pya.Action())
+  ACTIONS[-1].title = "Circuit \nSimulation"
+  ACTIONS[-1].on_triggered(interconnect.launch)
+  ACTIONS[-1].icon = path
+  menu.insert_item("@toolbar.end", "cir_sim", ACTIONS[-1])
   
-  _globals.ACTIONS.append(pya.Action())
-  _globals.ACTIONS[-1].title = "INTERCONNECT Monte Carlo Simulations"
-  _globals.ACTIONS[-1].on_triggered(interconnect.monte_carlo)
-  _globals.ACTIONS[-1].icon = path
-  menu.insert_item("@toolbar.cir_sim.end", "mc_sim", _globals.ACTIONS[-1])
+  ACTIONS.append(pya.Action())
+  ACTIONS[-1].title = "INTERCONNECT Monte Carlo Simulations"
+  ACTIONS[-1].on_triggered(interconnect.monte_carlo)
+  ACTIONS[-1].icon = path
+  menu.insert_item("@toolbar.cir_sim.end", "mc_sim", ACTIONS[-1])
   
-  _globals.ACTIONS.append(pya.Action())
-  _globals.ACTIONS[-1].title = "INTERCONNECT Circuit Simulation"
-  _globals.ACTIONS[-1].on_triggered(interconnect.launch)
-  _globals.ACTIONS[-1].icon = path
-  menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", _globals.ACTIONS[-1])
+  ACTIONS.append(pya.Action())
+  ACTIONS[-1].title = "INTERCONNECT Circuit Simulation"
+  ACTIONS[-1].on_triggered(interconnect.launch)
+  ACTIONS[-1].icon = path
+  menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", ACTIONS[-1])
   
-  _globals.ACTIONS.append(pya.Action())
-  _globals.ACTIONS[-1].title = "INTERCONNECT Update Netlist"
-  _globals.ACTIONS[-1].on_triggered(interconnect.update_netlist)
-  _globals.ACTIONS[-1].icon = path
-  menu.insert_item("@toolbar.cir_sim.end", "update_netlist", _globals.ACTIONS[-1])
-
-
-
+  ACTIONS.append(pya.Action())
+  ACTIONS[-1].title = "INTERCONNECT Update Netlist"
+  ACTIONS[-1].on_triggered(interconnect.update_netlist)
+  ACTIONS[-1].icon = path
+  menu.insert_item("@toolbar.cir_sim.end", "update_netlist", ACTIONS[-1])
 
 def registerKeyBindings():
   import os
