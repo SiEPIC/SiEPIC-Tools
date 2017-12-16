@@ -43,44 +43,8 @@ utils.arc = arc_test
 '''
 
 print ("***")
-from SiEPIC.utils import arc, arc_to_waveguide, points_per_circle
-print(arc(20, 90., 0.))
 
 
-#Create an arc spanning from start to stop in degrees
-def arc(radius, start, stop):
-  from SiEPIC.utils import points_per_circle
-  from math import pi, cos, sin
 
-  circle_fraction = abs(start-stop) / 360.0
-  n = int(points_per_circle(radius) * circle_fraction)
-  if n == 0: n = 1
-  da = 2 * pi / n * circle_fraction # increment, in radians
-
-  start = start*pi/180.0
-  stop = stop*pi/180.0
-  
-  return [pya.Point.from_dpoint(pya.DPoint(radius*cos(start+i*da), radius*sin(start+i*da))) for i in range(0, n+1) ]
-
-print(arc(20, 90., 0.))
-
-
-def arc2(x,y,r, w, theta_start, theta_stop):
-  from SiEPIC.utils import points_per_circle
-  from math import pi, cos, sin
-  dbu=1
-  circle_fraction = abs(theta_stop-theta_start) / 360.0
-  npoints = int(points_per_circle(r*dbu) * circle_fraction)
-  if npoints==0:
-    npoints = 1
-  da = 2 * pi / npoints * circle_fraction # increment, in radians
-  pts = []
-  th = theta_start / 360.0 * 2 * pi
-  for i in range(0, npoints+1):
-    pts.append(Point.from_dpoint(pya.DPoint((x+(r+w/2)*cos(i*da+th))/1, (y+(r+w/2)*sin(i*da+th))/1)))
-  return pts
-  
-print(arc2(0,0,20,0, 90, 0))
-
-</text>
+s</text>
 </klayout-macro>

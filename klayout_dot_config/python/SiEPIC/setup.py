@@ -3,7 +3,7 @@ import pya
 
   
 def registerMenuItems():
-  from . import scripts, examples, lumerical, _globals, install, setup
+  from . import scripts, examples, lumerical, _globals, install
   
   menu = pya.Application.instance().main_window().menu()
   s1 = "siepic_menu"
@@ -16,13 +16,6 @@ def registerMenuItems():
     _globals.ACTIONS[-1].on_triggered(install.install_dependencies)
     _globals.ACTIONS[-1].title = "Install SiEPIC Dependencies"
     menu.insert_item(s1 + ".end" , s2, _globals.ACTIONS[-1])
-
-  s2 = "keys"
-  if not(menu.is_menu(s1 + "." + s2)):
-    _globals.ACTIONS.append(pya.Action())
-    _globals.ACTIONS[-1].on_triggered(registerKeyBindings)
-    _globals.ACTIONS[-1].title = "* SiEPIC Configure shortcut keys"
-    menu.insert_item(s1 + ".beginning" , s2, _globals.ACTIONS[-1])
 
   s2 = "waveguides"
   if not(menu.is_menu(s1 + "." + s2)):

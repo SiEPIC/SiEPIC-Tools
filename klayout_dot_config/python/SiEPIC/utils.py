@@ -146,12 +146,12 @@ def angle_vector(u):
 def angle_trunc(a, trunc):
   return ((a%trunc)+trunc)%trunc
 
+
 # Calculate the recommended number of points in a circle, based on 
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
 def points_per_circle(radius):
   from math import acos, pi, ceil
   from .utils import get_technology
-  import SiEPIC
   TECHNOLOGY = get_technology()
   err = 1e3*TECHNOLOGY['dbu']/2
   return int(ceil(2*pi/acos(2 * (1 - err / radius)**2 - 1))) if radius > 0.1 else 100
@@ -295,4 +295,3 @@ def xml_to_dict(t):
   e = ET.XML(t)
   return etree_to_dict(e)
   
-    

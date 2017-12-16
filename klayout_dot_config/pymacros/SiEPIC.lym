@@ -22,9 +22,13 @@ SiEPIC installation and initalization
 
 import SiEPIC
 
+pya.Application.instance().main_window().message('SiEPIC initialization',5000)
 SiEPIC.setup.registerMenuItems()
+pya.Application.instance().main_window().message('SiEPIC Done menu items',5000)
 SiEPIC.setup.registerInterconnectToolbar()
+pya.Application.instance().main_window().message('SiEPIC Done Circuit simulation button',5000)
 SiEPIC.setup.registerKeyBindings()
+pya.Application.instance().main_window().message('SiEPIC Done key bindings',5000)
 
 # Determine whether we have Python 2 or Python 3
 import sys
@@ -34,5 +38,7 @@ if sys.version_info[0] == 3:
 elif sys.version_info[0] == 2:
     # Python 2 code
     pass
-    </text>
+    
+pya.Application.instance().main_window().message('SiEPIC initialization complete.',5000)
+</text>
 </klayout-macro>
