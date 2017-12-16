@@ -1,7 +1,9 @@
 import pya
 
+
+  
 def registerMenuItems():
-  from . import scripts, examples, lumerical, _globals, install
+  from . import scripts, examples, lumerical, _globals, install, setup
   
   menu = pya.Application.instance().main_window().menu()
   s1 = "siepic_menu"
@@ -14,6 +16,13 @@ def registerMenuItems():
     _globals.ACTIONS[-1].on_triggered(install.install_dependencies)
     _globals.ACTIONS[-1].title = "Install SiEPIC Dependencies"
     menu.insert_item(s1 + ".end" , s2, _globals.ACTIONS[-1])
+
+  s2 = "keys"
+  if not(menu.is_menu(s1 + "." + s2)):
+    _globals.ACTIONS.append(pya.Action())
+    _globals.ACTIONS[-1].on_triggered(registerKeyBindings)
+    _globals.ACTIONS[-1].title = "* SiEPIC Configure shortcut keys"
+    menu.insert_item(s1 + ".beginning" , s2, _globals.ACTIONS[-1])
 
   s2 = "waveguides"
   if not(menu.is_menu(s1 + "." + s2)):
@@ -201,6 +210,9 @@ def registerInterconnectToolbar():
   _globals.ACTIONS[-1].icon = path
   menu.insert_item("@toolbar.cir_sim.end", "update_netlist", _globals.ACTIONS[-1])
 
+
+
+
 def registerKeyBindings():
   import os
 
@@ -270,4 +282,6 @@ def registerKeyBindings():
   pya.Application.instance().set_config('guiding-shape-line-width','0')
   pya.Application.instance().set_config('rdb-marker-color','#ff0000')
   pya.Application.instance().set_config('rdb-marker-line-width','8')
-  pya.Application.instance().set_config('default-layer-properties', os.path.join(pya.Application.instance().application_data_path(),'salt','siepic_tools_dev','libraries','klayout_Layers_EBeam.lyp'))
+  pya.Application.instance().set_config('default-layer-properties', os.path.join(pya.Application.instance().application_data_path(),'salt','siepic_tools','libraries','klayout_Layers_EBeam.lyp'))
+  
+  
