@@ -67,6 +67,30 @@ def get_technology():
         itr.next()
     return technology
 
+def get_layout_variables():
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+
+  # Configure variables to find in the presently selected cell:
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    print("No view selected")
+    raise UserWarning("No view selected. Make sure you have an open layout.")
+  # Find the currently selected layout.
+  ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
+  if ly == None:
+    raise UserWarning("No layout. Make sure you have an open layout.")
+  # find the currently selected cell:
+  cv = pya.Application.instance().main_window().current_view().active_cellview()
+  cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+  if cell == None:
+    raise UserWarning("No cell. Make sure you have an open layout.")
+
+
+  return TECHNOLOGY, lv, ly, cell
+   
+  
+
 #Define an Enumeration type for Python
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)

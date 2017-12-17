@@ -72,6 +72,7 @@ def waveguide_to_path(cell = None):
   from . import _globals
   from .utils import select_waveguides, get_technology
   TECHNOLOGY = get_technology()
+  
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
     raise Exception("No view selected")
@@ -108,16 +109,9 @@ def waveguide_to_path(cell = None):
   lv.commit()
   
 def waveguide_length():
-  from .utils import get_technology
-  TECHNOLOGY = get_technology()
-  
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-  
-  ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
-  if ly == None:
-    raise Exception("No active layout")
+
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
     
   selection = lv.object_selection
   if len(selection) == 1 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name():
@@ -129,16 +123,9 @@ def waveguide_length():
     pya.MessageBox.warning("Selection is not a waveguide", "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
   
 def waveguide_length_diff():
-  from .utils import get_technology
-  TECHNOLOGY = get_technology()
-  
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-  
-  ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
-  if ly == None:
-    raise Exception("No active layout")
+
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
     
   selection = lv.object_selection
   if len(selection) == 2 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name() and selection[1].inst().is_pcell() and "Waveguide" in selection[1].inst().cell.basic_name():
@@ -158,8 +145,148 @@ def waveguide_heal():
 def auto_route():
   print("auto_route")
   
+
+'''
+SiEPIC-Tools: Snap Component
+
+by Lukas Chrostowski (c) 2016-2017
+
+This Python function implements snapping of one component to another. 
+
+Usage:
+- Click to select the component you wish to move (selected)
+- Hover the mouse over the component you wish to align to (transient)
+- Shift-O to run this script
+- The function will find the closest pins between these components, and move the selected component
+
+Version history:
+
+Lukas Chrostowski           2016/03/08
+ - Initial version
+ 
+Lukas Chrostowski           2017/12/16
+ - Updating to SiEPIC-Tools 0.3.x module based approach rather than a macro
+   and without optical components database
+ - Strict assumption that pin directions in the component are consistent, namely
+   they indicate which way the signal is LEAVING the component 
+   (path starts with the point inside the DevRec, then the point outside)
+   added to wiki https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/wiki/Component-and-PCell-Layout
+   This avoids the issue of components ending up on top of each other incorrectly.
+   Ensures that connections are valid
+   
+'''
+
 def snap_component():
-  print("snap_component")
+  print("*** snap_component, move selected object to snap onto the transient: ")
+  
+  from . import _globals
+
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  # Define layers based on PDK:
+  LayerSiN = TECHNOLOGY['Waveguide']
+  LayerPinRecN = TECHNOLOGY['PinRec']
+  LayerDevRecN = TECHNOLOGY['DevRec'] 
+  LayerFbrTgtN = TECHNOLOGY['FbrTgt'] 
+  LayerErrorN = TECHNOLOGY['Errors']
+  
+  # we need two objects.  One is selected, and the other is a transient selection
+  if lv.has_transient_object_selection() == False:
+    print("No transient selection")
+    v = pya.MessageBox.warning("No transient selection", "Hover the mouse (transient selection) over the object to which you wish to snap to.\nEnsure transient selection is enabled in Settings - Applications - Selection.", pya.MessageBox.Ok)
+  else:
+    # find the transient selection:
+    o_transient_iter = lv.each_object_selected_transient()
+    o_transient = next(o_transient_iter)  # returns ObjectInstPath[].
+
+    # Find the selected objects
+    o_selection = lv.object_selection   # returns ObjectInstPath[].
+
+    if len(o_selection) < 1:
+      v = pya.MessageBox.warning("No selection", "Select the object you wish to be moved.", pya.MessageBox.Ok)
+    if len(o_selection) > 1:
+      v = pya.MessageBox.warning("Too many selected", "Select only one object you wish to be moved.", pya.MessageBox.Ok)
+    else:
+      o_selection = o_selection[0]
+      if o_selection.is_cell_inst()==False:
+        v = pya.MessageBox.warning("No selection", "The selected object must be an instance (not primitive polygons)", pya.MessageBox.Ok)
+      elif o_transient.is_cell_inst()==False:
+        v = pya.MessageBox.warning("No selection", "The selected object must be an instance (not primitive polygons)", pya.MessageBox.Ok)
+      elif o_selection.inst().is_regular_array():
+        v = pya.MessageBox.warning("Array", "Selection was an array. \nThe array was 'exploded' (Edit | Selection | Resolve Array). \nPlease select the objects and try again.", pya.MessageBox.Ok)
+        # Record a transaction, to enable "undo"
+        lv.transaction("Object snapping - exploding array")
+        o_selection.inst().explode()
+        # Record a transaction, to enable "undo"
+        lv.commit()
+      elif o_transient.inst().is_regular_array():
+        v = pya.MessageBox.warning("Array", "Selection was an array. \nThe array was 'exploded' (Edit | Selection | Resolve Array). \nPlease select the objects and try again.", pya.MessageBox.Ok)
+        # Record a transaction, to enable "undo"
+        lv.transaction("Object snapping - exploding array")
+        o_transient.inst().explode()
+        # Record a transaction, to enable "undo"
+        lv.commit()      
+      elif o_transient == o_selection:
+        v = pya.MessageBox.warning("Same selection", "We need two different objects: one selected, and one transient (hover mouse over).", pya.MessageBox.Ok)
+      else: 
+        # we have two instances, we can snap them together:
+        # new code from here, 2017/12/17
+
+        # find absolute position of cell's pins:
+        # Function input is a cell Instance (http://www.klayout.de/doc-qt4/code/class_Instance.html)
+        # - find the pins using SiEPIC.core.Pin
+        # - transform them by the location of the cell
+        def find_pins_in_cell_inst(inst):
+          from . import core
+          cell=inst.cell
+          pins = set()
+          it = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['PinRec']))
+          while not(it.at_end()):
+            if it.shape().is_path():
+              pins.add(core.Pin(it.shape().path.transformed(it.itrans()), _globals.PIN_TYPES.OPTICAL).transform(inst.trans))
+            it.next()
+#          print("find_pins_in_cell: pins = %s" % pins)
+          return (pins)
+
+        # Find the pins within the two cell instances:
+        pins_transient = find_pins_in_cell_inst(o_transient.inst())
+        pins_selection = find_pins_in_cell_inst(o_selection.inst())
+        print("all pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_transient]] )
+        print("all pins_selection (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_selection]] )
+
+        # find all pin pairs that can be connected together
+        pin_pairs = []
+        # loop through all pins of the transient cell:
+        for pin_temp in list(pins_transient):
+          # find pins in selection cell that have a 180 deg orientation (can be connected)
+          # and sort to find the closest one
+          pins_sorted = sorted([pin for pin in pins_selection if ((pin_temp.rotation - pin.rotation)%360) == 180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pin_temp.center))
+          if pins_sorted:
+            pin_pairs.append([pins_sorted[0], pin_temp])
+            print("pins_selection(x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_sorted]] )
+            print("distances: %s" % [pin.center.distance(pin_temp.center) for pin in pins_sorted])
+        # if we have valid pin pairs, continue:
+        if pin_pairs:
+          # sort pin pairs to find closest one, to find the required translation:
+          pin_pairs_sorted_by_distance = sorted([pin_pair for pin_pair in pin_pairs], key=lambda x: x[0].center.distance(x[1].center))
+          print("shortest pins_selection & pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pin_pairs_sorted_by_distance[0]]] )
+          print("shortest distance: %s" % pin_pairs_sorted_by_distance[0][0].center.distance(pin_pairs_sorted_by_distance[0][1].center) )
+          trans = pya.Trans(pya.Trans.R0, pin_pairs_sorted_by_distance[0][1].center - pin_pairs_sorted_by_distance[0][0].center)
+          print("translation: %s" % trans )
+
+          # Record a transaction, to enable "undo"
+          lv.transaction("Object snapping")
+          # Move the selected object
+          o_selection.inst().transform(trans)
+          # Record a transaction, to enable "undo"
+          lv.commit()
+        else:
+          v = pya.MessageBox.warning("Snapping failed", "Snapping failed.  No matching pins found.", pya.MessageBox.Ok)
+
+        return
+# end def snap_component()
+  
   
 def delete_top_cells():
 
@@ -168,19 +295,10 @@ def delete_top_cells():
       ly.delete_cells([tcell for tcell in ly.each_top_cell() if tcell != cell.cell_index()])
     if len(ly.top_cells()) > 1:
       delete_cells(ly, cell)
+
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
     
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-
-  ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
-  if ly == None:
-    raise Exception("No active layout")
-  
-  cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-  if cell == None:
-    raise Exception("No active cell")
-
   if cell in ly.top_cells():
     lv.transaction("Delete extra top cells")
     delete_cells(ly, cell)
