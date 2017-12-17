@@ -173,6 +173,10 @@ Lukas Chrostowski           2017/12/16
    added to wiki https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/wiki/Component-and-PCell-Layout
    This avoids the issue of components ending up on top of each other incorrectly.
    Ensures that connections are valid
+
+Lukas Chrostowski           2017/12/17
+ - removing redundant code, and replacing with Brett's functions:
+   - Cell.find_pins, rather than code within.
    
 '''
 
@@ -231,34 +235,17 @@ def snap_component():
         v = pya.MessageBox.warning("Same selection", "We need two different objects: one selected, and one transient (hover mouse over).", pya.MessageBox.Ok)
       else: 
         # we have two instances, we can snap them together:
-        # new code from here, 2017/12/17
 
-        # find absolute position of cell's pins:
-        # Function input is a cell Instance (http://www.klayout.de/doc-qt4/code/class_Instance.html)
-        # - find the pins using SiEPIC.core.Pin
-        # - transform them by the location of the cell
-        def find_pins_in_cell_inst(inst):
-          from . import core
-          cell=inst.cell
-          pins = set()
-          it = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['PinRec']))
-          while not(it.at_end()):
-            if it.shape().is_path():
-              pins.add(core.Pin(it.shape().path.transformed(it.itrans()), _globals.PIN_TYPES.OPTICAL).transform(inst.trans))
-            it.next()
-#          print("find_pins_in_cell: pins = %s" % pins)
-          return (pins)
-
-        # Find the pins within the two cell instances:
-        pins_transient = find_pins_in_cell_inst(o_transient.inst())
-        pins_selection = find_pins_in_cell_inst(o_selection.inst())
+        # Find the pins within the two cell instances:     
+        pins_transient = o_transient.inst().find_pins()
+        pins_selection = o_selection.inst().find_pins()
         print("all pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_transient]] )
         print("all pins_selection (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_selection]] )
 
         # find all pin pairs that can be connected together
         pin_pairs = []
         # loop through all pins of the transient cell:
-        for pin_temp in list(pins_transient):
+        for pin_temp in pins_transient:
           # find pins in selection cell that have a 180 deg orientation (can be connected)
           # and sort to find the closest one
           pins_sorted = sorted([pin for pin in pins_selection if ((pin_temp.rotation - pin.rotation)%360) == 180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pin_temp.center))
