@@ -24,6 +24,11 @@ pya.PCellDeclarationHelper Extensions:
   
 pya.Cell Extensions:
   - print_parameter_values, if this cell is a pcell, prints the parameter values
+  - find_pins: find Pin object of either the specified name or all pins in a cell
+  - find_pin
+
+pya.Instance Extensions:
+  - find_pins: find Pin objects for all pins in a cell instance
 '''
 #################################################################################
 
@@ -205,7 +210,7 @@ def print_parameter_list(self):
 
 #################################################################################
 
-  pya.PCellDeclarationHelper.print_parameter_list = print_parameter_list
+pya.PCellDeclarationHelper.print_parameter_list = print_parameter_list
   
 #################################################################################
 #                    SiEPIC Class Extension of Cell Class                       #
@@ -221,13 +226,12 @@ def print_parameter_values(self):
     print("Parameter: %s, Value: %s") % (key, params[key])
 
 def find_pins(self):
-  from .utils import get_technology
   from .core import Pin
   from . import _globals
-
+  from .utils import get_technology
   TECHNOLOGY = get_technology()
   pins = []
-  it = self.begin_shapes_rec(TECHNOLOGY['PinRec'])
+  it = self.begin_shapes_rec(self.layout().layer(TECHNOLOGY['PinRec']))
   while not(it.at_end()):
     if it.shape().is_path():
       pins.append(Pin(it.shape().path.transformed(it.itrans()), _globals.PIN_TYPES.OPTICAL))
@@ -261,3 +265,19 @@ def find_pin(self, name):
 pya.Cell.print_parameter_values = print_parameter_values
 pya.Cell.find_pin = find_pin
 pya.Cell.find_pins = find_pins
+
+
+#################################################################################
+#                    SiEPIC Class Extension of Instance Class                   #
+#################################################################################
+
+# Function Definitions
+#################################################################################
+
+def find_pins(self):
+
+  return [pin.transform(self.trans) for pin in self.cell.find_pins()]
+  
+#################################################################################
+
+pya.Instance.find_pins = find_pins

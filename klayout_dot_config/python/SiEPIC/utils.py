@@ -1,6 +1,16 @@
 import pya
 
+'''
+Get Technology functions:
+ - get_technology_by_name(tech_name)
+ - get_technology()
+ - get_layout_variables(), also returns layout, cell.
 
+return:
+TECHNOLOGY['dbu'] is the database unit
+TECHNOLOGY['layer name'] is a LayerInfo object. 
+
+'''
 # Read the layer table for a given technology.
 def get_technology_by_name(tech_name):
     technology = {}
@@ -33,8 +43,6 @@ def get_technology_by_name(tech_name):
 # test example: give it a name of a technology, e.g., GSiP
 # print(get_technology_by_name('EBeam'))
 # print(get_technology_by_name('GSiP'))
-
-
 
 #Keeps SiEPIC global variables and libraries consistent with technology of current layout
 def get_technology():
