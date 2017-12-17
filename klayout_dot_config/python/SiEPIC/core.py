@@ -82,6 +82,8 @@ class WaveguideGUI():
     self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
     ui_file.close
     
+    self.window.setFixedSize(pya.Application.instance().desktop().screenGeometry().width/6, pya.Application.instance().desktop().screenGeometry().height/2)
+    
     table = self.window.findChild('layerTable')
     table.setColumnCount(3)
     table.setHorizontalHeaderLabels([ "Layer","Width","Offset"])
