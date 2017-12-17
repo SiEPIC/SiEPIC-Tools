@@ -242,24 +242,20 @@ def snap_component():
         print("all pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_transient]] )
         print("all pins_selection (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_selection]] )
 
-        # find all pin pairs that can be connected together
-        pin_pairs = []
-        # loop through all pins of the transient cell:
-        for pin_temp in pins_transient:
-          # find pins in selection cell that have a 180 deg orientation (can be connected)
-          # and sort to find the closest one
-          pins_sorted = sorted([pin for pin in pins_selection if ((pin_temp.rotation - pin.rotation)%360) == 180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pin_temp.center))
-          if pins_sorted:
-            pin_pairs.append([pins_sorted[0], pin_temp])
-            print("pins_selection(x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_sorted]] )
-            print("distances: %s" % [pin.center.distance(pin_temp.center) for pin in pins_sorted])
-        # if we have valid pin pairs, continue:
+        # create a list of all pin pairs for comparison;
+        # pin pairs must have a 180 deg orientation (so they can be connected);
+        # then sort to find closest ones
+        pin_pairs = sorted( [ [pin_t, pin_s] 
+          for pin_t in pins_transient \
+          for pin_s in pins_selection \
+          if ((pin_t.rotation - pin_s.rotation)%360) == 180 and pin_t.type == _globals.PIN_TYPES.OPTICAL and pin_s.type == _globals.PIN_TYPES.OPTICAL ],
+          key=lambda x: x[0].center.distance(x[1].center) )
+
         if pin_pairs:
-          # sort pin pairs to find closest one, to find the required translation:
-          pin_pairs_sorted_by_distance = sorted([pin_pair for pin_pair in pin_pairs], key=lambda x: x[0].center.distance(x[1].center))
-          print("shortest pins_selection & pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pin_pairs_sorted_by_distance[0]]] )
-          print("shortest distance: %s" % pin_pairs_sorted_by_distance[0][0].center.distance(pin_pairs_sorted_by_distance[0][1].center) )
-          trans = pya.Trans(pya.Trans.R0, pin_pairs_sorted_by_distance[0][1].center - pin_pairs_sorted_by_distance[0][0].center)
+          print("shortest pins_selection & pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pin_pairs[0]]] )
+          print("shortest distance: %s" % pin_pairs[0][0].center.distance(pin_pairs[0][1].center) )
+
+          trans = pya.Trans(pya.Trans.R0, pin_pairs[0][0].center - pin_pairs[0][1].center)
           print("translation: %s" % trans )
 
           # Record a transaction, to enable "undo"
