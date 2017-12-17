@@ -245,6 +245,7 @@ def snap_component():
         # create a list of all pin pairs for comparison;
         # pin pairs must have a 180 deg orientation (so they can be connected);
         # then sort to find closest ones
+        # nested list comprehension, tutorial: https://spapas.github.io/2016/04/27/python-nested-list-comprehensions/
         pin_pairs = sorted( [ [pin_t, pin_s] 
           for pin_t in pins_transient \
           for pin_s in pins_selection \
@@ -252,7 +253,7 @@ def snap_component():
           key=lambda x: x[0].center.distance(x[1].center) )
 
         if pin_pairs:
-          print("shortest pins_selection & pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pin_pairs[0]]] )
+          print("shortest pins_transient & pins_selection (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pin_pairs[0]]] )
           print("shortest distance: %s" % pin_pairs[0][0].center.distance(pin_pairs[0][1].center) )
 
           trans = pya.Trans(pya.Trans.R0, pin_pairs[0][0].center - pin_pairs[0][1].center)
@@ -265,7 +266,8 @@ def snap_component():
           # Record a transaction, to enable "undo"
           lv.commit()
         else:
-          v = pya.MessageBox.warning("Snapping failed", "Snapping failed.  No matching pins found.", pya.MessageBox.Ok)
+          v = pya.MessageBox.warning("Snapping failed", 
+            "Snapping failed. \nNo matching pins found. \nNote that pins must have exactly matching orientations (180 degrees)", pya.MessageBox.Ok)
 
         return
 # end def snap_component()
