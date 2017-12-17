@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Double Bus Ring Resonator</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.exlayout.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Key binding for SiEPIC-Tools function
+# SiEPIC Double Bus Ring Resonator
+
+import pya
+from SiEPIC import examples
+
+examples.dbl_bus_ring_res()
+</text>
+</klayout-macro>

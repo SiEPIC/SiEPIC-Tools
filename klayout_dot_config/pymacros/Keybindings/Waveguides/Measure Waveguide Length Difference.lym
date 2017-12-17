@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Measure Waveguide Length Difference</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut>Shift+D</shortcut>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.waveguides.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Key binding for SiEPIC-Tools function
+# SiEPIC Measure Waveguide Length Difference
+import pya
+from SiEPIC import scripts
+scripts.waveguide_length_diff()
+</text>
+</klayout-macro>

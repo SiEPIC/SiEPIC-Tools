@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Waveguide from Path</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut>Shift+W</shortcut>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.waveguides.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Key binding for SiEPIC-Tools function
+# SiEPIC Waveguide from Path
+import pya
+from SiEPIC import scripts
+scripts.waveguide_to_path()
+</text>
+</klayout-macro>

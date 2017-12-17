@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>12 TE Mach-Zehner Interferometers - Jaspreet Jhoja</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.exlayout.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Key binding for SiEPIC-Tools function
+# SiEPIC 12 TE Mach-Zehner Interferometers - Jaspreet Jhoja
+
+import pya
+from SiEPIC import examples
+
+examples.mzi()
+</text>
+</klayout-macro>

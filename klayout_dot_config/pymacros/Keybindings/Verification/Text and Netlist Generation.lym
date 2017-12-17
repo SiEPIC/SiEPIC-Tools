@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Text and Netlist Generation</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut>N</shortcut>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.verification.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Key binding for SiEPIC-Tools function
+# SiEPIC Text and Netlist Generation
+
+import pya
+from SiEPIC import scripts
+
+scripts.text_netlist_check()
+</text>
+</klayout-macro>
