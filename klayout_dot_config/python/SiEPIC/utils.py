@@ -4,7 +4,10 @@ import pya
 # Read the layer table for a given technology.
 def get_technology_by_name(tech_name):
     technology = {}
-    technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
+    if int(pya.Application.instance().version().split('.')[1]) > 24:
+      technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
+    else:
+      technology['dbu'] = 0.001
     lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
     file = open(lyp_file, 'r') 
     layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
@@ -45,7 +48,11 @@ def get_technology():
       return technology
 #      raise Exception("No view selected")
     
-    technology['dbu'] = pya.Technology.technology_by_name(lv.active_cellview().technology).dbu
+    if int(pya.Application.instance().version().split('.')[1]) > 24:
+      pass
+      technology['dbu'] = pya.Technology.technology_by_name(lv.active_cellview().technology).dbu
+    else:
+      technology['dbu'] = 0.001
     itr = lv.begin_layers()
     while True:
       if itr == lv.end_layers():

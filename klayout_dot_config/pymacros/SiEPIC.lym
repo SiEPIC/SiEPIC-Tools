@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description/>
+ <description>SiEPIC initialization</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -21,9 +21,16 @@ SiEPIC installation and initalization
 '''#################################################################################
 
 pya.Application.instance().main_window().message('SiEPIC initialization',5000)
+print(pya.Application.instance().version())
 
 # Determine whether we have Python 2 or Python 3
-import sys, builtins
+import sys
+
+if sys.version_info[0] == 3:
+    import builtins as builtins
+elif sys.version_info[0] == 2:
+    import __builtin__ as builtins
+
 
 if 'SiEPIC' not in sys.modules:
     builtins.ACTIONS = []

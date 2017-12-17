@@ -147,24 +147,24 @@ def snap(self, pins):
 # Path Extension
 #################################################################################
 
-  pya.Path.get_points = get_points
-  pya.Path.get_dpoints = get_dpoints
-  pya.Path.is_manhattan = is_manhattan
-  pya.Path.radius_check = radius_check
-  pya.Path.remove_colinear_points = remove_colinear_points
-  pya.Path.translate_from_center = translate_from_center
-  pya.Path.snap = snap;
+pya.Path.get_points = get_points
+pya.Path.get_dpoints = get_dpoints
+pya.Path.is_manhattan = is_manhattan
+pya.Path.radius_check = radius_check
+pya.Path.remove_colinear_points = remove_colinear_points
+pya.Path.translate_from_center = translate_from_center
+pya.Path.snap = snap;
 
 # DPath Extension
 #################################################################################
 
-  pya.DPath.get_points = get_points
-  pya.DPath.get_dpoints = get_dpoints
-  pya.DPath.is_manhattan = is_manhattan
-  pya.DPath.radius_check = radius_check
-  pya.DPath.remove_colinear_points = remove_colinear_points
-  pya.DPath.translate_from_center = translate_from_center
-  pya.DPath.snap = snap;
+pya.DPath.get_points = get_points
+pya.DPath.get_dpoints = get_dpoints
+pya.DPath.is_manhattan = is_manhattan
+pya.DPath.radius_check = radius_check
+pya.DPath.remove_colinear_points = remove_colinear_points
+pya.DPath.translate_from_center = translate_from_center
+pya.DPath.snap = snap;
 
 #################################################################################
 #            SiEPIC Class Extension of Polygon & DPolygon Class                 #
@@ -181,13 +181,13 @@ def get_dpoints(self):
 
 #################################################################################
 
-  pya.Polygon.get_points = get_points;
-  pya.Polygon.get_dpoints = get_dpoints;
+pya.Polygon.get_points = get_points;
+pya.Polygon.get_dpoints = get_dpoints;
 
 #################################################################################
 
-  pya.DPolygon.get_points = get_points;
-  pya.DPolygon.get_dpoints = get_dpoints;
+pya.DPolygon.get_points = get_points;
+pya.DPolygon.get_dpoints = get_dpoints;
 
 #################################################################################
 #                    SiEPIC Class Extension of PCell Class                      #
@@ -258,6 +258,6 @@ def find_pin(self, name):
 
 #################################################################################
 
-  pya.Cell.print_parameter_values = print_parameter_values
-  pya.Cell.find_pin = find_pin
-  pya.Cell.find_pins = find_pins
+pya.Cell.print_parameter_values = print_parameter_values
+pya.Cell.find_pin = find_pin
+pya.Cell.find_pins = find_pins
