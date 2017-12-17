@@ -22,14 +22,11 @@ SiEPIC installation and initalization
 
 pya.Application.instance().main_window().message('SiEPIC initialization',5000)
 
-import builtins
-ACTIONS = []
-builtins.ACTIONS = ACTIONS
-
 # Determine whether we have Python 2 or Python 3
-import sys
+import sys, builtins
 
 if 'SiEPIC' not in sys.modules:
+    builtins.ACTIONS = []
     import SiEPIC
 else:
     if sys.version_info[0] == 3:
@@ -39,7 +36,7 @@ else:
             from importlib import reload
     elif sys.version_info[0] == 2:
         pass
-            
+    
     SiEPIC = reload(SiEPIC)
     SiEPIC.extend = reload(SiEPIC.extend)
     SiEPIC._globals = reload(SiEPIC._globals)
@@ -54,11 +51,7 @@ else:
     print('Reloaded SiEPIC')
 
 SiEPIC.setup.registerMenuItems()
-pya.Application.instance().main_window().message('SiEPIC Done menu and toolbar',5000)
-
 SiEPIC.setup.registerKeyBindings()
-pya.Application.instance().main_window().message('SiEPIC Done key bindings',5000)
-
-pya.Application.instance().main_window().message('SiEPIC initialization complete.',5000)
+pya.Application.instance().main_window().message('SiEPIC - Initialization complete.',5000)
 </text>
 </klayout-macro>
