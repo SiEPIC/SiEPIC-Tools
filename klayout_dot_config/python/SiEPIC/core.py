@@ -52,10 +52,6 @@ class Net():
       if it.shape().is_path():
         self.pins.add(Pin(it.shape().path.transformed(it.itrans()), _globals.PIN_TYPES.OPTICAL))
       it.next()
-    for i in range(0, len(self.pins)):
-        for j in range(j, len(self.pins)):
-            if not i == j and pins[i].center == pins[j].center:
-                self.connect(pins[i], pins[j])
     return self
 
 class Pin():
@@ -67,7 +63,6 @@ class Pin():
     self.center = (pts[0]+pts[1])*0.5
     self.rotation = angle_vector(pts[0]-pts[1])
     self.type = _type
-    self.cell = path.cell
     
   def transform(self, trans):
     from .utils import angle_vector
