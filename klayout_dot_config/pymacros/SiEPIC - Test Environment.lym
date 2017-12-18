@@ -42,45 +42,66 @@ utils.arc = arc_test
 #################################################F################################
 '''
 
+if 1:
+    SiEPIC = reload(SiEPIC)
+    SiEPIC.extend = reload(SiEPIC.extend)
+    SiEPIC._globals = reload(SiEPIC._globals)
+    SiEPIC.core = reload(SiEPIC.core)
+    SiEPIC.examples = reload(SiEPIC.examples)
+    SiEPIC.lumerical = reload(SiEPIC.lumerical)
+    SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
+    SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
+    SiEPIC.scripts = reload(SiEPIC.scripts)
+    SiEPIC.utils = reload(SiEPIC.utils)
+    SiEPIC.setup = reload(SiEPIC.setup)
+    print('Reloaded SiEPIC')
+
+
 print ("***")
 
+  
 if 0:
-  import fnmatch
-  import os 
-  dir_path = os.path.dirname(os.path.realpath(__file__)) + '/../'
-  print(dir_path)
-
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  tech_name = 'GSiP'
   matches = []
-  for root, dirnames, filenames in os.walk(dir_path):
-      for filename in fnmatch.filter(filenames, '*.lyp'):
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, '*' + tech_name + '.lyp'):
           matches.append(os.path.join(root, filename))
+  print(matches)
+  
 
-  a = [ [root, directories, filenames] for root, directories, filenames in os.walk('/tmp/')] 
-  # a = [ for filename in [root, filenames for root, filenames in os.walk('/tmp/')] ]
+if 1:
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
+  #pins = cell.find_pins()
+  #print (pins)
 
-
-from SiEPIC.utils import get_layout_variables
-TECHNOLOGY, lv, ly, cell = get_layout_variables()
-
-pins = cell.find_pins()
-print (pins)
-
-
-from SiEPIC.core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net
-
-NET = Net()
-NET.refresh()
-
-
-
-
-
-
-
-
-
-
-
+  components = cell.find_components ()
+  print ("* Display list of components:" )
+  [c.display() for c in components]
+  
+  #from SiEPIC.core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net, Component
+  #from SiEPIC import _globals
+  #from SiEPIC.netlist import find_all_components
+  
+  #NET = Net()
+  #NET.find_components()
+  
+  
+  #NET.refresh()
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 </text>
 </klayout-macro>

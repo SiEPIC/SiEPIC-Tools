@@ -9,13 +9,14 @@ def find_all_components(cell):
   # Use the pin names on layer PinRec to sort the pins in alphabetical order
   #   Requires that a text label be in PinRec layer, co-linear inside the PinRec path.
 
+  _globals.NET.refresh().pins
 
   # Find all the DevRec shapes
   iter1 = cell.begin_shapes_rec(LayerDevRecN)
   i=0
   while not(iter1.at_end()):
     i+=1
-    subcell = iter1.cell()                     # cell (component) to which this shape belongs
+    subcell = iter1.cell()             # cell (component) to which this shape belongs
     component = subcell.basic_name()   # name library component
     instance = subcell.name      
     subcell.name                # name of the cell; for PCells, different from basic_name
@@ -40,15 +41,16 @@ def find_all_components(cell):
         if iter2.shape().is_text():
           text = iter2.shape().text
           print("%s: DevRec label: %s" % (i, text))
-          if text.string.find("Lumerical_INTERCONNECT_library=") &gt; -1:
+          if text.string.find("Lumerical_INTERCONNECT_library="):
             library = text.string[len("Lumerical_INTERCONNECT_library="):]
-          if text.string.find("Lumerical_INTERCONNECT_component=") &gt; -1:
+          if text.string.find("Lumerical_INTERCONNECT_component="):
             component = text.string[len("Lumerical_INTERCONNECT_component="):]
-          if text.string.find("Spice_param:") &gt; -1:
+          if text.string.find("Spice_param:"):
             spice_params = text.string[len("Spice_param:"):]
         iter2.next()
       if library == None:
         print("Missing library information for component: %s" % component )
+      # get the cell's x,y coordinates
       x = iter1.itrans().disp.x*dbu
       y = iter1.itrans().disp.y*dbu
       flip = iter1.trans().is_mirror()

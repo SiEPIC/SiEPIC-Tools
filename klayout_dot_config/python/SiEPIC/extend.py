@@ -225,16 +225,51 @@ def print_parameter_values(self):
   for key in params.keys():
     print("Parameter: %s, Value: %s") % (key, params[key])
 
+'''
+Optical Pins have: 
+ 1) path on layer PinRec, indicating direction (out of component)
+ 2) text on layer PinRec, inside the path
+Electrical Pins have: 
+ 1) box on layer PinRec, indicating direction (out of component)
+ 2) text on layer PinRec, inside the path
+'''
 def find_pins(self):
   from .core import Pin
   from . import _globals
   from .utils import get_technology
   TECHNOLOGY = get_technology()
   pins = []
-  it = self.begin_shapes_rec(self.layout().layer(TECHNOLOGY['PinRec']))
+  LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
+  it = self.begin_shapes_rec(LayerPinRecN)
   while not(it.at_end()):
     if it.shape().is_path():
-      pins.append(Pin(it.shape().path.transformed(it.itrans()), _globals.PIN_TYPES.OPTICAL))
+      pin_path = it.shape().path.transformed(it.itrans())
+      # Find text label (pin name) for this pin
+      pin_name = None
+      subcell = it.cell()  # cell (component) to which this shape belongs
+      iter2 = subcell.begin_shapes_rec_touching(LayerPinRecN, it.shape().bbox())
+      while not(iter2.at_end()):
+        if iter2.shape().is_text():
+          pin_name = iter2.shape().text.string
+        iter2.next()
+      if pin_name == None:
+        raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
+      pins.append(Pin(pin_path, _globals.PIN_TYPES.OPTICAL, pin_name = pin_name))
+#      print( "PinRec, name: %s at (%s)" % (pins[-1].pin_name, pins[-1].center) )
+    if it.shape().is_box():
+      pin_box = it.shape().box.transformed(it.itrans())
+      pin_name = None
+      subcell = it.cell()  # cell (component) to which this shape belongs
+      iter2 = subcell.begin_shapes_rec_touching(LayerPinRecN, it.shape().bbox())
+      while not(iter2.at_end()):
+        if iter2.shape().is_text():
+          pin_name = iter2.shape().text.string
+        iter2.next()
+      if pin_name == None:
+        raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
+      pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name = pin_name))
+#      print( "PinRec, name: %s at (%s)" % (pins[-1].pin_name, pins[-1].center) )
+      
     it.next()
   return pins
   
@@ -260,11 +295,114 @@ def find_pin(self, name):
     
   return None
 
+'''
+Components:
+'''
+def find_components(self):
+  '''
+  Function to traverse the cell's hierarchy and find all the components
+  returns list of components (class Component)
+  Use the DevRec shapes.  Assumption: One DevRec shape per component.
+  
+  Find all the DevRec shapes; identify the component it belongs; record the info as a Component 
+  for each component instance, also find the Pins and Fibre ports.
+  
+  Use the pin names on layer PinRec to sort the pins in alphabetical order
+  '''
+  print('*** Cell.find_components:')
+  
+  components = []
+
+  from .core import Component
+  from . import _globals
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  dbu = TECHNOLOGY['dbu']
+
+  
+  # Find all the DevRec shapes
+  LayerDevRecN = self.layout().layer(TECHNOLOGY['DevRec'])
+  iter1 = self.begin_shapes_rec(LayerDevRecN)
+  
+  i=0
+  while not(iter1.at_end()):
+    i+=1
+    subcell = iter1.cell()             # cell (component) to which this shape belongs
+    component = subcell.basic_name()   # name library component
+    instance = subcell.name      
+    subcell.name                # name of the cell; for PCells, different from basic_name
+
+    found_component = False
+    # DevRec must be either a Box or a Polygon:
+    if iter1.shape().is_box():
+      box= iter1.shape().box.transformed(iter1.itrans())
+      print("%s: DevRec in cell {%s}, box -- %s; %s" % (i, subcell.basic_name(), box.p1, box.p2) )
+      found_component = True
+    if iter1.shape().is_polygon():
+      polygon = iter1.shape().polygon.transformed(iter1.itrans())
+      print("%s: DevRec in cell {%s}, polygon -- %s" % (i, subcell.basic_name(), polygon))
+      found_component = True
+
+    # A component was found. record the instance info as an Optical_component 
+    if found_component:
+      # Find text label for DevRec, to get Library name
+      library = None
+      iter2 = subcell.begin_shapes_rec(LayerDevRecN)
+      spice_params = ""
+      while not(iter2.at_end()):
+        if iter2.shape().is_text():
+          text = iter2.shape().text
+          print("%s: DevRec label: %s" % (i, text))
+          if text.string.find("Lumerical_INTERCONNECT_library=") > -1:
+            library = text.string[len("Lumerical_INTERCONNECT_library="):]
+          if text.string.find("Lumerical_INTERCONNECT_component=") > -1:
+            component = text.string[len("Lumerical_INTERCONNECT_component="):]
+          if text.string.find("Spice_param:") > -1:
+            spice_params = text.string[len("Spice_param:"):]
+        iter2.next()
+      if library == None:
+        print("Missing library information for component: %s" % component )
+      # get the cell's x,y coordinates
+      x = iter1.itrans().disp.x*dbu
+      y = iter1.itrans().disp.y*dbu
+      flip = iter1.trans().is_mirror()
+      rotate = (int(iter1.trans().rot())*90) % 360
+      component_idx = len(components)
+      
+      # find the component pins, and Sort by pin text labels
+      pins = sorted(subcell.find_pins(), key=lambda  p: p.pin_name)
+#      [p.display() for p in pins]
+
+      components.append(Component(component_idx, \
+         component, instance, x, y, flip, rotate, library, spice_params, pins=pins) )
+
+
+#            optical_pins.append (Optical_pin (pin_idx, points, component_idx, x, y, 1, pin_info2[p1].pin_text) )
+#            optical_components[component_idx].npins += 1
+#            optical_components[component_idx].pins.append( pin_idx )
+
+      # reserve space for netlist for this component, based on the number of pins.
+#      optical_components[component_idx].nets = [-1] * (optical_components[component_idx].npins)
+
+
+
+    # end if found_component   
+    iter1.next()
+  # end while iter1 
+  return components
+# end def find_components
+  
+
+
+
+
+
 #################################################################################
 
 pya.Cell.print_parameter_values = print_parameter_values
 pya.Cell.find_pin = find_pin
 pya.Cell.find_pins = find_pins
+pya.Cell.find_components = find_components
 
 
 #################################################################################
