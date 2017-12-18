@@ -25,13 +25,29 @@ TECHNOLOGY['layer name'] is a LayerInfo object.
 
 '''
 # Read the layer table for a given technology.
+
 def get_technology_by_name(tech_name):
     technology = {}
     if int(pya.Application.instance().version().split('.')[1]) > 24:
       technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
     else:
       technology['dbu'] = 0.001
-    lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
+
+    if int(pya.Application.instance().version().split('.')[1]) > 24:
+      lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
+    else:
+      import os, fnmatch
+      dir_path = pya.Application.instance().application_data_path()
+      search_str = '*' + tech_name + '.lyp'
+      matches = []
+      for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+          for filename in fnmatch.filter(filenames, search_str):
+              matches.append(os.path.join(root, filename))
+      if matches:
+        lyp_file = matches[0]
+      else:
+        raise Exception('Cannot find technology layer properties file %s' % search_str )
+
     file = open(lyp_file, 'r') 
     layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
     file.close()
