@@ -44,7 +44,43 @@ utils.arc = arc_test
 
 print ("***")
 
+if 0:
+  import fnmatch
+  import os 
+  dir_path = os.path.dirname(os.path.realpath(__file__)) + '/../'
+  print(dir_path)
+
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path):
+      for filename in fnmatch.filter(filenames, '*.lyp'):
+          matches.append(os.path.join(root, filename))
+
+  a = [ [root, directories, filenames] for root, directories, filenames in os.walk('/tmp/')] 
+  # a = [ for filename in [root, filenames for root, filenames in os.walk('/tmp/')] ]
 
 
-s</text>
+
+from SiEPIC.utils import get_layout_variables
+TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+pins = cell.find_pins()
+print (pins)
+
+
+from SiEPIC.core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net
+
+NET = Net()
+NET.refresh()
+
+
+
+
+
+
+
+
+
+
+
+</text>
 </klayout-macro>

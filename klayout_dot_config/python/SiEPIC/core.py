@@ -76,10 +76,10 @@ Uses:
     
 Pin defs:
  - transform: to move the pin
- 
+ - display: list the pin
+
 '''
 class Pin():
-
   def __init__(self, path, _type, idx=None, component_idx=None, net=None, pin_name=None ):
     from .utils import angle_vector
     pts = path.get_points()
@@ -92,7 +92,6 @@ class Pin():
     self.net = net               # which net this pin is connected to
     self.pin_name = pin_name     # label read from the cell layout (PinRec text)
     
-    
   def transform(self, trans):
     from .utils import angle_vector
     self.path = self.path.transformed(trans)
@@ -100,6 +99,58 @@ class Pin():
     self.center = (pts[0]+pts[1])*0.5
     self.rotation = angle_vector(pts[0]-pts[1])
     return self
+
+  def display(self):
+    o = self
+    print("#%s: component_idx %s, pin_name %s, pin_type %s, net: %s, (%s), path: %s" %\
+      (o.idx, o.component_idx, o.pin_name, o.type, o.net, o.center, o.path) )
+
+def display_pins(pins):
+  print("Pins:")
+  for o in pins:
+    o.display()
+
+
+'''
+Component:
+This is a class that describes components (PCells and fixed)
+A component consists of:
+ - a layout representation
+ - additional information 
+
+Uses:
+ - Netlist extraction
+    - needs connectivity: components and how they are connected (net)
+    
+Component defs:
+ - display: list the component
+ - transform: to move the component
+ - find_pins
+ 
+'''
+class Component():
+  def __init__(self, idx=None, component=None, instance=None, center=None, flip=None, rotate=None, library=None, params=None):
+    self.idx = idx             # component index, should be unique, 0, 1, 2, ...
+    self.component = component # which component (name) this pin belongs to
+    self.instance = instance   # which component (instance) this pin belongs to
+    self.center = center       # instance location, Point with x, y
+    self.flip = flip           # instance flip, True / False
+    self.rotate = rotate       # instance rotation, 0, 90, 180, 270
+    self.library = library     # compact model library
+    self.nets = []             # nets connected to component
+    self.npins = 0             # number of pins
+    self.pins = []             # an array of all the optical pins
+    self.nepins = 0            # number of epins
+    self.epins = []            # an array of all the electrical pins
+    self.params = params       # Spice parameters
+
+  def display(self):
+    o = self
+    print("#%s: %s / %s, (%s, %s), nets %s, npins %s, pins %s, nepins %s, epins %s" %\
+      (o.idx, o.component, o.instance, o.x, o.y, o.nets, o.npins, o.pins, o.nepins, o.epins) )
+
+  def find_pins(self):        
+    return self.instance.find_pins()
 
 class WaveguideGUI():
 
