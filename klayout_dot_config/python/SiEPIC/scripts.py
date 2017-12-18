@@ -50,13 +50,15 @@ def waveguide_from_path(params = None, cell = None):
       path.snap(_globals.NET.refresh().pins)
       path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
       path.width = path.width * TECHNOLOGY['dbu']
+      print(params)
+      width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
       pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": path,
                                                                      "radius": params['radius'],
                                                                      "width": params['width'],
                                                                      "adiab": params['adiabatic'],
                                                                      "bezier": params['bezier'],
                                                                      "layers": [wg['layer'] for wg in params['wgs']] + [TECHNOLOGY['DevRec']],
-                                                                     "widths": [wg['width'] for wg in params['wgs']] + [2*params['width']],
+                                                                     "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
                                                                      "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
       selection.append(pya.ObjectInstPath())
       selection[-1].top = obj.top
@@ -67,10 +69,11 @@ def waveguide_from_path(params = None, cell = None):
     lv.clear_object_selection()
     lv.object_selection = selection
     lv.commit()
-    
+
+
 def waveguide_to_path(cell = None):
-  from . import _globals
-  from .utils import select_waveguides, get_technology
+  from SiEPIC import _globals
+  from SiEPIC.utils import select_waveguides, get_technology
   TECHNOLOGY = get_technology()
   
   lv = pya.Application.instance().main_window().current_view()
@@ -92,22 +95,43 @@ def waveguide_to_path(cell = None):
   waveguides = select_waveguides(cell)
   selection = []
   for obj in waveguides:
+    # path from guiding shape
     waveguide = obj.inst()
-    path = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each().__next__().path
-    path.width = 0.5/TECHNOLOGY['dbu']
+    # Python 3 only using __next__:
+    #    path = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each().__next__().path
+    # Python 2 & 3 fix:
+    from SiEPIC.utils import advance_iterator
+    path1 = advance_iterator(waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each())
+
+    # waveguide width from Waveguide PCell
+    c = waveguide.cell
+    width = c.pcell_parameters_by_name()['width']
+
+    # modify path (doesn't work in 0.24.10 / Python2); neither does dup()
+    # perhaps because this path belongs to a PCell.
+    #path1.width = int(width/TECHNOLOGY['dbu'])  # 
     
+    # instead create a new path:
+    path = pya.Path()
+    path.width = width/TECHNOLOGY['dbu']
+    path.points=[pts for pts in path1.each_point()]
+
     selection.append(pya.ObjectInstPath())
     selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
     selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path)
     selection[-1].top = obj.top
     selection[-1].cv_index = obj.cv_index
     
-    obj.inst().delete()
+    # deleting the instance was ok, but would leave the cell which ends up as an uninstantiated top cell
+    # obj.inst().delete()
+    # better delete the cell (KLayout also removes the PCell)
+    ly.delete_cell(c.cell_index())
 
   lv.clear_object_selection()
   lv.object_selection = selection
   lv.commit()
-  
+
+
 def waveguide_length():
 
   from .utils import get_layout_variables
@@ -272,7 +296,8 @@ def snap_component():
         return
 # end def snap_component()
   
-  
+
+# keep the selected top cell; delete everything else
 def delete_top_cells():
 
   def delete_cells(ly, cell):

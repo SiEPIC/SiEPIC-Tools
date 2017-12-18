@@ -1,5 +1,18 @@
 import pya
 
+
+
+# Python 2 vs 3 issues:  http://python3porting.com/differences.html
+# Python 2: iterator.next()
+# Python 3: next(iterator)
+# Python 2 & 3: advance_iterator(iterator)
+try:
+  advance_iterator = next
+except NameError:
+  def advance_iterator(it):
+    return it.next()
+
+
 '''
 Get Technology functions:
  - get_technology_by_name(tech_name)
@@ -138,6 +151,7 @@ def select_paths(lyr, cell = None):
   return lv.object_selection
   
 #Return all selected waveguides. If nothing is selected, select waveguides automatically
+#Returns all cell_inst
 def select_waveguides(cell = None):
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
@@ -213,9 +227,13 @@ def arc(radius, start, stop):
 #Create a bezier curve. While there are parameters for start and stop in degrees, this is currently only implemented for 90 degree bends
 def arc_bezier(radius, start, stop, bezier):
   from math import sin, cos, pi
+  TECHNOLOGY = get_technology()
+    
+  dbu = TECHNOLOGY['dbu']
+
   N=100
   L = radius  # effective bend radius / Length of the bend
-  diff = 1/(N-1)
+  diff = 1./(N-1) # convert int to float
   xp=[0, (1-bezier)*L, L, L]
   yp=[0, 0, bezier*L, L]
   xA = xp[3] - 3*xp[2] + 3*xp[1] - xp[0]

@@ -312,7 +312,7 @@ class WaveguideGUI():
       layer = self.window.findChild('ridgeLayer2').currentText
       layer = layer.split(' ')[-1].split('/')
       params['wgs'].append({'layer': pya.LayerInfo(int(layer[0]), int(layer[1])), 'width': float(self.window.findChild('ridgeWidth2').text), 'offset': 0})
-      params['width'] = params['wgs'][1]['width']
+      params['width'] = params['wgs'][0]['width']
       
     elif self.window.findChild('radioSlot').isChecked():
       w1 = float(self.window.findChild('slotWidth1').text)

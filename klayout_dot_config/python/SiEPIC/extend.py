@@ -121,7 +121,7 @@ def snap(self, pins):
   from math import pi
   TECHNOLOGY = get_technology()
     
-  d_min = 10/TECHNOLOGY['dbu'];
+  d_min = _globals.PATH_SNAP_PIN_MAXDIST/TECHNOLOGY['dbu'];
 
   if not len(pins): return
   pts = self.get_points()

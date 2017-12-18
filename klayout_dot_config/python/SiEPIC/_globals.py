@@ -23,3 +23,12 @@ except ImportError:
   MODULE_NUMPY = False
   
 #ACTIONS = []
+
+
+
+# Waveguide DevRec: space between the waveguide and the DevRec polygon
+WG_DEVREC_SPACE = 1
+
+# Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
+PATH_SNAP_PIN_MAXDIST = 20
+
