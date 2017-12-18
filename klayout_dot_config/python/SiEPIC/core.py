@@ -110,7 +110,7 @@ class Pin():
       self.center = (pts[0]+pts[1])*0.5  # center of the pin: a Point
       self.rotation = angle_vector(pts[0]-pts[1]) # direction / angle of the optical pin
     else:
-      self.rotation = None
+      self.rotation = 0
     self.box = box              # the pin's Box (Electrical)
     if box:
       self.center = box.center()  # center of the pin: a Point
@@ -122,10 +122,11 @@ class Pin():
     
   def transform(self, trans):
     from .utils import angle_vector
-    self.path = self.path.transformed(trans)
-    pts = self.path.get_points()
-    self.center = (pts[0]+pts[1])*0.5
-    self.rotation = angle_vector(pts[0]-pts[1])
+    if self.path:
+      self.path = self.path.transformed(trans)
+      pts = self.path.get_points()
+      self.center = (pts[0]+pts[1])*0.5
+      self.rotation = angle_vector(pts[0]-pts[1])
     return self
 
   def display(self):
