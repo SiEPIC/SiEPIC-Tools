@@ -125,7 +125,8 @@ class Waveguide(pya.PCellDeclarationHelper):
     self.cell.shapes(LayerPinRecN).insert(pya.Path([pya.Point(-100, 0), pya.Point(100, 0)], self.width/dbu).transformed(t))
     self.cell.shapes(LayerPinRecN).insert(pya.Text("pin2", t)).text_size = 0.4/dbu
 
-    self.cell.shapes(self.layout.guiding_shape_layer()).insert(pya.Path(path.get_points(), path.width))
+# this was adding a duplicate. There already is a guiding shape. also width should be /dbu.
+#    self.cell.shapes(self.layout.guiding_shape_layer()).insert(pya.Path(path.get_points(), path.width/dbu))
     
 class LumericalINTERCONNECT_Laser(pya.PCellDeclarationHelper):
   """
