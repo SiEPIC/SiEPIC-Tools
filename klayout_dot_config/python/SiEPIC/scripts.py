@@ -91,6 +91,9 @@ def waveguide_to_path(cell = None):
     ly = cell.layout()
     
   lv.transaction("waveguide to path")
+
+  # record objects to delete:
+  to_delete = []
   
   waveguides = select_waveguides(cell)
   selection = []
@@ -124,11 +127,20 @@ def waveguide_to_path(cell = None):
     
     # deleting the instance was ok, but would leave the cell which ends up as an uninstantiated top cell
     # obj.inst().delete()
-    # better delete the cell (KLayout also removes the PCell)
-    ly.delete_cell(c.cell_index())
+    # delete the cell (KLayout also removes the PCell)
+    # deleting it removes the cell entirely (which may be used elsewhere ?)
+    to_delete.append(waveguide.cell) 
 
+  # deleting instance or cell should be done outside of the for loop, otherwise each deletion changes the instance pointers in KLayout's internal structure
+  [t.delete() for t in to_delete]
+#  for t in to_delete:
+#    t.delete()
+
+  # Clear the layout view selection, since we deleted some objects (but others may still be selected):
   lv.clear_object_selection()
+  # Select the newly added objects
   lv.object_selection = selection
+  # Record a transaction, to enable "undo"
   lv.commit()
 
 
