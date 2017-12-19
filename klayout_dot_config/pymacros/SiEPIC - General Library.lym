@@ -177,9 +177,9 @@ class Waveguide(pya.PCellDeclarationHelper):
       shape.text_size = 0.1/dbu
 
     print("- PCell Waveguide: is empty guiding shape %s" % self.cell.shapes(self.layout.guiding_shape_layer()).is_empty())
-    #if self.cell.shapes(self.layout.guiding_shape_layer()).is_empty():
+    if self.cell.shapes(self.layout.guiding_shape_layer()).is_empty():
     # this was adding a duplicate. There already is a guiding shape. also width should be /dbu.
-    self.cell.shapes(self.layout.guiding_shape_layer()).insert(pya.Path(path.get_points(), path.width/dbu))
+      self.cell.shapes(self.layout.guiding_shape_layer()).insert(pya.Path(path.get_points(), path.width/dbu))
     
 class LumericalINTERCONNECT_Laser(pya.PCellDeclarationHelper):
   """

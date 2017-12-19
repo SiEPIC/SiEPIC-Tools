@@ -11,6 +11,8 @@ WG_GUI = WaveguideGUI()
 MC_GUI = MonteCarloGUI()
 DRC_GUI = CalibreGUI()
 
+# ******** lukasc
+# don't use a global one.. based on cells
 #Define global Net object that implements netlists and pin searching/connecting
 NET = Net()
 

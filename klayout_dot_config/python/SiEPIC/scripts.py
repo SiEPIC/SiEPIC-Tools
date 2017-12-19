@@ -47,6 +47,8 @@ def waveguide_from_path(params = None, cell = None):
         if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
           return
       
+      # *********** lukasc:
+      # change to cell's net, rather than global net.
       path.snap(_globals.NET.refresh().pins)
       path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
       path.width = path.width * TECHNOLOGY['dbu']

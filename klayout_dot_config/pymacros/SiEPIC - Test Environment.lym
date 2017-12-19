@@ -71,7 +71,7 @@ if 0:
   print(matches)
   
 
-if 0:
+if 1:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
@@ -176,7 +176,7 @@ def waveguide_to_path(cell = None):
   # Record a transaction, to enable "undo"
   lv.commit()
 
-waveguide_to_path()
+#waveguide_to_path()
 
   
   
