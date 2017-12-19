@@ -121,7 +121,7 @@ def waveguide_to_path(cell = None):
 
     selection.append(pya.ObjectInstPath())
     selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
-    selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path)
+    selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path.transformed(waveguide.trans))
     selection[-1].top = obj.top
     selection[-1].cv_index = obj.cv_index
     
