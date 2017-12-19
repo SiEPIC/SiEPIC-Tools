@@ -146,8 +146,11 @@ def snap(self, pins):
         pts[-2].y += dpt.y
       else:
         pts[-2].x += dpt.x
-        
-  self.points = pts
+
+  test_path = pya.Path()
+  test_path.points = pts
+  if test_path.length() > 0:
+    self.points = pts
 
 # Path Extension
 #################################################################################
