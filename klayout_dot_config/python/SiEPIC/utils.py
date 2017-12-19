@@ -89,7 +89,7 @@ def get_technology():
       print ("No view selected")
       technology['dbu']=0.001
       technology['technology_name']=technology_name
-      raise Exception("No view selected")
+#      raise Exception("No view selected")
       return technology
 
     # "lv.active_cellview().technology" crashes in KLayout 0.24.10 when loading a GDS file (technology not defined yet?)

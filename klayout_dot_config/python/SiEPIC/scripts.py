@@ -59,8 +59,11 @@ def waveguide_from_path(params = None, cell = None):
                                                                      "layers": [wg['layer'] for wg in params['wgs']] + [TECHNOLOGY['DevRec']],
                                                                      "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
                                                                      "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
+      if pcell==None:
+        raise Exception("'Waveguide' in 'SiEPIC General' library is not available. Check that the library was loaded successfully.")
       selection.append(pya.ObjectInstPath())
       selection[-1].top = obj.top
+      print(pcell)
       selection[-1].append_path(pya.InstElement.new(cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
       
       obj.shape.delete()
@@ -99,9 +102,14 @@ def waveguide_to_path(cell = None):
   for obj in waveguides:
     # path from guiding shape
     waveguide = obj.inst()
-    # Python 3 only using __next__:
-    #    path = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each().__next__().path
-    # Python 2 & 3 fix:
+    # Determine whether we have Python 2 or Python 3
+    import sys
+    
+#    if sys.version_info[0] == 3:
+#      # for some reason this doesn't work on Instantiated PCells, but it does on W-generated ones!
+#      path1 = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each().__next__().path
+#    elif sys.version_info[0] == 2:
+#      # Python 2 & 3 fix:
     from SiEPIC.utils import advance_iterator
     path1 = advance_iterator(waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each())
 
