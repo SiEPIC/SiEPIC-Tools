@@ -35,7 +35,8 @@ class Waveguide(pya.PCellDeclarationHelper):
     self.param("width", self.TypeDouble, "Width", default = 0.5)
     self.param("adiab", self.TypeBoolean, "Adiabatic", default = False)
     self.param("bezier", self.TypeDouble, "Bezier Parameter", default = 0.35)
-    self.param("layers", self.TypeList, "Layers", default = [TECHNOLOGY['Waveguide']])
+#    self.param("layers", self.TypeList, "Layers", default = [TECHNOLOGY['Waveguide']])
+    self.param("layers", self.TypeList, "Layers", default = ['1/0'])
     self.param("widths", self.TypeList, "Widths", default =  [0.5])
     self.param("offsets", self.TypeList, "Offsets", default = [0])
     
@@ -69,16 +70,16 @@ class Waveguide(pya.PCellDeclarationHelper):
     if not (len(self.layers)==len(self.widths) and len(self.layers)==len(self.offsets) and len(self.offsets)==len(self.widths)):
       raise Exception("There must be an equal number of layers, widths and offsets")
     path.remove_colinear_points()
-    for i in range(0, len(self.layers)):
+    for lr in range(0, len(self.layers)):
       
-      if isinstance(self.layers[i], str):
-        layer = self.layers[i].split('/')
+      if isinstance(self.layers[lr], str):
+        layer = self.layers[lr].split('/')
         layer = self.layout.layer(pya.LayerInfo(int(layer[0]), int(layer[1])))
       else:
-        layer = self.layout.layer(self.layers[i])
+        layer = self.layout.layer(self.layers[lr])
 
-      width = float(self.widths[i])/dbu
-      offset = float(self.offsets[i])/dbu
+      width = float(self.widths[lr])/dbu
+      offset = float(self.offsets[lr])/dbu
       #radius = self.radius/dbu + offset
       
       tpath = path.translate_from_center(offset)
@@ -112,21 +113,74 @@ class Waveguide(pya.PCellDeclarationHelper):
         wg_pts += pya.Path(arc_pts, width).transformed(pya.Trans(angle, turn &lt; 0, pts[i])).get_points()
 
       wg_pts.append(pts[-1])
-      self.cell.shapes(layer).insert(pya.Path(wg_pts, width).simple_polygon())
+      wg_polygon = pya.Path(wg_pts, width).simple_polygon()
+      self.cell.shapes(layer).insert(wg_polygon)
+      
+      print(self.layers[lr])
+#      if TECHNOLOGY['Waveguide'].to_s() == self.layers[lr]:
+#        waveguide_length = wg_polygon.area() / self.width * dbu**2
+      waveguide_length = 1
 
     pts = path.get_points()
     LayerPinRecN = self.layout.layer(TECHNOLOGY['PinRec'])
     
-    t = pya.Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
-    self.cell.shapes(LayerPinRecN).insert(pya.Path([pya.Point(-100, 0), pya.Point(100, 0)], self.width/dbu).transformed(t))
-    self.cell.shapes(LayerPinRecN).insert(pya.Text("pin1", t)).text_size = 0.4/dbu
+    t1 = pya.Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
+    self.cell.shapes(LayerPinRecN).insert(pya.Path([pya.Point(-50, 0), pya.Point(50, 0)], self.width/dbu).transformed(t1))
+    self.cell.shapes(LayerPinRecN).insert(pya.Text("pin1", t1)).text_size = 0.4/dbu
     
     t = pya.Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
-    self.cell.shapes(LayerPinRecN).insert(pya.Path([pya.Point(-100, 0), pya.Point(100, 0)], self.width/dbu).transformed(t))
+    self.cell.shapes(LayerPinRecN).insert(pya.Path([pya.Point(-50, 0), pya.Point(50, 0)], self.width/dbu).transformed(t))
     self.cell.shapes(LayerPinRecN).insert(pya.Text("pin2", t)).text_size = 0.4/dbu
 
-# this was adding a duplicate. There already is a guiding shape. also width should be /dbu.
-#    self.cell.shapes(self.layout.guiding_shape_layer()).insert(pya.Path(path.get_points(), path.width/dbu))
+
+    LayerDevRecN = self.layout.layer(TECHNOLOGY['DevRec'])
+    if TECHNOLOGY['technology_name'] == 'EBeam':
+      # Compact model information
+      angle_vec = angle_vector(pts[0]-pts[1])/90
+      print(angle_vec)
+      if angle_vec == 0: # horizontal
+        halign = 2 # right
+        angle=0
+        pt2=pts[0] + pya.Point(0, self.width/dbu)
+        pt3=pts[0] + pya.Point(0, -self.width/dbu)
+      if angle_vec == 2: # horizontal
+        halign = 0 # left
+        angle = 0
+        pt2=pts[0] + pya.Point(0, self.width/dbu)
+        pt3=pts[0] + pya.Point(0, -self.width/dbu)
+      if angle_vec == 1: # vertical
+        halign = 2 # right
+        angle = 1
+        pt2=pts[0] + pya.Point(self.width/dbu,0)
+        pt3=pts[0] + pya.Point(-self.width/dbu,0)
+      if angle_vec == -1: # vertical
+        halign = 0 # left
+        angle = 1
+        pt2=pts[0] + pya.Point(self.width/dbu,0)
+        pt3=pts[0] + pya.Point(-self.width/dbu,0)
+        
+      t = pya.Trans(angle, False, pts[0]) 
+      text = Text ('Lumerical_INTERCONNECT_library=Design kits/ebeam_v1.2', t)
+      text.halign=halign
+      shape = self.cell.shapes(LayerDevRecN).insert(text)
+      shape.text_size = 0.1/dbu
+      t = pya.Trans(angle, False, pt2)
+      text = Text ('Lumerical_INTERCONNECT_component=ebeam_wg_integral_1550', t)
+      text.halign=halign
+      shape = self.cell.shapes(LayerDevRecN).insert(text)
+      shape.text_size = 0.1/dbu
+      t = pya.Trans(angle, False, pt3)
+      text = Text \
+        ('Spice_param:wg_length=%.3fu wg_width=%.3fu' %\
+        (waveguide_length, self.width), t )
+      text.halign=halign
+      shape = self.cell.shapes(LayerDevRecN).insert(text)
+      shape.text_size = 0.1/dbu
+
+
+    if self.cell.shapes(self.layout.guiding_shape_layer()).is_empty():
+      # this was adding a duplicate. There already is a guiding shape. also width should be /dbu.
+      self.cell.shapes(self.layout.guiding_shape_layer()).insert(pya.Path(path.get_points(), path.width/dbu))
     
 class LumericalINTERCONNECT_Laser(pya.PCellDeclarationHelper):
   """
