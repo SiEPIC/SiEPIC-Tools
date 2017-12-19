@@ -76,27 +76,33 @@ def get_technology_by_name(tech_name):
 #Keeps SiEPIC global variables and libraries consistent with technology of current layout
 def get_technology():
     technology = {}
+
+    # defaults:
+    technology['DevRec'] = pya.LayerInfo(68, 0)
+    technology['Waveguide'] = pya.LayerInfo(1, 0)
+    technology['PinRec'] = pya.LayerInfo(69, 0)
+    technology_name = 'EBeam'
+
     lv = pya.Application.instance().main_window().current_view()
     if lv == None:
       # no layout open; return an default technology
       print ("No view selected")
-      # defaults:
-      technology['Waveguide'] = pya.LayerInfo(1, 0)
-      technology['DevRec'] = pya.LayerInfo(68, 0)
-      technology['PinRec'] = pya.LayerInfo(69, 0)
       technology['dbu']=0.001
-      technology['technology_name']='EBeam'
+      technology['technology_name']=technology_name
+      raise Exception("No view selected")
       return technology
-#      raise Exception("No view selected")
 
-
-    technology_name = lv.active_cellview().technology    
-    technology['technology_name'] = technology_name
+    # "lv.active_cellview().technology" crashes in KLayout 0.24.10 when loading a GDS file (technology not defined yet?)
     if int(pya.Application.instance().version().split('.')[1]) > 24:
-      pass
+      technology_name = lv.active_cellview().technology
+
+    technology['technology_name'] = technology_name
+    
+    if int(pya.Application.instance().version().split('.')[1]) > 24:
       technology['dbu'] = pya.Technology.technology_by_name(technology_name).dbu
     else:
       technology['dbu'] = 0.001
+      
     itr = lv.begin_layers()
     while True:
       if itr == lv.end_layers():
@@ -109,6 +115,7 @@ def get_technology():
         else:
           technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
         itr.next()
+        
     return technology
 
 def get_layout_variables():
