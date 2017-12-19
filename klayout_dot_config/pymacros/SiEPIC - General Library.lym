@@ -35,8 +35,8 @@ class Waveguide(pya.PCellDeclarationHelper):
     self.param("width", self.TypeDouble, "Width", default = 0.5)
     self.param("adiab", self.TypeBoolean, "Adiabatic", default = False)
     self.param("bezier", self.TypeDouble, "Bezier Parameter", default = 0.35)
-#    self.param("layers", self.TypeList, "Layers", default = [TECHNOLOGY['Waveguide']])
-    self.param("layers", self.TypeList, "Layers", default = ['1/0'])
+    self.param("layers", self.TypeList, "Layers", default = [TECHNOLOGY['Waveguide']])
+#    self.param("layers", self.TypeList, "Layers", default = ['1/0'])
     self.param("widths", self.TypeList, "Widths", default =  [0.5])
     self.param("offsets", self.TypeList, "Offsets", default = [0])
     
@@ -77,6 +77,7 @@ class Waveguide(pya.PCellDeclarationHelper):
         layer = self.layout.layer(pya.LayerInfo(int(layer[0]), int(layer[1])))
       else:
         layer = self.layout.layer(self.layers[lr])
+      print("layer: %s" % layer)
 
       width = float(self.widths[lr])/dbu
       offset = float(self.offsets[lr])/dbu
@@ -116,10 +117,10 @@ class Waveguide(pya.PCellDeclarationHelper):
       wg_polygon = pya.Path(wg_pts, width).simple_polygon()
       self.cell.shapes(layer).insert(wg_polygon)
       
-      print(self.layers[lr])
 #      if TECHNOLOGY['Waveguide'].to_s() == self.layers[lr]:
-#        waveguide_length = wg_polygon.area() / self.width * dbu**2
-      waveguide_length = 1
+      if self.layout.layer(TECHNOLOGY['Waveguide']) == layer:
+        waveguide_length = wg_polygon.area() / self.width * dbu**2
+ #     waveguide_length = 1
 
     pts = path.get_points()
     LayerPinRecN = self.layout.layer(TECHNOLOGY['PinRec'])

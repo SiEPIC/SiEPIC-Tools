@@ -363,18 +363,18 @@ def find_components(self):
       if library == None:
         print("Missing library information for component: %s" % component )
       # get the cell's x,y coordinates
-      x = iter1.itrans().disp.x*dbu
-      y = iter1.itrans().disp.y*dbu
-      flip = iter1.trans().is_mirror()
-      rotate = (int(iter1.trans().rot())*90) % 360
+      x = iter1.trans().disp.x*dbu
+      y = iter1.trans().disp.y*dbu
+#      flip = iter1.trans().is_mirror()
+#      rotate = (int(iter1.trans().rot())*90) % 360
       component_idx = len(components)
       
       # find the component pins, and Sort by pin text labels
       pins = sorted(subcell.find_pins(), key=lambda  p: p.pin_name)
 #      [p.display() for p in pins]
 
-      components.append(Component(component_idx, \
-         component, instance, x, y, flip, rotate, library, spice_params, pins=pins) )
+      components.append(Component(idx=component_idx, \
+         component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, pins=pins) )
 
 
 #            optical_pins.append (Optical_pin (pin_idx, points, component_idx, x, y, 1, pin_info2[p1].pin_text) )

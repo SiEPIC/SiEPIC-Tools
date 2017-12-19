@@ -158,27 +158,22 @@ Component defs:
  
 '''
 class Component():
-  def __init__(self, idx=None, component=None, instance=None, x=None, y=None, flip=None, rotate=None, library=None, params=None, pins=[], epins=[], nets=[] ):
+  def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[] ):
     self.idx = idx             # component index, should be unique, 0, 1, 2, ...
     self.component = component # which component (name) this pin belongs to
     self.instance = instance   # which component (instance) this pin belongs to
-    self.x = x                 # instance location, x
-    self.y = y                 # instance location, y
-    self.flip = flip           # instance flip, True / False
-    self.rotate = rotate       # instance rotation, 0, 90, 180, 270
+    self.trans = trans         # instance's location, mirror, rotation; in a ICplxTrans class http://www.klayout.de/doc-qt4/code/class_ICplxTrans.html
     self.library = library     # compact model library
     self.nets = nets           # nets connected to component
     self.pins = pins           # an array of all the optical pins
     self.npins = len(pins)     # number of pins
-    self.nepins = 0            # number of epins
-    self.epins = epins         # an array of all the electrical pins
     self.params = params       # Spice parameters
 
   def display(self):
     from . import _globals
     o = self
-    print("- component #%s: %s / %s, (%s, %s), nets %s, npins %s, opt pins %s, elec pins %s, IO pins %s" %\
-      (o.idx, o.component, o.instance, o.x, o.y, o.nets, o.npins, \
+    print("- component #%s: %s / %s, (%s), nets %s, npins %s, opt pins %s, elec pins %s, IO pins %s" %\
+      (o.idx, o.component, o.instance, o.trans, o.nets, o.npins, \
       [[p.pin_name, p.center.to_s()] for p in o.pins if p.type == _globals.PIN_TYPES.OPTICAL], \
       [[p.pin_name, p.center.to_s()] for p in o.pins if p.type == _globals.PIN_TYPES.ELECTRICAL], \
       [[p.pin_name, p.center.to_s()] for p in o.pins if p.type == _globals.PIN_TYPES.IO], ) )
