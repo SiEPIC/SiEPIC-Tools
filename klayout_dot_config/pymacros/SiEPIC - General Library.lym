@@ -77,7 +77,6 @@ class Waveguide(pya.PCellDeclarationHelper):
         layer = self.layout.layer(pya.LayerInfo(int(layer[0]), int(layer[1])))
       else:
         layer = self.layout.layer(self.layers[lr])
-      print("layer: %s" % layer)
 
       width = float(self.widths[lr])/dbu
       offset = float(self.offsets[lr])/dbu
@@ -138,7 +137,6 @@ class Waveguide(pya.PCellDeclarationHelper):
     if TECHNOLOGY['technology_name'] == 'EBeam':
       # Compact model information
       angle_vec = angle_vector(pts[0]-pts[1])/90
-      print(angle_vec)
       if angle_vec == 0: # horizontal
         halign = 2 # right
         angle=0

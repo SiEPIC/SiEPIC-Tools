@@ -50,7 +50,6 @@ def waveguide_from_path(params = None, cell = None):
       path.snap(_globals.NET.refresh().pins)
       path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
       path.width = path.width * TECHNOLOGY['dbu']
-      print(params)
       width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
       pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": path,
                                                                      "radius": params['radius'],
@@ -125,16 +124,21 @@ def waveguide_to_path(cell = None):
     selection[-1].top = obj.top
     selection[-1].cv_index = obj.cv_index
     
-    # deleting the instance was ok, but would leave the cell which ends up as an uninstantiated top cell
-    # obj.inst().delete()
-    # delete the cell (KLayout also removes the PCell)
-    # deleting it removes the cell entirely (which may be used elsewhere ?)
-    to_delete.append(waveguide.cell) 
+    if 1:
+      # deleting the instance was ok, but would leave the cell which ends up as an uninstantiated top cell
+      # obj.inst().delete()
+      to_delete.append(obj.inst())
+    else:
+      # delete the cell (KLayout also removes the PCell)
+      # deleting it removes the cell entirely (which may be used elsewhere ?)
+      # intermittent crashing...
+      to_delete.append(waveguide.cell) 
+
 
   # deleting instance or cell should be done outside of the for loop, otherwise each deletion changes the instance pointers in KLayout's internal structure
   [t.delete() for t in to_delete]
-#  for t in to_delete:
-#    t.delete()
+  #  for t in to_delete:
+  #    t.delete()
 
   # Clear the layout view selection, since we deleted some objects (but others may still be selected):
   lv.clear_object_selection()
