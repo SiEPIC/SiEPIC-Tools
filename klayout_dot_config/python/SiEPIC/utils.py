@@ -90,7 +90,8 @@ def get_technology():
 #      raise Exception("No view selected")
 
 
-    technology['technology_name'] = lv.active_cellview().technology    
+    technology_name = lv.active_cellview().technology    
+    technology['technology_name'] = technology_name
     if int(pya.Application.instance().version().split('.')[1]) > 24:
       pass
       technology['dbu'] = pya.Technology.technology_by_name(technology_name).dbu
