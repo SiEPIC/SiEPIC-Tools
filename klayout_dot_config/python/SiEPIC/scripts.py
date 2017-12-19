@@ -111,7 +111,8 @@ def waveguide_to_path(cell = None):
 #    elif sys.version_info[0] == 2:
 #      # Python 2 & 3 fix:
     from SiEPIC.utils import advance_iterator
-    path1 = advance_iterator(waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each())
+    itr = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each()
+    path1 = advance_iterator(itr)
 
     # waveguide width from Waveguide PCell
     c = waveguide.cell
