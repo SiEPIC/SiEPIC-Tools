@@ -14,10 +14,11 @@ DRC_GUI = CalibreGUI()
 # ******** lukasc
 # don't use a global one.. based on cells
 #Define global Net object that implements netlists and pin searching/connecting
-NET = Net()
+# NET = Net()
 
+# don't use a global one.. based on cells
 #Define global Component object
-COMPONENT = Component()
+#COMPONENT = Component()
 
 #Define enumeration for pins
 from .utils import enum

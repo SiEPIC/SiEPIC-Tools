@@ -1,3 +1,249 @@
+
+
+  # Determine the positions of all the components, in order to determine scaling
+  sch_positions = []
+  for o in optical_components:
+    sch_positions.append ([ o.x, o.y ])
+  for o in optical_waveguides:
+    x,y = xy_mean_mult(o.points, dbu)
+    sch_positions.append ([ x,y ])
+  sch_distances = []
+  for j in range(len(sch_positions)):
+    for k in range(j+1,len(sch_positions)):
+      dist = distance_xy ( sch_positions[j], sch_positions[k] )
+      sch_distances.append ( dist )
+
+  # find minimum distance between objects, but skip the closest x %, to make the layout more compact
+  # e.g., terminators connected to ring resonators are very close.
+  # not implemented...
+
+  sch_distances.sort()
+  print("Distances between components: %s" % sch_distances)
+  
+  # remove any 0 distances:
+  while 0.0 in sch_distances: sch_distances.remove(0.0)
+  
+  # scaling based on nearest neighbour:
+  Lumerical_schematic_scaling = 0.0006 / min(sch_distances)
+
+  # but if the layout is too big, limit the size
+  MAX_size = 0.05
+  if max(sch_distances)*Lumerical_schematic_scaling &gt; MAX_size:
+    Lumerical_schematic_scaling = MAX_size / max(sch_distances) 
+  print ("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
+
+#  Lumerical_schematic_scaling = 5e-2
+#  Lumerical_schematic_scaling = 20e-2
+#  Lumerical_schematic_scaling = 5e-3
+
+  # convert KLayout GDS rotation/flip to Lumerical INTERCONNECT
+  # KLayout defines mirror as an x-axis flip, whereas INTERCONNECT does y-axis flip
+  # KLayout defines rotation as counter-clockwise, whereas INTERCONNECT does clockwise
+  # input is KLayout Rotation,Flip; output is INTERCONNECT:
+  KLayoutInterconnectRotFlip = \
+      {(0, False):[0, False], \
+       (90, False):[270, False], \
+       (180, False):[180, False], \
+       (270, False):[90, False], \
+       (0, True):[180,True], \
+       (90, True):[90, True], \
+       (180, True):[0,True], \
+       (270, True):[270, False]}
+
+  from time import strftime 
+  
+  text_main = '* Spice output from KLayout SiEPIC PDK v%s, %s.\n\n' % (SiEPIC_Version, strftime("%Y-%m-%d %H:%M:%S") )
+  text_subckt = text_main
+
+#wtext.insertHtml('.subckt %s %s:&lt;br&gt;' % ( topcell.name, find_optical_IO_pins(optical_pins) ))
+  opticalIO_pins = find_optical_IO_pins(optical_pins)  
+
+  # find electrical IO pins
+  electricalIO_pins = ""
+  DCsources = "" # string to create DC sources for each pin
+  Vn = 1
+  SINGLE_DC_SOURCE = 2
+  # (1) attach all electrical pins to the same DC source
+  # (2) or to individual DC sources
+  # (3) or choose based on number of DC sources, if &gt; 5, use single DC source
+  for o in optical_components:
+    for p in o.epins:  # electrical pins
+      NetName = " N$" + o.component +'_' + str(o.idx) + '_' + p
+#      NetName = " C" + str(o.idx) + '_' + p
+      electricalIO_pins += NetName
+      DCsources += "N" + str(Vn) + NetName + " 0 dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/10., -2+Vn/8.)
+      Vn += 1
+  electricalIO_pins_subckt = electricalIO_pins
+
+  if (SINGLE_DC_SOURCE == 1) or ( (SINGLE_DC_SOURCE == 2) &amp; (Vn &gt; 5)):
+    electricalIO_pins_subckt = ""
+    for o in optical_components:
+      for p in o.epins:  # electrical pins
+        NetName = " N$"
+        electricalIO_pins_subckt += NetName
+        DCsources = "N1" + NetName + " 0 dcsource amplitude=0 sch_x=-2 sch_y=0\n"
+      
+  # create the top subckt:
+  text_subckt += '.subckt %s%s%s\n' % (topcell.name, electricalIO_pins, opticalIO_pins)
+  text_subckt += '.param MC_uniformity_width=0 \n' # assign MC settings before importing netlist components
+  text_subckt += '.param MC_uniformity_thickness=0 \n' 
+  text_subckt += '.param MC_resolution_x=100 \n' 
+  text_subckt += '.param MC_resolution_y=100 \n' 
+  text_subckt += '.param MC_grid=10e-6 \n' 
+  text_subckt += '.param MC_non_uniform=99 \n' 
+
+  # Get information about the laser and detectors:
+  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
+        get_LumericalINTERCONNECT_analyzers(topcell, optical_pins)
+  
+  for o in optical_components:
+  
+    nets_str = ""
+    for p in o.epins:  # electrical pins
+      nets_str += " N$" + o.component +'_' + str(o.idx) + '_' + p
+    for n in o.nets:  # optical nets
+      nets_str += " N$" + str(n)
+
+    trans = KLayoutInterconnectRotFlip[(o.rotate, o.flip)]
+     
+    flip = ' sch_f=true' if trans[1] else ''
+    if trans[0] &gt; 0:
+      rotate = ' sch_r=%s' % str(trans[0])
+    else:
+      rotate = ''
+#    t = '%s %s %s library="%s" lay_x=%s lay_y=%s sch_x=%s sch_y=%s %s%s'  % \
+#         ( "X"+o.component+"_"+str(o.idx), nets_str, o.component, o.library, str (o.x * 1e-6), o.y * 1e-6, o.x, o.y, rotate, flip)
+#    t = '  %s %s %s library="%s" %s $X=%s $Y=%s sch_x=%s sch_y=%s %s%s'  % \
+    
+    # Check to see if this component is an Optical IO type.
+    pinIOtype = 0
+    for p in o.pins:
+      for each_pin in optical_pins:
+        if(each_pin.idx == p):
+          if each_pin.pin_type == 2:
+            pinIOtype = 1
+          break  
+        
+    if ignoreOpticalIOs and pinIOtype:
+      # Replace the Grating Coupler or Edge Coupler with a 0-length waveguide.
+      component1 = "ebeam_wg_strip_1550"
+      params1 = "wg_length=0u wg_width=0.500u"
+    else:
+      component1 =  o.component 
+      params1 = o.params
+      
+    text_subckt += ' %s %s %s ' % ( component1 +"_"+str(o.idx), nets_str, component1 ) 
+    if o.library != None:
+      text_subckt += 'library="%s" ' % o.library
+    text_subckt += '%s lay_x=%s lay_y=%s sch_x=%s sch_y=%s %s%s\n' % \
+       ( params1,
+         eng_str(o.x * 1e-6), eng_str(o.y * 1e-6), \
+         eng_str(o.x * Lumerical_schematic_scaling), eng_str(o.y * Lumerical_schematic_scaling), \
+         rotate, flip)
+
+  # list all Optical_waveguides objects from an array
+  # input array, optical_waveguides
+  # example output:         
+  # X5 9 10 ebeam_wg_strip_1550 library="Design kits/ebeam_v1.0" wg_length=7.86299e-06 wg_width=5.085e-07 sch_x=-1.42 sch_y=-0.265
+
+  for o in optical_waveguides:
+    nets_str = "N$%s N$%s" %(o.net1, o.net2)
+    x,y = xy_mean_mult(o.points, dbu)
+    wg_angle =  ( 360- int(round(angle_segment ( [o.points[0], o.points[len(o.points)-1]] ) / 90) * 90) ) % 360
+    
+#    t = '%s %s %s library="%s" wg_length=%s wg_width=%s lay_x=%s lay_y=%s sch_x=%5.3f sch_y=%5.3f'  % \
+#           ( "Xwg" + str(o.idx), nets_str, o.component, o.library, eng_str(o.length*1e-6), eng_str(o.wg_width*1e-6), \
+#             eng_str(x * 1e-6), eng_str(y * 1e-6), x, y)
+    t = '  %s %s %s library="%s" wg_length=%s wg_width=%s sch_x=%s sch_y=%s sch_r=%s points="%s"'  % \
+           ( "wg" + str(o.idx), nets_str, o.component, o.library, \
+             eng_str(o.length*1e-6), eng_str(o.wg_width*1e-6), \
+             eng_str(x * Lumerical_schematic_scaling), eng_str(y * Lumerical_schematic_scaling), \
+             #str(o.points).replace('[','(').replace(']',')')  )   # format of waveguide section points
+             str(wg_angle), \
+             str(o.points).replace(', ',',')  )   # change format, delete space    
+    text_subckt += '%s\n' %t
+
+  text_subckt += '.ends %s\n\n' % (topcell.name)
+
+  if laser_net &gt; -1:
+    text_main += '* Optical Network Analyzer:\n'
+    text_main += '.ona input_unit=wavelength input_parameter=start_and_stop\n  + minimum_loss=80\n  + analysis_type=scattering_data\n  + multithreading=user_defined number_of_threads=1\n' 
+    text_main += '  + orthogonal_identifier=%s\n' % orthogonal_identifier
+    text_main += '  + start=%4.3fe-9\n' % wavelength_start
+    text_main += '  + stop=%4.3fe-9\n' % wavelength_stop
+    text_main += '  + number_of_points=%s\n' % wavelength_points
+    for i in range(0,len(detector_nets)):
+      text_main += '  + input(%s)=%s,N$%s\n' % (i+1, topcell.name, detector_nets[i])
+    text_main += '  + output=%s,N$%s\n' % (topcell.name, laser_net)
+
+  # main circuit
+  text_main += '%s %s %s %s sch_x=-1 sch_y=-1 ' % (topcell.name, electricalIO_pins_subckt, opticalIO_pins, topcell.name)
+  if len(DCsources) &gt; 0:
+    text_main += 'sch_r=270\n\n'
+  else:
+    text_main += '\n\n'
+
+  text_main += DCsources
+  
+  print(text_main)
+
+
+
+
+'''
+def check_segments_same_direction( segment1, segment2 ):
+  # check that they have the same direction
+  is_slope_equal = False
+  # check ∆x = 0 first to avoid division by 0
+  dx1 = (segment1[0].x-segment1[1].x)
+  dx2 = (segment2[0].x-segment2[1].x)
+  if dx2 == 0 and dx1 == 0:
+    is_slope_equal = True  # both vertical
+  elif dx1 != 0 and dx2 != 0:
+    # check slopes
+    slope1 = (segment1[0].y-segment1[1].y) / (segment1[0].x-segment1[1].x)
+    slope2 = (segment2[0].y-segment2[1].y) / (segment2[0].x-segment2[1].x)
+    if slope1 == slope2:
+      is_slope_equal = True  # both have the same slope
+  return is_slope_equal
+'''
+
+'''
+def check_segments_collinear_overlapping( segment1, segment2 ):
+  """ 
+  we want to identify ONLY the following situation:
+        X  O  X  O
+  where XX is a segment, and OO is another segment
+  namely, collinear, but also XX overlapping OO
+  example usage: 
+    a = pya.Point(0,0)
+    b = pya.Point(50,0)
+    c = pya.Point(50,0)
+    d = pya.Point(100,0)
+    segment1 = [ a, b ]
+    segment2 = [ c, d ]
+    print(check_segments_collinear_overlapping( segment1, segment2 ))
+  """  
+
+  # check for one of the segment2 points being inside segment1
+  check_between1 = pt_intersects_segment( segment1[0], segment1[1], segment2[0] ) | \
+                  pt_intersects_segment( segment1[0], segment1[1], segment2[1] )
+  # check for one of the segment1 points being inside segment2
+  check_between2 = pt_intersects_segment( segment2[0], segment2[1], segment1[0] ) | \
+                  pt_intersects_segment( segment2[0], segment2[1], segment1[1] )
+
+  # check that they have the same direction
+#  is_slope_equal = check_segments_same_direction( segment1, segment2 )
+  is_slope_equal = (inner_angle_b_vectors(segment1, segment2) == 0)
+  
+#  print( "check_segments_collinear_overlapping: %s, %s, %s, %s: %s, %s, %s" % (segment1[0], segment1[1], segment2[0], segment2[1], check_between1, check_between2, is_slope_equal) )
+  
+  return (check_between1 or check_between2) and is_slope_equal
+'''
+
+
+
+
 def find_all_components(cell):
   # function to traverse the entire layout hierarchy and find all the components
   # returns list of components, location, orientation

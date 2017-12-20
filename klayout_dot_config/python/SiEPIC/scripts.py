@@ -49,7 +49,8 @@ def waveguide_from_path(params = None, cell = None):
       
       # *********** lukasc:
       # change to cell's net, rather than global net.
-      path.snap(_globals.NET.refresh().pins)
+#      path.snap(_globals.NET.refresh().pins)
+      path.snap(cell.find_pins())
       path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
       path.width = path.width * TECHNOLOGY['dbu']
       width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2

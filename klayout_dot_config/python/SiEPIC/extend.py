@@ -245,6 +245,7 @@ def find_pins(self):
   LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
   it = self.begin_shapes_rec(LayerPinRecN)
   while not(it.at_end()):
+    idx = len(pins) # pin index value to be assigned to Pin.idx
     if it.shape().is_path():
       pin_path = it.shape().path.transformed(it.itrans())
       # Find text label (pin name) for this pin
@@ -257,7 +258,7 @@ def find_pins(self):
         iter2.next()
       if pin_name == None:
         raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
-      pins.append(Pin(pin_path, _globals.PIN_TYPES.OPTICAL, pin_name = pin_name))
+      pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name, idx=idx))
 #      print( "PinRec, name: %s at (%s)" % (pins[-1].pin_name, pins[-1].center) )
     if it.shape().is_box():
       pin_box = it.shape().box.transformed(it.itrans())
@@ -270,7 +271,7 @@ def find_pins(self):
         iter2.next()
       if pin_name == None:
         raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
-      pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name = pin_name))
+      pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name, idx=idx))
 #      print( "PinRec, name: %s at (%s)" % (pins[-1].pin_name, pins[-1].center) )
       
     it.next()
@@ -298,10 +299,18 @@ def find_pin(self, name):
     
   return None
 
+# find the pins inside a component
+def find_pins_component(self, component):
+  pins = self.find_pins()
+  for p in pins:
+    # add component to the pin
+    p.component = component
+  return pins
+
 '''
 Components:
 '''
-def find_components(self):
+def find_components(self, verbose=False):
   '''
   Function to traverse the cell's hierarchy and find all the components
   returns list of components (class Component)
@@ -310,9 +319,11 @@ def find_components(self):
   Find all the DevRec shapes; identify the component it belongs; record the info as a Component 
   for each component instance, also find the Pins and Fibre ports.
   
+  Find all the pins for the component, save in components and also return pin list.
   Use the pin names on layer PinRec to sort the pins in alphabetical order
   '''
-  print('*** Cell.find_components:')
+  if verbose:
+    print('*** Cell.find_components:')
   
   components = []
 
@@ -322,28 +333,29 @@ def find_components(self):
   TECHNOLOGY = get_technology()
   dbu = TECHNOLOGY['dbu']
 
-  
   # Find all the DevRec shapes
   LayerDevRecN = self.layout().layer(TECHNOLOGY['DevRec'])
   iter1 = self.begin_shapes_rec(LayerDevRecN)
   
-  i=0
   while not(iter1.at_end()):
-    i+=1
+    idx = len(components) # component index value to be assigned to Component.idx
     subcell = iter1.cell()             # cell (component) to which this shape belongs
     component = subcell.basic_name()   # name library component
     instance = subcell.name      
-    subcell.name                # name of the cell; for PCells, different from basic_name
+#    subcell.name                # name of the cell; for PCells, different from basic_name
 
     found_component = False
     # DevRec must be either a Box or a Polygon:
     if iter1.shape().is_box():
       box= iter1.shape().box.transformed(iter1.itrans())
-      print("%s: DevRec in cell {%s}, box -- %s; %s" % (i, subcell.basic_name(), box.p1, box.p2) )
+      if verbose:
+        print("%s: DevRec in cell {%s}, box -- %s; %s" % (idx, subcell.basic_name(), box.p1, box.p2) )
+      polygon = pya.Polygon(box) # Save the component outline polygon
       found_component = True
     if iter1.shape().is_polygon():
-      polygon = iter1.shape().polygon.transformed(iter1.itrans())
-      print("%s: DevRec in cell {%s}, polygon -- %s" % (i, subcell.basic_name(), polygon))
+      polygon = iter1.shape().polygon.transformed(iter1.itrans()) # Save the component outline polygon
+      if verbose:
+        print("%s: DevRec in cell {%s}, polygon -- %s" % (idx, subcell.basic_name(), polygon))
       found_component = True
 
     # A component was found. record the instance info as an Optical_component 
@@ -355,7 +367,8 @@ def find_components(self):
       while not(iter2.at_end()):
         if iter2.shape().is_text():
           text = iter2.shape().text
-          print("%s: DevRec label: %s" % (i, text))
+          if verbose:
+            print("%s: DevRec label: %s" % (idx, text))
           if text.string.find("Lumerical_INTERCONNECT_library=") > -1:
             library = text.string[len("Lumerical_INTERCONNECT_library="):]
           if text.string.find("Lumerical_INTERCONNECT_component=") > -1:
@@ -364,32 +377,22 @@ def find_components(self):
             spice_params = text.string[len("Spice_param:"):]
         iter2.next()
       if library == None:
-        print("Missing library information for component: %s" % component )
-      # get the cell's x,y coordinates
-      x = iter1.trans().disp.x*dbu
-      y = iter1.trans().disp.y*dbu
-#      flip = iter1.trans().is_mirror()
-#      rotate = (int(iter1.trans().rot())*90) % 360
-      component_idx = len(components)
-      
+        if verbose:
+          print("Missing library information for component: %s" % component )
+
+      # Save the component into the components list      
+      components.append(Component(idx=idx, \
+         component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon) )
+
       # find the component pins, and Sort by pin text labels
-      pins = sorted(subcell.find_pins(), key=lambda  p: p.pin_name)
-#      [p.display() for p in pins]
+      pins = sorted(subcell.find_pins_component(components[-1]), key=lambda  p: p.pin_name)
 
-      components.append(Component(idx=component_idx, \
-         component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, pins=pins) )
+      # find_pins returns pin locations within the subcell; transform to the top cell:
+      [p.transform(iter1.trans()) for p in pins]
 
+      # store the pins in the component
+      components[-1].pins=pins
 
-#            optical_pins.append (Optical_pin (pin_idx, points, component_idx, x, y, 1, pin_info2[p1].pin_text) )
-#            optical_components[component_idx].npins += 1
-#            optical_components[component_idx].pins.append( pin_idx )
-
-      # reserve space for netlist for this component, based on the number of pins.
-#      optical_components[component_idx].nets = [-1] * (optical_components[component_idx].npins)
-
-
-
-    # end if found_component   
     iter1.next()
   # end while iter1 
   return components
@@ -397,7 +400,74 @@ def find_components(self):
   
 
 
+def identify_nets(self, verbose=False):
+  # function to identify all the nets in the cell layout
+  # use the data in Optical_pin, Optical_waveguide to find overlaps
+  # and save results in components
 
+  from . import _globals
+  from .core import Net
+
+  # output: array of Net[]
+  nets = []
+
+  # find components and pins in the cell layout
+  components = self.find_components()
+  pins = self.find_pins()
+  
+  # Optical Pins:
+  optical_pins = [p for p in pins if p.type==_globals.PIN_TYPES.OPTICAL]
+  
+  # Loop through all pairs components (c1, c2); only look at touching components
+  for c1 in components:
+    for c2 in components [ c1.idx+1: len(components) ]:
+      if verbose:
+        print( " - Components: [%s-%s], [%s-%s]"
+          % (c1.component, c1.idx, c2.component, c2.idx) )      
+
+      if c1.polygon.bbox().overlaps(c2.polygon.bbox()) or c1.polygon.bbox().touches(c2.polygon.bbox()):
+        # Loop through all the pins (p1) in c1
+        # - Compare to all other pins, find other overlapping pins (p2) in c2
+        for p1 in c1.pins:
+          for p2 in c2.pins:
+            if 0:
+              print( " - Components, pins: [%s-%s, %s, %s, %s], [%s-%s, %s, %s, %s]"
+                % (c1.component, c1.idx, p1.pin_name, p1.center, p1.rotation, c2.component, c2.idx, p2.pin_name, p2.center, p2.rotation) )      
+      
+            # check that pins are facing each other, 180 degree
+            check1 = ((p1.rotation - p2.rotation)%360) == 180
+      
+            # check that the pin centres are perfectly overlapping 
+            # (to avoid slight disconnections, and phase errors in simulations)
+            check2 = (p1.center == p2.center)
+      
+            if check1 and check2:  # found connected pins:
+              # make a new optical net index
+              net_idx = len(nets)
+              # optical net connects two pins; keep track of the pins, Pin[] :
+              nets.append ( Net ( idx=net_idx, pins=[p1, p2] ) )
+              # assign this net number to the pins
+              p1.net = net_idx
+              p2.net = net_idx
+              
+              if verbose:
+                print( " - pin-pin, net: %s, component, pin: [%s-%s, %s, %s, %s], [%s-%s, %s, %s, %s]" 
+                  % (net_idx, c1.component, c1.idx, p1.pin_name, p1.center, p1.rotation, c2.component, c2.idx, p2.pin_name, p2.center, p2.rotation) )      
+      
+  return nets, components
+
+
+def spice_netlist_export(self, verbose = False):
+  # list all Optical_component objects from an array
+  # input array, optical_components
+  # example output:         
+  # X_grating_coupler_1 N$7 N$6 grating_coupler library="custom/genericcml" sch_x=-1.42 sch_y=-0.265 sch_r=0 sch_f=false
+
+  text_main = '* Spice output from KLayout SiEPIC-Tools v, %s.\n\n' % (__version__, strftime("%Y-%m-%d %H:%M:%S") )
+  text_subckt = text_main
+
+
+  return text_subckt, text_main, len(detector_nets)
 
 
 #################################################################################
@@ -405,8 +475,10 @@ def find_components(self):
 pya.Cell.print_parameter_values = print_parameter_values
 pya.Cell.find_pin = find_pin
 pya.Cell.find_pins = find_pins
+pya.Cell.find_pins_component = find_pins_component
 pya.Cell.find_components = find_components
-
+pya.Cell.identify_nets = identify_nets
+pya.Cell.spice_netlist_export = spice_netlist_export
 
 #################################################################################
 #                    SiEPIC Class Extension of Instance Class                   #

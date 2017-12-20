@@ -289,6 +289,7 @@ def arc_to_waveguide(pts, width):
 def translate_from_normal(pts, trans):
   from math import cos, sin, pi
   d = 1/(len(pts)-1)
+  print (d)
   
   a = angle_vector(pts[1]-pts[0])*pi/180 + (pi/2 if trans > 0 else -pi/2)
   tpts = [pts[0] + pya.Point(abs(trans)*cos(a), abs(trans)*sin(a))]
@@ -313,6 +314,7 @@ def pt_intersects_segment(a, b, c):
   dot = (c.x - a.x) * (b.x - a.x) + (c.y - a.y)*(b.y - a.y)
   if dot < 0 : return False
   return False if dot > (b.x - a.x)*(b.x - a.x) + (b.y - a.y)*(b.y - a.y) else True
+
 
 #Add bubble to a cell
 # Example

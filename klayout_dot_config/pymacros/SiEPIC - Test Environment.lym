@@ -78,107 +78,28 @@ if 1:
   #pins = cell.find_pins()
   #print (pins)
 
-  components = cell.find_components ()
-  print ("* Display list of components:" )
-  [c.display() for c in components]
+  if 0:
+    print ("* find_components():" )
+    components = cell.find_components (verbose=True)
+    print ("* Display list of components:" )
+    [c.display() for c in components]
+
+  if 1:
+    print ("* identify_nets():" )
+    nets, components = cell.identify_nets (verbose=True)
+    print ("* Display list of components:" )
+    [c.display() for c in components]
+    print ("* Display list of nets:" )
+    [n.display() for n in nets]
+
+  if 0:
+    spice_netlist_export(verbose=True)
   
   #from SiEPIC.core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net, Component
   #from SiEPIC import _globals
   #from SiEPIC.netlist import find_all_components
   
-  #NET = Net()
-  #NET.find_components()
-  
-  
-  #NET.refresh()
-  
 
-
-def waveguide_to_path(cell = None):
-  from SiEPIC import _globals
-  from SiEPIC.utils import select_waveguides, get_technology
-  TECHNOLOGY = get_technology()
-  
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-  
-  if cell is None:
-    ly = lv.active_cellview().layout()
-    if ly == None:
-      raise Exception("No active layout")
-    cell = lv.active_cellview().cell
-    if cell == None:
-      raise Exception("No active cell")
-  else:
-    ly = cell.layout()
-    
-  lv.transaction("waveguide to path")
-
-  # record objects to delete:
-  to_delete = []
-  
-  waveguides = select_waveguides(cell)
-  selection = []
-  for obj in waveguides:
-    # path from guiding shape
-    waveguide = obj.inst()
-    # Determine whether we have Python 2 or Python 3
-    import sys
-    
-    if sys.version_info[0] == 3:
-      # for some reason this doesn't work on Instantiated PCells, but it does on W-generated ones!
-      path1 = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each().__next__().path
-    elif sys.version_info[0] == 2:
-      # Python 2 &amp; 3 fix:
-      from SiEPIC.utils import advance_iterator
-      path1 = advance_iterator(waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each())
-
-    # waveguide width from Waveguide PCell
-    c = waveguide.cell
-    width = c.pcell_parameters_by_name()['width']
-
-    # modify path (doesn't work in 0.24.10 / Python2); neither does dup()
-    # perhaps because this path belongs to a PCell.
-    #path1.width = int(width/TECHNOLOGY['dbu'])  # 
-    
-    # instead create a new path:
-    path = pya.Path()
-    path.width = width/TECHNOLOGY['dbu']
-    path.points=[pts for pts in path1.each_point()]
-
-    selection.append(pya.ObjectInstPath())
-    selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
-    selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path.transformed(waveguide.trans))
-    selection[-1].top = obj.top
-    selection[-1].cv_index = obj.cv_index
-    
-    if 1:
-      # deleting the instance was ok, but would leave the cell which ends up as an uninstantiated top cell
-      # obj.inst().delete()
-      to_delete.append(obj.inst())
-    else:
-      # delete the cell (KLayout also removes the PCell)
-      # deleting it removes the cell entirely (which may be used elsewhere ?)
-      # intermittent crashing...
-      to_delete.append(waveguide.cell) 
-
-
-  # deleting instance or cell should be done outside of the for loop, otherwise each deletion changes the instance pointers in KLayout's internal structure
-  [t.delete() for t in to_delete]
-  #  for t in to_delete:
-  #    t.delete()
-
-  # Clear the layout view selection, since we deleted some objects (but others may still be selected):
-  lv.clear_object_selection()
-  # Select the newly added objects
-  lv.object_selection = selection
-  # Record a transaction, to enable "undo"
-  lv.commit()
-
-#waveguide_to_path()
-
-  
   
   
   
