@@ -1,5 +1,4 @@
 import pya
-from . import _globals
 
 
 '''
@@ -66,8 +65,9 @@ Pin defs:
 
 '''
 class Pin():
-  def __init__(self, path=None, _type=None, idx=None, box=None, component=None, net=_globals.NET_DISCONNECTED, pin_name=None ):
+  def __init__(self, path=None, _type=None, idx=None, box=None, component=None, net=None, pin_name=None ):
     from .utils import angle_vector
+    from . import _globals
     self.path = path            # the pin's Path (Optical)
     if path:
       pts = path.get_points()
@@ -80,7 +80,10 @@ class Pin():
       self.center = box.center()# center of the pin: a Point
     self.type = _type           # one of PIN_TYPES, defined in SiEPIC._globals.PINTYPES 
 #    self.idx = idx              # pin number, index, should be unique, 0, 1,
-    self.net = net              # which net this pin is connected to
+    if net == None:
+      self.net = _globals.NET_DISCONNECTED
+    else:
+      self.net = net            # which net this pin is connected to
     self.pin_name = pin_name    # label read from the cell layout (PinRec text)
 
     # for backwards linking (optional)

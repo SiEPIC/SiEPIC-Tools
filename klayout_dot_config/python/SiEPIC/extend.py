@@ -502,7 +502,7 @@ def spice_netlist_export(self, verbose = False):
     else:
       rotate = ''
       
-    text_subckt += ' %s %s %s ' % ( c.component +"_"+str(c.idx), nets_str, c.component ) 
+    text_subckt += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_"+str(c.idx), nets_str, c.component.replace(' ', '_') ) 
     if c.library != None:
       text_subckt += 'library="%s" ' % c.library
     x, y = c.trans.disp.x, c.trans.disp.y
