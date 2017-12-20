@@ -447,8 +447,8 @@ def identify_nets(self, verbose=False):
               # optical net connects two pins; keep track of the pins, Pin[] :
               nets.append ( Net ( idx=net_idx, pins=[p1, p2] ) )
               # assign this net number to the pins
-              p1.net = net_idx
-              p2.net = net_idx
+              p1.net = nets[-1]
+              p2.net = nets[-1]
               
               if verbose:
                 print( " - pin-pin, net: %s, component, pin: [%s-%s, %s, %s, %s], [%s-%s, %s, %s, %s]" 
@@ -462,11 +462,58 @@ def spice_netlist_export(self, verbose = False):
   # input array, optical_components
   # example output:         
   # X_grating_coupler_1 N$7 N$6 grating_coupler library="custom/genericcml" sch_x=-1.42 sch_y=-0.265 sch_r=0 sch_f=false
+  import SiEPIC
+  from . import _globals
+  from time import strftime 
+  from .utils import eng_str
 
-  text_main = '* Spice output from KLayout SiEPIC-Tools v, %s.\n\n' % (__version__, strftime("%Y-%m-%d %H:%M:%S") )
+
+  text_main = '* Spice output from KLayout SiEPIC-Tools v%s, %s.\n\n' % (SiEPIC.__version__, strftime("%Y-%m-%d %H:%M:%S") )
   text_subckt = text_main
 
+  nets, components = self.identify_nets ()
 
+  # convert KLayout GDS rotation/flip to Lumerical INTERCONNECT
+  # KLayout defines mirror as an x-axis flip, whereas INTERCONNECT does y-axis flip
+  # KLayout defines rotation as counter-clockwise, whereas INTERCONNECT does clockwise
+  # input is KLayout Rotation,Flip; output is INTERCONNECT:
+  KLayoutInterconnectRotFlip = \
+      {(0, False):[0, False], \
+       (90, False):[270, False], \
+       (180, False):[180, False], \
+       (270, False):[90, False], \
+       (0, True):[180,True], \
+       (90, True):[90, True], \
+       (180, True):[0,True], \
+       (270, True):[270, False]}
+  Lumerical_schematic_scaling=1
+
+  for c in components:
+    # optical nets
+    nets_str = ''
+    for p in c.pins:
+      nets_str += " N$" + str(p.net.idx)
+
+    trans = KLayoutInterconnectRotFlip[(c.trans.angle, c.trans.is_mirror())]
+     
+    flip = ' sch_f=true' if trans[1] else ''
+    if trans[0] > 0:
+      rotate = ' sch_r=%s' % str(trans[0])
+    else:
+      rotate = ''
+      
+    text_subckt += ' %s %s %s ' % ( c.component +"_"+str(c.idx), nets_str, c.component ) 
+    if c.library != None:
+      text_subckt += 'library="%s" ' % c.library
+    x, y = c.trans.disp.x, c.trans.disp.y
+    text_subckt += '%s lay_x=%s lay_y=%s sch_x=%s sch_y=%s %s%s\n' % \
+       ( c.params,
+         eng_str(x * 1e-6), eng_str(y * 1e-6), \
+         eng_str(x * Lumerical_schematic_scaling), eng_str(y * Lumerical_schematic_scaling), \
+         rotate, flip)
+
+
+  detector_nets=[]
   return text_subckt, text_main, len(detector_nets)
 
 

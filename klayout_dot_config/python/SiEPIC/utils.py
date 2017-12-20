@@ -384,3 +384,35 @@ def xml_to_dict(t):
   e = ET.XML(t)
   return etree_to_dict(e)
   
+
+def eng_str(x):
+    import math
+    # x input in meters
+    # output in meters, engineering notation, rounded to 1 nm
+    
+    EngExp_notation = 1 # 1 = "1.0e-6", 0 = "1.0u"
+    x = round(x*1E9)/1E9
+    y = abs(x)
+    if y == 0:
+      return '0'
+    else:
+      exponent = int(math.floor(math.log10(y)))
+      engr_exponent = exponent - exponent%3
+      if engr_exponent == -3:
+        str_engr_exponent = "m"
+        z = y/10**engr_exponent
+      elif engr_exponent == -6:
+        str_engr_exponent = "u"
+        z = y/10**engr_exponent
+      elif engr_exponent == -9:
+        str_engr_exponent = "n"
+        z = y/10**engr_exponent
+      else:
+        str_engr_exponent = ""
+        z = y/10**engr_exponent
+      sign = '-' if x < 0 else ''
+      if EngExp_notation:
+        return sign+str(z)+'E'+str(engr_exponent)
+#      return sign+ '%3.3f' % z +str(str_engr_exponent)
+      else:
+        return sign+ str(z) +str(str_engr_exponent)

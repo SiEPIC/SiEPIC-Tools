@@ -1,4 +1,5 @@
 import pya
+from . import _globals
 
 
 '''
@@ -38,7 +39,7 @@ class Net:
     self.pins = pins         # pin array, Pin[]    
 
   def display(self):
-    print ('- net: %s, pins: %s' % (self.idx, [[p.pin_name, p.center.to_s(), p.net, p.component.component, p.component.component] for p in self.pins ]))
+    print ('- net: %s, pins: %s' % (self.idx, [[p.pin_name, p.center.to_s(), p.component.component, p.component.component] for p in self.pins ]))
     
 '''
 Pin:
@@ -65,7 +66,7 @@ Pin defs:
 
 '''
 class Pin():
-  def __init__(self, path=None, _type=None, idx=None, box=None, component=None, net=None, pin_name=None ):
+  def __init__(self, path=None, _type=None, idx=None, box=None, component=None, net=_globals.NET_DISCONNECTED, pin_name=None ):
     from .utils import angle_vector
     self.path = path            # the pin's Path (Optical)
     if path:
@@ -78,7 +79,7 @@ class Pin():
     if box:
       self.center = box.center()# center of the pin: a Point
     self.type = _type           # one of PIN_TYPES, defined in SiEPIC._globals.PINTYPES 
-    self.idx = idx              # pin number, index, should be unique, 0, 1,
+#    self.idx = idx              # pin number, index, should be unique, 0, 1,
     self.net = net              # which net this pin is connected to
     self.pin_name = pin_name    # label read from the cell layout (PinRec text)
 
@@ -97,7 +98,7 @@ class Pin():
   def display(self):
     o = self
     print("- pin #%s: component_idx %s, pin_name %s, pin_type %s, net: %s, (%s), path: %s" %\
-      (o.idx, o.component_idx, o.pin_name, o.type, o.net, o.center, o.path) )
+      (o.idx, o.component_idx, o.pin_name, o.type, o.net.idx, o.center, o.path) )
 
 def display_pins(pins):
   print("Pins:")
@@ -127,7 +128,7 @@ class Component():
     self.idx = idx             # component index, should be unique, 0, 1, 2, ...
     self.component = component # which component (name) this pin belongs to
     self.instance = instance   # which component (instance) this pin belongs to
-    self.trans = trans         # instance's location, mirror, rotation; in a ICplxTrans class http://www.klayout.de/doc-qt4/code/class_ICplxTrans.html
+    self.trans = trans         # instance's location (.disp.x, y), mirror (.is_mirror), rotation (angle); in a ICplxTrans class http://www.klayout.de/doc-qt4/code/class_ICplxTrans.html
     self.library = library     # compact model library
     self.pins = pins           # an array of all the optical pins, Pin[]
     self.npins = len(pins)     # number of pins
@@ -138,9 +139,9 @@ class Component():
     c = self
     print("- component: %s-%s / %s, (%s), npins %s, opt pins %s, elec pins %s, IO pins %s" %\
       ( c.component, c.idx, c.instance, c.trans, c.npins, \
-      [[p.pin_name, p.center.to_s(), p.net] for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL], \
-      [[p.pin_name, p.center.to_s(), p.net] for p in c.pins if p.type == _globals.PIN_TYPES.ELECTRICAL], \
-      [[p.pin_name, p.center.to_s(), p.net] for p in c.pins if p.type == _globals.PIN_TYPES.IO], ) )
+      [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL], \
+      [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.ELECTRICAL], \
+      [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.IO], ) )
 
   def find_pins(self):        
     return self.instance.find_pins_component()

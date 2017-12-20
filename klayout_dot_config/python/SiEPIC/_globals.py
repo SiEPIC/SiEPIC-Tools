@@ -16,6 +16,8 @@ DRC_GUI = CalibreGUI()
 #Define global Net object that implements netlists and pin searching/connecting
 # NET = Net()
 
+NET_DISCONNECTED = Net()
+
 # don't use a global one.. based on cells
 #Define global Component object
 #COMPONENT = Component()

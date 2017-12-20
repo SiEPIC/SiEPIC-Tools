@@ -84,7 +84,7 @@ if 1:
     print ("* Display list of components:" )
     [c.display() for c in components]
 
-  if 1:
+  if 0:
     print ("* identify_nets():" )
     nets, components = cell.identify_nets (verbose=True)
     print ("* Display list of components:" )
@@ -92,8 +92,10 @@ if 1:
     print ("* Display list of nets:" )
     [n.display() for n in nets]
 
-  if 0:
-    spice_netlist_export(verbose=True)
+  if 1:
+    text_subckt, text_main, detector_nets = cell.spice_netlist_export(verbose=True)
+    print(text_subckt)
+
   
   #from SiEPIC.core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net, Component
   #from SiEPIC import _globals
