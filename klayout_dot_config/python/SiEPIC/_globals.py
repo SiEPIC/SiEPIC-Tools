@@ -25,6 +25,7 @@ NET_DISCONNECTED = Net()
 #Define enumeration for pins
 from .utils import enum
 PIN_TYPES = enum('IO', 'OPTICAL', 'ELECTRICAL')
+PIN_LENGTH = 100  # 0.1 micron
 
 try:
   import numpy
