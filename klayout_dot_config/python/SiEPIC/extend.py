@@ -63,9 +63,21 @@ def is_manhattan(self):
   return check==2
   
 def radius_check(self, radius):
+  def all2(iterable):
+    for element in iterable:
+        if not element:
+            return False
+    return True
+
   points = self.get_points()
   lengths = [ points[i].distance(points[i-1]) for i, pt in enumerate(points) if i > 0]
-  return (lengths[0] >= radius) and (lengths[-1] >= radius) and all(length >= 2*radius for length in lengths if length != lengths[0] or length != lengths[-1])
+
+  # first and last segment must be >= radius
+  check1=(lengths[0] >= radius)
+  check2=(lengths[-1] >= radius)
+  # middle segments must accommodate two bends, hence >= 2 radius
+  check3=[length >= 2*radius for length in lengths if length != lengths[0] or length != lengths[-1]]
+  return check1 and check2 and all(check3)
 
 def remove_colinear_points(self):
   from .utils import pt_intersects_segment
@@ -115,38 +127,67 @@ def translate_from_center(self, offset):
   elif self.__class__ == pya.DPath:
     return pya.DPath(tpts, self.width)
     
+'''
+snap - pya.Path extension
+This function snaps the two path endpoints to the nearest pins by adjusting the end segments
+
+Input: 
+ - self: the Path object
+ - pins: an array of Pin objects, which are paths with 2 points, 
+         with the vector giving the direction (out of the component)
+Output:
+ - modifies the original Path
+
+'''
 def snap(self, pins):
+  # Import functionality from SiEPIC-Tools:
   from .utils import angle_vector, get_technology
   from . import _globals
-  from math import pi
   TECHNOLOGY = get_technology()
     
+  # Search for pins within this distance to the path endpoints, e.g., 10 microns
   d_min = _globals.PATH_SNAP_PIN_MAXDIST/TECHNOLOGY['dbu'];
 
   if not len(pins): return
+
+  # array of path vertices:
   pts = self.get_points()
+
+  # angles of all segments:
   ang = angle_vector(pts[1]-pts[0])
-  pins_sorted = sorted([pin for pin in pins if ((pin.rotation - ang)%180) == 0 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[0]))
+  print( '%s, %s' % (ang, [pin.rotation for pin in pins] ))
+  
+  # sort all the pins based on distance to the Path endpoint
+  # only consider pins that are facing each other, 180 degrees 
+  pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation)%360) == 180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[0]))
+
   if len(pins_sorted):
+    # pins_sorted[0] is the closest one
     dpt = pins_sorted[0].center - pts[0]
+    # check if the pin is close enough to the path endpoint
     if dpt.abs() <= d_min:
-      pts[0] += dpt
+      # snap the endpoint to the pin
+      pts[0] = dpt
+      # move the first corner
       if(round(ang % 180) == 0):
         pts[1].y += dpt.y
       else:
         pts[1].x += dpt.x
-  
-  ang = angle_vector(pts[-1]-pts[-2])
-  pins_sorted = sorted([pin for pin in pins if ((pin.rotation - ang)%180) == 0 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
+        
+  # do the same thing on the other end:  
+  ang = angle_vector(pts[-2]-pts[-1])
+  print( '%s, %s' % (ang, [pin.rotation for pin in pins] ))
+  pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation)%360) == 180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
   if len(pins_sorted):
     dpt = pins_sorted[0].center - pts[-1]
     if dpt.abs() <= d_min:
-      pts[-1] += dpt
+      pts[-1] = dpt
       if(round(ang % 180) == 0):
         pts[-2].y += dpt.y
       else:
         pts[-2].x += dpt.x
 
+  # check that the path has non-zero length after the snapping operation
   test_path = pya.Path()
   test_path.points = pts
   if test_path.length() > 0:
