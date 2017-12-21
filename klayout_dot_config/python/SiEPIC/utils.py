@@ -277,6 +277,31 @@ def arc_wg(radius, w, theta_start, theta_stop):
     pts.append(pya.Point.from_dpoint(pya.DPoint(((radius-w/2)*cos(i*da+th))/1, ((radius-w/2)*sin(i*da+th))/1)))
   return pya.Polygon(pts)
 
+def arc_wg_xy(x, y, r, w, theta_start, theta_stop):
+  # function to draw an arc of waveguide
+  # x, y: location of the origin
+  # r: radius
+  # w: waveguide width
+  # length units in dbu
+  # theta_start, theta_stop: angles for the arc
+  # angles in degrees
+
+  from math import pi, cos, sin
+  from .utils import points_per_circle
+  
+  circle_fraction = abs(theta_stop-theta_start) / 360.0
+  npoints = int(points_per_circle(r) * circle_fraction)
+  if npoints==0:
+    npoints = 1
+  da = 2 * pi / npoints * circle_fraction # increment, in radians
+  pts = []
+  th = theta_start / 360.0 * 2 * pi
+  for i in range(0, npoints+1):
+    pts.append(pya.Point.from_dpoint(pya.DPoint((x+(r+w/2)*cos(i*da+th))/1, (y+(r+w/2)*sin(i*da+th))/1)))
+  for i in range(npoints, -1, -1):
+    pts.append(pya.Point.from_dpoint(pya.DPoint((x+(r-w/2)*cos(i*da+th))/1, (y+(r-w/2)*sin(i*da+th))/1)))
+  return pya.Polygon(pts)
+
 
 #Create a bezier curve. While there are parameters for start and stop in degrees, this is currently only implemented for 90 degree bends
 def arc_bezier(radius, start, stop, bezier):
