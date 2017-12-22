@@ -63,6 +63,7 @@ class Waveguide(pya.PCellDeclarationHelper):
 
     from SiEPIC.utils import arc, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors
     from math import cos, sin, pi, sqrt
+    import pya
     TECHNOLOGY = get_technology()
     
     dbu = self.layout.dbu
@@ -137,6 +138,10 @@ class Waveguide(pya.PCellDeclarationHelper):
     if TECHNOLOGY['technology_name'] == 'EBeam':
       # Compact model information
       angle_vec = angle_vector(pts[0]-pts[1])/90
+      halign = 0 # left
+      angle=0
+      pt2=pts[0]
+      pt3=pts[0]
       if angle_vec == 0: # horizontal
         halign = 2 # right
         angle=0

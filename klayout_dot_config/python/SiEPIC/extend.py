@@ -167,7 +167,7 @@ def snap(self, pins):
     # check if the pin is close enough to the path endpoint
     if dpt.abs() <= d_min:
       # snap the endpoint to the pin
-      pts[0] = dpt
+      pts[0] += dpt
       # move the first corner
       if(round(ang % 180) == 0):
         pts[1].y += dpt.y
@@ -181,7 +181,7 @@ def snap(self, pins):
   if len(pins_sorted):
     dpt = pins_sorted[0].center - pts[-1]
     if dpt.abs() <= d_min:
-      pts[-1] = dpt
+      pts[-1] += dpt
       if(round(ang % 180) == 0):
         pts[-2].y += dpt.y
       else:
@@ -282,14 +282,22 @@ def find_pins(self):
   from . import _globals
   from .utils import get_technology
   TECHNOLOGY = get_technology()
+
+  # array to store Pin objects
   pins = []
+  
+  # Pin Recognition layer
   LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
+
+  # iterate through all the shapes in the cell
   it = self.begin_shapes_rec(LayerPinRecN)
   while not(it.at_end()):
-    idx = len(pins) # pin index value to be assigned to Pin.idx
+    # Assume a PinRec Path is an optical pin
     if it.shape().is_path():
+      # get the pin path
       pin_path = it.shape().path.transformed(it.itrans())
-      # Find text label (pin name) for this pin
+      # Find text label (pin name) for this pin by searching inside the Path bounding box
+      # Text label must be on DevRec layer
       pin_name = None
       subcell = it.cell()  # cell (component) to which this shape belongs
       iter2 = subcell.begin_shapes_rec_touching(LayerPinRecN, it.shape().bbox())
@@ -299,8 +307,11 @@ def find_pins(self):
         iter2.next()
       if pin_name == None:
         raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
-      pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name, idx=idx))
-#      print( "PinRec, name: %s at (%s)" % (pins[-1].pin_name, pins[-1].center) )
+      # Store the pin information int he pins array
+      pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+
+    # Assume a PinRec Box is an electrical pin
+    # similar to optical pin
     if it.shape().is_box():
       pin_box = it.shape().box.transformed(it.itrans())
       pin_name = None
@@ -312,10 +323,10 @@ def find_pins(self):
         iter2.next()
       if pin_name == None:
         raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
-      pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name, idx=idx))
-#      print( "PinRec, name: %s at (%s)" % (pins[-1].pin_name, pins[-1].center) )
+      pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
       
     it.next()
+  # return the array of pins
   return pins
   
 def find_pin(self, name):

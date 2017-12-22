@@ -42,9 +42,10 @@ class Net:
     
 '''
 Pin:
-This is a class that describes optical pins on components and waveguides.
+This is a class that describes pins on components and waveguides.
 A pin consists of:
- - a Path with 2 points, with it's vector giving the direction
+ - optical pin: a Path with 2 points, with it's vector giving the direction
+ - electrical pin: a Box
  - a Text label giving it's name
  - a type: OPTICAL, I/O, ELECTRICAL
 A pin can associated with:
@@ -65,7 +66,7 @@ Pin defs:
 
 '''
 class Pin():
-  def __init__(self, path=None, _type=None, idx=None, box=None, component=None, net=None, pin_name=None ):
+  def __init__(self, path=None, _type=None, box=None, component=None, net=None, pin_name=None ):
     from .utils import angle_vector
     from . import _globals
     self.path = path            # the pin's Path (Optical)
@@ -79,17 +80,15 @@ class Pin():
     if box:
       self.center = box.center()# center of the pin: a Point
     self.type = _type           # one of PIN_TYPES, defined in SiEPIC._globals.PINTYPES 
-#    self.idx = idx              # pin number, index, should be unique, 0, 1,
-    if net == None:
-      self.net = _globals.NET_DISCONNECTED
-    else:
+    if net:                     # Net for netlist generation
       self.net = net            # which net this pin is connected to
+    else:
+      self.net = _globals.NET_DISCONNECTED
     self.pin_name = pin_name    # label read from the cell layout (PinRec text)
-
-    # for backwards linking (optional)
     self.component = component  # which component index this pin belongs to
     
   def transform(self, trans):
+    # Transformation of the pin location
     from .utils import angle_vector
     if self.path:
       self.path = self.path.transformed(trans)
