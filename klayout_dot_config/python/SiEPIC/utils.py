@@ -58,12 +58,9 @@ def get_technology_by_name(tech_name):
         # encoutered a layer group, look inside:
         j = k['group-members']
         if 'name' in j:
-          layerInfo = j['source'].split('@')[0]
           technology[j['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
         else:
           for j in k['group-members']:
-            print(j['source'])
-            layerInfo = j['source'].split('@')[0]
             technology[j['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
       else:
         technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
