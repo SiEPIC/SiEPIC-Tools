@@ -301,6 +301,7 @@ def find_pins(self):
   while not(it.at_end()):
     # Assume a PinRec Path is an optical pin
     if it.shape().is_path():
+      print ("Path: %s" % it.shape() )
       # get the pin path
       pin_path = it.shape().path.transformed(it.itrans())
       # Find text label (pin name) for this pin by searching inside the Path bounding box
@@ -320,16 +321,19 @@ def find_pins(self):
     # Assume a PinRec Box is an electrical pin
     # similar to optical pin
     if it.shape().is_box():
+#      print ("Box: %s" % it.shape() )
       pin_box = it.shape().box.transformed(it.itrans())
       pin_name = None
       subcell = it.cell()  # cell (component) to which this shape belongs
       iter2 = subcell.begin_shapes_rec_touching(LayerPinRecN, it.shape().bbox())
+#      print ("Box: %s" % it.shape().bbox() )
       while not(iter2.at_end()):
+#        print ("shape touching: %s" % iter2.shape() )
         if iter2.shape().is_text():
           pin_name = iter2.shape().text.string
         iter2.next()
       if pin_name == None:
-        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_path)
+        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_box)
       pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
       
     it.next()
