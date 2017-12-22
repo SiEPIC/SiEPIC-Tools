@@ -28,6 +28,7 @@ PIN_TYPES = enum('IO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 100  # 0.1 micron
 
 try:
+  MODULE_NUMPY = True
   import numpy
 except ImportError:
   MODULE_NUMPY = False

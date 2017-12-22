@@ -26,9 +26,18 @@ pya.Cell Extensions:
   - print_parameter_values, if this cell is a pcell, prints the parameter values
   - find_pins: find Pin object of either the specified name or all pins in a cell
   - find_pin
+  - find_pins_component 
+  - find_components
+  - identify_nets
+  - get_LumericalINTERCONNECT_analyzers
+  - spice_netlist_export
 
 pya.Instance Extensions:
   - find_pins: find Pin objects for all pins in a cell instance
+
+pya.Point Extensions:
+  - to_dpoint: convert integer Point using dbu to float DPoint
+
 '''
 #################################################################################
 
@@ -287,7 +296,7 @@ def find_pins(self):
   # Pin Recognition layer
   LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
 
-  # iterate through all the shapes in the cell
+  # iterate through all the PinRec shapes in the cell
   it = self.begin_shapes_rec(LayerPinRecN)
   while not(it.at_end()):
     # Assume a PinRec Path is an optical pin
@@ -305,7 +314,7 @@ def find_pins(self):
         iter2.next()
       if pin_name == None:
         raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
-      # Store the pin information int he pins array
+      # Store the pin information in the pins array
       pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
 
     # Assume a PinRec Box is an electrical pin
@@ -324,6 +333,22 @@ def find_pins(self):
       pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
       
     it.next()
+
+  # Optical IO (Fibre) Recognition layer
+  LayerFbrTgtN = self.layout().layer(TECHNOLOGY['FbrTgt'])
+
+  # iterate through all the FbrTgt shapes in the cell
+  it = self.begin_shapes_rec(LayerFbrTgtN)
+  while not(it.at_end()):
+    # Assume a FbrTgt Path is an optical pin
+    if it.shape().is_polygon():
+      # Store the pin information in the pins array
+      pins.append(Pin(path=it.shape().polygon.transformed(it.itrans()),
+         _type=_globals.PIN_TYPES.IO, 
+         pin_name=self.basic_name().replace(' ', '_')))
+#         pin_name=it.cell().basic_name())) # 'OpticalFibre 9micron'
+    it.next()
+
   # return the array of pins
   return pins
   
@@ -506,6 +531,106 @@ def identify_nets(self, verbose=False):
       
   return nets, components
 
+def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
+  """
+  Find - LumericalINTERCONNECT_Laser
+       - LumericalINTERCONNECT_Detector
+  get their parameters
+  determine which OpticalIO they are connected to, and find their nets
+  Assume that the detectors and laser are on the topcell (not subcells); don't perform transformations.
+  
+  returns: parameters, nets in order
+  
+  usage:
+  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, ignoreOpticalIOs = get_LumericalINTERCONNECT_analyzers(topcell, optical_pins)
+  """
+
+  topcell = self
+
+  from . import _globals
+  from .utils import select_paths, get_technology
+  from .core import Net
+  TECHNOLOGY = get_technology()
+  
+  layout = topcell.layout()
+  LayerLumericalN = self.layout().layer(TECHNOLOGY['Lumerical'])
+
+  # data structure used to find the detectors and which optical nets they are connected to.
+  class Detector_info:
+    def __init__(self, detector_net, detector_number):
+      self.detector_net = detector_net
+      self.detector_number = detector_number
+  detectors_info = []  
+  
+  # default is the 1st polarization
+  orthogonal_identifier = 1
+      
+  # Find the laser and detectors in the layout.
+  iter1 = topcell.begin_shapes_rec(LayerLumericalN)
+  n_IO = 0
+  laser_net = None
+  wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = 0,0,0,0,0
+  while not(iter1.at_end()):
+    subcell = iter1.cell()             # cell (component) to which this shape belongs
+    if iter1.shape().is_box():
+      box = iter1.shape().box.transformed(iter1.itrans())
+      if iter1.cell().basic_name() == "Lumerical INTERCONNECT Detector":
+        n_IO += 1
+        # *** todo read parameters from Text labels rather than PCell:
+        detector_number = subcell.pcell_parameters_by_name()["number"]
+        if verbose:
+          print("%s: Detector {%s} %s, box -- %s; %s"   % (n_IO, subcell.basic_name(), detector_number, box.p1, box.p2) )
+        # find components which have an IO pin inside the Lumerical box:
+        components_IO = [ c for c in components if any( [box.contains(p.center) for p in c.pins if p.type == _globals.PIN_TYPES.IO] ) ]
+        if len(components_IO) > 1:
+          raise Exception("Error - more than 1 optical IO connected to the detector.")
+        if len(components_IO) == 0:
+           print("Warning - No optical IO connected to the detector.") 
+#          raise Exception("Error - 0 optical IO connected to the detector.")
+        else:
+          p = [p for p in components_IO[0].pins if p.type == _globals.PIN_TYPES.IO]
+          p[0].pin_name += '_detector' + str(n_IO)
+          p[0].net=Net(idx=p[0].pin_name, pins=p)
+          detectors_info.append(Detector_info(p[0].net, detector_number) )
+          if verbose:
+            print(" - pin_name: %s"   % (p[0].pin_name) )
+
+      if iter1.cell().basic_name() == "Lumerical INTERCONNECT Laser":
+        n_IO += 1
+        # *** todo read parameters from Text labels rather than PCell:
+        wavelength_start = subcell.pcell_parameters_by_name()["wavelength_start"]
+        wavelength_stop = subcell.pcell_parameters_by_name()["wavelength_stop"]
+        wavelength_points = subcell.pcell_parameters_by_name()["npoints"]
+        orthogonal_identifier = subcell.pcell_parameters_by_name()["orthogonal_identifier"]
+        ignoreOpticalIOs = subcell.pcell_parameters_by_name()["ignoreOpticalIOs"]
+        if verbose:
+          print("%s: Laser {%s}, box -- %s; %s"   % (n_IO, subcell.basic_name(), box.p1, box.p2) )
+        # find components which have an IO pin inside the Lumerical box:
+        components_IO = [ c for c in components if any( [box.contains(p.center) for p in c.pins if p.type == _globals.PIN_TYPES.IO] ) ]
+        if len(components_IO) > 1:
+          raise Exception("Error - more than 1 optical IO connected to the laser.")
+        if len(components_IO) == 0:
+          print("Warning - No optical IO connected to the laser.")
+#          raise Exception("Error - 0 optical IO connected to the laser.")
+        else:
+          p = [p for p in components_IO[0].pins if p.type == _globals.PIN_TYPES.IO]
+          p[0].pin_name += '_laser' + str(n_IO)
+          laser_net = p[0].net=Net(idx=p[0].pin_name, pins=p)
+          if verbose:
+            print(" - pin_name: %s"   % (p[0].pin_name) )
+
+    iter1.next()
+    
+  # Sort the detectors:
+  detectors_info2 = sorted(detectors_info, key=lambda  d: d.detector_number)
+    
+  # output:
+  detector_nets = []
+  for d in detectors_info2:
+    detector_nets.append (d.detector_net)
+
+  return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs
+    
 
 def spice_netlist_export(self, verbose = False):
   # list all Optical_component objects from an array
@@ -536,13 +661,90 @@ def spice_netlist_export(self, verbose = False):
        (90, True):[90, True], \
        (180, True):[0,True], \
        (270, True):[270, False]}
-  Lumerical_schematic_scaling=1
+
+  # Determine the Layout-to-Schematic (x,y) coordinate scaling       
+  # Find the distances between all the components, in order to determine scaling
+  sch_positions = [o.Dcenter for o in components]
+  sch_distances = []
+  for j in range(len(sch_positions)):
+    for k in range(j+1,len(sch_positions)):
+      dist = (sch_positions[j] - sch_positions[k]).abs()
+      sch_distances.append ( dist )
+  sch_distances.sort()
+  if verbose:
+    print("Distances between components: %s" % sch_distances)
+  # remove any 0 distances:
+  while 0.0 in sch_distances: sch_distances.remove(0.0)
+  # scaling based on nearest neighbour:
+  Lumerical_schematic_scaling = 0.0006 / min(sch_distances)
+  # but if the layout is too big, limit the size
+  MAX_size = 0.05
+  if max(sch_distances)*Lumerical_schematic_scaling > MAX_size:
+    Lumerical_schematic_scaling = MAX_size / max(sch_distances) 
+  print ("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
+
+  # find electrical IO pins
+  electricalIO_pins = ""
+  DCsources = "" # string to create DC sources for each pin
+  Vn = 1
+  SINGLE_DC_SOURCE = 2
+  # (1) attach all electrical pins to the same DC source
+  # (2) or to individual DC sources
+  # (3) or choose based on number of DC sources, if &gt; 5, use single DC source
+  for c in components:
+    for p in c.pins:
+      if p.type == _globals.PIN_TYPES.ELECTRICAL:
+        NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
+        electricalIO_pins += NetName
+        DCsources += "N" + str(Vn) + NetName + " 0 dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/10., -2+Vn/8.)
+        Vn += 1
+  electricalIO_pins_subckt = electricalIO_pins
+
+  if (SINGLE_DC_SOURCE == 1) or ( (SINGLE_DC_SOURCE == 2) and (Vn > 5)):
+    electricalIO_pins_subckt = ""
+    for c in components:
+      for p in c.pins:
+        if p.type == _globals.PIN_TYPES.ELECTRICAL:
+          NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
+          electricalIO_pins_subckt += NetName
+          DCsources = "N1" + NetName + " 0 dcsource amplitude=0 sch_x=-2 sch_y=0\n"
+
+  # Get information about the laser and detectors:
+  # this updates the Optical IO Net
+  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
+        get_LumericalINTERCONNECT_analyzers(self, components, verbose=verbose)
+
+  # find optical IO pins
+  opticalIO_pins=''
+  for c in components:
+    for p in c.pins:
+      if p.type == _globals.PIN_TYPES.IO:
+        NetName =  ' ' + p.pin_name
+        print(p.pin_name)
+        opticalIO_pins += NetName
+
+  # create the top subckt:
+  text_subckt += '.subckt %s%s%s\n' % (self.name, electricalIO_pins, opticalIO_pins)
+  text_subckt += '.param MC_uniformity_width=0 \n' # assign MC settings before importing netlist components
+  text_subckt += '.param MC_uniformity_thickness=0 \n' 
+  text_subckt += '.param MC_resolution_x=100 \n' 
+  text_subckt += '.param MC_resolution_y=100 \n' 
+  text_subckt += '.param MC_grid=10e-6 \n' 
+  text_subckt += '.param MC_non_uniform=99 \n' 
 
   for c in components:
-    # optical nets
+    # optical nets: must be ordered electrical, optical IO, then optical
     nets_str = ''
     for p in c.pins:
-      nets_str += " N$" + str(p.net.idx)
+      if p.type == _globals.PIN_TYPES.ELECTRICAL:
+        nets_str += " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
+    for p in c.pins:
+      if p.type == _globals.PIN_TYPES.IO:
+        nets_str += " " + str(p.net.idx)
+    for p in c.pins:
+      if p.type == _globals.PIN_TYPES.OPTICAL:
+        nets_str += " N$" + str(p.net.idx)
+
 
     trans = KLayoutInterconnectRotFlip[(c.trans.angle, c.trans.is_mirror())]
      
@@ -551,6 +753,17 @@ def spice_netlist_export(self, verbose = False):
       rotate = ' sch_r=%s' % str(trans[0])
     else:
       rotate = ''
+
+    # Check to see if this component is an Optical IO type.
+    pinIOtype = any([p for p in c.pins if p.type == _globals.PIN_TYPES.IO])
+        
+    if ignoreOpticalIOs and pinIOtype:
+      # Replace the Grating Coupler or Edge Coupler with a 0-length waveguide.
+      component1 = "ebeam_wg_strip_1550"
+      params1 = "wg_length=0u wg_width=0.500u"
+    else:
+      component1 =  o.component 
+      params1 = o.params
       
     text_subckt += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_"+str(c.idx), nets_str, c.component.replace(' ', '_') ) 
     if c.library != None:
@@ -563,7 +776,28 @@ def spice_netlist_export(self, verbose = False):
          rotate, flip)
 
 
-  detector_nets=[]
+  text_subckt += '.ends %s\n\n' % (self.name)
+
+  if laser_net:
+    text_main += '* Optical Network Analyzer:\n'
+    text_main += '.ona input_unit=wavelength input_parameter=start_and_stop\n  + minimum_loss=80\n  + analysis_type=scattering_data\n  + multithreading=user_defined number_of_threads=1\n' 
+    text_main += '  + orthogonal_identifier=%s\n' % orthogonal_identifier
+    text_main += '  + start=%4.3fe-9\n' % wavelength_start
+    text_main += '  + stop=%4.3fe-9\n' % wavelength_stop
+    text_main += '  + number_of_points=%s\n' % wavelength_points
+    for i in range(0,len(detector_nets)):
+      text_main += '  + input(%s)=%s,%s\n' % (i+1, self.name, detector_nets[i].idx)
+    text_main += '  + output=%s,%s\n' % (self.name, laser_net.idx)
+
+  # main circuit
+  text_main += '%s %s %s %s sch_x=-1 sch_y=-1 ' % (self.name, electricalIO_pins_subckt, opticalIO_pins, self.name)
+  if len(DCsources) > 0:
+    text_main += 'sch_r=270\n\n'
+  else:
+    text_main += '\n\n'
+
+  text_main += DCsources
+
   return text_subckt, text_main, len(detector_nets)
 
 
@@ -575,6 +809,7 @@ pya.Cell.find_pins = find_pins
 pya.Cell.find_pins_component = find_pins_component
 pya.Cell.find_components = find_components
 pya.Cell.identify_nets = identify_nets
+pya.Cell.get_LumericalINTERCONNECT_analyzers = get_LumericalINTERCONNECT_analyzers
 pya.Cell.spice_netlist_export = spice_netlist_export
 
 #################################################################################
@@ -591,3 +826,20 @@ def find_pins(self):
 #################################################################################
 
 pya.Instance.find_pins = find_pins
+
+
+#################################################################################
+#                    SiEPIC Class Extension of Point Class                      #
+#################################################################################
+
+# multiply an integer Point by a constant to get a float DPoint
+# new DPoint = Point.to_dtype(TECHNOLOGY['dbu'])
+# in v > 0.25, is built-in to KLayout
+if int(pya.Application.instance().version().split('.')[1]) < 25:
+  def to_dtype(self,dbu):
+    # create a new empty list.  Otherwise, this function would modify the original list
+    # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
+    return pya.DPoint(self.x * dbu, self.y * dbu)
+
+  # KLayout v0.25 introduced technology variable:
+  pya.Point.to_dtype = to_dtype

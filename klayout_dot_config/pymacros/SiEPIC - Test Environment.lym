@@ -94,6 +94,7 @@ if 1:
 
   if 1:
     text_subckt, text_main, detector_nets = cell.spice_netlist_export(verbose=True)
+    print(text_main)
     print(text_subckt)
 
   
