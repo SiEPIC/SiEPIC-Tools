@@ -80,6 +80,7 @@ def get_technology():
     # defaults:
     technology['DevRec'] = pya.LayerInfo(68, 0)
     technology['Waveguide'] = pya.LayerInfo(1, 0)
+    technology['Si'] = pya.LayerInfo(1, 0)
     technology['PinRec'] = pya.LayerInfo(69, 0)
     technology_name = 'EBeam'
 
