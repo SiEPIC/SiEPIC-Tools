@@ -10,6 +10,12 @@
     <height>476</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>279</width>
+    <height>476</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>Monte Carlo</string>
   </property>
@@ -22,6 +28,12 @@
       <width>201</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>201</width>
+      <height>16</height>
+     </size>
     </property>
     <property name="font">
      <font>
@@ -40,6 +52,12 @@
       <width>261</width>
       <height>181</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>261</width>
+      <height>181</height>
+     </size>
     </property>
     <property name="currentIndex">
      <number>1</number>
@@ -212,6 +230,12 @@
         <height>61</height>
        </rect>
       </property>
+      <property name="minimumSize">
+       <size>
+        <width>251</width>
+        <height>61</height>
+       </size>
+      </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
       </property>
@@ -227,6 +251,12 @@
          <height>21</height>
         </rect>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>71</width>
+         <height>21</height>
+        </size>
+       </property>
        <property name="text">
         <string>Std. Dev (nm):</string>
        </property>
@@ -240,6 +270,12 @@
          <height>20</height>
         </rect>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>101</width>
+         <height>20</height>
+        </size>
+       </property>
       </widget>
       <widget class="QLabel" name="label_37">
        <property name="geometry">
@@ -249,6 +285,12 @@
          <width>81</width>
          <height>16</height>
         </rect>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>81</width>
+         <height>16</height>
+        </size>
        </property>
        <property name="text">
         <string>Width Variation:</string>
@@ -263,6 +305,12 @@
         <width>251</width>
         <height>61</height>
        </rect>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>251</width>
+        <height>61</height>
+       </size>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -279,6 +327,12 @@
          <height>21</height>
         </rect>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>71</width>
+         <height>21</height>
+        </size>
+       </property>
        <property name="text">
         <string>Std. Dev (nm):</string>
        </property>
@@ -292,6 +346,12 @@
          <height>20</height>
         </rect>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>101</width>
+         <height>20</height>
+        </size>
+       </property>
       </widget>
       <widget class="QLabel" name="label_39">
        <property name="geometry">
@@ -301,6 +361,12 @@
          <width>101</width>
          <height>16</height>
         </rect>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>101</width>
+         <height>16</height>
+        </size>
        </property>
        <property name="text">
         <string>Thickness Variation:</string>
@@ -318,6 +384,12 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>111</width>
+      <height>21</height>
+     </size>
+    </property>
     <property name="text">
      <string>Generate Histograms:</string>
     </property>
@@ -330,6 +402,12 @@
       <width>171</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>171</width>
+      <height>21</height>
+     </size>
     </property>
     <property name="text">
      <string>Number of Test Dies Per Wafer:</string>
@@ -344,6 +422,12 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>42</width>
+      <height>21</height>
+     </size>
+    </property>
    </widget>
    <widget class="QCheckBox" name="gain">
     <property name="geometry">
@@ -353,6 +437,12 @@
       <width>70</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>70</width>
+      <height>21</height>
+     </size>
     </property>
     <property name="text">
      <string>Gain</string>
@@ -367,6 +457,12 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>81</width>
+      <height>21</height>
+     </size>
+    </property>
     <property name="text">
      <string>Wavelength</string>
     </property>
@@ -379,6 +475,12 @@
       <width>121</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>121</width>
+      <height>21</height>
+     </size>
     </property>
     <property name="text">
      <string>Number of Test Wafers:</string>
@@ -393,6 +495,12 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>121</width>
+      <height>21</height>
+     </size>
+    </property>
     <property name="text">
      <string>Free Spectral Range</string>
     </property>
@@ -406,6 +514,12 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>42</width>
+      <height>21</height>
+     </size>
+    </property>
    </widget>
    <widget class="QPushButton" name="cancel">
     <property name="geometry">
@@ -415,6 +529,12 @@
       <width>75</width>
       <height>23</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>75</width>
+      <height>23</height>
+     </size>
     </property>
     <property name="text">
      <string>Cancel</string>
@@ -429,6 +549,12 @@
       <height>23</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>75</width>
+      <height>23</height>
+     </size>
+    </property>
     <property name="text">
      <string>Run</string>
     </property>
@@ -442,6 +568,12 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>61</width>
+      <height>21</height>
+     </size>
+    </property>
     <property name="text">
      <string>Technology:</string>
     </property>
@@ -454,6 +586,12 @@
       <width>171</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>171</width>
+      <height>21</height>
+     </size>
     </property>
     <item>
      <property name="text">

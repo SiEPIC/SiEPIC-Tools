@@ -167,8 +167,6 @@ class WaveguideGUI():
     self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
     ui_file.close
     
-    self.window.setFixedSize(pya.Application.instance().desktop().screenGeometry().width/6, pya.Application.instance().desktop().screenGeometry().height/2)
-    
     table = self.window.findChild('layerTable')
     table.setColumnCount(3)
     table.setHorizontalHeaderLabels([ "Layer","Width","Offset"])
@@ -186,7 +184,7 @@ class WaveguideGUI():
     self.window.findChild('radioCustom').toggled(self.updateFields)
     self.window.findChild('adiabatic').toggled(self.updateFields)
     self.window.findChild('radioStrip').click()
-    self.status = None
+    self.initialized = False
     self.layers = []
     
   def updateTable(self, val):
@@ -277,26 +275,21 @@ class WaveguideGUI():
   def show(self):
     self.updateLayers(0)
     self.updateTable(0)
+    self.initialized = True
     self.window.show()
   
   def close(self, val):
-    self.status = False
     self.window.close()
-    from . import scripts
-    scripts.waveguide_from_path()
 
   def ok(self, val):
-    self.status = True
     self.window.close()
     from . import scripts
     scripts.waveguide_from_path()
-    
-  def return_status(self):
-    status = self.status
-    self.status = None
-    return status
   
   def get_parameters(self):
+    if not self.initialized:
+      self.show()
+      return None
     params = { 'radius': float(self.window.findChild('radius').text),
                'width': 0,
                'adiabatic': self.window.findChild('adiabatic').isChecked(),
@@ -384,5 +377,29 @@ class MonteCarloGUI():
     self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
     ui_file.close
     
+    self.window.findChild('run').clicked(self.ok)
+    self.window.findChild('cancel').clicked(self.close)
+    self.status = None
+    
   def show(self):
-    pass
+    self.window.show()
+  
+  def close(self, val):
+    self.status = False
+    self.window.close()
+    from . import lumerical
+    lumerical.interconnect.monte_carlo()
+
+  def ok(self, val):
+    self.status = True
+    self.window.close()
+    from .lumerical import interconnect
+    interconnect.monte_carlo()
+    
+  def return_status(self):
+    status = self.status
+    self.status = None
+    return status
+
+  def get_parameters(self):
+    return {}

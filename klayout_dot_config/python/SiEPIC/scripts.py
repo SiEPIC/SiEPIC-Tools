@@ -19,58 +19,53 @@ def waveguide_from_path(params = None, cell = None):
   else:
     ly = cell.layout()
   
-  status = _globals.WG_GUI.return_status()
-  if status is None and params is None:
-    _globals.WG_GUI.show()
-  else:
-    lv.transaction("waveguide from path")
+  lv.transaction("waveguide from path")
 
-    if status is False: return
-    if params is None: params = _globals.WG_GUI.get_parameters()  
-    
-    selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell)
-    selection = []
-  
-    warning = pya.QMessageBox()
-    warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
-    warning.setDefaultButton(pya.QMessageBox.Yes)
-    for obj in selected_paths:
-      path = obj.shape.path
-      if not path.is_manhattan():
-        warning.setText("Warning: Waveguide segments (first, last) are not Manhattan (vertical, horizontal).")
-        warning.setInformativeText("Do you want to Proceed?")
-        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
-          return
-      if not path.radius_check(params['radius']/TECHNOLOGY['dbu']):
-        warning.setText("Warning: One of the waveguide segments has insufficient length to accommodate the desired bend radius.")
-        warning.setInformativeText("Do you want to Proceed?")
-        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
-          return
-      
-      path.snap(cell.find_pins())
-      path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
-      path.width = path.width * TECHNOLOGY['dbu']
-      width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
-      pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": path,
-                                                                     "radius": params['radius'],
-                                                                     "width": params['width'],
-                                                                     "adiab": params['adiabatic'],
-                                                                     "bezier": params['bezier'],
-                                                                     "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
-                                                                     "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
-                                                                     "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
-      if pcell==None:
-        raise Exception("'Waveguide' in 'SiEPIC General' library is not available. Check that the library was loaded successfully.")
-      selection.append(pya.ObjectInstPath())
-      selection[-1].top = obj.top
-      print(pcell)
-      selection[-1].append_path(pya.InstElement.new(cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
-      
-      obj.shape.delete()
-    
-    lv.clear_object_selection()
-    lv.object_selection = selection
-    lv.commit()
+  if params is None: params = _globals.WG_GUI.get_parameters()
+  if params is None: return
+  selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell)
+  selection = []
+
+  warning = pya.QMessageBox()
+  warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
+  warning.setDefaultButton(pya.QMessageBox.Yes)
+  for obj in selected_paths:
+    path = obj.shape.path
+    if not path.is_manhattan():
+      warning.setText("Warning: Waveguide segments (first, last) are not Manhattan (vertical, horizontal).")
+      warning.setInformativeText("Do you want to Proceed?")
+      if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+        return
+    if not path.radius_check(params['radius']/TECHNOLOGY['dbu']):
+      warning.setText("Warning: One of the waveguide segments has insufficient length to accommodate the desired bend radius.")
+      warning.setInformativeText("Do you want to Proceed?")
+      if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+        return
+
+    path.snap(cell.find_pins())
+    path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
+    path.width = path.width * TECHNOLOGY['dbu']
+    width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
+    pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": path,
+                                                                   "radius": params['radius'],
+                                                                   "width": params['width'],
+                                                                   "adiab": params['adiabatic'],
+                                                                   "bezier": params['bezier'],
+                                                                   "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
+                                                                   "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
+                                                                   "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
+    if pcell==None:
+      raise Exception("'Waveguide' in 'SiEPIC General' library is not available. Check that the library was loaded successfully.")
+    selection.append(pya.ObjectInstPath())
+    selection[-1].top = obj.top
+    print(pcell)
+    selection[-1].append_path(pya.InstElement.new(cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
+
+    obj.shape.delete()
+
+  lv.clear_object_selection()
+  lv.object_selection = selection
+  lv.commit()
 
 
 def waveguide_to_path(cell = None):
@@ -224,8 +219,8 @@ def snap_component():
   # Define layers based on PDK:
   LayerSiN = TECHNOLOGY['Waveguide']
   LayerPinRecN = TECHNOLOGY['PinRec']
-  LayerDevRecN = TECHNOLOGY['DevRec'] 
-  LayerFbrTgtN = TECHNOLOGY['FbrTgt'] 
+  LayerDevRecN = TECHNOLOGY['DevRec']
+  LayerFbrTgtN = TECHNOLOGY['FbrTgt']
   LayerErrorN = TECHNOLOGY['Errors']
   
   # we need two objects.  One is selected, and the other is a transient selection

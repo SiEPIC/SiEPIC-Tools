@@ -8,16 +8,16 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
- <shortcut/>
+ <shortcut>W</shortcut>
  <show-in-menu>true</show-in-menu>
  <group-name/>
- <menu-path>siepic_menu.waveguides.begin</menu-path>
+ <menu-path/>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function
 # SiEPIC Path to Waveguide
 import pya
-from SiEPIC import _globals
-_globals.WG_GUI.show()
+from SiEPIC import scripts
+scripts.waveguide_from_path()
 </text>
 </klayout-macro>
