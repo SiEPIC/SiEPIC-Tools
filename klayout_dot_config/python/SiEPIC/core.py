@@ -300,33 +300,28 @@ class WaveguideGUI():
     if self.window.findChild('radioStrip').isChecked():
     
       layer = self.window.findChild('stripLayer').currentText
-      layer = layer.split(' ')[-1].split('/')
-      params['wgs'].append({'layer': pya.LayerInfo(int(layer[0]), int(layer[1])), 'width': float(self.window.findChild('stripWidth').text), 'offset': 0})
+      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('stripWidth').text), 'offset': 0})
       params['width'] = params['wgs'][0]['width']
       
     elif self.window.findChild('radioRidge').isChecked():
       layer = self.window.findChild('ridgeLayer1').currentText
-      layer = layer.split(' ')[-1].split('/')
-      params['wgs'].append({'layer': pya.LayerInfo(int(layer[0]), int(layer[1])), 'width': float(self.window.findChild('ridgeWidth1').text), 'offset': 0})
+      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ridgeWidth1').text), 'offset': 0})
       layer = self.window.findChild('ridgeLayer2').currentText
-      layer = layer.split(' ')[-1].split('/')
-      params['wgs'].append({'layer': pya.LayerInfo(int(layer[0]), int(layer[1])), 'width': float(self.window.findChild('ridgeWidth2').text), 'offset': 0})
+      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ridgeWidth2').text), 'offset': 0})
       params['width'] = params['wgs'][0]['width']
       
     elif self.window.findChild('radioSlot').isChecked():
       w1 = float(self.window.findChild('slotWidth1').text)
       w2 = float(self.window.findChild('slotWidth2').text)
       layer = self.window.findChild('slotLayer').currentText
-      layer = layer.split(' ')[-1].split('/')
-      params['wgs'].append({'layer': pya.LayerInfo(int(layer[0]), int(layer[1])), 'width': (w1-w2)/2,'offset': (w1+w2)/4})
-      params['wgs'].append({'layer': pya.LayerInfo(int(layer[0]), int(layer[1])), 'width': (w1-w2)/2,'offset': -(w1+w2)/4})
+      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': (w1-w2)/2,'offset': (w1+w2)/4})
+      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': (w1-w2)/2,'offset': -(w1+w2)/4})
       params['width'] = w1
     elif self.window.findChild('radioCustom').isChecked():
       table = self.window.findChild('layerTable')
       for i in range(0, int(self.window.findChild('numLayers').value)):
         layer = table.cellWidget(i,0).currentText
-        layer = layer.split(' ')[-1].split('/')
-        params['wgs'].append({'layer': pya.LayerInfo(int(layer[0]), int(layer[1])), 'width': float(table.cellWidget(i,1).text), 'offset': float(table.cellWidget(i,2).text)})
+        params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(table.cellWidget(i,1).text), 'offset': float(table.cellWidget(i,2).text)})
         w = (params['wgs'][-1]['width']/2+params['wgs'][-1]['offset'])*2
         if params['width'] < w:
           params['width'] = w

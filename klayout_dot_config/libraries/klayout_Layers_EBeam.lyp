@@ -73,7 +73,7 @@
   <marked>false</marked>
   <animation>0</animation>
   <name>32_Si_p4nm</name>
-  <source>'32_Si_p4nm' 32/0@1</source>
+  <source>32/0@1</source>
  </properties>
  <properties>
   <frame-color>#ff80a8</frame-color>
@@ -88,7 +88,7 @@
   <marked>false</marked>
   <animation>0</animation>
   <name>33_Si_p2nm</name>
-  <source>'33_Si_p2nm' 33/0@1</source>
+  <source>33/0@1</source>
  </properties>
  <properties>
   <frame-color>#805000</frame-color>

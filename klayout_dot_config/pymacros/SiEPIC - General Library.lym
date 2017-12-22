@@ -37,8 +37,7 @@ class Waveguide(PCellDeclarationHelper):
     self.param("width", self.TypeDouble, "Width", default = 0.5)
     self.param("adiab", self.TypeBoolean, "Adiabatic", default = False)
     self.param("bezier", self.TypeDouble, "Bezier Parameter", default = 0.35)
-    self.param("layers", self.TypeList, "Layers", default = [TECHNOLOGY['Waveguide']])
-#    self.param("layers", self.TypeList, "Layers", default = ['1/0'])
+    self.param("layers", self.TypeList, "Layers", default = ['Waveguide'])
     self.param("widths", self.TypeList, "Widths", default =  [0.5])
     self.param("offsets", self.TypeList, "Offsets", default = [0])
     
@@ -75,12 +74,8 @@ class Waveguide(PCellDeclarationHelper):
     path.remove_colinear_points()
     for lr in range(0, len(self.layers)):
       
-      if isinstance(self.layers[lr], str):
-        layer = self.layers[lr].split('/')
-        layer = self.layout.layer(LayerInfo(int(layer[0]), int(layer[1])))
-      else:
-        layer = self.layout.layer(self.layers[lr])
-
+      layer = self.layout.layer(TECHNOLOGY[self.layers[lr]])
+      
       width = float(self.widths[lr])/dbu
       offset = float(self.offsets[lr])/dbu
       #radius = self.radius/dbu + offset

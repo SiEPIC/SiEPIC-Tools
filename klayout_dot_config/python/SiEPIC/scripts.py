@@ -56,7 +56,7 @@ def waveguide_from_path(params = None, cell = None):
                                                                      "width": params['width'],
                                                                      "adiab": params['adiabatic'],
                                                                      "bezier": params['bezier'],
-                                                                     "layers": [wg['layer'] for wg in params['wgs']] + [TECHNOLOGY['DevRec']],
+                                                                     "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
                                                                      "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
                                                                      "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
       if pcell==None:
