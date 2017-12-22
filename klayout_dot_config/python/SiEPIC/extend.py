@@ -313,7 +313,7 @@ def find_pins(self):
           pin_name = iter2.shape().text.string
         iter2.next()
       if pin_name == None:
-        raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
+        raise Exception("Invalid pin Path detected: %s.\nOptical Pins must have a pin name." % pin_path)
       # Store the pin information in the pins array
       pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
 
@@ -329,7 +329,7 @@ def find_pins(self):
           pin_name = iter2.shape().text.string
         iter2.next()
       if pin_name == None:
-        raise Exception("Invalid pin detected: %s.\nPins must have a pin name." % pin_path)
+        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_path)
       pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
       
     it.next()
@@ -665,7 +665,7 @@ def spice_netlist_export(self, verbose = False):
   # Determine the Layout-to-Schematic (x,y) coordinate scaling       
   # Find the distances between all the components, in order to determine scaling
   sch_positions = [o.Dcenter for o in components]
-  sch_distances = []
+  sch_distances = [1e6]
   for j in range(len(sch_positions)):
     for k in range(j+1,len(sch_positions)):
       dist = (sch_positions[j] - sch_positions[k]).abs()
