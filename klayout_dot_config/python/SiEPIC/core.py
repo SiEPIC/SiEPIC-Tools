@@ -66,7 +66,7 @@ Pin defs:
 
 '''
 class Pin():
-  def __init__(self, path=None, _type=None, box=None, component=None, net=None, pin_name=None ):
+  def __init__(self, path=None, _type=None, box=None, polygon=None, component=None, net=None, pin_name=None ):
     from .utils import angle_vector
     from . import _globals
     self.path = path            # the pin's Path (Optical)
@@ -79,6 +79,8 @@ class Pin():
     self.box = box              # the pin's Box (Electrical)
     if box:
       self.center = box.center()# center of the pin: a Point
+    if polygon:
+      self.center = polygon.center()# center of the pin: a Point
     self.type = _type           # one of PIN_TYPES, defined in SiEPIC._globals.PINTYPES 
     if net:                     # Net for netlist generation
       self.net = net            # which net this pin is connected to
@@ -136,6 +138,10 @@ class Component():
     self.npins = len(pins)     # number of pins
     self.params = params       # Spice parameters
     self.polygon = polygon     # The component's DevRec polygon/box outline
+    self.center = polygon.bbox().center()  # Point
+    from .utils import get_technology
+    TECHNOLOGY = get_technology()
+    self.Dcenter = self.center.to_dtype(TECHNOLOGY['dbu'])
   def display(self):
     from . import _globals
     c = self

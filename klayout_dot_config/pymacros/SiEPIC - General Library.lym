@@ -215,12 +215,13 @@ class LumericalINTERCONNECT_Laser(PCellDeclarationHelper):
     return False
     
   def produce_impl(self):
+    from SiEPIC.utils import layout_pgtext, get_technology
     TECHNOLOGY = get_technology()
     ly = self.layout
     shapes = self.cell.shapes
     dbu = self.layout.dbu
     
-    LayerINTERCONNECT = ly.layer(TECHNOLOGY['733_Lumerical'])
+    LayerINTERCONNECT = ly.layer(TECHNOLOGY['Lumerical'])
 
     # Draw the laser
     width = 60/dbu
@@ -232,9 +233,8 @@ class LumericalINTERCONNECT_Laser(PCellDeclarationHelper):
     shapes(LayerINTERCONNECT).insert(Text ("Number of points: %s" % (self.npoints), Trans(Trans.R0,-width/2+3/dbu, height/2-12/dbu))).text_size = 1.5/dbu
     shapes(LayerINTERCONNECT).insert(Text("Ignore optical IOs in simulations: %s" % (self.ignoreOpticalIOs), Trans(Trans.R0,-width/2+3/dbu, height/2-16/dbu))).text_size = 1.5/dbu
     # Add a polygon text description
-    from SiEPIC.utils import layout_pgtext
-    layout_pgtext(self.cell, _globals.TECHNOLOGY['Text'], -width/2*dbu+3, -height/2*dbu+2, "Number of points: %s" % (self.npoints), 2.2)
-    layout_pgtext(self.cell, _globals.TECHNOLOGY['Text'], -width/2*dbu+3, -height/2*dbu+5, "Wavelength range: %4.3f - %4.3f nm" % (self.wavelength_start, self.wavelength_stop), 2.2)
+    layout_pgtext(self.cell, TECHNOLOGY['Text'], -width/2*dbu+3, -height/2*dbu+2, "Number of points: %s" % (self.npoints), 2.2)
+    layout_pgtext(self.cell, TECHNOLOGY['Text'], -width/2*dbu+3, -height/2*dbu+5, "Wavelength range: %4.3f - %4.3f nm" % (self.wavelength_start, self.wavelength_stop), 2.2)
 
 class LumericalINTERCONNECT_Detector(PCellDeclarationHelper):
   """
@@ -257,12 +257,13 @@ class LumericalINTERCONNECT_Detector(PCellDeclarationHelper):
     pass
            
   def produce_impl(self):
+    from SiEPIC.utils import layout_pgtext, get_technology
     TECHNOLOGY = get_technology()
     ly = self.layout
     shapes = self.cell.shapes
     dbu = self.layout.dbu
     
-    LayerINTERCONNECT = ly.layer(TECHNOLOGY['733_Lumerical'])
+    LayerINTERCONNECT = ly.layer(TECHNOLOGY['Lumerical'])
 
     # Draw the outline
     width = 60/dbu
@@ -274,13 +275,12 @@ class LumericalINTERCONNECT_Detector(PCellDeclarationHelper):
     shapes(LayerINTERCONNECT).insert(Text("LumericalINTERCONNECT_Detector %s" % (self.number), Trans(0,0))).text_size = 0.1/dbu
 
     # Add a polygon text description
-    from SiEPIC.utils import layout_pgtext
-    layout_pgtext(self.cell, _globals.TECHNOLOGY['Text'], -width/2*dbu+3, -height/2*dbu+2, "Number: %s" % (self.number), 2.2)
+    layout_pgtext(self.cell, TECHNOLOGY['Text'], -width/2*dbu+3, -height/2*dbu+2, "Number: %s" % (self.number), 2.2)
 
 class SiEPIC_General(Library):
   def __init__(self):
-    technology = 'SiEPIC General'
-    print("Initializing '%s' Library." % technology)
+    library = 'SiEPIC General'
+    print("Initializing '%s' Library." % library)
 
     self.description = "Laser, Detector, Waveguides"
 
@@ -294,11 +294,11 @@ class SiEPIC_General(Library):
     
     # Register us the library with the technology name
     # If a library with that name already existed, it will be replaced then.
-    self.register(technology)
+    self.register(library)
 
-    if int(Application.instance().version().split('.')[1]) &gt; 24:
+#    if int(Application.instance().version().split('.')[1]) &gt; 24:
       # KLayout v0.25 introduced technology variable:
-      self.technology(technology)
+#      self.technology=technology
 
     
 SiEPIC_General()

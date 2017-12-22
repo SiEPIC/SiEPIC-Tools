@@ -43,6 +43,10 @@ utils.arc = arc_test
 '''
 
 if 1:
+    import sys
+    print (sys.version[0])
+    if int(sys.version[0]) &gt; 2:
+      from importlib import reload
     SiEPIC = reload(SiEPIC)
     SiEPIC.extend = reload(SiEPIC.extend)
     SiEPIC._globals = reload(SiEPIC._globals)
@@ -71,7 +75,7 @@ if 0:
   print(matches)
   
 
-if 1:
+if 0:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
@@ -92,8 +96,9 @@ if 1:
     print ("* Display list of nets:" )
     [n.display() for n in nets]
 
-  if 1:
+  if 0:
     text_subckt, text_main, detector_nets = cell.spice_netlist_export(verbose=True)
+    print(text_main)
     print(text_subckt)
 
   
@@ -101,14 +106,17 @@ if 1:
   #from SiEPIC import _globals
   #from SiEPIC.netlist import find_all_components
   
+if 1:  
+    lv = pya.Application.instance().main_window().current_view()
+    ly = lv.active_cellview().layout() 
+    cell = lv.active_cellview().cell
+    
+    LayerN=ly.layer(pya.LayerInfo('Text'))
+    pya.Trans(pya.Trans.R0,10000,10000)
+    pya.Trans(10000,10000)
+#    cell.shapes(LayerN).insert(pya.Text ("elec1a", pya.Trans(10000,10000)))
+    cell.shapes(LayerN).insert(pya.Text ("elec1a", pya.Trans(pya.Trans.R0,10000,10000)))
 
-  
-  
-  
-  
-  
-  
-  
-  
-</text>
+
+  </text>
 </klayout-macro>
