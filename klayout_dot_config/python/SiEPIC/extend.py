@@ -85,7 +85,7 @@ def radius_check(self, radius):
   check1=(lengths[0] >= radius)
   check2=(lengths[-1] >= radius)
   # middle segments must accommodate two bends, hence >= 2 radius
-  check3=[length >= 2*radius for length in lengths if length != lengths[0] or length != lengths[-1]]
+  check3=[length >= 2*radius for length in lengths[1:-1]]
   return check1 and check2 and all(check3)
 
 def remove_colinear_points(self):

@@ -102,30 +102,14 @@ def waveguide_to_path(cell = None):
   for obj in waveguides:
     # path from guiding shape
     waveguide = obj.inst()
-    # Determine whether we have Python 2 or Python 3
-    import sys
-    
-#    if sys.version_info[0] == 3:
-#      # for some reason this doesn't work on Instantiated PCells, but it does on W-generated ones!
-#      path1 = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each().__next__().path
-#    elif sys.version_info[0] == 2:
-#      # Python 2 & 3 fix:
+
+    # Python 2 & 3 fix:
     from SiEPIC.utils import advance_iterator
     itr = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each()
     path1 = advance_iterator(itr)
 
-    # waveguide width from Waveguide PCell
-    c = waveguide.cell
-    width = c.pcell_parameters_by_name()['width']
-
-    # modify path (doesn't work in 0.24.10 / Python2); neither does dup()
-    # perhaps because this path belongs to a PCell.
-    #path1.width = int(width/TECHNOLOGY['dbu'])  # 
-    
-    # instead create a new path:
-    path = pya.Path()
-    path.width = width/TECHNOLOGY['dbu']
-    path.points=[pts for pts in path1.each_point()]
+    path = waveguide.cell.pcell_parameters_by_name()['path']
+    path.width = path.width/TECHNOLOGY['dbu']
 
     selection.append(pya.ObjectInstPath())
     selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
