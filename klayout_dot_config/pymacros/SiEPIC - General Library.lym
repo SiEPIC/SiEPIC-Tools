@@ -183,7 +183,7 @@ class Waveguide(PCellDeclarationHelper):
       shape = self.cell.shapes(LayerDevRecN).insert(text)
       shape.text_size = 0.1/dbu
 
-    print("- PCell Waveguide: is empty guiding shape %s" % self.cell.shapes(self.layout.guiding_shape_layer()).is_empty())
+    # print("- PCell Waveguide: is empty guiding shape %s" % self.cell.shapes(self.layout.guiding_shape_layer()).is_empty())
     #if self.cell.shapes(self.layout.guiding_shape_layer()).is_empty():
     # this was adding a duplicate. There already is a guiding shape. also width should be /dbu.
     self.cell.shapes(self.layout.guiding_shape_layer()).insert(Path(path.get_points(), path.width/dbu))
@@ -284,9 +284,10 @@ class LumericalINTERCONNECT_Detector(PCellDeclarationHelper):
 
 class SiEPIC_General(Library):
   def __init__(self):
-    print("Initializing SiEPIC_General Library.")
+    technology = 'SiEPIC General'
+    print("Initializing '%s' Library." % technology)
 
-    self.description = ""
+    self.description = "Laser, Detector, Waveguides"
 
     #import os
     #self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP.gds"))
@@ -296,7 +297,14 @@ class SiEPIC_General(Library):
     self.layout().register_pcell("Lumerical INTERCONNECT Detector", LumericalINTERCONNECT_Detector())
     self.layout().register_pcell("Waveguide", Waveguide())
     
-    self.register("SiEPIC General")
+    # Register us the library with the technology name
+    # If a library with that name already existed, it will be replaced then.
+    self.register(technology)
+
+    if int(Application.instance().version().split('.')[1]) &gt; 24:
+      # KLayout v0.25 introduced technology variable:
+      self.technology(technology)
+
     
 SiEPIC_General()
  </text>
