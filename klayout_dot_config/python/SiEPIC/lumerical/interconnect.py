@@ -66,8 +66,8 @@ def Setup_Lumerical_KLayoutPython_integration():
       '''
       cmd1='launchctl unload  %s' % matches[0]
       a,b=commands.getstatusoutput(cmd1)
-      if a != 0 or b !='':
-        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+#      if a != 0 or b !='':
+#        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
       cmd1='launchctl load  %s' % matches[0]
       a,b=commands.getstatusoutput(cmd1)
       if a != 0 or b !='':
