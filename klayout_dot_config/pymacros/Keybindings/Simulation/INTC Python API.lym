@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Setup Lumerical-KLayout Python integration
+
+import SiEPIC, pya
+
+
+def Setup_Lumerical_KLayoutPython_integration():
+  if sys.platform.startswith('darwin'):
+    
+    import os, fnmatch
+    dir_path = pya.Application.instance().application_data_path()
+    file_name = 'GSiP'
+    matches = []
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter(filenames, file_name):
+            matches.append(os.path.join(root, filename))
+    print(matches)
+    
+  
+  import SiEPIC.lumerical.lumapi_osx as lumapi
+  
+  '''
+  Python Lumerical API
+  
+   - set paths so KLayout's Python can find INTERCONNECT
+  
+   - Manually:
+     https://kx.lumerical.com/t/python-api-on-mac-os-work-around/5923
+     then start KLayout from the terminal:
+  
+  sudo nano /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python/lumapi.py 
+    INTEROPLIB = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + "/../Matlab/libinterop-api.1.dylib"
+  open -n /Applications/klayout.app/
+     
+   - eventually try to have it available from the dock.
+   
+     https://apple.stackexchange.com/questions/51677/how-to-set-path-for-finder-launched-applications
+   - in /Applications/klayout.app/Contents/Info.plist
+  
+  #!/bin/sh
+  
+  . ~/.bash_profile
+  
+  logger "`dirname \"$0\"`/eclipse"
+  
+  exec "`dirname \"$0\"`/eclipse" $@
+  In the Terminal set the executable flag of the shell script eclipse.sh, i.e.:
+  
+  chmod +x /Applications/eclipse/Eclipse.app/Contents/MacOS/eclipse.sh    
+  
+   - in Sierra: https://apple.stackexchange.com/questions/289060/setting-variables-in-environment-plist
+   
+   
+   - in Python
+   
+    https://kb.lumerical.com/en/ref_scripts_interoperability.html
+   
+  '''
+  import sys, numpy, os  # include numpy
+  sys.path.append("/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python/") # lumapi path
+  sys.path.append("/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS/")
+  import lumapi
+  '''
+  - should load successfully
+  '''
+  if 'INTC' not in globals():
+    INTC = lumapi.open('interconnect')
+  else:
+    try:
+      lumapi.evalScript(INTC, "?'';")
+    except:
+      INTC = lumapi.open('interconnect')
+    
+  lumapi.evalScript(INTC, "switchtolayout;")
+  lumapi.evalScript(INTC, "cd ('/tmp/klayout_EBeam_lukasc');")
+  lumapi.evalScript(INTC, "INTC;")
+  lumapi.evalScript(INTC, "visualize(t1);")
+  
+  
+  #lumapi.close(INTC)
+
+
+</text>
+</klayout-macro>
