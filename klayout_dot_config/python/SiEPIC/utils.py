@@ -87,6 +87,7 @@ def get_technology():
     technology['Si'] = pya.LayerInfo(1, 0)
     technology['PinRec'] = pya.LayerInfo(69, 0)
     technology['Lumerical'] = pya.LayerInfo(733, 0)
+    technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
     lv = pya.Application.instance().main_window().current_view()

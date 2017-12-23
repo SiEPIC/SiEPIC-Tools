@@ -9,8 +9,7 @@
     <string>sh</string>
     <string>-c</string>
     <string>
-      launchctl setenv FOO foo
-      launchctl setenv BAR bar
+      launchctl setenv SiEPIC_Tools_Lumerical_KLayout_environment True
       launchctl setenv PATH /Applications/Lumerical/FDTD\ Solutions/FDTD\ Solutions.app/Contents/MacOS:/Applications/Lumerical/MODE\ Solutions/MODE\ Solutions.app/Contents/MacOS:/Applications/Lumerical/DEVICE/DEVICE.app/Contents/MacOS:/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS:$PATH
     </string>
   </array>

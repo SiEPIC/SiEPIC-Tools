@@ -61,5 +61,7 @@ SiEPIC.setup.registerMenuItems()
 SiEPIC.setup.registerKeyBindings()
 pya.Application.instance().main_window().message('SiEPIC - Initialization complete.',5000)
 
+# Lumerical INTERCONNECT Python integration
+INTC = None
 </text>
 </klayout-macro>

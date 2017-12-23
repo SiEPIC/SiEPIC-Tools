@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description/>
+ <description>Setup Lumerical-KLayout Python integration</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -9,9 +9,9 @@
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
  <shortcut/>
- <show-in-menu>false</show-in-menu>
+ <show-in-menu>true</show-in-menu>
  <group-name/>
- <menu-path/>
+ <menu-path>siepic_menu.simulation.begin</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Setup Lumerical-KLayout Python integration
@@ -20,80 +20,153 @@ import SiEPIC, pya
 
 
 def Setup_Lumerical_KLayoutPython_integration():
+  import sys, os, string
   if sys.platform.startswith('darwin'):
-    
+
+    if string.find(sys.version,"2.7.") &gt; -1:
+      import commands
+    else:
+      raise Exception ('Unknown Python version: %s' % file_name)
+  
+    ##################################################################
+    # Configure OSX Path to include Lumerical tools: 
+          
+    # Copy the launch control file into user's Library folder
+    # execute launctl to register the new paths
     import os, fnmatch
     dir_path = pya.Application.instance().application_data_path()
-    file_name = 'GSiP'
+    file_name = 'SiEPIC_Tools_Lumerical_KLayout_environment.plist'
     matches = []
     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
         for filename in fnmatch.filter(filenames, file_name):
             matches.append(os.path.join(root, filename))
-    print(matches)
     
-  
-  import SiEPIC.lumerical.lumapi_osx as lumapi
-  
-  '''
-  Python Lumerical API
-  
-   - set paths so KLayout's Python can find INTERCONNECT
-  
-   - Manually:
-     https://kx.lumerical.com/t/python-api-on-mac-os-work-around/5923
-     then start KLayout from the terminal:
-  
-  sudo nano /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python/lumapi.py 
-    INTEROPLIB = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + "/../Matlab/libinterop-api.1.dylib"
-  open -n /Applications/klayout.app/
-     
-   - eventually try to have it available from the dock.
-   
-     https://apple.stackexchange.com/questions/51677/how-to-set-path-for-finder-launched-applications
-   - in /Applications/klayout.app/Contents/Info.plist
-  
-  #!/bin/sh
-  
-  . ~/.bash_profile
-  
-  logger "`dirname \"$0\"`/eclipse"
-  
-  exec "`dirname \"$0\"`/eclipse" $@
-  In the Terminal set the executable flag of the shell script eclipse.sh, i.e.:
-  
-  chmod +x /Applications/eclipse/Eclipse.app/Contents/MacOS/eclipse.sh    
-  
-   - in Sierra: https://apple.stackexchange.com/questions/289060/setting-variables-in-environment-plist
-   
-   
-   - in Python
-   
-    https://kb.lumerical.com/en/ref_scripts_interoperability.html
-   
-  '''
-  import sys, numpy, os  # include numpy
-  sys.path.append("/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python/") # lumapi path
-  sys.path.append("/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS/")
-  import lumapi
-  '''
-  - should load successfully
-  '''
-  if 'INTC' not in globals():
-    INTC = lumapi.open('interconnect')
-  else:
-    try:
-      lumapi.evalScript(INTC, "?'';")
-    except:
+    if not matches[0]:
+      raise Exception ('Missing file: %s' % file_name)
+
+    # Check if Paths are correctly set, and KLayout Python sees them
+    a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
+    if b=='':
+      # Not yet installed... copy files, install
+
+      '''
+      cmd1='cp %s $HOME/Library/LaunchAgents/' % matches[0]
+      a,b=commands.getstatusoutput(cmd1)
+      print(b)
+      if a != 0:
+        raise Exception ('Error calling: %s' % cmd1)
+      cmd1='launchctl load  $HOME/Library/LaunchAgents/%s' % file_name
+      a,b=commands.getstatusoutput(cmd1)
+      print(b)
+      if a != 0:
+        raise Exception ('Error calling: %s' % cmd1)
+      '''
+      cmd1='launchctl unload  %s' % matches[0]
+      a,b=commands.getstatusoutput(cmd1)
+      if a != 0 or b !='':
+        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+      cmd1='launchctl load  %s' % matches[0]
+      a,b=commands.getstatusoutput(cmd1)
+      if a != 0 or b !='':
+        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+      cmd1='killall Dock'
+      a,b=commands.getstatusoutput(cmd1)
+      if a != 0 or b !='':
+        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+
+      # Check if Paths are correctly set, and KLayout Python sees them
+      a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
+      if b=='':
+        # Not loaded    
+        raise Exception ('The System paths have been updated. Please restart KLayout, and try again.')
+
+    ##################################################################
+    # Load Lumerical API: 
+
+    import SiEPIC.lumerical.lumapi_osx as lumapi
+    
+    global INTC  # Python Lumerical INTERCONNECT integration handle
+
+    print('INTC' not in globals())
+    if 'INTC' not in globals():
+      raise Exception ("Variable INTC for Lumerical INTERCONNECT is not global defined.")
+
+    if not INTC:
       INTC = lumapi.open('interconnect')
+      print(INTC)
+    else:
+      try:
+        lumapi.evalScript(INTC, "?'KLayout integration test.';")
+      except:
+        INTC = lumapi.open('interconnect')
+    try:
+      lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+    except:
+      raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
+
+    lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+
+# Lumerical INTERCONNECT Python integration
+if 'INTC' not in globals():
+  INTC = None
+     
+Setup_Lumerical_KLayoutPython_integration()    
     
-  lumapi.evalScript(INTC, "switchtolayout;")
-  lumapi.evalScript(INTC, "cd ('/tmp/klayout_EBeam_lukasc');")
-  lumapi.evalScript(INTC, "INTC;")
-  lumapi.evalScript(INTC, "visualize(t1);")
+import SiEPIC.lumerical.lumapi_osx as lumapi
+lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+
+'''
+Python Lumerical API
+
+ - set paths so KLayout's Python can find INTERCONNECT
+
+ - Manually:
+   https://kx.lumerical.com/t/python-api-on-mac-os-work-around/5923
+   then start KLayout from the terminal:
+
+sudo nano /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python/lumapi.py 
+  INTEROPLIB = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + "/../Matlab/libinterop-api.1.dylib"
+open -n /Applications/klayout.app/
+   
+ - eventually try to have it available from the dock.
+ 
+   https://apple.stackexchange.com/questions/51677/how-to-set-path-for-finder-launched-applications
+ - in /Applications/klayout.app/Contents/Info.plist
+
+ 
+ - in Python
+ 
+  https://kb.lumerical.com/en/ref_scripts_interoperability.html
+ 
+import sys, numpy, os  # include numpy
+sys.path.append("/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python/") # lumapi path
+sys.path.append("/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS/")
+import lumapi
+- should load successfully
+if 'INTC' not in globals():
+  INTC = lumapi.open('interconnect')
+else:
+  try:
+    lumapi.evalScript(INTC, "?'';")
+  except:
+    INTC = lumapi.open('interconnect')
   
-  
-  #lumapi.close(INTC)
+lumapi.evalScript(INTC, "switchtolayout;")
+lumapi.evalScript(INTC, "cd ('/tmp/klayout_EBeam_lukasc');")
+lumapi.evalScript(INTC, "INTC;")
+lumapi.evalScript(INTC, "visualize(t1);")
 
 
+#lumapi.close(INTC)
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  file_name = 'GSiP'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, file_name):
+          matches.append(os.path.join(root, filename))
+  print(matches)
+'''
 </text>
 </klayout-macro>

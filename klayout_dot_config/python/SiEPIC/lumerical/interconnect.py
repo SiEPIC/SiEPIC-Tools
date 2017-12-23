@@ -21,13 +21,98 @@ import pya
 
 
 
+def Setup_Lumerical_KLayoutPython_integration():
+  import sys, os, string
+  if sys.platform.startswith('darwin'):
+
+    if string.find(sys.version,"2.7.") > -1:
+      import commands
+    else:
+      raise Exception ('Unknown Python version: %s' % file_name)
+  
+    ##################################################################
+    # Configure OSX Path to include Lumerical tools: 
+          
+    # Copy the launch control file into user's Library folder
+    # execute launctl to register the new paths
+    import os, fnmatch
+    dir_path = pya.Application.instance().application_data_path()
+    file_name = 'SiEPIC_Tools_Lumerical_KLayout_environment.plist'
+    matches = []
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter(filenames, file_name):
+            matches.append(os.path.join(root, filename))
+    
+    if not matches[0]:
+      raise Exception ('Missing file: %s' % file_name)
+
+    # Check if Paths are correctly set, and KLayout Python sees them
+    a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
+    if b=='':
+      # Not yet installed... copy files, install
+
+      '''
+      cmd1='cp %s $HOME/Library/LaunchAgents/' % matches[0]
+      a,b=commands.getstatusoutput(cmd1)
+      print(b)
+      if a != 0:
+        raise Exception ('Error calling: %s' % cmd1)
+      cmd1='launchctl load  $HOME/Library/LaunchAgents/%s' % file_name
+      a,b=commands.getstatusoutput(cmd1)
+      print(b)
+      if a != 0:
+        raise Exception ('Error calling: %s' % cmd1)
+      '''
+      cmd1='launchctl unload  %s' % matches[0]
+      a,b=commands.getstatusoutput(cmd1)
+      if a != 0 or b !='':
+        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+      cmd1='launchctl load  %s' % matches[0]
+      a,b=commands.getstatusoutput(cmd1)
+      if a != 0 or b !='':
+        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+      cmd1='killall Dock'
+      a,b=commands.getstatusoutput(cmd1)
+      if a != 0 or b !='':
+        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+
+      # Check if Paths are correctly set, and KLayout Python sees them
+      a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
+      if b=='':
+        # Not loaded    
+        raise Exception ('The System paths have been updated. Please restart KLayout, and try again.')
+
+    ##################################################################
+    # Load Lumerical API: 
+
+    import SiEPIC.lumerical.lumapi_osx as lumapi
+    
+    global INTC  # Python Lumerical INTERCONNECT integration handle
+
+    print('INTC' not in globals())
+    if 'INTC' not in globals():
+      raise Exception ("Variable INTC for Lumerical INTERCONNECT is not global defined.")
+
+    if not INTC:
+      INTC = lumapi.open('interconnect')
+      print(INTC)
+    else:
+      try:
+        lumapi.evalScript(INTC, "?'KLayout integration test.';")
+      except:
+        INTC = lumapi.open('interconnect')
+    try:
+      lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+    except:
+      raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
+
+    lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+
+
+
 def launch():
   print('launch')
 
-  from ..utils import get_technology
-  from .. import _globals
-  TECHNOLOGY = get_technology()
-  
   import os, platform, sys, string
   print(os.name)
   print(platform.system())
@@ -40,6 +125,14 @@ def launch():
   # Linux
   if not any ( [sys.platform.startswith("win"), sys.platform.startswith("linux"), sys.platform.startswith("darwin") ]):
     raise Exception("Unsupported operating system: %s" % sys.platform)
+
+
+  global INTC  # Python Lumerical INTERCONNECT integration handle
+  
+  from ..utils import get_technology
+  from .. import _globals
+  TECHNOLOGY = get_technology()
+  
   
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
@@ -164,26 +257,50 @@ def launch():
   
   elif sys.platform.startswith('darwin'):
     # OSX specific
-    if string.find(version,"2.7.") > -1:
-      import commands
-      home = os.path.expanduser("~")
-# *** todo: check if the bash_profile has the lines below, if not, ask the user, and add
-      if ~os.path.exists(home + "/.bash_profile"):
-        text_bash =  '\n'
-        text_bash += '# Setting PATH for Lumerical API\n'
-        text_bash += 'export PATH=/Applications/Lumerical/FDTD\ Solutions/FDTD\ Solutions.app/Contents/MacOS:$PATH\n'
-        text_bash += 'export PATH=/Applications/Lumerical/MODE\ Solutions/MODE\ Solutions.app/Contents/MacOS:$PATH\n'
-        text_bash += 'export PATH=/Applications/Lumerical/DEVICE/DEVICE.app/Contents/MacOS:$PATH\n'
-        text_bash += 'export PATH=/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS:$PATH\n'
-        text_bash +=  '\n'
-        file = open(home + "/.bash_profile", 'w')
-        file.write (text_bash)
-        file.close()
-      print("Running INTERCONNECT")
-      #commands.getstatusoutput('open /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args %s' % filename)
-      runcmd = 'source ~/.bash_profile; open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2
-      print("Running in shell: %s" % runcmd)
-      commands.getstatusoutput(runcmd)
+
+    import SiEPIC.lumerical.lumapi_osx as lumapi
+
+    if 'INTC' not in globals():
+      raise Exception ("Variable INTC for Lumerical INTERCONNECT is not global defined.")
+
+    if not INTC:  # Not running, start a new session
+      INTC = lumapi.open('interconnect')
+      print(INTC)
+    else: # found open INTC session
+      try:
+        lumapi.evalScript(INTC, "?'KLayout integration test.';")
+      except: # but can't communicate with INTC; perhaps it was closed by the user
+        INTC = lumapi.open('interconnect')  # run again.
+    try: # check one more time
+      lumapi.evalScript(INTC, "?'KLayout integration test.';")
+      # Run using Python integration:
+      lumapi.evalScript(INTC, "switchtolayout;")
+      lumapi.evalScript(INTC, "cd ('" + tmp_folder + "');")
+      lumapi.evalScript(INTC, topcell.name + ";")
+
+    except:
+      print ("Can't connect to Lumerical INTERCONNECT using Python. Proceeding using command interface.")
+
+      if string.find(version,"2.7.") > -1:
+        import commands
+        home = os.path.expanduser("~")
+        if ~os.path.exists(home + "/.bash_profile"):
+          text_bash =  '\n'
+          text_bash += '# Setting PATH for Lumerical API\n'
+          text_bash += 'export PATH=/Applications/Lumerical/FDTD\ Solutions/FDTD\ Solutions.app/Contents/MacOS:$PATH\n'
+          text_bash += 'export PATH=/Applications/Lumerical/MODE\ Solutions/MODE\ Solutions.app/Contents/MacOS:$PATH\n'
+          text_bash += 'export PATH=/Applications/Lumerical/DEVICE/DEVICE.app/Contents/MacOS:$PATH\n'
+          text_bash += 'export PATH=/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS:$PATH\n'
+          text_bash +=  '\n'
+          file = open(home + "/.bash_profile", 'w')
+          file.write (text_bash)
+          file.close()
+        print("Running INTERCONNECT")
+        runcmd = 'source ~/.bash_profile; open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2
+        print("Running in shell: %s" % runcmd)
+        commands.getstatusoutput(runcmd)
+
+    
   
   elif sys.platform.startswith('win'):
     # Windows specific code here

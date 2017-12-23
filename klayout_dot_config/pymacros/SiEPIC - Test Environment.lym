@@ -58,6 +58,9 @@ if 1:
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.setup = reload(SiEPIC.setup)
+
+    # Lumerical INTERCONNECT Python integration
+    INTC = None
     print('Reloaded SiEPIC')
 
 
