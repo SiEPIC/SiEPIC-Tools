@@ -31,6 +31,7 @@ def waveguide_from_path(params = None, cell = None):
   warning.setDefaultButton(pya.QMessageBox.Yes)
   for obj in selected_paths:
     path = obj.shape.path
+    path.unique_points()
     if not path.is_manhattan():
       warning.setText("Warning: Waveguide segments (first, last) are not Manhattan (vertical, horizontal).")
       warning.setInformativeText("Do you want to Proceed?")
@@ -95,19 +96,41 @@ def waveguide_to_path(cell = None):
   waveguides = select_waveguides(cell)
   selection = []
   for obj in waveguides:
-    # path from guiding shape
+    # path from waveguide guiding shape
     waveguide = obj.inst()
 
-    # Python 2 & 3 fix:
-    from SiEPIC.utils import advance_iterator
-    itr = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each()
-    path1 = advance_iterator(itr)
+    if 0:
+      # Python 2 & 3 fix:
+      from SiEPIC.utils import advance_iterator
+      itr = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each()
+      path1 = advance_iterator(itr)
 
-    path = waveguide.cell.pcell_parameters_by_name()['path']
-    path.width = path.width/TECHNOLOGY['dbu']
+    from ._globals import KLAYOUT_VERSION
+    
+    if KLAYOUT_VERSION > 24:
+      path = waveguide.cell.pcell_parameters_by_name()['path']
+      path.width = path.width/TECHNOLOGY['dbu']
+    else:
+      # waveguide path and width from Waveguide PCell
+      path1 = waveguide.cell.pcell_parameters_by_name()['path']
+      print(path1)
+      path = pya.Path()
+      path.width = waveguide.cell.pcell_parameters_by_name()['width']/TECHNOLOGY['dbu']
+      pts=[]
+      for pt in [pt1 for pt1 in (path1).each_point()]:
+        if type(pt) == pya.Point:
+          # for instantiated PCell
+          pts.append (pya.Point())
+        else:
+          # for waveguide from path
+          pts.append (pya.Point().from_dpoint(pt*(1/TECHNOLOGY['dbu'])))
+      for p in pts:
+        print(p)
+      path.points = pts
 
     selection.append(pya.ObjectInstPath())
     selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
+    # DPath.transformed requires DTrans. waveguide.trans is a Trans object
     selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path.transformed(waveguide.trans))
     selection[-1].top = obj.top
     selection[-1].cv_index = obj.cv_index

@@ -27,13 +27,14 @@ TECHNOLOGY['layer name'] is a LayerInfo object.
 # Read the layer table for a given technology.
 
 def get_technology_by_name(tech_name):
+    from ._globals import KLAYOUT_VERSION
     technology = {}
-    if int(pya.Application.instance().version().split('.')[1]) > 24:
+    if KLAYOUT_VERSION > 24:
       technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
     else:
       technology['dbu'] = 0.001
 
-    if int(pya.Application.instance().version().split('.')[1]) > 24:
+    if KLAYOUT_VERSION > 24:
       lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
     else:
       import os, fnmatch
@@ -64,6 +65,9 @@ def get_technology_by_name(tech_name):
           for j in k['group-members']:
             layerInfo_j = j['source'].split('@')[0]
             technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
+        print(k['source'])
+        if k['source'] != '*/*@*':
+          technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
       else:
         technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
     return technology
@@ -72,8 +76,9 @@ def get_technology_by_name(tech_name):
 # print(get_technology_by_name('EBeam'))
 # print(get_technology_by_name('GSiP'))
 
-#Keeps SiEPIC global variables and libraries consistent with technology of current layout
+# Get the current Technology
 def get_technology():
+    from ._globals import KLAYOUT_VERSION
     technology = {}
 
     # defaults:
@@ -85,23 +90,22 @@ def get_technology():
 
     lv = pya.Application.instance().main_window().current_view()
     if lv == None:
-      # no layout open; return an default technology
+      # no layout open; return a default technology
       print ("No view selected")
       technology['dbu']=0.001
       technology['technology_name']=technology_name
-#      raise Exception("No view selected")
       return technology
 
     # "lv.active_cellview().technology" crashes in KLayout 0.24.10 when loading a GDS file (technology not defined yet?)
-    if int(pya.Application.instance().version().split('.')[1]) > 24:
+    if KLAYOUT_VERSION > 24:
       technology_name = lv.active_cellview().technology
 
     technology['technology_name'] = technology_name
     
-    if int(pya.Application.instance().version().split('.')[1]) > 24:
+    if KLAYOUT_VERSION > 24:
       technology['dbu'] = pya.Technology.technology_by_name(technology_name).dbu
     else:
-      technology['dbu'] = 0.001
+      technology['dbu'] = pya.Application.instance().main_window().current_view().active_cellview().layout().dbu
       
     itr = lv.begin_layers()
     while True:

@@ -9,8 +9,9 @@ pya.Path and pya.DPath Extensions:
   - get_dpoints(), returns list of pya.DPoints
   - is_manhattan(), tests to see if the path is manhattan
   - radius_check(radius), tests to see of all path segments are long enough to be
-  converted to a waveguide with bends of radius 'radius'
+    converted to a waveguide with bends of radius 'radius'
   - remove_colinear_points(), removes all colinear points in place
+  - unique_points_path(), remove all but one colinear points
   - translate_from_center(offset), returns a new path whose points have been offset
   by 'offset' from the center of the original path
   - snap(pins), snaps the path in place to the nearest pin
@@ -88,13 +89,30 @@ def radius_check(self, radius):
   check3=[length >= 2*radius for length in lengths[1:-1]]
   return check1 and check2 and all(check3)
 
+# remove all but 1 colinear point
 def remove_colinear_points(self):
   from .utils import pt_intersects_segment
   if self.__class__ == pya.Path:
     pts = self.get_points()
   else:
     pts = self.get_dpoints()
+
+  # this version removed all colinear points, which doesn't make sense for a path
   self.points = [pts[0]]+[pts[i] for i in range(1, len(pts)-1) if not pt_intersects_segment(pts[i+1], pts[i-1], pts[i])]+[pts[-1]]
+
+def unique_points(self):
+  if self.__class__ == pya.Path:
+    pts = self.get_points()
+  else:
+    pts = self.get_dpoints()
+
+  # only keep unique path points:
+  output = []
+  for pt in pts:
+    if pt not in output:
+        output.append(pt)
+  self.points = output
+
   
 def translate_from_center(self, offset):
   from math import pi, cos, sin, acos, sqrt
@@ -208,6 +226,7 @@ pya.Path.get_dpoints = get_dpoints
 pya.Path.is_manhattan = is_manhattan
 pya.Path.radius_check = radius_check
 pya.Path.remove_colinear_points = remove_colinear_points
+pya.Path.unique_points = unique_points
 pya.Path.translate_from_center = translate_from_center
 pya.Path.snap = snap;
 

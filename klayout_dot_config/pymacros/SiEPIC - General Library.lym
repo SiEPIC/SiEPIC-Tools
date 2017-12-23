@@ -71,7 +71,7 @@ class Waveguide(PCellDeclarationHelper):
     path = self.path*(1/dbu)
     if not (len(self.layers)==len(self.widths) and len(self.layers)==len(self.offsets) and len(self.offsets)==len(self.widths)):
       raise Exception("There must be an equal number of layers, widths and offsets")
-    path.remove_colinear_points()
+    path.unique_points()
     for lr in range(0, len(self.layers)):
       
       layer = self.layout.layer(TECHNOLOGY[self.layers[lr]])

@@ -106,7 +106,7 @@ if 0:
   #from SiEPIC import _globals
   #from SiEPIC.netlist import find_all_components
   
-if 1:  
+if 0:  
     lv = pya.Application.instance().main_window().current_view()
     ly = lv.active_cellview().layout() 
     cell = lv.active_cellview().cell

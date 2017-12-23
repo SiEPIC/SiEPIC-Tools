@@ -35,6 +35,8 @@ except ImportError:
   
 #ACTIONS = []
 
+KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
+
 
 
 # Waveguide DevRec: space between the waveguide and the DevRec polygon
