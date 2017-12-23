@@ -43,6 +43,4 @@ WG_DEVREC_SPACE = 1
 # Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
 PATH_SNAP_PIN_MAXDIST = 20
 
-# Lumerical INTERCONNECT Python integration
-INTC = None
 

@@ -16,106 +16,19 @@
  <dsl-interpreter-name/>
  <text># Setup Lumerical-KLayout Python integration
 
-import SiEPIC, pya
+import pya
 
-
-def Setup_Lumerical_KLayoutPython_integration():
-  import sys, os, string
-  if sys.platform.startswith('darwin'):
-
-    if string.find(sys.version,"2.7.") &gt; -1:
-      import commands
-    else:
-      raise Exception ('Unknown Python version: %s' % file_name)
-  
-    ##################################################################
-    # Configure OSX Path to include Lumerical tools: 
-          
-    # Copy the launch control file into user's Library folder
-    # execute launctl to register the new paths
-    import os, fnmatch
-    dir_path = pya.Application.instance().application_data_path()
-    file_name = 'SiEPIC_Tools_Lumerical_KLayout_environment.plist'
-    matches = []
-    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
-        for filename in fnmatch.filter(filenames, file_name):
-            matches.append(os.path.join(root, filename))
-    
-    if not matches[0]:
-      raise Exception ('Missing file: %s' % file_name)
-
-    # Check if Paths are correctly set, and KLayout Python sees them
-    a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
-    if b=='':
-      # Not yet installed... copy files, install
-
-      '''
-      cmd1='cp %s $HOME/Library/LaunchAgents/' % matches[0]
-      a,b=commands.getstatusoutput(cmd1)
-      print(b)
-      if a != 0:
-        raise Exception ('Error calling: %s' % cmd1)
-      cmd1='launchctl load  $HOME/Library/LaunchAgents/%s' % file_name
-      a,b=commands.getstatusoutput(cmd1)
-      print(b)
-      if a != 0:
-        raise Exception ('Error calling: %s' % cmd1)
-      '''
-      cmd1='launchctl unload  %s' % matches[0]
-      a,b=commands.getstatusoutput(cmd1)
-      if a != 0 or b !='':
-        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-      cmd1='launchctl load  %s' % matches[0]
-      a,b=commands.getstatusoutput(cmd1)
-      if a != 0 or b !='':
-        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-      cmd1='killall Dock'
-      a,b=commands.getstatusoutput(cmd1)
-      if a != 0 or b !='':
-        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-
-      # Check if Paths are correctly set, and KLayout Python sees them
-      a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
-      if b=='':
-        # Not loaded    
-        raise Exception ('The System paths have been updated. Please restart KLayout, and try again.')
-
-    ##################################################################
-    # Load Lumerical API: 
-
-    import SiEPIC.lumerical.lumapi_osx as lumapi
-    
-    global INTC  # Python Lumerical INTERCONNECT integration handle
-
-    print('INTC' not in globals())
-    if 'INTC' not in globals():
-      raise Exception ("Variable INTC for Lumerical INTERCONNECT is not global defined.")
-
-    if not INTC:
-      INTC = lumapi.open('interconnect')
-      print(INTC)
-    else:
-      try:
-        lumapi.evalScript(INTC, "?'KLayout integration test.';")
-      except:
-        INTC = lumapi.open('interconnect')
-    try:
-      lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
-    except:
-      raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
-
-    lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+from SiEPIC import lumerical
 
 # Lumerical INTERCONNECT Python integration
-if 'INTC' not in globals():
-  INTC = None
-     
-Setup_Lumerical_KLayoutPython_integration()    
+ 
+lumerical.interconnect.Setup_Lumerical_KLayoutPython_integration()    
     
+
+'''
 import SiEPIC.lumerical.lumapi_osx as lumapi
 lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
 
-'''
 Python Lumerical API
 
  - set paths so KLayout's Python can find INTERCONNECT

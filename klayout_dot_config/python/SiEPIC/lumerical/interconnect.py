@@ -19,7 +19,8 @@ SiEPIC.lumerical.interconnect:
 
 import pya
 
-
+# Lumerical INTERCONNECT Python integration
+INTC = None
 
 def Setup_Lumerical_KLayoutPython_integration():
   import sys, os, string
@@ -85,14 +86,9 @@ def Setup_Lumerical_KLayoutPython_integration():
     ##################################################################
     # Load Lumerical API: 
 
-    import SiEPIC.lumerical.lumapi_osx as lumapi
-    
+    import lumapi_osx as lumapi
     global INTC  # Python Lumerical INTERCONNECT integration handle
-
-    print('INTC' not in globals())
-    if 'INTC' not in globals():
-      raise Exception ("Variable INTC for Lumerical INTERCONNECT is not global defined.")
-
+    
     if not INTC:
       INTC = lumapi.open('interconnect')
       print(INTC)
@@ -125,9 +121,6 @@ def launch():
   # Linux
   if not any ( [sys.platform.startswith("win"), sys.platform.startswith("linux"), sys.platform.startswith("darwin") ]):
     raise Exception("Unsupported operating system: %s" % sys.platform)
-
-
-  global INTC  # Python Lumerical INTERCONNECT integration handle
   
   from ..utils import get_technology
   from .. import _globals
@@ -258,10 +251,8 @@ def launch():
   elif sys.platform.startswith('darwin'):
     # OSX specific
 
-    import SiEPIC.lumerical.lumapi_osx as lumapi
-
-    if 'INTC' not in globals():
-      raise Exception ("Variable INTC for Lumerical INTERCONNECT is not global defined.")
+    import lumapi_osx as lumapi
+    global INTC  # Python Lumerical INTERCONNECT integration handle
 
     if not INTC:  # Not running, start a new session
       INTC = lumapi.open('interconnect')
