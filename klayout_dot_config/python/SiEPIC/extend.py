@@ -11,7 +11,7 @@ pya.Path and pya.DPath Extensions:
   - radius_check(radius), tests to see of all path segments are long enough to be
     converted to a waveguide with bends of radius 'radius'
   - remove_colinear_points(), removes all colinear points in place
-  - unique_points_path(), remove all but one colinear points
+  - unique_points(), remove all but one colinear points
   - translate_from_center(offset), returns a new path whose points have been offset
   by 'offset' from the center of the original path
   - snap(pins), snaps the path in place to the nearest pin
@@ -238,6 +238,7 @@ pya.DPath.get_dpoints = get_dpoints
 pya.DPath.is_manhattan = is_manhattan
 pya.DPath.radius_check = radius_check
 pya.DPath.remove_colinear_points = remove_colinear_points
+pya.DPath.unique_points = unique_points
 pya.DPath.translate_from_center = translate_from_center
 pya.DPath.snap = snap;
 
