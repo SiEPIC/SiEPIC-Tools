@@ -304,7 +304,7 @@ Electrical Pins have:
  1) box on layer PinRec, indicating direction (out of component)
  2) text on layer PinRec, inside the path
 '''
-def find_pins(self):
+def find_pins(self, verbose=False):
   from .core import Pin
   from . import _globals
   from .utils import get_technology
@@ -321,7 +321,8 @@ def find_pins(self):
   while not(it.at_end()):
     # Assume a PinRec Path is an optical pin
     if it.shape().is_path():
-      print ("Path: %s" % it.shape() )
+      if verbose:
+        print ("Path: %s" % it.shape() )
       # get the pin path
       pin_path = it.shape().path.transformed(it.itrans())
       # Find text label (pin name) for this pin by searching inside the Path bounding box
@@ -439,7 +440,7 @@ def find_components(self, verbose=False):
   while not(iter1.at_end()):
     idx = len(components) # component index value to be assigned to Component.idx
     subcell = iter1.cell()             # cell (component) to which this shape belongs
-    component = subcell.basic_name()   # name library component
+    component = subcell.basic_name().replace(' ','_')   # name library component
     instance = subcell.name      
 #    subcell.name                # name of the cell; for PCells, different from basic_name
 

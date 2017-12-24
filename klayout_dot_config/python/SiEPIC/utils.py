@@ -32,6 +32,7 @@ import SiEPIC.utils
 SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 def get_technology_by_name(tech_name):
+    print("get_technology_by_name()")
     from ._globals import KLAYOUT_VERSION
     technology = {}
     technology['technology_name']=tech_name
@@ -92,6 +93,7 @@ def get_technology_by_name(tech_name):
 
 # Get the current Technology
 def get_technology():
+    print("get_technology()")
     from ._globals import KLAYOUT_VERSION
     technology = {}
 

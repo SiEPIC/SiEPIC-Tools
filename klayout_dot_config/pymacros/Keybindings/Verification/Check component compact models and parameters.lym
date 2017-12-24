@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Check component compact models and parameters</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.verification.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import SiEPIC, pya
+
+# Enter your Python code here ..
+
+# test Component.has_compactmodel()
+if 1:
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  if 0:
+    print ("* find_components():" )
+    components = cell.find_components ()
+    print ("* Display list of components:" )
+    [c.display() for c in components]
+  if 0:
+    text_subckt, text_main, detector_nets = cell.spice_netlist_export(verbose=True)
+    print(text_main)
+    print(text_subckt)
+  if 1:
+    print ("* find_components()" )
+    components = cell.find_components ()
+    print ("* Display list of components" )
+
+    if not all([c.has_model() for c in components]):
+      # missing models, find which one
+      components_havemodels = [[c.has_model(), c.component, c.instance] for c in components]
+      missing_models = []
+      for c in components_havemodels:
+        if c[0] == False:
+          missing_models.append([c[1],c[2]])
+      missing = ("We have %s component(s) missing models, as follows: %s" % (len(missing_models), missing_models))
+      v = pya.MessageBox.warning("Errors", missing, pya.MessageBox.Ok)
+      
+  </text>
+</klayout-macro>

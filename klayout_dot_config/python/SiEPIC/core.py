@@ -131,6 +131,7 @@ class Component():
   def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None ):
     self.idx = idx             # component index, should be unique, 0, 1, 2, ...
     self.component = component # which component (name) this pin belongs to
+    self.component = component # which component (name) this pin belongs to
     self.instance = instance   # which component (instance) this pin belongs to
     self.trans = trans         # instance's location (.disp.x, y), mirror (.is_mirror), rotation (angle); in a ICplxTrans class http://www.klayout.de/doc-qt4/code/class_ICplxTrans.html
     self.library = library     # compact model library
@@ -145,15 +146,26 @@ class Component():
   def display(self):
     from . import _globals
     c = self
-    print("- component: %s-%s / %s, (%s), npins %s, opt pins %s, elec pins %s, IO pins %s" %\
+    text = ("- component: %s-%s / %s, (%s), npins %s, opt pins %s, elec pins %s, IO pins %s, has compact model: %s" %\
       ( c.component, c.idx, c.instance, c.trans, c.npins, \
       [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL], \
       [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.ELECTRICAL], \
-      [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.IO], ) )
+      [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.IO], \
+      c.has_model() ) )
+    print(text)
+    return text
 
   def find_pins(self):        
     return self.instance.find_pins_component()
 
+  def has_model(self):
+    # check if this component has a compact model in the INTC library
+    from .utils import get_technology, get_technology_by_name
+    TECHNOLOGY = get_technology()
+    TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
+
+    from ._globals import INTC_ELEMENTS
+    return ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+self.component.lower()) in INTC_ELEMENTS
 
 
 
