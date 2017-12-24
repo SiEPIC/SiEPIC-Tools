@@ -7,6 +7,6 @@
  <doc>A library providing a range of tools for designing Silicon Electronic-Photonic Integrated Circuits</doc>
  <doc-url>https://github.com/lukasc-ubc/SiEPIC-Tools/blob/master/README.md</doc-url>
  <url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/trunk/klayout_dot_config</url>
- <author>Lukas Chrostowski, Jaspreet Jhoja, Mustafa Hammood, Brett Poulsen, Jonas Flueckiger, Rounak Singh Narde, Chris Zeqin Lu, Nathan Smith, Stefan Preble, Claudio Alarcon-Reyes</author>
- <author-contact>GitHub: lukasc-ubc, jaspreetj, mustafacc, bpoulse, jfluecki, rounaksingh, luzeqin, nsmith5, StefanPreble, clalarco</author-contact>
+ <author>Lukas Chrostowski, Jaspreet Jhoja, Mustafa Hammood, Brett Poulsen, Jonas Flueckiger, Rounak Singh Narde, Chris Zeqin Lu, Nathan Smith, Claudio Alarcon-Reyes</author>
+ <author-contact>GitHub: lukasc-ubc, jaspreetj, mustafacc, bpoulse, jfluecki, rounaksingh, luzeqin, nsmith5, clalarco</author-contact>
 </salt-grain>

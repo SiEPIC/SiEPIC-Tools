@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Monte Carlo Simulation</description>
+ <description>Circuit Simulation: Lumerical Interconnect, Update Netlist</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -10,16 +10,16 @@
  <autorun-early>false</autorun-early>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
- <group-name/>
- <menu-path>siepic_menu.simulation.begin</menu-path>
+ <group-name>2 Circuit Simulation</group-name>
+ <menu-path>siepic_menu.simulation.end</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function
-# SiEPIC Monte Carlo Simulation
+# SiEPIC Update Netlist in Lumerical
 
 import pya
 from SiEPIC import lumerical
 
-lumerical.interconnect.monte_carlo()
+lumerical.interconnect.circuit_simulation_update_netlist()
 </text>
 </klayout-macro>

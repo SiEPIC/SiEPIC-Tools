@@ -24,11 +24,17 @@ TECHNOLOGY['dbu'] is the database unit
 TECHNOLOGY['layer name'] is a LayerInfo object. 
 
 '''
-# Read the layer table for a given technology.
 
+'''
+Read the layer table for a given technology.
+Usage:
+import SiEPIC.utils
+SiEPIC.utils.get_technology_by_name('EBeam')
+'''
 def get_technology_by_name(tech_name):
     from ._globals import KLAYOUT_VERSION
     technology = {}
+    technology['technology_name']=tech_name
     if KLAYOUT_VERSION > 24:
       technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
     else:
@@ -36,6 +42,7 @@ def get_technology_by_name(tech_name):
 
     if KLAYOUT_VERSION > 24:
       lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
+      technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
     else:
       import os, fnmatch
       dir_path = pya.Application.instance().application_data_path()
@@ -48,7 +55,15 @@ def get_technology_by_name(tech_name):
         lyp_file = matches[0]
       else:
         raise Exception('Cannot find technology layer properties file %s' % search_str )
-
+      # technology['base_path']
+      head, tail = os.path.split(lyp_file)
+      technology['base_path'] = os.path.split(head)[0]
+      # technology['INTC_CML']
+      cml_files = [x for x in os.listdir(technology['base_path']) if x.endswith(".cml")]
+      technology['INTC_CML'] = cml_files[-1]
+      technology['INTC_CML_path'] = os.path.join(technology['base_path'],cml_files[-1])
+      technology['INTC_CML_version'] = cml_files[-1].replace(tech_name+'_','')
+      
     file = open(lyp_file, 'r') 
     layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
     file.close()
@@ -65,7 +80,6 @@ def get_technology_by_name(tech_name):
           for j in k['group-members']:
             layerInfo_j = j['source'].split('@')[0]
             technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-        print(k['source'])
         if k['source'] != '*/*@*':
           technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
       else:

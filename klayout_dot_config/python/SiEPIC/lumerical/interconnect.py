@@ -7,14 +7,21 @@
 
 Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 
-SiEPIC.lumerical.interconnect:
+- Setup_Lumerical_KLayoutPython_integration
+    Configure PATH env, import lumapi, run interconnect, 
+    Install technology CML, read CML elements
+- circuit_simulation: netlist extract and run simulation
+- circuit_simulation_update_netlist: update netlist and run simulation
+- circuit_simulation_monte_carlo: perform many simulations
+- component_simulation: single component simulation
 
-- launch: netlist extract and run simulation
-- update_netlist: update netlist and run simulation
-- monte_carlo: perform many simulations
+usage:
+ import SiEPIC.lumerical.interconnect:
+
 
 ################################################################################
 '''
+
 
 
 import pya
@@ -66,8 +73,8 @@ def Setup_Lumerical_KLayoutPython_integration():
       '''
       cmd1='launchctl unload  %s' % matches[0]
       a,b=commands.getstatusoutput(cmd1)
-#      if a != 0 or b !='':
-#        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
+      if a != 0:
+        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
       cmd1='launchctl load  %s' % matches[0]
       a,b=commands.getstatusoutput(cmd1)
       if a != 0 or b !='':
@@ -82,32 +89,63 @@ def Setup_Lumerical_KLayoutPython_integration():
       if b=='':
         # Not loaded    
         raise Exception ('The System paths have been updated. Please restart KLayout, and try again.')
+  # end of OSX 
 
-    ##################################################################
-    # Load Lumerical API: 
+  if sys.platform.startswith('win'):
+    pass
+  # end of Windows
+  
+  
+  ##################################################################
+  # Load Lumerical API: 
 
-    import lumapi_osx as lumapi
-    global INTC  # Python Lumerical INTERCONNECT integration handle
-    
-    if not INTC:
-      INTC = lumapi.open('interconnect')
-      print(INTC)
-    else:
-      try:
-        lumapi.evalScript(INTC, "?'KLayout integration test.';")
-      except:
-        INTC = lumapi.open('interconnect')
+  import lumapi_osx as lumapi
+  global INTC  # Python Lumerical INTERCONNECT integration handle
+  
+  if not INTC:
+    INTC = lumapi.open('interconnect')
+    print(INTC)
+  else:
     try:
-      lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+      lumapi.evalScript(INTC, "?'KLayout integration test.';")
     except:
-      raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
-
+      INTC = lumapi.open('interconnect')
+  try:
     lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+  except:
+    raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
+
+
+  import os 
+  # Read INTC element library
+  lumapi.evalScript(INTC, "out=library;")
+  INTC_libs=lumapi.getVar(INTC, "out")
+
+  # Install technology CML if missing in INTC
+  dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
+  from ..utils import get_technology, get_technology_by_name
+  # get current technology
+  TECHNOLOGY = get_technology() 
+  # load more technology details (CML file location)
+  TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
+  # check if the latest version of the CML is in KLayout's tech
+  if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].replace('.cml','').lower()) in INTC_libs:
+    # install CML
+    print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
+    lumapi.evalScript(INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
+    # Re-Read INTC element library
+    lumapi.evalScript(INTC, "out=library;")
+    INTC_libs=lumapi.getVar(INTC, "out")
+
+  # Save INTC element library to KLayout application data path
+  fh = open(os.path.join(dir_path,"Lumerical_INTC_CMLs.txt"), "w")
+  fh.writelines(INTC_libs)
+  fh.close()
 
 
 
-def launch():
-  print('launch')
+def circuit_simulation():
+  print('circuit_simulation()')
 
   import os, platform, sys, string
   print(os.name)
@@ -323,11 +361,11 @@ def launch():
 
 
   
-def update_netlist():
+def circuit_simulation_update_netlist():
   print('update netlist')
   
   
-def monte_carlo(params = None, cell = None):
+def circuit_simulation_monte_carlo(params = None, cell = None):
   from .. import _globals
 
   lv = pya.Application.instance().main_window().current_view()
