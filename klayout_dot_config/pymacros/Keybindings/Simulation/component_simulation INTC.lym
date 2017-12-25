@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Component: show Compact Model in Lumerical Interconnect</description>
+ <description>Component: show Compact Model in Lumerical INTERCONNECT</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -10,7 +10,7 @@
  <autorun-early>false</autorun-early>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
- <group-name>1 Component Simulation</group-name>
+ <group-name>0 Component Simulation</group-name>
  <menu-path>siepic_menu.simulation.end</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
@@ -21,5 +21,6 @@ import pya
 from SiEPIC import lumerical
 
 lumerical.interconnect.component_simulation()
+
 </text>
 </klayout-macro>

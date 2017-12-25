@@ -1,3 +1,37 @@
+#################################################################################
+#                SiEPIC Tools - utils                                           #
+#################################################################################
+'''
+List of functions:
+
+get_technology_by_name
+get_technology
+get_layout_variables
+enum
+select_paths
+select_waveguides
+select_instances
+angle_b_vectors
+inner_angle_b_vectors
+angle_vector
+angle_trunc
+points_per_circle
+arc
+arc_wg
+arc_wg_xy
+arc_bezier
+arc_to_waveguide
+translate_from_normal
+pt_intersects_segment
+layout_pgtext
+find_automated_measurement_labels
+etree_to_dict: XML parser
+xml_to_dict
+eng_str
+
+
+'''
+
 import pya
 
 
@@ -163,7 +197,6 @@ def get_layout_variables():
   return TECHNOLOGY, lv, ly, cell
    
   
-
 #Define an Enumeration type for Python
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -232,6 +265,35 @@ def select_waveguides(cell = None):
     
   return lv.object_selection
   
+#Return all selected instances. 
+#Returns all cell_inst
+def select_instances(cell = None):
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+  if cell is None:
+    ly = lv.active_cellview().layout() 
+    if ly == None:
+      raise Exception("No active layout")
+    cell = lv.active_cellview().cell
+    if cell == None:
+      raise Exception("No active cell")
+  else:
+    ly = cell.layout()
+
+  selection = lv.object_selection
+  if selection == []:
+    for instance in cell.each_inst():
+      selection.append(pya.ObjectInstPath())
+      selection[-1].top = cell.cell_index()
+      selection[-1].append_path(pya.InstElement.new(instance))
+    lv.object_selection = selection
+  else:
+    lv.object_selection = [o for o in selection if o.is_cell_inst()]
+    
+  return lv.object_selection
+  
+
 #Find the angle between two vectors (not necessarily the smaller angle)
 def angle_b_vectors(u, v):
   from math import atan2, pi
@@ -399,6 +461,7 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv = False):
   dbu = cell.layout().dbu
   cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x/dbu, y/dbu)))
 
+
 def find_automated_measurement_labels(cell, LayerTextN):
   # example usage:
   # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
@@ -426,6 +489,7 @@ except NameError:
   def advance_iterator(it):
     return it.next()
     
+
 
 # XML to Dict parser, from:
 # https://stackoverflow.com/questions/2148119/how-to-convert-an-xml-string-to-a-dictionary-in-python/10077069

@@ -1,3 +1,28 @@
+
+#################################################################################
+#                SiEPIC Tools - scripts                                         #
+#################################################################################
+'''
+
+waveguide_from_path
+waveguide_to_path
+waveguide_length
+waveguide_length_diff
+waveguide_heal
+auto_route
+snap_component
+delete_top_cells
+compute_area
+calibreDRC
+auto_coord_extract
+calculate_area
+layout_check
+text_netlist_check
+
+
+'''
+
+
 import pya
 
 def waveguide_from_path(params = None, cell = None):
@@ -343,6 +368,7 @@ def delete_top_cells():
   else:
     v = pya.MessageBox.warning("No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
   
+  
 def compute_area():
   print("compute_area")
   
@@ -580,6 +606,7 @@ def calculate_area():
     area += itr.shape().area()
     itr.next()
   print(area/total)
+
 
 def layout_check():
   print("layout_check")

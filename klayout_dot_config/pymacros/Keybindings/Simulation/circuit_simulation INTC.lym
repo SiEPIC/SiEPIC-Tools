@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Circuit Simulation: Lumerical Interconnect</description>
+ <description>Circuit Simulation: Lumerical INTERCONNECT</description>
  <version/>
  <category>pymacros</category>
  <prolog/>

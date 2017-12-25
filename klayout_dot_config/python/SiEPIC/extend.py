@@ -13,7 +13,7 @@ pya.Path and pya.DPath Extensions:
   - remove_colinear_points(), removes all colinear points in place
   - unique_points(), remove all but one colinear points
   - translate_from_center(offset), returns a new path whose points have been offset
-  by 'offset' from the center of the original path
+    by 'offset' from the center of the original path
   - snap(pins), snaps the path in place to the nearest pin
   
 pya.Polygon and pya.DPolygon Extensions:
@@ -32,6 +32,7 @@ pya.Cell Extensions:
   - identify_nets
   - get_LumericalINTERCONNECT_analyzers
   - spice_netlist_export
+  - check_component_models
 
 pya.Instance Extensions:
   - find_pins: find Pin objects for all pins in a cell instance
@@ -369,7 +370,7 @@ def find_pins(self, verbose=False):
     if it.shape().is_polygon():
       # Store the pin information in the pins array
       pins.append(Pin(path=it.shape().polygon.transformed(it.itrans()),
-         _type=_globals.PIN_TYPES.IO, 
+         _type=_globals.PIN_TYPES.OPTICALIO, 
          pin_name=self.basic_name().replace(' ', '_')))
 #         pin_name=it.cell().basic_name())) # 'OpticalFibre 9micron'
     it.next()
@@ -606,14 +607,14 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
         if verbose:
           print("%s: Detector {%s} %s, box -- %s; %s"   % (n_IO, subcell.basic_name(), detector_number, box.p1, box.p2) )
         # find components which have an IO pin inside the Lumerical box:
-        components_IO = [ c for c in components if any( [box.contains(p.center) for p in c.pins if p.type == _globals.PIN_TYPES.IO] ) ]
+        components_IO = [ c for c in components if any( [box.contains(p.center) for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] ) ]
         if len(components_IO) > 1:
           raise Exception("Error - more than 1 optical IO connected to the detector.")
         if len(components_IO) == 0:
            print("Warning - No optical IO connected to the detector.") 
 #          raise Exception("Error - 0 optical IO connected to the detector.")
         else:
-          p = [p for p in components_IO[0].pins if p.type == _globals.PIN_TYPES.IO]
+          p = [p for p in components_IO[0].pins if p.type == _globals.PIN_TYPES.OPTICALIO]
           p[0].pin_name += '_detector' + str(n_IO)
           p[0].net=Net(idx=p[0].pin_name, pins=p)
           detectors_info.append(Detector_info(p[0].net, detector_number) )
@@ -631,14 +632,14 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
         if verbose:
           print("%s: Laser {%s}, box -- %s; %s"   % (n_IO, subcell.basic_name(), box.p1, box.p2) )
         # find components which have an IO pin inside the Lumerical box:
-        components_IO = [ c for c in components if any( [box.contains(p.center) for p in c.pins if p.type == _globals.PIN_TYPES.IO] ) ]
+        components_IO = [ c for c in components if any( [box.contains(p.center) for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] ) ]
         if len(components_IO) > 1:
           raise Exception("Error - more than 1 optical IO connected to the laser.")
         if len(components_IO) == 0:
           print("Warning - No optical IO connected to the laser.")
 #          raise Exception("Error - 0 optical IO connected to the laser.")
         else:
-          p = [p for p in components_IO[0].pins if p.type == _globals.PIN_TYPES.IO]
+          p = [p for p in components_IO[0].pins if p.type == _globals.PIN_TYPES.OPTICALIO]
           p[0].pin_name += '_laser' + str(n_IO)
           laser_net = p[0].net=Net(idx=p[0].pin_name, pins=p)
           if verbose:
@@ -666,7 +667,6 @@ def spice_netlist_export(self, verbose = False):
   from . import _globals
   from time import strftime 
   from .utils import eng_str
-
 
   text_main = '* Spice output from KLayout SiEPIC-Tools v%s, %s.\n\n' % (SiEPIC.__version__, strftime("%Y-%m-%d %H:%M:%S") )
   text_subckt = text_main
@@ -743,7 +743,7 @@ def spice_netlist_export(self, verbose = False):
   opticalIO_pins=''
   for c in components:
     for p in c.pins:
-      if p.type == _globals.PIN_TYPES.IO:
+      if p.type == _globals.PIN_TYPES.OPTICALIO:
         NetName =  ' ' + p.pin_name
         print(p.pin_name)
         opticalIO_pins += NetName
@@ -764,7 +764,7 @@ def spice_netlist_export(self, verbose = False):
       if p.type == _globals.PIN_TYPES.ELECTRICAL:
         nets_str += " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
     for p in c.pins:
-      if p.type == _globals.PIN_TYPES.IO:
+      if p.type == _globals.PIN_TYPES.OPTICALIO:
         nets_str += " " + str(p.net.idx)
     for p in c.pins:
       if p.type == _globals.PIN_TYPES.OPTICAL:
@@ -780,7 +780,7 @@ def spice_netlist_export(self, verbose = False):
       rotate = ''
 
     # Check to see if this component is an Optical IO type.
-    pinIOtype = any([p for p in c.pins if p.type == _globals.PIN_TYPES.IO])
+    pinIOtype = any([p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO])
         
     if ignoreOpticalIOs and pinIOtype:
       # Replace the Grating Coupler or Edge Coupler with a 0-length waveguide.
@@ -824,6 +824,31 @@ def spice_netlist_export(self, verbose = False):
   text_main += DCsources
 
   return text_subckt, text_main, len(detector_nets)
+
+def check_components_models():
+  
+  # Check if all the components in the cell have compact models loaded in INTERCONNECT
+  
+  # test for Component.has_compactmodel()
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  
+  print ("* find_components()" )
+  components = cell.find_components ()
+  print ("* Display list of components" )
+  
+  if not all([c.has_model() for c in components]):
+    # missing models, find which one
+    components_havemodels = [[c.has_model(), c.component, c.instance] for c in components]
+    missing_models = []
+    for c in components_havemodels:
+      if c[0] == False:
+        missing_models.append([c[1],c[2]])
+    missing = ("We have %s component(s) missing models, as follows: %s" % (len(missing_models), missing_models))
+    v = pya.MessageBox.warning("Errors", missing, pya.MessageBox.Ok)
+  else:
+    print('check_components_models(): all models are present.')
+
 
 
 #################################################################################

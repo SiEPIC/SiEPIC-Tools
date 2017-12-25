@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Check component compact models and parameters</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name>Setup 2</group-name>
+ <menu-path>siepic_menu.simulation.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import SiEPIC, pya
+
+SiEPIC.extend.check_components_models()
+</text>
+</klayout-macro>

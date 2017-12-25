@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Setup Lumerical INTERCONNECT</description>
+ <description>Setup Lumerical INTERCONNECT and CML</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
