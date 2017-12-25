@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>my.startup</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>sh</string>
+    <string>-c</string>
+    <string>
+      launchctl setenv SiEPIC_Tools_Lumerical_KLayout_environment True
+      launchctl setenv PATH /Applications/Lumerical/FDTD\ Solutions/FDTD\ Solutions.app/Contents/MacOS:/Applications/Lumerical/MODE\ Solutions/MODE\ Solutions.app/Contents/MacOS:/Applications/Lumerical/DEVICE/DEVICE.app/Contents/MacOS:/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS:$PATH
+    </string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>

@@ -24,7 +24,7 @@ NET_DISCONNECTED = Net()
 
 #Define enumeration for pins
 from .utils import enum
-PIN_TYPES = enum('IO', 'OPTICAL', 'ELECTRICAL')
+PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 100  # 0.1 micron
 
 try:
@@ -37,11 +37,21 @@ except ImportError:
 
 KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
 
-
-
 # Waveguide DevRec: space between the waveguide and the DevRec polygon
 WG_DEVREC_SPACE = 1
 
 # Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
 PATH_SNAP_PIN_MAXDIST = 20
 
+
+# Load INTC element library details KLayout application data path
+import os 
+path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
+path = os.path.join(path,"Lumerical_INTC_CMLs.txt")
+INTC_ELEMENTS = ''
+if os.path.exists(path):
+  print('loading Lumerical_INTC_CMLs.txt')
+  fh = open(path, "r")
+  INTC_ELEMENTS = fh.read()
+  fh.close()
+  
