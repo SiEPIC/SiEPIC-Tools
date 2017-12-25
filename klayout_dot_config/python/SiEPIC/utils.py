@@ -1,3 +1,37 @@
+#################################################################################
+#                SiEPIC Tools - utils                                           #
+#################################################################################
+'''
+List of functions:
+ 
+get_technology_by_name
+get_technology
+get_layout_variables
+enum
+select_paths
+select_waveguides
+select_instances
+angle_b_vectors
+inner_angle_b_vectors
+angle_vector
+angle_trunc
+points_per_circle
+arc
+arc_wg
+arc_wg_xy
+arc_bezier
+arc_to_waveguide
+translate_from_normal
+pt_intersects_segment
+layout_pgtext
+find_automated_measurement_labels
+etree_to_dict: XML parser
+xml_to_dict
+eng_str
+
+
+'''
+
 import pya
 
 
@@ -24,11 +58,18 @@ TECHNOLOGY['dbu'] is the database unit
 TECHNOLOGY['layer name'] is a LayerInfo object. 
 
 '''
-# Read the layer table for a given technology.
 
+'''
+Read the layer table for a given technology.
+Usage:
+import SiEPIC.utils
+SiEPIC.utils.get_technology_by_name('EBeam')
+'''
 def get_technology_by_name(tech_name):
+    print("get_technology_by_name()")
     from ._globals import KLAYOUT_VERSION
     technology = {}
+    technology['technology_name']=tech_name
     if KLAYOUT_VERSION > 24:
       technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
     else:
@@ -36,6 +77,7 @@ def get_technology_by_name(tech_name):
 
     if KLAYOUT_VERSION > 24:
       lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
+      technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
     else:
       import os, fnmatch
       dir_path = pya.Application.instance().application_data_path()
@@ -48,7 +90,15 @@ def get_technology_by_name(tech_name):
         lyp_file = matches[0]
       else:
         raise Exception('Cannot find technology layer properties file %s' % search_str )
-
+      # technology['base_path']
+      head, tail = os.path.split(lyp_file)
+      technology['base_path'] = os.path.split(head)[0]
+      # technology['INTC_CML']
+      cml_files = [x for x in os.listdir(technology['base_path']) if x.endswith(".cml")]
+      technology['INTC_CML'] = cml_files[-1]
+      technology['INTC_CML_path'] = os.path.join(technology['base_path'],cml_files[-1])
+      technology['INTC_CML_version'] = cml_files[-1].replace(tech_name+'_','')
+      
     file = open(lyp_file, 'r') 
     layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
     file.close()
@@ -65,7 +115,6 @@ def get_technology_by_name(tech_name):
           for j in k['group-members']:
             layerInfo_j = j['source'].split('@')[0]
             technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-        print(k['source'])
         if k['source'] != '*/*@*':
           technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
       else:
@@ -78,6 +127,7 @@ def get_technology_by_name(tech_name):
 
 # Get the current Technology
 def get_technology():
+    print("get_technology()")
     from ._globals import KLAYOUT_VERSION
     technology = {}
 
@@ -87,6 +137,7 @@ def get_technology():
     technology['Si'] = pya.LayerInfo(1, 0)
     technology['PinRec'] = pya.LayerInfo(69, 0)
     technology['Lumerical'] = pya.LayerInfo(733, 0)
+    technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
     lv = pya.Application.instance().main_window().current_view()
@@ -146,7 +197,6 @@ def get_layout_variables():
   return TECHNOLOGY, lv, ly, cell
    
   
-
 #Define an Enumeration type for Python
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -215,6 +265,35 @@ def select_waveguides(cell = None):
     
   return lv.object_selection
   
+#Return all selected instances. 
+#Returns all cell_inst
+def select_instances(cell = None):
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+  if cell is None:
+    ly = lv.active_cellview().layout() 
+    if ly == None:
+      raise Exception("No active layout")
+    cell = lv.active_cellview().cell
+    if cell == None:
+      raise Exception("No active cell")
+  else:
+    ly = cell.layout()
+
+  selection = lv.object_selection
+  if selection == []:
+    for instance in cell.each_inst():
+      selection.append(pya.ObjectInstPath())
+      selection[-1].top = cell.cell_index()
+      selection[-1].append_path(pya.InstElement.new(instance))
+    lv.object_selection = selection
+  else:
+    lv.object_selection = [o for o in selection if o.is_cell_inst()]
+    
+  return lv.object_selection
+  
+
 #Find the angle between two vectors (not necessarily the smaller angle)
 def angle_b_vectors(u, v):
   from math import atan2, pi
@@ -382,6 +461,7 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv = False):
   dbu = cell.layout().dbu
   cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x/dbu, y/dbu)))
 
+
 def find_automated_measurement_labels(cell, LayerTextN):
   # example usage:
   # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
@@ -409,6 +489,7 @@ except NameError:
   def advance_iterator(it):
     return it.next()
     
+
 
 # XML to Dict parser, from:
 # https://stackoverflow.com/questions/2148119/how-to-convert-an-xml-string-to-a-dictionary-in-python/10077069
