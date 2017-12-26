@@ -723,15 +723,23 @@ def layout_check(cell = None, verbose=False):
 
     # check all the component's pins to check if they are assigned a net:
     for pin in c.pins:
-      print( " - Found disconnected pin, type %s, at (%s), net: %s"  % (pin.type, pin.center, pin.net.idx) )
       if pin.type == _globals.PIN_TYPES.OPTICAL and not pin.net.idx:
         # disconnected optical pin 
         if verbose:
           print( " - Found disconnected pin, type %s, at (%s)"  % (pin.type, pin.center) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_discpin.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( pin.path.to_dtype(dbu) ) )
-  
 
+    # Verification: pin width mismatches
+    
+    # Verification: overlapping components (DevRec)
+      # automatically takes care of waveguides crossing other waveguides & components
+    
+    # DFT verification - probably separate
+    # GC spacing in a connected circuit
+    #   make sure they are facing the right way
+    #   opt_in labels
+    # GC spacing between separate GC circuits (to avoid measuring the wrong one)
       
   #displays results in Marker Database Browser, using Results Database (rdb)
   if rdb.num_items() > 0:
@@ -739,10 +747,6 @@ def layout_check(cell = None, verbose=False):
     lv.show_rdb(rdb_i, cv.cell_index)
   else:
     v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
-
-
-
-
 
 
   
