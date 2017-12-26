@@ -139,7 +139,7 @@ Component defs:
  
 '''
 class Component():
-  def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None ):
+  def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, cell=None, basic_name=None ):
     self.idx = idx             # component index, should be unique, 0, 1, 2, ...
     self.component = component # which component (name) this pin belongs to
     self.instance = instance   # which component (instance) this pin belongs to
@@ -150,14 +150,16 @@ class Component():
     self.params = params       # Spice parameters
     self.polygon = polygon     # The component's DevRec polygon/box outline
     self.center = polygon.bbox().center()  # Point
+    self.cell = cell           # component's cell
+    self.basic_name = basic_name # component's basic_name (especially for PCells)
     from .utils import get_technology
     TECHNOLOGY = get_technology()
     self.Dcenter = self.center.to_dtype(TECHNOLOGY['dbu'])
   def display(self):
     from . import _globals
     c = self
-    text = ("- component: %s-%s / %s, (%s), npins %s, opt pins %s, elec pins %s, IO pins %s, has compact model: %s" %\
-      ( c.component, c.idx, c.instance, c.trans, c.npins, \
+    text = ("- component: %s-%s / %s, (%s), (%s), npins %s, opt pins %s, elec pins %s, IO pins %s, has compact model: %s" %\
+      ( c.component, c.idx, c.instance, c.trans, c.Dcenter, c.npins, \
       [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL], \
       [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.ELECTRICAL], \
       [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO], \

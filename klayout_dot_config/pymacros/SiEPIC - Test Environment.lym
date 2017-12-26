@@ -63,6 +63,14 @@ if 1:
 
 print ("***")
 
+if 0:
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  print ("* find_components():" )
+  components = cell.find_components (verbose=True)
+  print ("* Display list of components:" )
+  [c.display() for c in components]
+
 if 1:
   from SiEPIC import scripts  
   scripts.layout_check(verbose=True)
@@ -80,7 +88,7 @@ if 0:
   print(matches)
   
 
-if 0:
+if 1:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 

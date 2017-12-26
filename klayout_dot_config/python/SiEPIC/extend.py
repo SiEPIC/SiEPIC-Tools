@@ -15,11 +15,12 @@ pya.Path and pya.DPath Extensions:
   - translate_from_center(offset), returns a new path whose points have been offset
     by 'offset' from the center of the original path
   - snap(pins), snaps the path in place to the nearest pin
-  - to_dtype (for < 0.24)
+  - to_dtype(dbu), for KLayout < 0.25, integer using dbu to float 
   
 pya.Polygon and pya.DPolygon Extensions:
   - get_points(), returns list of pya.Points
   - get_dpoints(), returns list of pya.DPoints
+  - to_dtype(dbu), for KLayout < 0.25, integer using dbu to float 
   
 pya.PCellDeclarationHelper Extensions:
   - print_parameter_list, prints parameter list
@@ -39,7 +40,7 @@ pya.Instance Extensions:
   - find_pins: find Pin objects for all pins in a cell instance
 
 pya.Point Extensions:
-  - to_dpoint: convert integer Point using dbu to float DPoint
+  - to_dtype(dbu): for KLayout < 0.25, convert integer Point using dbu to float DPoint
 
 '''
 #################################################################################
@@ -263,10 +264,16 @@ def get_points(self):
 def get_dpoints(self):
   return [pya.DPoint(pt.x, pt.y) for pt in self.each_point_hull()]
 
+def to_dtype(self,dbu):
+  pts = self.get_points()
+  pts1 = [ p.to_dtype(dbu) for p in pts ]
+  return pya.DPolygon(pts1)
+
 #################################################################################
 
 pya.Polygon.get_points = get_points;
 pya.Polygon.get_dpoints = get_dpoints;
+pya.Polygon.to_dtype = to_dtype;
 
 #################################################################################
 
@@ -447,7 +454,7 @@ def find_components(self, verbose=False):
   
   while not(iter1.at_end()):
     idx = len(components) # component index value to be assigned to Component.idx
-    subcell = iter1.cell()             # cell (component) to which this shape belongs
+    subcell = iter1.cell() # cell (component) to which this shape belongs
     component = subcell.basic_name().replace(' ','_')   # name library component
     instance = subcell.name      
 #    subcell.name                # name of the cell; for PCells, different from basic_name
@@ -468,38 +475,45 @@ def find_components(self, verbose=False):
 
     # A component was found. record the instance info as an Optical_component 
     if found_component:
-      # Find text label for DevRec, to get Library name
-      library = None
-      iter2 = subcell.begin_shapes_rec(LayerDevRecN)
-      spice_params = ""
-      while not(iter2.at_end()):
-        if iter2.shape().is_text():
-          text = iter2.shape().text
+      # check if the component is flattened, or a hierarchical sub-cell
+      if self == subcell: 
+        # Save the flattened component into the components list
+        components.append( Component(component = "Flattened", basic_name = "Flattened", idx=idx, polygon=polygon, trans=iter1.trans() ) )
+      else:
+        # Find text label for DevRec, to get Library name
+        library = None
+        # *** use of subcell assumes that the shapes are hierarchical within the component
+        # for flat layout... check within the DevRec shape.
+        iter2 = subcell.begin_shapes_rec(LayerDevRecN)
+        spice_params = ""
+        while not(iter2.at_end()):
+          if iter2.shape().is_text():
+            text = iter2.shape().text
+            if verbose:
+              print("%s: DevRec label: %s" % (idx, text))
+            if text.string.find("Lumerical_INTERCONNECT_library=") > -1:
+              library = text.string[len("Lumerical_INTERCONNECT_library="):]
+            if text.string.find("Lumerical_INTERCONNECT_component=") > -1:
+              component = text.string[len("Lumerical_INTERCONNECT_component="):]
+            if text.string.find("Spice_param:") > -1:
+              spice_params = text.string[len("Spice_param:"):]
+          iter2.next()
+        if library == None:
           if verbose:
-            print("%s: DevRec label: %s" % (idx, text))
-          if text.string.find("Lumerical_INTERCONNECT_library=") > -1:
-            library = text.string[len("Lumerical_INTERCONNECT_library="):]
-          if text.string.find("Lumerical_INTERCONNECT_component=") > -1:
-            component = text.string[len("Lumerical_INTERCONNECT_component="):]
-          if text.string.find("Spice_param:") > -1:
-            spice_params = text.string[len("Spice_param:"):]
-        iter2.next()
-      if library == None:
-        if verbose:
-          print("Missing library information for component: %s" % component )
-
-      # Save the component into the components list      
-      components.append(Component(idx=idx, \
-         component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon) )
-
-      # find the component pins, and Sort by pin text labels
-      pins = sorted(subcell.find_pins_component(components[-1]), key=lambda  p: p.pin_name)
-
-      # find_pins returns pin locations within the subcell; transform to the top cell:
-      [p.transform(iter1.trans()) for p in pins]
-
-      # store the pins in the component
-      components[-1].pins=pins
+            print("Missing library information for component: %s" % component )
+  
+        # Save the component into the components list      
+        components.append(Component(idx=idx, \
+           component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon, cell=subcell, basic_name=subcell.basic_name()) )
+  
+        # find the component pins, and Sort by pin text labels
+        pins = sorted(subcell.find_pins_component(components[-1]), key=lambda  p: p.pin_name)
+  
+        # find_pins returns pin locations within the subcell; transform to the top cell:
+        [p.transform(iter1.trans()) for p in pins]
+  
+        # store the pins in the component
+        components[-1].pins=pins
 
     iter1.next()
   # end while iter1 
@@ -800,7 +814,7 @@ def spice_netlist_export(self, verbose = False):
     text_subckt += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_"+str(c.idx), nets_str, c.component.replace(' ', '_') ) 
     if c.library != None:
       text_subckt += 'library="%s" ' % c.library
-    x, y = c.trans.disp.x, c.trans.disp.y
+    x, y = c.Dcenter.x, c.Dcenter.y
     text_subckt += '%s lay_x=%s lay_y=%s sch_x=%s sch_y=%s %s%s\n' % \
        ( c.params,
          eng_str(x * 1e-6), eng_str(y * 1e-6), \

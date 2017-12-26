@@ -610,14 +610,27 @@ def calculate_area():
     itr.next()
   print(area/total)
 
+'''
+Verification:
 
+Limitations:
+- we assume that the layout was created by SiEPIC-Tools in KLayout, that PCells are there,
+  and that the layout hasn't been flattened. This allows us to isolate individual components,
+  and get their parameters. Working with a flattened layout would be harder, and require:
+   - reading parameters from the text labels (OK)
+   - find_components would need to look within the DevRec layer, rather than in the selected cell
+   - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
+     This could be solved by putting the pins inside the cells, rather than sticking out.
+
+'''
 def layout_check(cell = None, verbose=False):
   if verbose:
-    print("layout_check")
+    print("*** layout_check()")
 
   from . import _globals
   from .utils import get_technology, select_paths
   TECHNOLOGY = get_technology()
+  dbu=TECHNOLOGY['dbu']
 
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
@@ -634,7 +647,11 @@ def layout_check(cell = None, verbose=False):
     ly = cell.layout()
 
   # Get the components and nets for the layout
-  nets, components = cell.identify_nets(verbose=True)
+  nets, components = cell.identify_nets(verbose=False)
+  if verbose:
+    print ("* Display list of components:" )
+    [c.display() for c in components]
+
 
   # Create a Results Database
   rdb_i = lv.create_rdb("SiEPIC-Tools Verification: %s technology" % TECHNOLOGY['technology_name'])
@@ -655,16 +672,39 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_wg_manhattan = rdb.create_category(rdb_cat_id_wg, "Manhattan")
   rdb_cat_id_wg_manhattan.description =  "The first and last waveguide segment need to be Manhattan (vertical or horizontal) so that they can connect to device pins."
 
+  # Component checking
+  rdb_cell = next(rdb.each_cell())
+  rdb_cat_id_comp = rdb.create_category("Component errors")
+  rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
+  rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
+
   paths = select_paths(TECHNOLOGY['Waveguide'], cell = cell)
   for p in paths:
     # Check for paths with > 2 vertices
-    Dpath = p.shape.path.to_dtype(TECHNOLOGY['dbu'])
+    Dpath = p.shape.path.to_dtype(dbu)
     if Dpath.num_points() > 2:
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_path.rdb_id())
       rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
-      
-#  for c in components if c.instance == "Waveguide":
-#    pass
+
+  for c in components:
+    # the following only works for layouts where the Waveguide is still a PCells (not flattened)
+    # basic_name is assigned in Cell.find_components, by reading the PCell parameter
+    # if the layout is flattened, we don't have an easy way to get the path
+    # it could be done perhaps as a parameter (points)
+    if c.basic_name == "Waveguide":
+      Dpath =  c.cell.pcell_parameters_by_name()['path']
+      radius = c.cell.pcell_parameters_by_name()['radius']
+      if verbose:
+        print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius) )
+      if not Dpath.radius_check(radius):
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_radius.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( Dpath ) )
+    if c.basic_name == "Flattened":
+      if verbose:
+        print(" - Component: Flattened: %s" % (c.polygon) )
+      rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_comp_flat.rdb_id())
+      rdb_item.add_value(pya.RdbItemValue( c.polygon.to_dtype(dbu) ) )
+
 
       
   #displays results in Marker Database Browser, using Results Database (rdb)
