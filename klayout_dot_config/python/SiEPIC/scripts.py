@@ -653,13 +653,11 @@ def layout_check(cell = None, verbose=False):
     print ("* Display list of components:" )
     [c.display() for c in components]
 
-
   # Create a Results Database
   rdb_i = lv.create_rdb("SiEPIC-Tools Verification: %s technology" % TECHNOLOGY['technology_name'])
   rdb = lv.rdb(rdb_i)
   rdb.top_cell_name = cell.name
   rdb_cell = rdb.create_cell(cell.name)
-
 
   # Waveguide checking
   rdb_cell = next(rdb.each_cell())
@@ -679,13 +677,17 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
   rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
 
+  # Connectivity checking
+  rdb_cell = next(rdb.each_cell())
+  rdb_cat_id = rdb.create_category("Connectivity errors")
+  rdb_cat_id_discpin = rdb.create_category(rdb_cat_id, "Disconnected pin")
+  rdb_cat_id_discpin.description = "Disconnected pin"
+
   paths = find_paths(TECHNOLOGY['Waveguide'], cell = cell)
   for p in paths:
     print("%s, %s" % (type(p), p) )
     # Check for paths with > 2 vertices
     Dpath = p.to_dtype(dbu)
-#    Dpath = p
-#    Dpath = p.shape.path.to_dtype(dbu)
     if Dpath.num_points() > 2:
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_path.rdb_id())
       rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
@@ -713,13 +715,22 @@ def layout_check(cell = None, verbose=False):
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_manhattan.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( DPath ) )
 
-
     if c.basic_name == "Flattened":
       if verbose:
         print(" - Component: Flattened: %s" % (c.polygon) )
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_comp_flat.rdb_id())
       rdb_item.add_value(pya.RdbItemValue( c.polygon.to_dtype(dbu) ) )
 
+    # check all the component's pins to check if they are assigned a net:
+    for pin in c.pins:
+      print( " - Found disconnected pin, type %s, at (%s), net: %s"  % (pin.type, pin.center, pin.net.idx) )
+      if pin.type == _globals.PIN_TYPES.OPTICAL and not pin.net.idx:
+        # disconnected optical pin 
+        if verbose:
+          print( " - Found disconnected pin, type %s, at (%s)"  % (pin.type, pin.center) )
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_discpin.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( pin.path.to_dtype(dbu) ) )
+  
 
       
   #displays results in Marker Database Browser, using Results Database (rdb)

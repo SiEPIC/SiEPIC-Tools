@@ -205,7 +205,8 @@ def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
 
-#Find all paths, full hierarachy. 
+# Find all paths, full hierarachy scan, return polygons on top cell. 
+# for Verfication
 def find_paths(layer, cell = None):
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
@@ -224,14 +225,7 @@ def find_paths(layer, cell = None):
   itr = cell.begin_shapes_rec(ly.layer(layer))
   while not(itr.at_end()):
     if itr.shape().is_path():
-#      selection.append (itr.shape().path)
       selection.append (itr.shape().path.transformed(itr.trans()))
-#      selection.append(pya.ObjectInstPath())
-#      selection[-1].layer = ly.layer(layer)
-#      selection[-1].shape = itr.shape()
-#      selection[-1].top = itr.cell_index()
-#      selection[-1].top = cell.cell_index()
-#      selection[-1].cv_index = 0
     itr.next()
     
   return selection
