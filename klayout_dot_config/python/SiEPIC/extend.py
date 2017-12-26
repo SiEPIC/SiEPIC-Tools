@@ -15,7 +15,8 @@ pya.Path and pya.DPath Extensions:
   - translate_from_center(offset), returns a new path whose points have been offset
     by 'offset' from the center of the original path
   - snap(pins), snaps the path in place to the nearest pin
-  - to_dtype(dbu), for KLayout < 0.25, integer using dbu to float 
+  - to_dtype(dbu), for KLayout < 0.25, integer to float using dbu
+  - to_itype(dbu), for KLayout < 0.25, float to integer using dbu
   
 pya.Polygon and pya.DPolygon Extensions:
   - get_points(), returns list of pya.Points
@@ -62,6 +63,11 @@ def to_dtype(self, dbu):
   Dpath = pya.DPath(self.get_dpoints(), self.width) * dbu
   Dpath.width = self.width * dbu
   return Dpath
+
+def to_itype(self, dbu):
+  path = pya.Path(self.get_points(), self.width) * (1/dbu)
+  path.width = self.width / dbu
+  return path
 
 def get_points(self):
   return [pya.Point(pt.x, pt.y) for pt in self.each_point()]
@@ -242,6 +248,7 @@ pya.Path.snap = snap;
 # DPath Extension
 #################################################################################
 
+pya.DPath.to_itype = to_itype
 pya.DPath.to_dtype = to_dtype
 pya.DPath.get_points = get_points
 pya.DPath.get_dpoints = get_dpoints
@@ -568,7 +575,7 @@ def identify_nets(self, verbose=False):
               # make a new optical net index
               net_idx = len(nets)
               # optical net connects two pins; keep track of the pins, Pin[] :
-              nets.append ( Net ( idx=net_idx, pins=[p1, p2] ) )
+              nets.append ( Net ( idx=net_idx, pins=[p1, p2], _type=_globals.PIN_TYPES.OPTICAL ) )
               # assign this net number to the pins
               p1.net = nets[-1]
               p2.net = nets[-1]

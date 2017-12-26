@@ -684,6 +684,8 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id = rdb.create_category("Connectivity errors")
   rdb_cat_id_discpin = rdb.create_category(rdb_cat_id, "Disconnected pin")
   rdb_cat_id_discpin.description = "Disconnected pin"
+  rdb_cat_id_mismatchedpin = rdb.create_category(rdb_cat_id, "Mismatched pin")
+  rdb_cat_id_mismatchedpin.description = "Mismatched pin widths"
 
   paths = find_paths(TECHNOLOGY['Waveguide'], cell = cell)
   for p in paths:
@@ -732,9 +734,6 @@ def layout_check(cell = None, verbose=False):
           print( " - Found disconnected pin, type %s, at (%s)"  % (pin.type, pin.center) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_discpin.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( pin.path.to_dtype(dbu) ) )
-
-    # Verification: pin width mismatches
-
       
     # Verification: overlapping components (DevRec)
       # automatically takes care of waveguides crossing other waveguides & components
@@ -748,7 +747,6 @@ def layout_check(cell = None, verbose=False):
       r.merged_semantics=True
       area_merged = r.area()
       if area_merged <> area_raw:
-        itr = r.each_merged()
         polygon_merged = r.each_merged().next()
         if verbose:
           print( " - Found overlapping components: %s, %s"  % (c.component, c2.component) )
@@ -761,6 +759,20 @@ def layout_check(cell = None, verbose=False):
     #   make sure they are facing the right way
     #   opt_in labels
     # GC spacing between separate GC circuits (to avoid measuring the wrong one)
+
+  for n in nets:
+    # Verification: optical pin width mismatches
+    if n.type == _globals.PIN_TYPES.OPTICAL and not n.idx == None:
+      pin_paths = [p.path for p in n.pins]
+      if pin_paths[0].width <> pin_paths[-1].width:
+        if verbose:
+          print( " - Found mismatched pin widths: %s"  % (pin_paths[0]) )
+        r = pya.Region([pin_paths[0].to_itype(1).polygon(), pin_paths[-1].to_itype(1).polygon()])
+        polygon_merged = r.each_merged().next()
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_mismatchedpin.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( polygon_merged.to_dtype(dbu) ) )
+    
+
       
   #displays results in Marker Database Browser, using Results Database (rdb)
   if rdb.num_items() > 0:
