@@ -69,10 +69,13 @@ def waveguide_from_path(params = None, cell = None):
         return
 
     path.snap(cell.find_pins())
-    path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
-    path.width = path.width * TECHNOLOGY['dbu']
+    
+    # 0.25: path.to_dtype
+#    path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
+#    path.width = path.width * TECHNOLOGY['dbu']
+    Dpath = path.to_dtype(TECHNOLOGY['dbu'])
     width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
-    pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": path,
+    pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": Dpath,
                                                                    "radius": params['radius'],
                                                                    "width": params['width'],
                                                                    "adiab": params['adiabatic'],
@@ -608,8 +611,10 @@ def calculate_area():
   print(area/total)
 
 
-def layout_check():
-  print("layout_check")
+def layout_check(cell = None, verbose=False):
+  if verbose:
+    print("layout_check")
+
   
 def text_netlist_check():
   print("text_netlist_check")

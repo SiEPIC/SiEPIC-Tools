@@ -15,6 +15,7 @@ pya.Path and pya.DPath Extensions:
   - translate_from_center(offset), returns a new path whose points have been offset
     by 'offset' from the center of the original path
   - snap(pins), snaps the path in place to the nearest pin
+  - to_dtype (for < 0.24)
   
 pya.Polygon and pya.DPolygon Extensions:
   - get_points(), returns list of pya.Points
@@ -55,6 +56,11 @@ warning.setDefaultButton(pya.QMessageBox.Ok)
 
 # Function Definitions
 #################################################################################
+
+def to_dtype(self, dbu):
+  Dpath = pya.DPath(self.get_dpoints(), self.width) * dbu
+  Dpath.width = self.width * dbu
+  return Dpath
 
 def get_points(self):
   return [pya.Point(pt.x, pt.y) for pt in self.each_point()]
@@ -222,6 +228,7 @@ def snap(self, pins):
 # Path Extension
 #################################################################################
 
+pya.Path.to_dtype = to_dtype
 pya.Path.get_points = get_points
 pya.Path.get_dpoints = get_dpoints
 pya.Path.is_manhattan = is_manhattan
