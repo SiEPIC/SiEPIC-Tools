@@ -676,6 +676,8 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_comp = rdb.create_category("Component errors")
   rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
   rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
+  rdb_cat_id_comp_overlap = rdb.create_category(rdb_cat_id_comp, "Overlapping component")
+  rdb_cat_id_comp_overlap.description = "Overlapping components (defined as overlapping DevRec layers; touch is ok)"
 
   # Connectivity checking
   rdb_cell = next(rdb.each_cell())
@@ -692,7 +694,8 @@ def layout_check(cell = None, verbose=False):
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_path.rdb_id())
       rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
 
-  for c in components:
+  for i in range(0,len(components)):
+    c=components[i]
     # the following only works for layouts where the Waveguide is still a PCells (not flattened)
     # basic_name is assigned in Cell.find_components, by reading the PCell parameter
     # if the layout is flattened, we don't have an easy way to get the path
@@ -723,7 +726,7 @@ def layout_check(cell = None, verbose=False):
 
     # check all the component's pins to check if they are assigned a net:
     for pin in c.pins:
-      if pin.type == _globals.PIN_TYPES.OPTICAL and not pin.net.idx:
+      if pin.type == _globals.PIN_TYPES.OPTICAL and pin.net.idx == None:
         # disconnected optical pin 
         if verbose:
           print( " - Found disconnected pin, type %s, at (%s)"  % (pin.type, pin.center) )
@@ -731,9 +734,27 @@ def layout_check(cell = None, verbose=False):
         rdb_item.add_value(pya.RdbItemValue( pin.path.to_dtype(dbu) ) )
 
     # Verification: pin width mismatches
-    
+
+      
     # Verification: overlapping components (DevRec)
       # automatically takes care of waveguides crossing other waveguides & components
+    # Region: put in two DevRec polygons (in raw), measure area, merge, check if are is the same
+    #  checks for touching but not overlapping DevRecs
+    for i2 in range(i+1,len(components)):
+      c2=components[i2]
+      r = pya.Region([c.polygon, c2.polygon])
+      r.merged_semantics=False
+      area_raw = r.area()
+      r.merged_semantics=True
+      area_merged = r.area()
+      if area_merged <> area_raw:
+        itr = r.each_merged()
+        polygon_merged = r.each_merged().next()
+        if verbose:
+          print( " - Found overlapping components: %s, %s"  % (c.component, c2.component) )
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_comp_overlap.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( polygon_merged.to_dtype(dbu) ) )
+    
     
     # DFT verification - probably separate
     # GC spacing in a connected circuit

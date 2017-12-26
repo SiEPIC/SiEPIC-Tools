@@ -911,7 +911,9 @@ if int(pya.Application.instance().version().split('.')[1]) < 25:
   def to_dtype(self,dbu):
     # create a new empty list.  Otherwise, this function would modify the original list
     # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
-    return pya.DPoint(self.x * dbu, self.y * dbu)
+    return pya.DPoint(self.x / (1/dbu), self.y / (1/dbu))
+    # > 15950 * 0.001 = 15.950000000000001
+    # > 15950 / (1/ 0.001) = 15.95
 
   # KLayout v0.25 introduced technology variable:
   pya.Point.to_dtype = to_dtype
