@@ -65,8 +65,9 @@ Usage:
 import SiEPIC.utils
 SiEPIC.utils.get_technology_by_name('EBeam')
 '''
-def get_technology_by_name(tech_name):
-    print("get_technology_by_name()")
+def get_technology_by_name(tech_name, verbose=False):
+    if verbose:
+      print("get_technology_by_name()")
     from ._globals import KLAYOUT_VERSION
     technology = {}
     technology['technology_name']=tech_name
@@ -126,8 +127,9 @@ def get_technology_by_name(tech_name):
 # print(get_technology_by_name('GSiP'))
 
 # Get the current Technology
-def get_technology():
-    print("get_technology()")
+def get_technology(verbose=False):
+    if verbose:
+      print("get_technology()")
     from ._globals import KLAYOUT_VERSION
     technology = {}
 

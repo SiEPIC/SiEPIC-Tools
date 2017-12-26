@@ -63,6 +63,11 @@ if 1:
 
 print ("***")
 
+if 1:
+  from SiEPIC import scripts  
+  scripts.layout_check(verbose=True)
+
+
   
 if 0:
   import os, fnmatch
@@ -96,7 +101,7 @@ if 0:
     print ("* Display list of nets:" )
     [n.display() for n in nets]
 
-  if 1:
+  if 0:
     text_subckt, text_main, detector_nets = cell.spice_netlist_export(verbose=True)
     print(text_main)
     print(text_subckt)
@@ -123,7 +128,7 @@ if 0:
 # Verification tests:
 
 # test Component.has_compactmodel()
-if 1:
+if 0:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 

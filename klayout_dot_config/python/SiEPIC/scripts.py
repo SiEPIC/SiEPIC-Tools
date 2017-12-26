@@ -615,6 +615,70 @@ def layout_check(cell = None, verbose=False):
   if verbose:
     print("layout_check")
 
+  from . import _globals
+  from .utils import get_technology, select_paths
+  TECHNOLOGY = get_technology()
+
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+  if cell is None:
+    ly = lv.active_cellview().layout() 
+    if ly == None:
+      raise Exception("No active layout")
+    cell = lv.active_cellview().cell
+    if cell == None:
+      raise Exception("No active cell")
+    cv = lv.active_cellview()
+  else:
+    ly = cell.layout()
+
+  # Get the components and nets for the layout
+  nets, components = cell.identify_nets(verbose=True)
+
+  # Create a Results Database
+  rdb_i = lv.create_rdb("SiEPIC-Tools Verification: %s technology" % TECHNOLOGY['technology_name'])
+  rdb = lv.rdb(rdb_i)
+  rdb.top_cell_name = cell.name
+  rdb_cell = rdb.create_cell(cell.name)
+
+
+  # Waveguide checking
+  rdb_cell = next(rdb.each_cell())
+  rdb_cat_id_wg = rdb.create_category("Waveguide errors")
+  rdb_cat_id_wg_path = rdb.create_category(rdb_cat_id_wg, "Path")
+  rdb_cat_id_wg_path.description = "Waveguide path: Only 2 points allowed in a path. Convert to a Waveguide if necessary."
+  rdb_cat_id_wg_radius = rdb.create_category(rdb_cat_id_wg, "Radius")
+  rdb_cat_id_wg_radius.description = "Not enough space to accommodate the desired bend radius for the waveguide."
+  rdb_cat_id_wg_bendpts = rdb.create_category(rdb_cat_id_wg, "Bend points")
+  rdb_cat_id_wg_bendpts.description = "Waveguide bend should have more points per circle."
+  rdb_cat_id_wg_manhattan = rdb.create_category(rdb_cat_id_wg, "Manhattan")
+  rdb_cat_id_wg_manhattan.description =  "The first and last waveguide segment need to be Manhattan (vertical or horizontal) so that they can connect to device pins."
+
+  paths = select_paths(TECHNOLOGY['Waveguide'], cell = cell)
+  for p in paths:
+    # Check for paths with > 2 vertices
+    Dpath = p.shape.path.to_dtype(TECHNOLOGY['dbu'])
+    if Dpath.num_points() > 2:
+      rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_path.rdb_id())
+      rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
+      
+#  for c in components if c.instance == "Waveguide":
+#    pass
+
+      
+  #displays results in Marker Database Browser, using Results Database (rdb)
+  if rdb.num_items() > 0:
+    v = pya.MessageBox.warning("Errors", "%s layout errors detected.  \nPlease review errors using the 'Marker Database Browser'." % rdb.num_items(), pya.MessageBox.Ok)
+    lv.show_rdb(rdb_i, cv.cell_index)
+  else:
+    v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
+
+
+
+
+
+
   
 def text_netlist_check():
   print("text_netlist_check")
