@@ -610,6 +610,15 @@ def calculate_area():
     itr.next()
   print(area/total)
 
+
+
+# Inputs, and example of how to generate them:
+# nets, components = topcell.identify_nets()
+# selected_component = components[5]   (elsewhere the desired component is selected)
+def trim_netlist (nets, components, selected_component):
+  trimmed_nets, trimmed_components = nets, components
+  return trimmed_nets, trimmed_components
+
 '''
 Verification:
 
@@ -690,11 +699,11 @@ def layout_check(cell = None, verbose=False):
   rdb_cell = next(rdb.each_cell())
   rdb_cat_id = rdb.create_category("Design for Test errors")
   rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in labels: same")
-  rdb_cat_id_optin_unique.description = "Automated measurement opt_in labels should be unique."
+  rdb_cat_id_optin_unique.description = "Automated test opt_in labels should be unique."
   rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in labels: missing")
-  rdb_cat_id_optin_missing.description = "Automated measurement opt_in labels are required for testing."
+  rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements."
   if TECHNOLOGY['technology_name'] == 'EBeam':
-    rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler")
+    rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
     rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
 
   paths = find_paths(TECHNOLOGY['Waveguide'], cell = cell)
@@ -779,25 +788,34 @@ def layout_check(cell = None, verbose=False):
           rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCorient.rdb_id())
           rdb_item.add_value(pya.RdbItemValue( polygon.to_dtype(dbu) ) )
     
-    # GC spacing in a connected circuit
-    #   opt_in labels
-    # GC spacing between separate GC circuits (to avoid measuring the wrong one)
 
   # opt_in labels unique
   text_out, texts = find_automated_measurement_labels(cell)
   if len(texts) == 0:
     rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
     rdb_item.add_value(pya.RdbItemValue( pya.Polygon(cell.bbox()).to_dtype(dbu) ) )
-  
+  # opt_in labels
   for ti1 in range(0,len(texts)):
+    t = texts[ti1]
+    # opt_in labels check for unique
     for ti2 in  range(ti1+1, len(texts)):
       if texts[ti1].string == texts[ti2].string:
-        t = texts[ti1]
         box = pya.Box(t.x-2*t.size, t.y-2*t.size, t.x+2*t.size, t.y+2*t.size)
         if verbose:
           print( " - Found DFT error, non unique text labels: %s, %s, %s"  % (t.string, t.x, t.y) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_unique.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
+
+    # starting with each opt_in label, identify the sub-circuit, check for GC spacing
+    # find closest GC to the opt_in label
+    components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.center.distance(pya.Point(t.x, t.y)))
+    if verbose:
+      print( " - Found opt_in Optical IO: %s, %s"  % (components_sorted[0].instance, texts[ti1].string) )
+    trimmed_nets, trimmed_components = trim_netlist (nets, components, c)
+    
+    
+  # GC spacing between separate GC circuits (to avoid measuring the wrong one)
+
 
   for n in nets:
     # Verification: optical pin width mismatches
