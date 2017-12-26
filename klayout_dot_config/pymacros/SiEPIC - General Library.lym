@@ -171,9 +171,10 @@ class Waveguide(PCellDeclarationHelper):
       shape = self.cell.shapes(LayerDevRecN).insert(text)
       shape.text_size = 0.1/dbu
       t = Trans(angle, False, pt3)
-      text = Text \
-        ('Spice_param:wg_length=%.3fu wg_width=%.3fu' %\
-        (waveguide_length, self.width), t )
+      pts_txt = str([ [p.to_dtype(dbu).x, p.to_dtype(dbu).y] for p in pts ]).replace(', ',',')
+      text = Text ( \
+        'Spice_param:wg_length=%.3fu wg_width=%.3fu points=%s' %\
+          (waveguide_length, self.width, pts_txt ), t )
       text.halign=halign
       shape = self.cell.shapes(LayerDevRecN).insert(text)
       shape.text_size = 0.1/dbu
