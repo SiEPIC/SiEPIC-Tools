@@ -7,7 +7,7 @@ This module extends several pya classes that are useful for the library.
 pya.Path and pya.DPath Extensions:
   - get_points(), returns list of pya.Points
   - get_dpoints(), returns list of pya.DPoints
-  - is_manhattan(), tests to see if the path is manhattan
+  - is_manhattan(), tests to see if the path is manhattan (only the 1st and last segments)
   - radius_check(radius), tests to see of all path segments are long enough to be
     converted to a waveguide with bends of radius 'radius'
   - remove_colinear_points(), removes all colinear points in place
@@ -242,6 +242,7 @@ pya.Path.snap = snap;
 # DPath Extension
 #################################################################################
 
+pya.DPath.to_dtype = to_dtype
 pya.DPath.get_points = get_points
 pya.DPath.get_dpoints = get_dpoints
 pya.DPath.is_manhattan = is_manhattan

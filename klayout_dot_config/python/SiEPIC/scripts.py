@@ -628,7 +628,8 @@ def layout_check(cell = None, verbose=False):
     print("*** layout_check()")
 
   from . import _globals
-  from .utils import get_technology, select_paths
+#  from .utils import get_technology, select_paths
+  from .utils import get_technology, find_paths
   TECHNOLOGY = get_technology()
   dbu=TECHNOLOGY['dbu']
 
@@ -678,10 +679,13 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
   rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
 
-  paths = select_paths(TECHNOLOGY['Waveguide'], cell = cell)
+  paths = find_paths(TECHNOLOGY['Waveguide'], cell = cell)
   for p in paths:
+    print("%s, %s" % (type(p), p) )
     # Check for paths with > 2 vertices
-    Dpath = p.shape.path.to_dtype(dbu)
+    Dpath = p.to_dtype(dbu)
+#    Dpath = p
+#    Dpath = p.shape.path.to_dtype(dbu)
     if Dpath.num_points() > 2:
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_path.rdb_id())
       rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
@@ -696,9 +700,20 @@ def layout_check(cell = None, verbose=False):
       radius = c.cell.pcell_parameters_by_name()['radius']
       if verbose:
         print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius) )
+
+      # Radius check:
       if not Dpath.radius_check(radius):
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_radius.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( Dpath ) )
+
+      # Check for waveguides with too few bend points
+
+      # Check if waveguide end segments are Manhattan; this ensures they can connect to a pin
+      if not Dpath.is_manhattan():
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_manhattan.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( DPath ) )
+
+
     if c.basic_name == "Flattened":
       if verbose:
         print(" - Component: Flattened: %s" % (c.polygon) )

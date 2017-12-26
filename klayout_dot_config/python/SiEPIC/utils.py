@@ -8,6 +8,7 @@ get_technology_by_name
 get_technology
 get_layout_variables
 enum
+find_paths
 select_paths
 select_waveguides
 select_instances
@@ -204,8 +205,40 @@ def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
 
+#Find all paths, full hierarachy. 
+def find_paths(layer, cell = None):
+  lv = pya.Application.instance().main_window().current_view()
+  if lv == None:
+    raise Exception("No view selected")
+  if cell is None:
+    ly = lv.active_cellview().layout() 
+    if ly == None:
+      raise Exception("No active layout")
+    cell = lv.active_cellview().cell
+    if cell == None:
+      raise Exception("No active cell")
+  else:
+    ly = cell.layout()
+    
+  selection = []
+  itr = cell.begin_shapes_rec(ly.layer(layer))
+  while not(itr.at_end()):
+    if itr.shape().is_path():
+#      selection.append (itr.shape().path)
+      selection.append (itr.shape().path.transformed(itr.trans()))
+#      selection.append(pya.ObjectInstPath())
+#      selection[-1].layer = ly.layer(layer)
+#      selection[-1].shape = itr.shape()
+#      selection[-1].top = itr.cell_index()
+#      selection[-1].top = cell.cell_index()
+#      selection[-1].cv_index = 0
+    itr.next()
+    
+  return selection
+
+
 #Return all selected paths. If nothing is selected, select paths automatically
-def select_paths(lyr, cell = None):
+def select_paths(layer, cell = None):
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
     raise Exception("No view selected")
@@ -222,11 +255,11 @@ def select_paths(lyr, cell = None):
     
   selection = lv.object_selection
   if selection == []:
-    itr = cell.begin_shapes_rec(ly.layer(lyr))
+    itr = cell.begin_shapes_rec(ly.layer(layer))
     while not(itr.at_end()):
       if itr.shape().is_path():
         selection.append(pya.ObjectInstPath())
-        selection[-1].layer = ly.layer(lyr)
+        selection[-1].layer = ly.layer(layer)
         selection[-1].shape = itr.shape()
         selection[-1].top = cell.cell_index()
         selection[-1].cv_index = 0
