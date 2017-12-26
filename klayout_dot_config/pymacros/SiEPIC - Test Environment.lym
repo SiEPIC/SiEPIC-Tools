@@ -75,7 +75,12 @@ if 1:
   from SiEPIC import scripts  
   scripts.layout_check(verbose=True)
 
-
+if 0:
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  from SiEPIC import utils
+  text_out, texts = utils.find_automated_measurement_labels(cell)
+  print(text_out)
+  print(texts)
 
   
 if 0:

@@ -744,7 +744,7 @@ def spice_netlist_export(self, verbose = False):
   SINGLE_DC_SOURCE = 2
   # (1) attach all electrical pins to the same DC source
   # (2) or to individual DC sources
-  # (3) or choose based on number of DC sources, if &gt; 5, use single DC source
+  # (3) or choose based on number of DC sources, if > 5, use single DC source
   for c in components:
     for p in c.pins:
       if p.type == _globals.PIN_TYPES.ELECTRICAL:

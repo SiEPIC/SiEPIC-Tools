@@ -571,8 +571,8 @@ def auto_coord_extract():
   # Find the automated measurement coordinates:
   from .utils import find_automated_measurement_labels
   cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-  t = find_automated_measurement_labels(cell, cell.layout().layer(TECHNOLOGY['LayerText']))
-  wtext.insertHtml (t)
+  text_out, texts = find_automated_measurement_labels(cell)
+  wtext.insertHtml (text_out)
 
 def calculate_area():
   from .utils import get_technology
@@ -628,8 +628,7 @@ def layout_check(cell = None, verbose=False):
     print("*** layout_check()")
 
   from . import _globals
-#  from .utils import get_technology, select_paths
-  from .utils import get_technology, find_paths
+  from .utils import get_technology, find_paths, find_automated_measurement_labels
   TECHNOLOGY = get_technology()
   dbu=TECHNOLOGY['dbu']
 
@@ -686,6 +685,14 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_discpin.description = "Disconnected pin"
   rdb_cat_id_mismatchedpin = rdb.create_category(rdb_cat_id, "Mismatched pin")
   rdb_cat_id_mismatchedpin.description = "Mismatched pin widths"
+
+  # Design for Test checking
+  rdb_cell = next(rdb.each_cell())
+  rdb_cat_id = rdb.create_category("Design for Test errors")
+  rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler")
+  rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
+  rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in labels")
+  rdb_cat_id_optin_unique.description = "Automated measurement opt_in labels should be unique."
 
   paths = find_paths(TECHNOLOGY['Waveguide'], cell = cell)
   for p in paths:
@@ -755,10 +762,28 @@ def layout_check(cell = None, verbose=False):
     
     
     # DFT verification - probably separate
+    # GC facing the right way
+    if TECHNOLOGY['technology_name'] == 'EBeam':
+      if c.instance:
+        ci = c.basic_name.replace(' ','_').replace('$','_')
+        if  ci == "ebeam_gc_te1550":
+          if verbose:
+            print( " - Found GC: %s, %s"  % (c.component, c.trans.angle) )
+        if  ci == "ebeam_gc_te1550" and c.trans.angle <> 0 or \
+            ci == "ebeam_gc_tm1550" and c.trans.angle <> 180: 
+          if verbose:
+            print( " - Found DFT error, GC facing the wrong way: %s, %s"  % (c.component, c.trans.angle) )
+          polygon = c.polygon
+          rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCorient.rdb_id())
+          rdb_item.add_value(pya.RdbItemValue( polygon.to_dtype(dbu) ) )
+    
     # GC spacing in a connected circuit
-    #   make sure they are facing the right way
     #   opt_in labels
     # GC spacing between separate GC circuits (to avoid measuring the wrong one)
+
+  # opt_in labels unique
+  # text_out, texts = find_automated_measurement_labels(cell)
+  # rdb_cat_id_optin_unique
 
   for n in nets:
     # Verification: optical pin width mismatches
