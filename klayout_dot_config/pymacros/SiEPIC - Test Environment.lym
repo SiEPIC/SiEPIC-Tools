@@ -73,7 +73,7 @@ if 0:
 
 if 1:
   from SiEPIC import scripts  
-  scripts.layout_check(verbose=True)
+  scripts.layout_check(verbose=False)
 
 if 0:
   TECHNOLOGY, lv, ly, cell = get_layout_variables()

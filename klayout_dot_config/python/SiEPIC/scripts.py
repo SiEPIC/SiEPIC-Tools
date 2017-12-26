@@ -689,14 +689,18 @@ def layout_check(cell = None, verbose=False):
   # Design for Test checking
   rdb_cell = next(rdb.each_cell())
   rdb_cat_id = rdb.create_category("Design for Test errors")
-  rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler")
-  rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
-  rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in labels")
+  rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in labels: same")
   rdb_cat_id_optin_unique.description = "Automated measurement opt_in labels should be unique."
+  rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in labels: missing")
+  rdb_cat_id_optin_missing.description = "Automated measurement opt_in labels are required for testing."
+  if TECHNOLOGY['technology_name'] == 'EBeam':
+    rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler")
+    rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
 
   paths = find_paths(TECHNOLOGY['Waveguide'], cell = cell)
   for p in paths:
-    print("%s, %s" % (type(p), p) )
+    if verbose:
+      print("%s, %s" % (type(p), p) )
     # Check for paths with > 2 vertices
     Dpath = p.to_dtype(dbu)
     if Dpath.num_points() > 2:
@@ -761,14 +765,12 @@ def layout_check(cell = None, verbose=False):
         rdb_item.add_value(pya.RdbItemValue( polygon_merged.to_dtype(dbu) ) )
     
     
-    # DFT verification - probably separate
+    # DFT verification
+    # *** todo: create a DFT file for each technology, load.
     # GC facing the right way
     if TECHNOLOGY['technology_name'] == 'EBeam':
-      if c.instance:
+      if c.basic_name:
         ci = c.basic_name.replace(' ','_').replace('$','_')
-        if  ci == "ebeam_gc_te1550":
-          if verbose:
-            print( " - Found GC: %s, %s"  % (c.component, c.trans.angle) )
         if  ci == "ebeam_gc_te1550" and c.trans.angle <> 0 or \
             ci == "ebeam_gc_tm1550" and c.trans.angle <> 180: 
           if verbose:
@@ -782,8 +784,20 @@ def layout_check(cell = None, verbose=False):
     # GC spacing between separate GC circuits (to avoid measuring the wrong one)
 
   # opt_in labels unique
-  # text_out, texts = find_automated_measurement_labels(cell)
-  # rdb_cat_id_optin_unique
+  text_out, texts = find_automated_measurement_labels(cell)
+  if len(texts) == 0:
+    rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
+    rdb_item.add_value(pya.RdbItemValue( pya.Polygon(cell.bbox()).to_dtype(dbu) ) )
+  
+  for ti1 in range(0,len(texts)):
+    for ti2 in  range(ti1+1, len(texts)):
+      if texts[ti1].string == texts[ti2].string:
+        t = texts[ti1]
+        box = pya.Box(t.x-2*t.size, t.y-2*t.size, t.x+2*t.size, t.y+2*t.size)
+        if verbose:
+          print( " - Found DFT error, non unique text labels: %s, %s, %s"  % (t.string, t.x, t.y) )
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_unique.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
 
   for n in nets:
     # Verification: optical pin width mismatches

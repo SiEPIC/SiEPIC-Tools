@@ -358,7 +358,8 @@ def find_pins(self, verbose=False):
           pin_name = iter2.shape().text.string
         iter2.next()
       if pin_name == None:
-        raise Exception("Invalid pin Path detected: %s.\nOptical Pins must have a pin name." % pin_path)
+        print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
+        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
       # Store the pin information in the pins array
       pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
 
