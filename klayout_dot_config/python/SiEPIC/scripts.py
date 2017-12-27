@@ -775,8 +775,10 @@ def layout_check(cell = None, verbose=False):
       area_raw = r.area()
       r.merged_semantics=True
       area_merged = r.area()
-      if area_merged <> area_raw:
-        polygon_merged = r.each_merged().next()
+      if area_merged != area_raw:
+        from .utils import advance_iterator 
+        polygon_merged = advance_iterator(r.each_merged())
+#        polygon_merged = r.each_merged().next()
         if verbose:
           print( " - Found overlapping components: %s, %s"  % (c.component, c2.component) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_comp_overlap.rdb_id())
@@ -789,8 +791,8 @@ def layout_check(cell = None, verbose=False):
     if TECHNOLOGY['technology_name'] == 'EBeam':
       if c.basic_name:
         ci = c.basic_name.replace(' ','_').replace('$','_')
-        if  ci == "ebeam_gc_te1550" and c.trans.angle <> 0 or \
-            ci == "ebeam_gc_tm1550" and c.trans.angle <> 180: 
+        if  ci == "ebeam_gc_te1550" and c.trans.angle != 0 or \
+            ci == "ebeam_gc_tm1550" and c.trans.angle != 180: 
           if verbose:
             print( " - Found DFT error, GC facing the wrong way: %s, %s"  % (c.component, c.trans.angle) )
           polygon = c.polygon
@@ -829,10 +831,10 @@ def layout_check(cell = None, verbose=False):
       
     # starting with each opt_in label, identify the sub-circuit, then GCs, and check for GC spacing
     trimmed_nets, trimmed_components = trim_netlist (nets, components, components_sorted[0])
-    detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - pya.Point(t.x, t.y).to_dtype(1)) <> pya.DPoint(0,0)]
+    detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - pya.Point(t.x, t.y).to_dtype(1)) != pya.DPoint(0,0)]
     vect_optin_GCs = [c.trans.disp - pya.Point(t.x, t.y).to_dtype(1) for c in detector_GCs]
     for vi in range(0,len(detector_GCs)):
-      if round(angle_vector(vect_optin_GCs[vi])%180)<>90:
+      if round(angle_vector(vect_optin_GCs[vi])%180)!=90:
         if verbose:
           print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), texts[ti1].string) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
@@ -863,7 +865,7 @@ def layout_check(cell = None, verbose=False):
     # Verification: optical pin width mismatches
     if n.type == _globals.PIN_TYPES.OPTICAL and not n.idx == None:
       pin_paths = [p.path for p in n.pins]
-      if pin_paths[0].width <> pin_paths[-1].width:
+      if pin_paths[0].width != pin_paths[-1].width:
         if verbose:
           print( " - Found mismatched pin widths: %s"  % (pin_paths[0]) )
         r = pya.Region([pin_paths[0].to_itype(1).polygon(), pin_paths[-1].to_itype(1).polygon()])
