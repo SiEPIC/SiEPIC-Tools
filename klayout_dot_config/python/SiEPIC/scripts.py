@@ -571,7 +571,7 @@ def auto_coord_extract():
   # Find the automated measurement coordinates:
   from .utils import find_automated_measurement_labels
   cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-  text_out, texts = find_automated_measurement_labels(cell)
+  text_out,opt_in = find_automated_measurement_labels(cell)
   wtext.insertHtml (text_out)
 
 def calculate_area():
@@ -799,17 +799,17 @@ def layout_check(cell = None, verbose=False):
     
 
   # opt_in labels missing
-  text_out, texts = find_automated_measurement_labels(cell)
-  if len(texts) == 0:
+  text_out, opt_in = find_automated_measurement_labels(cell)
+  if len(opt_in) == 0:
     rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
     rdb_item.add_value(pya.RdbItemValue( pya.Polygon(cell.bbox()).to_dtype(dbu) ) )
   # opt_in labels
-  for ti1 in range(0,len(texts)):
-    t = texts[ti1]
+  for ti1 in range(0,len(opt_in)):
+    t = opt_in[ti1]['Text']
     box = pya.Box(t.x-2*t.size, t.y-2*t.size, t.x+2*t.size, t.y+2*t.size)
     # opt_in labels check for unique
-    for ti2 in  range(ti1+1, len(texts)):
-      if texts[ti1].string == texts[ti2].string:
+    for ti2 in  range(ti1+1, len(opt_in)):
+      if opt_in[ti1]['opt_in'] == texts[ti2]['opt_in']:
         if verbose:
           print( " - Found DFT error, non unique text labels: %s, %s, %s"  % (t.string, t.x, t.y) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_unique.rdb_id())
@@ -820,10 +820,10 @@ def layout_check(cell = None, verbose=False):
     # GC too far check:
     dist_optin_c = components_sorted[0].trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1))
     if verbose:
-      print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (texts[ti1].string, components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c*dbu) )
+      print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (opt_in[ti1].string, components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c*dbu) )
     if dist_optin_c > 10000:
       if verbose:
-        print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, texts[ti1].string) )
+        print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, opt_in[ti1].string) )
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_toofar.rdb_id())
       rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
       
@@ -834,7 +834,7 @@ def layout_check(cell = None, verbose=False):
     for vi in range(0,len(detector_GCs)):
       if round(angle_vector(vect_optin_GCs[vi])%180)<>90:
         if verbose:
-          print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), texts[ti1].string) )
+          print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1].string) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
           
@@ -851,7 +851,7 @@ def layout_check(cell = None, verbose=False):
         del detector_GCs[del_index]
     for vi in range(0, len(vect_optin_GCs)):
       if verbose:
-        print( " - DFT GC array config error: %s, %s"  % (components_sorted[0].instance, texts[ti1].string) )
+        print( " - DFT GC array config error: %s, %s"  % (components_sorted[0].instance, opt_in[ti1].string) )
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCarrayconfig.rdb_id())
       rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
 

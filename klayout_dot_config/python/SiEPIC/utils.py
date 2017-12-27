@@ -490,23 +490,27 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv = False):
   dbu = cell.layout().dbu
   cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x/dbu, y/dbu)))
 
-
-def find_automated_measurement_labels(cell, LayerTextN=None):
+def find_automated_measurement_labels(topcell=None, LayerTextN=None):
   # example usage:
   # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
   # LayerText = pya.LayerInfo(10, 0)
   # LayerTextN = topcell.layout().layer(LayerText)
   # find_automated_measurement_labels(topcell, LayerTextN)
+  import string
   if not LayerTextN:
     from .utils import get_technology, find_paths
     TECHNOLOGY = get_technology()
     dbu=TECHNOLOGY['dbu']
     LayerTextN=TECHNOLOGY['Text']
-
-  text_out = ''
-  iter = cell.begin_shapes_rec(cell.layout().layer(LayerTextN))
+  if not topcell:
+    topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    
+  text_out = '% X-coord, Y-coord, Polarization, wavelength, type, deviceID, params <br>'
+  dbu = topcell.layout().dbu
+  iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
   i=0
-  texts=[]
+  texts=[] # pya Text, for Verification
+  opt_in = [] # dictionary containing everything extracted from the opt_in labels.
   while not(iter.at_end()):
     if iter.shape().is_text():
       text = iter.shape().text
@@ -514,10 +518,19 @@ def find_automated_measurement_labels(cell, LayerTextN=None):
         i+=1
         text2 = iter.shape().text.transformed(iter.itrans())
         texts.append(text2)
-        text_out += "label: %s, location: (%s, %s) <br>" %(text.string, text2.x*dbu, text2.y*dbu )
+        fields = text.string.split("_")
+        while len(fields) < 7:
+          fields.append('comment')
+        opt_in.append ({'opt_in': text.string, 'x': int(text2.x*dbu), 'y': int(text2.y*dbu), 'pol': fields[2], 'wavelength': fields[3], 'type': fields[4], 'deviceID': fields[5], 'params': fields[6:], 'Text': text2 })
+        params_txt = ''
+        for f in fields[6:]:
+          params_txt += ', ' + str(f)
+        text_out += "%s, %s, %s, %s, %s, %s%s<br>" %(int(text2.x*dbu), int(text2.y*dbu), fields[2], fields[3],fields[4],fields[5],params_txt )
     iter.next()
   text_out += "<br>*** Number of automated measurement labels: %s.<br>" % i
-  return text_out, texts
+  return text_out, opt_in
+
+
 
 try:
   advance_iterator = next
