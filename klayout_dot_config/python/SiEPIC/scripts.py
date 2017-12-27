@@ -698,10 +698,12 @@ def layout_check(cell = None, verbose=False):
   # Design for Test checking
   rdb_cell = next(rdb.each_cell())
   rdb_cat_id = rdb.create_category("Design for Test errors")
-  rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in labels: same")
+  rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in label: same")
   rdb_cat_id_optin_unique.description = "Automated test opt_in labels should be unique."
-  rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in labels: missing")
+  rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in label: missing")
   rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements."
+  rdb_cat_id_optin_toofar = rdb.create_category(rdb_cat_id, "opt_in label: too far away")
+  rdb_cat_id_optin_toofar.description = "Automated test opt_in labels must be placed at the tip of the grating coupler, namely near the (0,0) point of the cell."
   if TECHNOLOGY['technology_name'] == 'EBeam':
     rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
     rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
@@ -789,7 +791,7 @@ def layout_check(cell = None, verbose=False):
           rdb_item.add_value(pya.RdbItemValue( polygon.to_dtype(dbu) ) )
     
 
-  # opt_in labels unique
+  # opt_in labels missing
   text_out, texts = find_automated_measurement_labels(cell)
   if len(texts) == 0:
     rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
@@ -797,10 +799,10 @@ def layout_check(cell = None, verbose=False):
   # opt_in labels
   for ti1 in range(0,len(texts)):
     t = texts[ti1]
+    box = pya.Box(t.x-2*t.size, t.y-2*t.size, t.x+2*t.size, t.y+2*t.size)
     # opt_in labels check for unique
     for ti2 in  range(ti1+1, len(texts)):
       if texts[ti1].string == texts[ti2].string:
-        box = pya.Box(t.x-2*t.size, t.y-2*t.size, t.x+2*t.size, t.y+2*t.size)
         if verbose:
           print( " - Found DFT error, non unique text labels: %s, %s, %s"  % (t.string, t.x, t.y) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_unique.rdb_id())
@@ -808,10 +810,17 @@ def layout_check(cell = None, verbose=False):
 
     # starting with each opt_in label, identify the sub-circuit, check for GC spacing
     # find closest GC to the opt_in label
-    components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.center.distance(pya.Point(t.x, t.y)))
+    components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1)))
+    dist_optin_c = components_sorted[0].trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1))
     if verbose:
-      print( " - Found opt_in Optical IO: %s, %s"  % (components_sorted[0].instance, texts[ti1].string) )
+      print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (texts[ti1].string, components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c*dbu) )
+    if dist_optin_c > 10000:
+      if verbose:
+        print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, texts[ti1].string) )
+      rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_toofar.rdb_id())
+      rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
     trimmed_nets, trimmed_components = trim_netlist (nets, components, c)
+    components_sorted = sorted([c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.center.distance(pya.Point(t.x, t.y)))
     
     
   # GC spacing between separate GC circuits (to avoid measuring the wrong one)
