@@ -55,6 +55,7 @@ else:
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.setup = reload(SiEPIC.setup)
+    SiEPIC.github = reload(SiEPIC.github)
     print('Reloaded SiEPIC')
 
 SiEPIC.setup.registerMenuItems()

@@ -52,6 +52,7 @@ if 1:
     SiEPIC._globals = reload(SiEPIC._globals)
     SiEPIC.core = reload(SiEPIC.core)
     SiEPIC.examples = reload(SiEPIC.examples)
+    SiEPIC.github = reload(SiEPIC.github)
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
@@ -71,7 +72,7 @@ if 0:
   print ("* Display list of components:" )
   [c.display() for c in components]
 
-if 1:
+if 0:
   from SiEPIC import scripts  
   scripts.layout_check(verbose=True)
 
@@ -94,7 +95,7 @@ if 0:
   print(matches)
   
 
-if 1:
+if 0:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
@@ -169,6 +170,28 @@ if 0:
           missing_models.append([c[1],c[2]])
       missing = ("We have %s component(s) missing models, as follows: %s" % (len(missing_models), missing_models))
       v = pya.MessageBox.warning("Errors", missing, pya.MessageBox.Ok)
+   
+if 0:
+  import SiEPIC.github
+  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='PCM')
+  print(files)
+  SiEPIC.github.github_get_files(user='lukasc-ubc', repo='edX-Phot1x', filesearch='PCM', save_folder='/tmp/t')
+    
+if 0:
+  from SiEPIC.utils import find_automated_measurement_labels
+  text_out, opt_in = find_automated_measurement_labels()
+  print(text_out)
+  print(opt_in)
       
-  </text>
+if 1:
+  from SiEPIC.github import fetch_measurement_data_from_github
+  fetch_measurement_data_from_github (verbose=True)
+
+if 0:
+  import SiEPIC.github
+#  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat')
+#  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='TMAlign_FarmMiddle_1.mat')
+  SiEPIC.github.github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filepath_search='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat', filename_search='TMAlign_FarmMiddle_1.mat', save_folder='/tmp/t')
+  
+</text>
 </klayout-macro>
