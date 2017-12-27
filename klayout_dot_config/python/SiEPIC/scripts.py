@@ -637,7 +637,7 @@ def layout_check(cell = None, verbose=False):
     print("*** layout_check()")
 
   from . import _globals
-  from .utils import get_technology, find_paths, find_automated_measurement_labels
+  from .utils import get_technology, find_paths, find_automated_measurement_labels, angle_vector
   TECHNOLOGY = get_technology()
   dbu=TECHNOLOGY['dbu']
 
@@ -696,6 +696,9 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_mismatchedpin.description = "Mismatched pin widths"
 
   # Design for Test checking
+  DFT_Detectors_AboveLaser = 1
+  DFT_Detectors_BelowLaser = 2
+  DFT_GC_Pitch = 127
   rdb_cell = next(rdb.each_cell())
   rdb_cat_id = rdb.create_category("Design for Test errors")
   rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in label: same")
@@ -704,9 +707,13 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements."
   rdb_cat_id_optin_toofar = rdb.create_category(rdb_cat_id, "opt_in label: too far away")
   rdb_cat_id_optin_toofar.description = "Automated test opt_in labels must be placed at the tip of the grating coupler, namely near the (0,0) point of the cell."
+  rdb_cat_id_GCpitch = rdb.create_category(rdb_cat_id, "Grating Coupler pitch")
+  rdb_cat_id_GCpitch.description = "Grating couplers must be on a %s micron pitch, vertically arranged." % (DFT_GC_Pitch)
   if TECHNOLOGY['technology_name'] == 'EBeam':
     rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
     rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
+  rdb_cat_id_GCarrayconfig = rdb.create_category(rdb_cat_id, "Fibre array configuration")
+  rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Couplers above the opt_in label (laser injection port) and at most %s Grating Couplers below the opt_in label" % (DFT_Detectors_AboveLaser, DFT_Detectors_BelowLaser)
 
   paths = find_paths(TECHNOLOGY['Waveguide'], cell = cell)
   for p in paths:
@@ -808,9 +815,9 @@ def layout_check(cell = None, verbose=False):
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_unique.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
 
-    # starting with each opt_in label, identify the sub-circuit, check for GC spacing
-    # find closest GC to the opt_in label
+    # find the GC closest to the opt_in label. 
     components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1)))
+    # GC too far check:
     dist_optin_c = components_sorted[0].trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1))
     if verbose:
       print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (texts[ti1].string, components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c*dbu) )
@@ -819,9 +826,35 @@ def layout_check(cell = None, verbose=False):
         print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, texts[ti1].string) )
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_toofar.rdb_id())
       rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
-    trimmed_nets, trimmed_components = trim_netlist (nets, components, c)
-    components_sorted = sorted([c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.center.distance(pya.Point(t.x, t.y)))
-    
+      
+    # starting with each opt_in label, identify the sub-circuit, then GCs, and check for GC spacing
+    trimmed_nets, trimmed_components = trim_netlist (nets, components, components_sorted[0])
+    detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - pya.Point(t.x, t.y).to_dtype(1)) <> pya.DPoint(0,0)]
+    vect_optin_GCs = [c.trans.disp - pya.Point(t.x, t.y).to_dtype(1) for c in detector_GCs]
+    for vi in range(0,len(detector_GCs)):
+      if round(angle_vector(vect_optin_GCs[vi])%180)<>90:
+        if verbose:
+          print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), texts[ti1].string) )
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+          
+    # find the GCs in the circuit that don't match the testing configuration
+    for d in range(1, DFT_Detectors_AboveLaser+1):
+      if pya.DPoint(0,d*DFT_GC_Pitch*1000) in vect_optin_GCs:
+        del_index = vect_optin_GCs.index(pya.DPoint(0,d*DFT_GC_Pitch*1000))
+        del vect_optin_GCs[del_index]
+        del detector_GCs[del_index]
+    for d in range(1, DFT_Detectors_BelowLaser+1):
+      if pya.DPoint(0,-d*DFT_GC_Pitch*1000) in vect_optin_GCs:
+        del_index = vect_optin_GCs.index(pya.DPoint(0,-d*DFT_GC_Pitch*1000))
+        del vect_optin_GCs[del_index]
+        del detector_GCs[del_index]
+    for vi in range(0, len(vect_optin_GCs)):
+      if verbose:
+        print( " - DFT GC array config error: %s, %s"  % (components_sorted[0].instance, texts[ti1].string) )
+      rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCarrayconfig.rdb_id())
+      rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+
     
   # GC spacing between separate GC circuits (to avoid measuring the wrong one)
 

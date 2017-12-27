@@ -42,6 +42,7 @@ pya.Instance Extensions:
 
 pya.Point Extensions:
   - to_dtype(dbu): for KLayout < 0.25, convert integer Point using dbu to float DPoint
+  - angle_vector
 
 '''
 #################################################################################
@@ -925,3 +926,12 @@ if int(pya.Application.instance().version().split('.')[1]) < 25:
 
   # KLayout v0.25 introduced technology variable:
   pya.Point.to_dtype = to_dtype
+
+
+#Find the angle of a vector
+def angle_vector(u):
+  from math import atan2, pi
+  return (atan2(u.y,u.x))/pi*180
+
+pya.Point.angle_vector = angle_vector
+pya.DPoint.angle_vector = angle_vector
