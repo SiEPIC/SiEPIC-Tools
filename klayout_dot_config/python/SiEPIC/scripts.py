@@ -1031,7 +1031,7 @@ def fetch_measurement_data_from_github(verbose=None):
       if verbose:
         print('   File selection: %s' % file_selection)
       savefilepath1 = github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filename_search=file_selection[0], filepath_search=file_selection[1], include_path=include_path, save_folder=tmp_folder, verbose=verbose) 
-      savefilepath += savefilepath1
+      savefilepath += [savefilepath1]
 
     # this launches open_PDF once for each opt_in label:
     if 0 and savefilepath:  
@@ -1053,17 +1053,9 @@ def fetch_measurement_data_from_github(verbose=None):
     if verbose:
       print('All files: %s' % (savefilepath1) )
 
-    depth = lambda L: isinstance(L, list) and max(map(depth, L))+1
-    
-#    if depth(savefilepath):
-#      savefilepath = [item for sublist in savefilepath for item in sublist]
-    
     files = ''
-    if depth(savefilepath):
-      for s in savefilepath:
-        files += s + ' '        
-    else:
-      files = savefilepath
+    for s in savefilepath:
+      files += s + ' '        
       
     open_PDF_files(files)
 
