@@ -929,8 +929,9 @@ Get data, one of:
  - Individual
 '''
 def fetch_measurement_data_from_github(verbose=None):
-  import pya, github, tempfile
-
+  import pya, tempfile
+  from .github import github_get_filenames, github_get_files, github_get_file
+  
   if verbose:
     print('Fetch measurement data from GitHub')
 
@@ -987,7 +988,7 @@ def fetch_measurement_data_from_github(verbose=None):
     if verbose:
       print("  searching for: %s" % search_for)
 
-    files = github.github_get_filenames(extension='pdf', user='lukasc-ubc', repo='edX-Phot1x', filesearch=search_for, verbose=verbose)
+    files = github_get_filenames(extension='pdf', user='lukasc-ubc', repo='edX-Phot1x', filesearch=search_for, verbose=verbose)
 
     if len(files) == 0:
       print (' measurement not found!')
@@ -1021,7 +1022,7 @@ def fetch_measurement_data_from_github(verbose=None):
 
     # Download file(s)
     if all_measurements == 1:
-      savefilepath1  = github.github_get_files(user='lukasc-ubc', repo='edX-Phot1x',filename_search=search_for, save_folder=tmp_folder,  include_path=include_path, verbose=verbose)
+      savefilepath1  = github_get_files(user='lukasc-ubc', repo='edX-Phot1x',filename_search=search_for, save_folder=tmp_folder,  include_path=include_path, verbose=verbose)
       savefilepath += savefilepath1
     else: # find the single file to download
       for f in files:
@@ -1029,7 +1030,7 @@ def fetch_measurement_data_from_github(verbose=None):
           file_selection = f
       if verbose:
         print('   File selection: %s' % file_selection)
-      savefilepath1 = github.github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filename_search=file_selection[0], filepath_search=file_selection[1], include_path=include_path, save_folder=tmp_folder, verbose=verbose) 
+      savefilepath1 = github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filename_search=file_selection[0], filepath_search=file_selection[1], include_path=include_path, save_folder=tmp_folder, verbose=verbose) 
       savefilepath += savefilepath1
 
     # this launches open_PDF once for each opt_in label:
