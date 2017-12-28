@@ -1,12 +1,12 @@
 '''
-Download files from GitHub using GitHub API &amp; raw download
+Download files from GitHub using GitHub API and raw download
 Requires additional Python modules to be installed: requests
 on OSX: > sudo easy_install requests
     or  > pip install requests
-
 '''
 
-def github_get_filenames(user, repo, filesearch, auth=None):
+# Search the GitHub repository for files containing the string "filesearch", with optional extension
+def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbose=None):
   import requests
   import json
   import os
@@ -19,74 +19,66 @@ def github_get_filenames(user, repo, filesearch, auth=None):
     dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' + str(r['url']).split('/contents/')[1]).split('?')[0]
     filename = dl.split('/')[-1]
     path = dl.split('/raw/master/')[-1]
-    files.append ([filename, path])
-    print ('%s: %s' % (filename, path) )
+    if extension in filename[-len(extension):]:
+      files.append ([filename, path])
+    if verbose:
+      print ('     %s: %s' % (filename, path) )
   return files
 
-def github_get_files(user, repo, filesearch, save_folder=None, auth=None):
+# Get all files from the respository with filename = filename_search
+# write to a single folder: save_folder
+# or recreate the folder tree, if include_path = True
+def github_get_files(user, repo, filename_search, save_folder=None, auth=None, include_path=None, verbose=None):
   import requests
   import json
   import os
-  filesearch = filesearch.replace('%20',' ')
-  r = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filesearch, user, repo),auth=auth)
-  for r in json.loads(r.text)['items']:
+  savefilepath=[]
+  filename_search = filename_search.replace('%20',' ')
+  req = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filename_search, user, repo),auth=auth)
+  for r in json.loads(req.text)['items']:
     dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' + str(r['url']).split('/contents/')[1]).split('?')[0]
     filename = dl.split('/')[-1]
-    print(dl)
-    r = requests.get (dl, auth=auth)
-    open('%s' % (os.path.join(save_folder,filename)),'w').write(r.content)
+    path = str(r['url']).split('/contents/')[1].split('?')[0][0:-len(filename)].replace('%20','_')
+    if verbose:
+      print([filename,path, dl])
+    req = requests.get (dl, auth=auth)
+    if include_path:
+      base_path = os.path.join(save_folder, path)
+      if not os.path.exists(base_path):
+        os.makedirs(base_path)
+      savefilepath.append (os.path.join(base_path,filename))
+    else:
+      savefilepath.append (os.path.join(save_folder, path[:-1].replace('/','-'))+filename)
+    open(savefilepath[-1],'w').write(req.content)
+  return savefilepath
 
-def github_get_file(user, repo, filename_search, filepath_search, save_folder=None, auth=None):
+# Get specific file from the respository with filename = filename_search
+# which is located in the path: filepath_search
+# write to a folder: save_folder
+def github_get_file(user, repo, filename_search, filepath_search, save_folder=None, auth=None, include_path=None, verbose=None):
   import requests
   import json
   import os
-  r = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filename_search, user, repo),auth=auth)
-  for r in json.loads(r.text)['items']:
+  savefilepath=None
+  req = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filename_search, user, repo),auth=auth)
+  for r in json.loads(req.text)['items']:
     dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' + str(r['url']).split('/contents/')[1]).split('?')[0]
     filename = dl.split('/')[-1]
-    print(dl)
+    path = str(r['url']).split('/contents/')[1].split('?')[0][0:-len(filename)].replace('%20','_')
+    if verbose:
+      print([filename,path, dl])
     if filename == filename_search:
-      r = requests.get (dl, auth=auth)
-      open('%s' % (os.path.join(save_folder,filename)),'w').write(r.content)
+      req = requests.get (dl, auth=auth)
+      if include_path:
+        base_path = os.path.join(save_folder, path)
+        if not os.path.exists(base_path):
+          os.makedirs(base_path)
+        savefilepath = os.path.join(base_path,filename)
+      else:
+        savefilepath = os.path.join(save_folder,filename)
+      open(savefilepath,'w').write(req.content)
+  return savefilepath
 
-
-def fetch_measurement_data_from_github(verbose=None):
-  import pya
-  from .utils import find_automated_measurement_labels
-  text_out,opt_in = find_automated_measurement_labels()
-
-  # GUI to ask which opt_in measurement to fetch
-  opt_in_labels = [o['opt_in'] for o in opt_in]
-  opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in circuts fetch experimental data.",  opt_in_labels, 0)
-  for o in opt_in:
-    if o['opt_in'] == opt_in_selection_text:
-      opt_in_selection  = o
-      # = o.keys()[o.values().index(opt_in_selection_text)] 
-  fields = opt_in_selection_text.split("_")
-  search_for = ''
-  for i in range(4,min(6,len(fields))):
-    search_for += fields[i]+'_'
-  if verbose:
-    print("opt_in selected from InputDialog = %s, %s" % (opt_in_selection_text, opt_in_selection) )
-    print("  searching for: %s" % search_for)
-
-  files = github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch=search_for)
-  
-  # GUI to ask which opt_in measurement to fetch
-  opt_in_labels = [f[1] for f in files]
-  opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in circuts fetch experimental data.",  opt_in_labels, 0)
-  for f in files:
-    if f[1] == opt_in_selection_text:
-      file_selection  = f
-  if verbose:
-    print('File selection: %s' % file_selection)
-
-  github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filename_search=file_selection[0], filepath_search=file_selection[1], save_folder='/tmp') 
-
-  import commands
-  runcmd = '/usr/bin/open  /Applications/Preview.app /tmp/%s' % file_selection[0]
-  print("Running in shell: %s" % runcmd)
-  print(commands.getstatusoutput(runcmd))
 
 '''
 

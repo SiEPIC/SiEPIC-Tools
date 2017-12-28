@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Fetch measurement data from GitHub using opt_in labels</description>
+ <description>Fetch measurement data from GitHub</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -16,6 +16,6 @@
  <dsl-interpreter-name/>
  <text>import SiEPIC, pya
 
-SiEPIC.github.fetch_measurement_data_from_github()
+SiEPIC.scripts.fetch_measurement_data_from_github(verbose=True)
 </text>
 </klayout-macro>

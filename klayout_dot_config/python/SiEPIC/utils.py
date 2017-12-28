@@ -11,6 +11,7 @@ get_technology
 get_layout_variables
 enum
 find_paths
+selected_opt_in_text
 select_paths
 select_waveguides
 select_instances
@@ -232,7 +233,17 @@ def find_paths(layer, cell = None):
     
   return selection
 
-
+#Return all selected opt_in Text labels. 
+# example usage: selected_opt_in_text()[0].shape.text.string
+def selected_opt_in_text():
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  
+  selection = lv.object_selection
+  selection = [o for o in selection if (not o.is_cell_inst()) and o.shape.is_text() and 'opt_in' in o.shape.text.string]
+  return selection
+  
+  
 #Return all selected paths. If nothing is selected, select paths automatically
 def select_paths(layer, cell = None):
   lv = pya.Application.instance().main_window().current_view()

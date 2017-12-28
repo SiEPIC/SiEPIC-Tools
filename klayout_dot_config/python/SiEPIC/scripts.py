@@ -886,3 +886,193 @@ def layout_check(cell = None, verbose=False):
   
 def text_netlist_check():
   print("text_netlist_check")
+  
+''' 
+Open all PDF files using an appropriate viewer
+'''
+def open_PDF_files(files):
+  import sys
+  if sys.platform.startswith('darwin'):
+    import commands
+    # open all the files in a single Preview application. 
+    # open in one window with tabs: https://support.apple.com/en-ca/guide/mac-help/mchlp2469
+    # System Preferences - Dock - Prefer tabs when opening documents - Always
+    runcmd = '/usr/bin/open -n -a /Applications/Preview.app %s' % files
+    print("Running in shell: %s" % runcmd)
+    print(commands.getstatusoutput(runcmd))
+
+'''
+Open the folder using an appropriate file finder / explorer
+'''
+def open_folder(folder):
+  import sys
+  if sys.platform.startswith('darwin'):
+    import commands
+    runcmd = '/usr/bin/open %s' % folder
+    print("Running in shell: %s" % runcmd)
+    print(commands.getstatusoutput(runcmd))
+
+
+'''
+Fetch measurement data from GitHub
+
+Identify opt_in circuit, using one of:
+ - selected opt_in Text objects
+ - GUI
+    - All - first option
+    - Individual - selected
+
+Query GitHub to find measurement data for opt_in label(s)
+
+Get data, one of:
+ - All
+ - Individual
+'''
+def fetch_measurement_data_from_github(verbose=None):
+  import pya, github, tempfile
+
+  if verbose:
+    print('Fetch measurement data from GitHub')
+
+  tmp_folder = tempfile.mkdtemp()
+  folder_flatten_option = None
+
+  from .utils import find_automated_measurement_labels
+  text_out,opt_in = find_automated_measurement_labels()
+
+  # First check if any opt_in labels are selected  
+  opt_in_selection_text = []
+  from .utils import selected_opt_in_text
+  oinstpaths = selected_opt_in_text()
+  for oi in oinstpaths:
+    opt_in_selection_text.append (oi.shape.text.string)
+  
+  if opt_in_selection_text:
+    if verbose:
+      print(' user selected opt_in labels')
+  else:
+    # If not, scan the cell and find all the labels
+    if verbose:
+      print(' starting GUI to select opt_in labels')
+
+    # GUI to ask which opt_in measurement to fetch
+    opt_in_labels = [o['opt_in'] for o in opt_in]
+    opt_in_labels.insert(0,'All opt-in labels')
+    opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in labels, to fetch experimental data.",  opt_in_labels, 0)
+    if not opt_in_selection_text: # user pressed cancel
+      if verbose:
+        print (' user cancel!')
+      return 
+    if opt_in_selection_text == 'All opt-in labels':
+      opt_in_selection_text = [o['opt_in'] for o in opt_in]
+      if verbose:
+        print('  selecting all opt_in labels' )
+    else:
+      opt_in_selection_text = [opt_in_selection_text]
+
+  if verbose:
+    print(' opt_in labels: %s' % opt_in_selection_text )
+    print(' Begin looping through labels')
+    
+  all_measurements = 0
+  savefilepath = []
+  
+  # Loop through the opt_in text labels
+  for ot in opt_in_selection_text:
+
+    fields = ot.split("_")
+    search_for = ''
+    for i in range(4,min(7,len(fields))):
+      search_for += fields[i]+'_'
+    if verbose:
+      print("  searching for: %s" % search_for)
+
+    files = github.github_get_filenames(extension='pdf', user='lukasc-ubc', repo='edX-Phot1x', filesearch=search_for, verbose=verbose)
+
+    if len(files) == 0:
+      print (' measurement not found!')
+      return
+      
+    elif len(files) == 1:
+      measurements_text = files[0][1].replace('%20',' ')
+    elif len(files) > 1:
+      if all_measurements == 0:
+        # GUI to ask which opt_in measurement to fetch
+        measurements = [f[1].replace('%20',' ') for f in files]
+        measurements.insert(0,'All measurements')
+        measurements_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the data files for opt_in = %s, to fetch experimental data.\n" % search_for,  measurements, 0)
+        if not measurements_text: # user pressed cancel
+          if verbose:
+            print (' user cancel!')
+          return 
+        if measurements_text == 'All measurements':
+          if verbose:
+            print ('  all measurements')
+          all_measurements = 1
+    
+    if not folder_flatten_option:
+      # GUI to ask if we want to keep the folder tree
+      options = ['Flatten folder tree','Replicate folder tree']
+      folder_flatten_option = pya.InputDialog.ask_item("folder tree", "Do you wish to place all files in the same folder (flatten folder tree), or recreate the folder tree structure?",  options, 0)
+      if folder_flatten_option == 'Replicate folder tree': 
+        include_path=True
+      else:
+        include_path=False
+
+    # Download file(s)
+    if all_measurements == 1:
+      savefilepath1  = github.github_get_files(user='lukasc-ubc', repo='edX-Phot1x',filename_search=search_for, save_folder=tmp_folder,  include_path=include_path, verbose=verbose)
+      savefilepath += savefilepath1
+    else: # find the single file to download
+      for f in files:
+        if f[1] == measurements_text.replace(' ','%20'):
+          file_selection = f
+      if verbose:
+        print('   File selection: %s' % file_selection)
+      savefilepath1 = github.github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filename_search=file_selection[0], filepath_search=file_selection[1], include_path=include_path, save_folder=tmp_folder, verbose=verbose) 
+      savefilepath += savefilepath1
+
+    # this launches open_PDF once for each opt_in label:
+    if 0 and savefilepath:  
+      if verbose:
+        print('All files for opt_in %s: %s' % (opt_in[0]['opt_in'], savefilepath1) )
+      
+      files = ''
+      depth = lambda L: isinstance(L, list) and max(map(depth, L))+1
+      if depth(savefilepath1):
+        for s in savefilepath1:
+          files += s + ' '        
+      else:
+        files = savefilepath1
+        
+      open_PDF_files(files)
+
+  # this launches open_PDF once for all files at the end:
+  if 1 and savefilepath:
+    if verbose:
+      print('All files: %s' % (savefilepath1) )
+
+    depth = lambda L: isinstance(L, list) and max(map(depth, L))+1
+    
+#    if depth(savefilepath):
+#      savefilepath = [item for sublist in savefilepath for item in sublist]
+    
+    files = ''
+    if depth(savefilepath):
+      for s in savefilepath:
+        files += s + ' '        
+    else:
+      files = savefilepath
+      
+    open_PDF_files(files)
+
+  warning = pya.QMessageBox()
+  warning.setStandardButtons(pya.QMessageBox.Ok)
+  if savefilepath:  
+    open_folder(tmp_folder)
+    warning.setText("Measurement Data: successfully downloaded files.")
+  else:
+    warning.setText("Measurement Data: 0 files downloaded.")
+  pya.QMessageBox_StandardButton(warning.exec_())
+            
+  return savefilepath

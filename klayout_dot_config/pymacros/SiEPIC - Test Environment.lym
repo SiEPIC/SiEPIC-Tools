@@ -184,14 +184,53 @@ if 0:
   print(opt_in)
       
 if 1:
-  from SiEPIC.github import fetch_measurement_data_from_github
-  fetch_measurement_data_from_github (verbose=True)
-
+  from SiEPIC.scripts import fetch_measurement_data_from_github
+  savefilepath = fetch_measurement_data_from_github (verbose=True)
+#  savefilepath = fetch_all_measurement_data_from_github(verbose=True)
 if 0:
   import SiEPIC.github
 #  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat')
 #  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='TMAlign_FarmMiddle_1.mat')
   SiEPIC.github.github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filepath_search='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat', filename_search='TMAlign_FarmMiddle_1.mat', save_folder='/tmp/t')
   
+if 0:
+  import time
+  
+  from scipy.io import loadmat        # used to load MATLAB data files
+  
+  import matplotlib
+  import matplotlib.pyplot as plt     # used to plot data
+  plt.ioff()
+  import os                           # used to process filenames
+  
+  FileName = '/tmp/t/TMAlign_FarmMiddle_1.mat'
+  
+  PORT=1 # Which Fibre array port is the output connected to?
+  # Load the file, from the MATLAB format.
+  matData = loadmat(FileName, squeeze_me=True, struct_as_record=False)
+  
+  # Read the experimental data from the MATLAB file
+  #wavelength = matData['scanResults'][PORT-1].Data[:,0]/1e9
+  wavelength = matData['scandata'].wavelength/1e9
+  power = matData['scandata'].power[:,PORT-1]
+  
+  # Plot the raw data:
+  fig=plt.figure()
+  print(time.clock())
+  plt.plot(wavelength*1e6, power)
+  plt.xlabel('Wavelength [$\mu$m]')
+  plt.ylabel('Transmission [dB]')
+  plt.autoscale(enable=True, axis='x', tight=True)
+  plt.autoscale(enable=True, axis='y', tight=True)
+  print(time.clock())
+  saveFigFileName = os.path.splitext(FileName)[0]+'.pdf'
+  plt.title('Raw spectrum data: %s'%(saveFigFileName))
+  plt.savefig(saveFigFileName)
+  print(time.clock())
+  saveFigFileName = os.path.splitext(FileName)[0]+'.png'
+  plt.title('Raw spectrum data: %s'%(saveFigFileName))
+  plt.savefig(saveFigFileName)
+  print(time.clock())
+
 </text>
 </klayout-macro>
