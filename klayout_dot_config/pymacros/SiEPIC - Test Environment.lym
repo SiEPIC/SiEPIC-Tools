@@ -183,7 +183,7 @@ if 0:
   print(text_out)
   print(opt_in)
       
-if 1:
+if 0:
   from SiEPIC.scripts import fetch_measurement_data_from_github
   savefilepath = fetch_measurement_data_from_github (verbose=True)
 #  savefilepath = fetch_all_measurement_data_from_github(verbose=True)

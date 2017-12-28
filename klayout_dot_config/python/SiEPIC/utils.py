@@ -100,9 +100,14 @@ def get_technology_by_name(tech_name, verbose=False):
       technology['base_path'] = os.path.split(head)[0]
       # technology['INTC_CML']
       cml_files = [x for x in os.listdir(technology['base_path']) if x.endswith(".cml")]
-      technology['INTC_CML'] = cml_files[-1]
-      technology['INTC_CML_path'] = os.path.join(technology['base_path'],cml_files[-1])
-      technology['INTC_CML_version'] = cml_files[-1].replace(tech_name+'_','')
+      if cml_files:
+        technology['INTC_CML'] = cml_files[-1]
+        technology['INTC_CML_path'] = os.path.join(technology['base_path'],cml_files[-1])
+        technology['INTC_CML_version'] = cml_files[-1].replace(tech_name+'_','')
+      else:
+        technology['INTC_CML'] = None
+        technology['INTC_CML_path'] = None
+        technology['INTC_CML_version'] = None
       
     file = open(lyp_file, 'r') 
     layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
@@ -516,7 +521,19 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
     dbu=TECHNOLOGY['dbu']
     LayerTextN=TECHNOLOGY['Text']
   if not topcell:
+    lv = pya.Application.instance().main_window().current_view()
+    if lv == None:
+      print("No view selected")
+      raise UserWarning("No view selected. Make sure you have an open layout.")
+    # Find the currently selected layout.
+    ly = pya.Application.instance().main_window().current_view().active_cellview().layout() 
+    if ly == None:
+      raise UserWarning("No layout. Make sure you have an open layout.")
+    # find the currently selected cell:
+    cv = pya.Application.instance().main_window().current_view().active_cellview()
     topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    if topcell == None:
+      raise UserWarning("No cell. Make sure you have an open layout.")
     
   text_out = '% X-coord, Y-coord, Polarization, wavelength, type, deviceID, params <br>'
   dbu = topcell.layout().dbu

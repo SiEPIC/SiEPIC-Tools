@@ -7,7 +7,18 @@ on OSX: > sudo easy_install requests
 
 # Search the GitHub repository for files containing the string "filesearch", with optional extension
 def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbose=None):
-  import requests
+  
+  import sys, pya
+
+  try:
+    import requests
+  except ImportError:
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Ok)
+    warning.setText("Missing Python module: 'requests'.  Please install, restart KLayout, and try again.")
+    pya.QMessageBox_StandardButton(warning.exec_())
+    return []
+
   import json
   import os
   filenames=[]
