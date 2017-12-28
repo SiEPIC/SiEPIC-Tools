@@ -890,7 +890,7 @@ def text_netlist_check():
 ''' 
 Open all PDF files using an appropriate viewer
 '''
-def open_PDF_files(files):
+def open_PDF_files(files,files_list):
   import sys
   if sys.platform.startswith('darwin'):
     import commands
@@ -900,7 +900,10 @@ def open_PDF_files(files):
     runcmd = '/usr/bin/open -n -a /Applications/Preview.app %s' % files
     print("Running in shell: %s" % runcmd)
     print(commands.getstatusoutput(runcmd))
-
+  if sys.platform.startswith('win'):
+    import os
+    for f in files_list:
+      os.startfile(f)
 '''
 Open the folder using an appropriate file finder / explorer
 '''
@@ -912,6 +915,10 @@ def open_folder(folder):
     print("Running in shell: %s" % runcmd)
     print(commands.getstatusoutput(runcmd))
 
+  if sys.platform.startswith('win'):
+    import subprocess
+    print("running in windows explorer, %s" % folder)
+    print(subprocess.Popen(r'explorer /select,"%s"' % folder))
 
 '''
 Fetch measurement data from GitHub
@@ -1057,7 +1064,7 @@ def fetch_measurement_data_from_github(verbose=None):
     for s in savefilepath:
       files += s + ' '        
       
-    open_PDF_files(files)
+    open_PDF_files(files, savefilepath)
 
   warning = pya.QMessageBox()
   warning.setStandardButtons(pya.QMessageBox.Ok)

@@ -60,7 +60,7 @@ def github_get_files(user, repo, filename_search, save_folder=None, auth=None, i
       savefilepath.append (os.path.join(base_path,filename))
     else:
       savefilepath.append (os.path.join(save_folder, path[:-1].replace('/','-'))+filename)
-    open(savefilepath[-1],'w').write(req.content)
+    open(savefilepath[-1],'wb').write(req.content)
   return savefilepath
 
 # Get specific file from the respository with filename = filename_search
@@ -87,7 +87,7 @@ def github_get_file(user, repo, filename_search, filepath_search, save_folder=No
         savefilepath = os.path.join(base_path,filename)
       else:
         savefilepath = os.path.join(save_folder,filename)
-      open(savefilepath,'w').write(req.content)
+      open(savefilepath,'wb').write(req.content)
   return savefilepath
 
 
