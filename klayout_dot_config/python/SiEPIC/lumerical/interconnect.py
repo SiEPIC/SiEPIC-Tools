@@ -147,6 +147,10 @@ def component_simulation(verbose=False):
   # get selected instances
   from ..utils import select_instances
   selected_instances = select_instances()
+
+  from ..utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    
   
   # check that it is one or more:
   error = pya.QMessageBox()
@@ -167,7 +171,7 @@ def component_simulation(verbose=False):
   # Loop if more than one component selected
   for obj in selected_instances:
 # *** not working. .returns Flattened.
-    c = obj.inst().cell.find_components()[0]
+#    c = obj.inst().cell.find_components()[0]
     c = cell.find_components(obj.inst().cell)[0]
     
     if not c.has_model():
@@ -235,7 +239,16 @@ def component_simulation(verbose=False):
     file.close()
     if verbose:
       print(text_main)
-  
+
+    '''
+    # Ask user whether to start a new visualizer, or use an existing one.
+    opt_in_labels = [o['opt_in'] for o in opt_in]
+    opt_in_labels.insert(0,'All opt-in labels')
+    opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in labels, to fetch experimental data.",  opt_in_labels, 0)
+    if not opt_in_selection_text: # user pressed cancel
+      pass
+    '''    
+
     # Write the Lumerical INTERCONNECT start-up script.
     text_lsf =  'switchtolayout;\n'
     text_lsf += 'deleteall;\n'
