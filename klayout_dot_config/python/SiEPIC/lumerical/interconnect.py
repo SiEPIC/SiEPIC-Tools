@@ -28,7 +28,7 @@ usage:
 import pya
 
 def run_INTC():
-  import lumapi_osx as lumapi
+  import lumapi
   from .. import _globals
   _globals.INTC  # Python Lumerical INTERCONNECT integration handle
   
@@ -102,7 +102,7 @@ def Setup_Lumerical_KLayoutPython_integration():
   ##################################################################
   # Load Lumerical API: 
 
-  import lumapi_osx as lumapi
+  import lumapi
   from .. import _globals
   _globals.INTC  # Python Lumerical INTERCONNECT integration handle
   
@@ -142,7 +142,7 @@ def component_simulation(verbose=False):
     
   # Run INTERCONNECT
   # using Lumerical API: 
-  import lumapi_osx as lumapi
+  import lumapi
 
   # get selected instances
   from ..utils import select_instances
@@ -423,7 +423,7 @@ def circuit_simulation():
     # OSX specific
 
     try: 
-      import lumapi_osx as lumapi
+      import lumapi
       from .. import _globals
       run_INTC()
       # Run using Python integration:

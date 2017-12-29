@@ -1,16 +1,19 @@
 from ctypes import *
-from numpy import *
+#from numpy import *
 import platform
 import inspect
 import time
 import os
 from pprint import pprint
 
-#INTEROPLIB = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + "/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Matlab/libinterop-api.1.dylib"
-INTEROPLIB = "/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Matlab/libinterop-api.1.dylib"
-
+print(platform.system())
+INTEROPLIB = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + "/libinterop-api.so.1"
+print(INTEROPLIB)
 if platform.system() == 'Windows': 
+    INTEROPLIB = "C:\\Program Files\\Lumerical\\INTERCONNECT\\api\\python\\interopapi.dll"
     INTEROPLIB = "interopapi.dll"
+    INTEROPLIB = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + "\\interopapi.dll"
+
 
 class Session(Structure):
     _fields_ = [("p", c_void_p)]
@@ -55,6 +58,7 @@ ValUnion._fields_ = [("doubleVal", c_double),
 Any._fields_ = [("type", c_int), ("val", ValUnion)]
 
 def initLib():
+    print(INTEROPLIB)
     iapi = CDLL(INTEROPLIB)
     
     iapi.appOpen.restype = Session
