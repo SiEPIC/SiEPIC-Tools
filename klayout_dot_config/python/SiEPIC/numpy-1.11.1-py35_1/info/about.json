@@ -1,0 +1,5 @@
+{
+  "home": "http://numpy.scipy.org/", 
+  "license": "BSD", 
+  "summary": "array processing for numbers, strings, records, and objects"
+}
