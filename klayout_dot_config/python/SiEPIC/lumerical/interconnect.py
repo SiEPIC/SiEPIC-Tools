@@ -29,18 +29,19 @@ import pya
 
 def run_INTC():
   import lumapi_osx as lumapi
-  global INTC  # Python Lumerical INTERCONNECT integration handle
+  from .. import _globals
+  _globals.INTC  # Python Lumerical INTERCONNECT integration handle
   
-  if not INTC: # Not running, start a new session
-    INTC = lumapi.open('interconnect')
-    print(INTC)
+  if not _globals.INTC: # Not running, start a new session
+    _globals.INTC = lumapi.open('interconnect')
+    print(_globals.INTC)
   else: # found open INTC session
     try:
-      lumapi.evalScript(INTC, "?'KLayout integration test.';")
+      lumapi.evalScript(_globals.INTC, "?'KLayout integration test.';")
     except: # but can't communicate with INTC; perhaps it was closed by the user
       INTC = lumapi.open('interconnect') # run again.
   try: # check again
-    lumapi.evalScript(INTC, "?'KLayout integration test.';")
+    lumapi.evalScript(_globals.INTC, "?'KLayout integration test.';")
   except:
     raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
 
@@ -102,15 +103,16 @@ def Setup_Lumerical_KLayoutPython_integration():
   # Load Lumerical API: 
 
   import lumapi_osx as lumapi
-  global INTC  # Python Lumerical INTERCONNECT integration handle
+  from .. import _globals
+  _globals.INTC  # Python Lumerical INTERCONNECT integration handle
   
   run_INTC()
-  lumapi.evalScript(INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+  lumapi.evalScript(_globals.INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
 
   import os 
   # Read INTC element library
-  lumapi.evalScript(INTC, "out=library;")
-  INTC_libs=lumapi.getVar(INTC, "out")
+  lumapi.evalScript(_globals.INTC, "out=library;")
+  INTC_libs=lumapi.getVar(_globals.INTC, "out")
 
   # Install technology CML if missing in INTC
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
@@ -123,9 +125,9 @@ def Setup_Lumerical_KLayoutPython_integration():
   if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].replace('.cml','').lower()) in INTC_libs:
     # install CML
     print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
-    lumapi.evalScript(INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
+    lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
     # Re-Read INTC element library
-    lumapi.evalScript(INTC, "out=library;")
+    lumapi.evalScript(_globals.INTC, "out=library;")
     INTC_libs=lumapi.getVar(INTC, "out")
 
   # Save INTC element library to KLayout application data path
@@ -141,8 +143,6 @@ def component_simulation(verbose=False):
   # Run INTERCONNECT
   # using Lumerical API: 
   import lumapi_osx as lumapi
-  global INTC  # Python Lumerical INTERCONNECT integration handle
-#  run_INTC()
 
   # get selected instances
   from ..utils import select_instances
@@ -166,7 +166,10 @@ def component_simulation(verbose=False):
   # Check if the component has a compact model loaded in INTERCONNECT
   # Loop if more than one component selected
   for obj in selected_instances:
+# *** not working. .returns Flattened.
     c = obj.inst().cell.find_components()[0]
+    c = cell.find_components(obj.inst().cell)[0]
+    
     if not c.has_model():
       if len(selected_instances) == 0:
         error.setText("Error: Component '%s' does not have a compact model. Cannot perform simulation." % c)
@@ -252,9 +255,10 @@ def component_simulation(verbose=False):
       print(text_lsf)
     
     # Run using Python integration:
+    from .. import _globals
     run_INTC()
-    lumapi.evalScript(INTC, "cd ('" + tmp_folder + "');")
-    lumapi.evalScript(INTC, c.component + ";")
+    lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+    lumapi.evalScript(_globals.INTC, c.component + ";")
 
     
   
@@ -407,12 +411,12 @@ def circuit_simulation():
 
     try: 
       import lumapi_osx as lumapi
-      global INTC  # Python Lumerical INTERCONNECT integration handle
+      from .. import _globals
       run_INTC()
       # Run using Python integration:
-      lumapi.evalScript(INTC, "switchtolayout;")
-      lumapi.evalScript(INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(INTC, topcell.name + ";")
+      lumapi.evalScript(_globals.INTC, "switchtolayout;")
+      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+      lumapi.evalScript(_globals.INTC, topcell.name + ";")
 
     except:
       print ("Can't connect to Lumerical INTERCONNECT using Python. Proceeding using command interface.")

@@ -64,6 +64,20 @@ if 1:
 
 print ("***")
 
+if 1:
+  import SiEPIC.lumerical as lumerical
+  lumerical.interconnect.component_simulation(verbose=True)
+  
+
+if 0:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  nets, components = cell.identify_nets(verbose=True)
+  
+#  scripts.layout_check(verbose=True)
+
+
 if 0:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -72,9 +86,6 @@ if 0:
   print ("* Display list of components:" )
   [c.display() for c in components]
 
-if 0:
-  from SiEPIC import scripts  
-  scripts.layout_check(verbose=True)
 
 if 0:
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -108,7 +119,7 @@ if 0:
     print ("* Display list of components:" )
     [c.display() for c in components]
 
-  if 0:
+  if 1:
     print ("* identify_nets():" )
     nets, components = cell.identify_nets (verbose=True)
     print ("* Display list of components:" )
@@ -183,7 +194,7 @@ if 0:
   print(text_out)
   print(opt_in)
       
-if 1:
+if 0:
   from SiEPIC.scripts import fetch_measurement_data_from_github
   savefilepath = fetch_measurement_data_from_github (verbose=True)
 #  savefilepath = fetch_all_measurement_data_from_github(verbose=True)

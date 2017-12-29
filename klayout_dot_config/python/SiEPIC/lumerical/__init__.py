@@ -1,4 +1,5 @@
 from . import interconnect, fdtd
 
 # Lumerical INTERCONNECT Python integration
-INTC = None
+
+print('Lumerical INTERCONNECT Python integration')

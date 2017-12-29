@@ -54,4 +54,7 @@ if os.path.exists(path):
   fh = open(path, "r")
   INTC_ELEMENTS = fh.read()
   fh.close()
-  
+try:
+  INTC
+except:
+  INTC = None  

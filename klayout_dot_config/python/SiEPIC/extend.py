@@ -435,7 +435,7 @@ def find_pins_component(self, component):
 '''
 Components:
 '''
-def find_components(self, verbose=False):
+def find_components(self, verbose=False, cell_selected=None):
   '''
   Function to traverse the cell's hierarchy and find all the components
   returns list of components (class Component)
@@ -446,6 +446,9 @@ def find_components(self, verbose=False):
   
   Find all the pins for the component, save in components and also return pin list.
   Use the pin names on layer PinRec to sort the pins in alphabetical order
+  
+  cell_selected: only find components that match this specific cell.
+  
   '''
   if verbose:
     print('*** Cell.find_components:')
@@ -465,6 +468,9 @@ def find_components(self, verbose=False):
   while not(iter1.at_end()):
     idx = len(components) # component index value to be assigned to Component.idx
     subcell = iter1.cell() # cell (component) to which this shape belongs
+    if cell_selected and not subcell in cell_selected:
+      # check if subcell is one of the arguments to this function: cell_selected
+      continue
     component = subcell.basic_name().replace(' ','_')   # name library component
     instance = subcell.name      
 #    subcell.name                # name of the cell; for PCells, different from basic_name
@@ -879,6 +885,7 @@ def check_components_models():
     v = pya.MessageBox.warning("Errors", missing, pya.MessageBox.Ok)
   else:
     print('check_components_models(): all models are present.')
+    v = pya.MessageBox.warning("All ok", "All components have models. Ok to simulate the circuit.", pya.MessageBox.Ok)
 
 
 
