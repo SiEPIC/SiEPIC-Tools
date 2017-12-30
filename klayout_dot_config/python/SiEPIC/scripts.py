@@ -880,7 +880,7 @@ def layout_check(cell = None, verbose=False):
         
       # starting with each opt_in label, identify the sub-circuit, then GCs, and check for GC spacing
       trimmed_nets, trimmed_components = trim_netlist (nets, components, components_sorted[0])
-      detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp.to_p() - components_sorted[0].trans.disp.to_p()) != pya.DPoint(0,0)]
+      detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp).to_p()  != pya.DPoint(0,0)]
       if verbose:
         print("   N=%s, detector GCs: %s" %  (len(detector_GCs), [c.display() for c in detector_GCs]) )
       vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p() for c in detector_GCs]

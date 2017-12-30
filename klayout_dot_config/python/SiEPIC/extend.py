@@ -774,7 +774,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
   # find the GCs in the circuit and connect detectors based on DFT rules
   detectors_info = []  
   detector_number = 0
-  for d in range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+1,0,-1) + range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1):
+  for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+1,0,-1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1)):
     if pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000) in vect_optin_GCs:
       detector_number += 1
       index = vect_optin_GCs.index(pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000))
@@ -953,8 +953,8 @@ def spice_netlist_export(self, verbose = False):
       component1 = "ebeam_wg_strip_1550"
       params1 = "wg_length=0u wg_width=0.500u"
     else:
-      component1 =  o.component 
-      params1 = o.params
+      component1 =  c.component 
+      params1 = c.params
       
     text_subckt += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_"+str(c.idx), nets_str, c.component.replace(' ', '_') ) 
     if c.library != None:

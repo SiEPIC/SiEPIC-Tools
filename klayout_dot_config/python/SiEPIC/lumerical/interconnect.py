@@ -361,7 +361,7 @@ def circuit_simulation(verbose=False):
     print(text_Spice)
   
   if sys.platform.startswith("win"):
-    folder_name = app.application_data_path()
+    folder_name = pya.Application.instance().application_data_path()
     if not os.path.isdir(folder_name+'/tmp'):
       os.makedirs(folder_name+"/tmp")
     filename = folder_name + '/tmp/%s_main.spi' % topcell.name
