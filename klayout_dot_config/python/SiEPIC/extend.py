@@ -44,6 +44,7 @@ pya.Instance Extensions:
 pya.Point Extensions:
   - to_dtype(dbu): for KLayout < 0.25, convert integer Point using dbu to float DPoint
   - angle_vector
+  - to_p(): for KLayout < 0.25
 
 '''
 #################################################################################
@@ -726,8 +727,8 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
 
   # find closest GC to opt_in (pick the 1st one... ignore the others)
   t = opt_in_dict[0]['Text']
-  components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1)))
-  dist_optin_c = components_sorted[0].trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1))
+  components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
+  dist_optin_c = components_sorted[0].trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1))
   if verbose:
     print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (opt_in_dict[0]['Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c) )
   if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler'])*1000:
@@ -737,10 +738,10 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     pya.QMessageBox_StandardButton(warning.exec_())
     return
   # starting with the opt_in label, identify the sub-circuit, then GCs
-  detector_GCs = [ c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp) != pya.DPoint(0,0)]
+  detector_GCs = [ c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0,0)]
   if verbose:
     print("   N=%s, detector GCs: %s" %  (len(detector_GCs), [c.display() for c in detector_GCs]) )
-  vect_optin_GCs = [c.trans.disp - components_sorted[0].trans.disp for c in detector_GCs]
+  vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p() for c in detector_GCs]
 
   # Laser at the opt_in GC:
   p = [p for p in components_sorted[0].pins if p.type == _globals.PIN_TYPES.OPTICALIO]
@@ -1049,10 +1050,10 @@ pya.Instance.find_pins = find_pins
 #                    SiEPIC Class Extension of Point Class                      #
 #################################################################################
 
-# multiply an integer Point by a constant to get a float DPoint
-# new DPoint = Point.to_dtype(TECHNOLOGY['dbu'])
-# in v > 0.25, is built-in to KLayout
+# in v > 0.24, these are built-in to KLayout
 if int(pya.Application.instance().version().split('.')[1]) < 25:
+  # multiply an integer Point by a constant to get a float DPoint
+  # new DPoint = Point.to_dtype(TECHNOLOGY['dbu'])
   def to_dtype(self,dbu):
     # create a new empty list.  Otherwise, this function would modify the original list
     # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
@@ -1060,14 +1061,19 @@ if int(pya.Application.instance().version().split('.')[1]) < 25:
     # > 15950 * 0.001 = 15.950000000000001
     # > 15950 / (1/ 0.001) = 15.95
 
-  # KLayout v0.25 introduced technology variable:
+  def to_p(self):
+    return self
+
   pya.Point.to_dtype = to_dtype
+  pya.Point.to_p = to_p
+  pya.DPoint.to_p = to_p
 
 
 #Find the angle of a vector
 def angle_vector(u):
   from math import atan2, pi
   return (atan2(u.y,u.x))/pi*180
+
 
 pya.Point.angle_vector = angle_vector
 pya.DPoint.angle_vector = angle_vector
