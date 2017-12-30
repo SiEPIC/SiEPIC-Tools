@@ -74,7 +74,7 @@ if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.component_simulation(verbose=True)
 
-if 1:
+if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.circuit_simulation(verbose=True)
   
@@ -97,7 +97,7 @@ if 0:
   [n.display() for n in nets]
 
 # Verification
-if 0:
+if 1:
   from SiEPIC import scripts  
   
   scripts.layout_check(verbose=True)
