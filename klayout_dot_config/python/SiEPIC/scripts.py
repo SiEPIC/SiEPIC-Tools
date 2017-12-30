@@ -612,12 +612,46 @@ def calculate_area():
 
 
 
+"""
+SiEPIC-Tools: Trim Netlist
+by Jaspreet Jhoja (c) 2016-2017
+
+This Python function facilitates trimming of netlist based on a selected component. 
+Version history:
+
+Jaspreet Jhoja           2017/12/29
+ - Initial version
+"""
 # Inputs, and example of how to generate them:
 # nets, components = topcell.identify_nets()
 # selected_component = components[5]   (elsewhere the desired component is selected)
+
 def trim_netlist (nets, components, selected_component):
-  trimmed_nets, trimmed_components = nets, components
-  return trimmed_nets, trimmed_components
+  selected = selected_component
+  #>17        <2
+  #nets[0].pins[0].component.idx
+  trimmed_net = []
+  net_idx = [[each.pins[0].component.idx,each.pins[1].component.idx] for each in nets]
+  len_net_idx = len(net_idx)
+  count= 0
+  while count< (len_net_idx - 1):
+      for i in range(count + 1, len_net_idx): #i keep track of nets from next net to last net 
+          first_set = set(net_idx[count])     #first set is formed of elements from current to backwards
+          second_set = set(net_idx[i])        # second set is formed of elements from current + 1 to forward
+          if len(first_set.intersection(second_set)) > 0:  #if there are common elements between two sets
+              net_idx.pop(i)                               #remove the nets from the list
+              net_idx.pop(count)                           #remove the count net as well
+              net_idx.append(list(first_set.union(second_set)))  #merged them and add to the list                  
+              len_net_idx -= 1 #2 removed 1 added so reduce 1
+              count-= 1 #readjust count as the elements have shifted to left
+              break
+      count+= 1
+  for net in net_idx:
+    if(selected.idx in net):
+      trimmed_components = [each for each in components if each.idx in net]
+      trimmed_nets = [each for each in nets if (each.pins[0].component.idx in net or each.pins[1].component.idx in net)]
+      print("success - netlist trimmed")
+      return trimmed_nets, trimmed_components
 
 '''
 Verification:
