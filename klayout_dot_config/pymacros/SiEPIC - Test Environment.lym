@@ -64,13 +64,23 @@ if 1:
 
 print ("***")
 
+
+if 0:
+  import SiEPIC.utils
+  DFT=SiEPIC.utils.load_DFT()
+  print(DFT)
+
 if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.component_simulation(verbose=True)
+
+if 1:
+  import SiEPIC.lumerical as lumerical
+  lumerical.interconnect.circuit_simulation(verbose=True)
   
 
 # Netlist, Netlist trimming:
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -85,6 +95,10 @@ if 1:
   [c.display() for c in components]
   print ("* Display list of nets:" )
   [n.display() for n in nets]
+
+# Verification
+if 0:
+  from SiEPIC import scripts  
   
   scripts.layout_check(verbose=True)
 

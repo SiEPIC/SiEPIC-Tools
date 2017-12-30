@@ -34,6 +34,7 @@ pya.Cell Extensions:
   - find_components
   - identify_nets
   - get_LumericalINTERCONNECT_analyzers
+  - get_LumericalINTERCONNECT_analyzers_from_opt_in
   - spice_netlist_export
   - check_component_models
 
@@ -594,6 +595,13 @@ def identify_nets(self, verbose=False):
       
   return nets, components
 
+
+# data structure used to find the detectors and which optical nets they are connected to.
+class Detector_info:
+  def __init__(self, detector_net, detector_number):
+    self.detector_net = detector_net
+    self.detector_number = detector_number
+
 def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
   """
   Find - LumericalINTERCONNECT_Laser
@@ -605,7 +613,7 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
   returns: parameters, nets in order
   
   usage:
-  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, ignoreOpticalIOs = get_LumericalINTERCONNECT_analyzers(topcell, optical_pins)
+  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, ignoreOpticalIOs = get_LumericalINTERCONNECT_analyzers(topcell, components)
   """
 
   topcell = self
@@ -618,12 +626,6 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
   layout = topcell.layout()
   LayerLumericalN = self.layout().layer(TECHNOLOGY['Lumerical'])
 
-  # data structure used to find the detectors and which optical nets they are connected to.
-  class Detector_info:
-    def __init__(self, detector_net, detector_number):
-      self.detector_net = detector_net
-      self.detector_number = detector_number
-  detectors_info = []  
   
   # default is the 1st polarization
   orthogonal_identifier = 1
@@ -631,6 +633,7 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
   # Find the laser and detectors in the layout.
   iter1 = topcell.begin_shapes_rec(LayerLumericalN)
   n_IO = 0
+  detectors_info = []  
   laser_net = None
   wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = 0,0,0,0,0
   while not(iter1.at_end()):
@@ -693,7 +696,107 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
     detector_nets.append (d.detector_net)
 
   return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs
+
+
+def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=None):
+  """
+  From the opt_in label, find the trimmed circuit, and assign a laser and detectors
+  
+  returns: parameters, nets in order
+  
+  usage:
+  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, ignoreOpticalIOs = get_LumericalINTERCONNECT_analyzers_from_opt_in(topcell, components)
+  """
+  from . import _globals
+  from .core import Net
+
+  from SiEPIC.utils import load_DFT
+  DFT=load_DFT()
+  if not DFT:
+    if verbose:
+      print(' no DFT rules available.')
+    return
     
+  from .scripts import user_select_opt_in
+  opt_in_selection_text, opt_in_dict = user_select_opt_in(verbose=verbose)
+  if not opt_in_dict:
+    if verbose:
+      print(' no opt_in selected.')
+    return
+
+  # find closest GC to opt_in (pick the 1st one... ignore the others)
+  t = opt_in_dict[0]['Text']
+  components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1)))
+  dist_optin_c = components_sorted[0].trans.disp.distance(pya.Point(t.x, t.y).to_dtype(1))
+  if verbose:
+    print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (opt_in_dict[0]['Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c) )
+  if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler'])*1000:
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Ok)
+    warning.setText("To run a simulation, you need to have an opt_in label with %s microns from the nearest grating coupler" % int(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']) )
+    pya.QMessageBox_StandardButton(warning.exec_())
+    return
+  # starting with the opt_in label, identify the sub-circuit, then GCs
+  detector_GCs = [ c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp) != pya.DPoint(0,0)]
+  if verbose:
+    print("   N=%s, detector GCs: %s" %  (len(detector_GCs), [c.display() for c in detector_GCs]) )
+  vect_optin_GCs = [c.trans.disp - components_sorted[0].trans.disp for c in detector_GCs]
+
+  # Laser at the opt_in GC:
+  p = [p for p in components_sorted[0].pins if p.type == _globals.PIN_TYPES.OPTICALIO]
+  p[0].pin_name += '_laser'
+  laser_net = p[0].net=Net(idx=p[0].pin_name, pins=p)
+  if verbose:
+    print(" - pin_name: %s"   % (p[0].pin_name) )
+  
+  if DFT['design-for-test']['tunable-laser']['wavelength'] == opt_in_dict[0]['wavelength']:
+    wavelength_start, wavelength_stop, wavelength_points = float(DFT['design-for-test']['tunable-laser']['wavelength-start']), float(DFT['design-for-test']['tunable-laser']['wavelength-stop']), int(DFT['design-for-test']['tunable-laser']['wavelength-points'])
+  else:
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Ok)
+    warning.setText("No laser at %s nm is available. Tunable laser definition is in the technology's DFT.xml file." % opt_in_dict[0]['wavelength'])
+    pya.QMessageBox_StandardButton(warning.exec_())
+    return
+
+  if opt_in_dict[0]['pol'] == 'TE':
+    orthogonal_identifier = 1
+  elif opt_in_dict[0]['pol'] == 'TM':
+    orthogonal_identifier = 2
+  else: 
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Ok)
+    warning.setText("Unknown polarization: %s." % opt_in_dict[0]['pol'])
+    pya.QMessageBox_StandardButton(warning.exec_())
+    return
+  ignoreOpticalIOs = False
+      
+  # find the GCs in the circuit and connect detectors based on DFT rules
+  detectors_info = []  
+  detector_number = 0
+  for d in range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+1,0,-1) + range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1):
+    if pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000) in vect_optin_GCs:
+      detector_number += 1
+      index = vect_optin_GCs.index(pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000))
+      detector_GCs[index] # component
+
+      p = [p for p in detector_GCs[index].pins if p.type == _globals.PIN_TYPES.OPTICALIO]
+      p[0].pin_name += '_detector' + str(detector_number)
+      p[0].net=Net(idx=p[0].pin_name, pins=p)
+      detectors_info.append(Detector_info(p[0].net, detector_number) )
+      if verbose:
+        print(" - pin_name: %s"   % (p[0].pin_name) )
+
+  # Sort the detectors:
+  detectors_info2 = sorted(detectors_info, key=lambda  d: d.detector_number)
+    
+  # output:
+  detector_nets = []
+  for d in detectors_info2:
+    detector_nets.append (d.detector_net)
+    
+
+  return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs
+  
 
 def spice_netlist_export(self, verbose = False):
   # list all Optical_component objects from an array
@@ -775,6 +878,31 @@ def spice_netlist_export(self, verbose = False):
   # this updates the Optical IO Net
   laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
         get_LumericalINTERCONNECT_analyzers(self, components, verbose=verbose)
+
+  # if Laser and Detectors are not defined
+  if not laser_net or not detector_nets:  
+    # Use opt_in labels    
+    laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
+        get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=verbose)
+        
+    if not laser_net or not detector_nets:
+      warning = pya.QMessageBox()
+      warning.setStandardButtons(pya.QMessageBox.Ok)
+      warning.setText("To run a simulation, you need to define a laser and detector(s), or have an opt_in label.")
+      pya.QMessageBox_StandardButton(warning.exec_())
+      return
+
+  # trim the netlist, based on where the laser is connected
+  laser_component = [c for c in components if any([p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO and 'laser' in p.pin_name]) ]
+  from .scripts import trim_netlist
+  nets, components = trim_netlist (nets, components, laser_component[0])
+
+  if verbose:
+    print ("* Display list of components:" )
+    [c.display() for c in components]
+    print ("* Display list of nets:" )
+    [n.display() for n in nets]
+        
 
   # find optical IO pins
   opticalIO_pins=''
@@ -898,6 +1026,7 @@ pya.Cell.find_pins_component = find_pins_component
 pya.Cell.find_components = find_components
 pya.Cell.identify_nets = identify_nets
 pya.Cell.get_LumericalINTERCONNECT_analyzers = get_LumericalINTERCONNECT_analyzers
+pya.Cell.get_LumericalINTERCONNECT_analyzers_from_opt_in = get_LumericalINTERCONNECT_analyzers_from_opt_in
 pya.Cell.spice_netlist_export = spice_netlist_export
 
 #################################################################################

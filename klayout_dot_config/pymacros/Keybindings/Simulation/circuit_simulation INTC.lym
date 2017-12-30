@@ -20,6 +20,6 @@
 import pya
 from SiEPIC import lumerical
 
-lumerical.interconnect.circuit_simulation()
+lumerical.interconnect.circuit_simulation(verbose=True)
 </text>
 </klayout-macro>

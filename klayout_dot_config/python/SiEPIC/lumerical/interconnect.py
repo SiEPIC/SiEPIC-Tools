@@ -27,7 +27,7 @@ usage:
 
 import pya
 
-def run_INTC():
+def run_INTC(verbose=False):
   import lumapi
   from .. import _globals
   _globals.INTC  # Python Lumerical INTERCONNECT integration handle
@@ -45,7 +45,7 @@ def run_INTC():
   except:
     raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
 
-def Setup_Lumerical_KLayoutPython_integration():
+def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   import sys, os, string
   if sys.platform.startswith('darwin'):
 
@@ -107,7 +107,7 @@ def Setup_Lumerical_KLayoutPython_integration():
   _globals.INTC  # Python Lumerical INTERCONNECT integration handle
   
   run_INTC()
-  lumapi.evalScript(_globals.INTC, "a=0:0.01:10; plot(a,sin(a),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+  lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
 
   import os 
   # Read INTC element library
@@ -131,9 +131,13 @@ def Setup_Lumerical_KLayoutPython_integration():
     INTC_libs=lumapi.getVar(INTC, "out")
 
   # Save INTC element library to KLayout application data path
+  if not os.path.exists(dir_path):
+    os.makedirs(dir_path)
   fh = open(os.path.join(dir_path,"Lumerical_INTC_CMLs.txt"), "w")
   fh.writelines(INTC_libs)
   fh.close()
+
+  lumapi.evalScript(_globals.INTC, "?'KLayout integration successful, CML library (%s) is available.';" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
 
 
 def component_simulation(verbose=False):
@@ -277,8 +281,9 @@ def component_simulation(verbose=False):
   
 
 
-def circuit_simulation():
-  print('circuit_simulation()')
+def circuit_simulation(verbose=False):
+  if verbose:
+    print('*** circuit_simulation()')
 
   import os, platform, sys, string
   print(os.name)
@@ -351,9 +356,9 @@ def circuit_simulation():
   '''
 
   # Output the Spice netlist:
-  text_Spice, text_Spice_main, num_detectors = topcell.spice_netlist_export()
-  
-  print(text_Spice)
+  text_Spice, text_Spice_main, num_detectors = topcell.spice_netlist_export(verbose=verbose)
+  if verbose:   
+    print(text_Spice)
   
   if sys.platform.startswith("win"):
     folder_name = app.application_data_path()
@@ -410,7 +415,8 @@ def circuit_simulation():
   file.write (text_lsf)
   file.close()
   
-  print(text_lsf)
+  if verbose:
+    print(text_lsf)
   
   if sys.platform.startswith('linux'):
     # Linux-specific code here...
@@ -482,6 +488,8 @@ def circuit_simulation():
         path = path.replace('/', '\\')
         subprocess.Popen(args=[path, '-run', filename2], shell=True)
 
+  if verbose:
+    print('Done Lumerical INTERCONNECT circuit simulation.')
 
 
   

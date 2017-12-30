@@ -8,6 +8,7 @@ List of functions:
 advance_iterator
 get_technology_by_name
 get_technology
+load_DFT
 get_layout_variables
 enum
 find_paths
@@ -184,6 +185,35 @@ def get_technology(verbose=False):
         itr.next()
         
     return technology
+
+
+'''
+Load Design-for-Test (DFT) rules
+These are technology specific, and located in the tech folder, named DFT.xml
+'''
+def load_DFT():
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'DFT.xml'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+  if matches:
+    DFT_file = matches[0]
+    
+    file = open(DFT_file, 'r') 
+    DFT = xml_to_dict(file.read())
+    file.close()
+  
+    return DFT
+  else:
+    return None
 
 def get_layout_variables():
   from .utils import get_technology
@@ -508,6 +538,12 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv = False):
   dbu = cell.layout().dbu
   cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x/dbu, y/dbu)))
 
+
+'''
+return all opt_in labels:
+ text_out: HTML text
+ opt_in: a Dictionary
+'''
 def find_automated_measurement_labels(topcell=None, LayerTextN=None):
   # example usage:
   # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
@@ -595,7 +631,10 @@ def etree_to_dict(t):
 
 def xml_to_dict(t):
   from xml.etree import cElementTree as ET
-  e = ET.XML(t)
+  try:
+    e = ET.XML(t)
+  except:
+    raise UserWarning("Error in the XML file.")
   return etree_to_dict(e)
   
 
