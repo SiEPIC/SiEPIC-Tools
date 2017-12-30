@@ -64,18 +64,29 @@ if 1:
 
 print ("***")
 
-if 1:
+if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.component_simulation(verbose=True)
   
 
-if 0:
+# Netlist, Netlist trimming:
+if 1:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
-  nets, components = cell.identify_nets(verbose=True)
+  nets, components = cell.identify_nets(verbose=False)
+  print ("* Display list of components:" )
+  [c.display() for c in components]
+  print ("* Display list of nets:" )
+  [n.display() for n in nets]
+  selected_component = components[0]
+  nets, components = scripts.trim_netlist (nets, components, selected_component)
+  print ("* Display list of components:" )
+  [c.display() for c in components]
+  print ("* Display list of nets:" )
+  [n.display() for n in nets]
   
-#  scripts.layout_check(verbose=True)
+  scripts.layout_check(verbose=True)
 
 
 if 0:
