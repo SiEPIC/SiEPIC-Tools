@@ -90,7 +90,6 @@ def waveguide_from_path(params = None, cell = None):
       raise Exception("'Waveguide' in 'SiEPIC General' library is not available. Check that the library was loaded successfully.")
     selection.append(pya.ObjectInstPath())
     selection[-1].top = obj.top
-    print(pcell)
     selection[-1].append_path(pya.InstElement.new(cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
 
     obj.shape.delete()
@@ -144,7 +143,6 @@ def waveguide_to_path(cell = None):
     else:
       # waveguide path and width from Waveguide PCell
       path1 = waveguide.cell.pcell_parameters_by_name()['path']
-      print(path1)
       path = pya.Path()
       path.width = waveguide.cell.pcell_parameters_by_name()['width']/TECHNOLOGY['dbu']
       pts=[]
@@ -155,8 +153,6 @@ def waveguide_to_path(cell = None):
         else:
           # for waveguide from path
           pts.append (pya.Point().from_dpoint(pt*(1/TECHNOLOGY['dbu'])))
-      for p in pts:
-        print(p)
       path.points = pts
 
     selection.append(pya.ObjectInstPath())
@@ -637,6 +633,7 @@ def trim_netlist (nets, components, selected_component):
   net_idx = [[each.pins[0].component.idx,each.pins[1].component.idx] for each in nets]
   len_net_idx = len(net_idx)
   count= 0
+  trimmed_nets, trimmed_components = [],[]
   while count< (len_net_idx - 1):
       for i in range(count + 1, len_net_idx): #i keep track of nets from next net to last net 
           first_set = set(net_idx[count])     #first set is formed of elements from current to backwards
@@ -654,8 +651,9 @@ def trim_netlist (nets, components, selected_component):
       trimmed_components = [each for each in components if each.idx in net]
       trimmed_nets = [each for each in nets if (each.pins[0].component.idx in net or each.pins[1].component.idx in net)]
       print("success - netlist trimmed")
-      return trimmed_nets, trimmed_components
 
+  return trimmed_nets, trimmed_components
+  
 
 
 '''

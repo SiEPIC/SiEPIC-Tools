@@ -169,7 +169,10 @@ def get_technology(verbose=False):
     if KLAYOUT_VERSION > 24:
       technology['dbu'] = pya.Technology.technology_by_name(technology_name).dbu
     else:
-      technology['dbu'] = pya.Application.instance().main_window().current_view().active_cellview().layout().dbu
+      if pya.Application.instance().main_window().current_view().active_cellview().is_valid():
+        technology['dbu'] = pya.Application.instance().main_window().current_view().active_cellview().layout().dbu
+      else:
+        technology['dbu'] = 0.001
       
     itr = lv.begin_layers()
     while True:

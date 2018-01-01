@@ -23,7 +23,7 @@ Script_SiEPIC_General=1
 # Import KLayout Python API methods:
 # Box, Point, Polygon, Text, Trans, LayerInfo, etc
 from pya import *
-from SiEPIC.utils import get_technology
+from SiEPIC.utils import get_technology, get_technology_by_name
 
 class Waveguide(PCellDeclarationHelper):
 
@@ -47,7 +47,7 @@ class Waveguide(PCellDeclarationHelper):
   
   def coerce_parameters_impl(self):
     pass
-
+          
   def can_create_from_shape(self, layout, shape, layer):
     return shape.is_path()
 
@@ -62,9 +62,10 @@ class Waveguide(PCellDeclarationHelper):
         
   def produce_impl(self):
 
-    from SiEPIC.utils import arc, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors
+    from SiEPIC.utils import arc_wg_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors
     from math import cos, sin, pi, sqrt
     import pya
+    
     TECHNOLOGY = get_technology()
     
     dbu = self.layout.dbu
@@ -72,63 +73,72 @@ class Waveguide(PCellDeclarationHelper):
     if not (len(self.layers)==len(self.widths) and len(self.layers)==len(self.offsets) and len(self.offsets)==len(self.widths)):
       raise Exception("There must be an equal number of layers, widths and offsets")
     path.unique_points()
+    wg_polygons = []
     for lr in range(0, len(self.layers)):
       
       layer = self.layout.layer(TECHNOLOGY[self.layers[lr]])
       
       width = float(self.widths[lr])/dbu
       offset = float(self.offsets[lr])/dbu
-      #radius = self.radius/dbu + offset
       
       tpath = path.translate_from_center(offset)
       
       pts = tpath.get_points()
       wg_pts = [pts[0]]
+      pt_radius_previous=0
       for i in range(1,len(pts)-1):
         turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
         radius = (self.radius/dbu + offset) if turn &gt; 0 else (self.radius/dbu - offset)
-
         pt_radius = radius
         
-        dis = pts[i].distance(pts[i-1])
-        if (i==1 and dis &lt; pt_radius):
-          pt_radius = dis - TECHNOLOGY['dbu']
-        elif (dis &lt; 2*pt_radius):
-          pt_radius = dis/2
-        
-        dis = pts[i].distance(pts[i+1])
-        if (i==len(pts)-2 and dis &lt; pt_radius):
-          pt_radius = dis
-        elif (dis &lt; 2*pt_radius):
-          pt_radius = dis/2
+        # determine the radius, based on how much space is available
+        dis1 = pts[i].distance(pts[i-1])
+        dis2 = pts[i].distance(pts[i+1])
+        angle = angle_vector(pts[i]-pts[i-1])/90
+        if len(pts)==3:
+          pt_radius = min (dis1, dis2, radius)
+        else:
+          if i==1:
+            if dis1 &lt;= pt_radius:
+              pt_radius = dis1
+          elif dis1 &lt; 2*pt_radius:
+            pt_radius = dis1/2
+          if i==len(pts)-2:
+            if dis2 &lt;= pt_radius:
+              pt_radius = dis2
+          elif dis2 &lt; 2*pt_radius:
+            pt_radius = dis2/2
 
+        # waveguide bends:
         if(self.adiab):
           arc_pts = [Point(-pt_radius, pt_radius) + pt for pt in arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), self.bezier)]
         else:
-          arc_pts = [Point(-pt_radius, pt_radius) + pt for pt in arc(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]))]
-        angle = angle_vector(pts[i]-pts[i-1])/90
-        
-        wg_pts += Path(arc_pts, width).transformed(Trans(angle, turn &lt; 0, pts[i])).get_points()
+          wg_polygons += [arc_wg_xy(-pt_radius, pt_radius, pt_radius, width, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i])).transformed(Trans(angle, turn &lt; 0, pts[i]))]
 
-      wg_pts.append(pts[-1])
-      wg_polygon = Path(wg_pts, width).simple_polygon()
+        # straight waveguide sections between bends:
+        wg_polygons += [Path([Point(pt_radius_previous,0), Point(dis1-pt_radius,0)], width).polygon().transformed(Trans(angle, turn &lt; 0, pts[i-1]))]
+        if i==len(pts)-2:
+          angle2 = angle_vector(pts[i+1]-pts[i])/90
+          wg_polygons += [Path([Point(pt_radius,0), Point(dis2,0)], width).polygon().transformed(Trans(angle2, turn &lt; 0, pts[i]))]
+        pt_radius_previous = pt_radius
+
+      r_itr = Region(wg_polygons).merge().each_merged()
+      wg_polygon = next(r_itr)
       self.cell.shapes(layer).insert(wg_polygon)
       
-#      if TECHNOLOGY['Waveguide'].to_s() == self.layers[lr]:
       if self.layout.layer(TECHNOLOGY['Waveguide']) == layer:
         waveguide_length = wg_polygon.area() / self.width * dbu**2
- #     waveguide_length = 1
 
     pts = path.get_points()
     LayerPinRecN = self.layout.layer(TECHNOLOGY['PinRec'])
     
     t1 = Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
     self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], self.width/dbu).transformed(t1))
-    self.cell.shapes(LayerPinRecN).insert(Text("pin1", t1, 0.4/dbu, -1))
+    self.cell.shapes(LayerPinRecN).insert(Text("pin1", t1, 0.3/dbu, -1))
     
     t = Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
     self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], self.width/dbu).transformed(t))
-    self.cell.shapes(LayerPinRecN).insert(Text("pin2", t, 0.4/dbu, -1))
+    self.cell.shapes(LayerPinRecN).insert(Text("pin2", t, 0.3/dbu, -1))
 
 
     LayerDevRecN = self.layout.layer(TECHNOLOGY['DevRec'])
