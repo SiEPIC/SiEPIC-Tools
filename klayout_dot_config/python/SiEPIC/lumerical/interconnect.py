@@ -277,11 +277,8 @@ def component_simulation(verbose=False):
     lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
     lumapi.evalScript(_globals.INTC, c.component + ";")
 
-    
-  
 
-
-def circuit_simulation(verbose=False):
+def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[]):
   if verbose:
     print('*** circuit_simulation()')
 
@@ -356,7 +353,7 @@ def circuit_simulation(verbose=False):
   '''
 
   # Output the Spice netlist:
-  text_Spice, text_Spice_main, num_detectors = topcell.spice_netlist_export(verbose=verbose)
+  text_Spice, text_Spice_main, num_detectors = topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   if verbose:   
     print(text_Spice)
   
@@ -405,11 +402,45 @@ def circuit_simulation(verbose=False):
   text_lsf += 'set("run setup script",2);\n'
   text_lsf += 'save("%s");\n' % filename_icp
   text_lsf += 'run;\n'
-  for i in range(0, num_detectors):
-    text_lsf += 't%s = getresult("ONA_1", "input %s/mode 1/gain");\n' % (i+1, i+1)
+  for i in range(1, num_detectors+1):
+    if matlab_data_files:
+      # convert simulation data into simple datasets:
+      wavelenth_scale = 1e9
+      text_lsf += 'temp = getresult("ONA_1", "input %s/mode 1/gain");\n' % i
+      text_lsf += 't%s = matrixdataset("Simulation");\n' % i
+      text_lsf += 't%s.addparameter("wavelength",temp.wavelength*%s);\n' % (i, wavelenth_scale)
+      text_lsf += 't%s.addattribute("Simulation, Detector %s",getresultdata("ONA_1", "input %s/mode 1/gain"));\n' % (i,i, i)
+    else:
+      text_lsf += 't%s = getresult("ONA_1", "input %s/mode 1/gain");\n' % (i, i)
+      
+  # load measurement data files
+  m_count=0
+  if matlab_data_files:
+    for m in matlab_data_files:
+      if '.mat' in m:
+        m_count += 1
+        # INTERCONNECT can't deal with our measurement files... load and save data.
+        from scipy.io import loadmat, savemat        # used to load MATLAB data files
+        # *** todo, use DFT rules to determine which measurements we should load.
+        PORT=2 # Which Fibre array port is the output connected to?
+        matData = loadmat(m, squeeze_me=True, struct_as_record=False)
+        wavelength = matData['scandata'].wavelength
+        power = matData['scandata'].power[:,PORT-1]
+        savemat(m, {'wavelength': wavelength, 'power': power})
+        
+        # INTERCONNECT load data
+        head, tail = os.path.split(m)
+        tail = tail.split('.mat')[0]
+        text_lsf += 'matlabload("%s");\n' % m
+        text_lsf += 'm%s = matrixdataset("Measurement");\n' % m_count
+        text_lsf += 'm%s.addparameter("wavelength",wavelength*%s);\n'  % (m_count, wavelenth_scale)
+        text_lsf += 'm%s.addattribute("Measured: %s",power);\n'  % (m_count, tail)
+  
   text_lsf += 'visualize(t1'
-  for i in range(1, num_detectors):
-    text_lsf += ', t%s' % (i+1)
+  for i in range(2, num_detectors+1):
+    text_lsf += ', t%s' % i
+  for i in range(1, m_count+1):
+    text_lsf += ', m%s' % i
   text_lsf += ');\n'
   
   file.write (text_lsf)

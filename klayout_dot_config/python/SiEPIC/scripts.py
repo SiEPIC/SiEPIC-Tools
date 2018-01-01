@@ -22,6 +22,7 @@ open_PDF_files
 open_folder
 user_select_opt_in
 fetch_measurement_data_from_github
+measurement_vs_simulation
 
 '''
 
@@ -965,43 +966,47 @@ def open_folder(folder):
 User to select opt_in labels, either:
  - Text object selection in the layout
  - GUI with drop-down menu from all labels in the layout
+ - argument to the function, opt_in_selection_text, array of opt_in labels (strings)
 ''' 
-def user_select_opt_in(verbose=None):
+def user_select_opt_in(verbose=None, option_all=True, opt_in_selection_text=[]):
   from .utils import find_automated_measurement_labels
   text_out,opt_in = find_automated_measurement_labels()
   if not opt_in:
     print (' No opt_in labels found in the layout')
     return False, False
-    
-  # First check if any opt_in labels are selected  
-  opt_in_selection_text = []
-  from .utils import selected_opt_in_text
-  oinstpaths = selected_opt_in_text()
-  for oi in oinstpaths:
-    opt_in_selection_text.append (oi.shape.text.string)
   
-  if opt_in_selection_text:
-    if verbose:
-      print(' user selected opt_in labels')
-  else:
-    # If not, scan the cell and find all the labels
-    if verbose:
-      print(' starting GUI to select opt_in labels')
-
-    # GUI to ask which opt_in measurement to fetch
-    opt_in_labels = [o['opt_in'] for o in opt_in]
-    opt_in_labels.insert(0,'All opt-in labels')
-    opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in labels, to fetch experimental data.",  opt_in_labels, 0)
-    if not opt_in_selection_text: # user pressed cancel
+  # optional argument to this function
+  if not opt_in_selection_text:
+  
+    # First check if any opt_in labels are selected  
+    from .utils import selected_opt_in_text
+    oinstpaths = selected_opt_in_text()
+    for oi in oinstpaths:
+      opt_in_selection_text.append (oi.shape.text.string)
+    
+    if opt_in_selection_text:
       if verbose:
-        print (' user cancel!')
-      return 
-    if opt_in_selection_text == 'All opt-in labels':
-      opt_in_selection_text = [o['opt_in'] for o in opt_in]
-      if verbose:
-        print('  selecting all opt_in labels' )
+        print(' user selected opt_in labels')
     else:
-      opt_in_selection_text = [opt_in_selection_text]
+      # If not, scan the cell and find all the labels
+      if verbose:
+        print(' starting GUI to select opt_in labels')
+  
+      # GUI to ask which opt_in measurement to fetch
+      opt_in_labels = [o['opt_in'] for o in opt_in]
+      if option_all:
+        opt_in_labels.insert(0,'All opt-in labels')
+      opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in labels, to fetch experimental data.",  opt_in_labels, 0)
+      if not opt_in_selection_text: # user pressed cancel
+        if verbose:
+          print (' user cancel!')
+        return 
+      if opt_in_selection_text == 'All opt-in labels':
+        opt_in_selection_text = [o['opt_in'] for o in opt_in]
+        if verbose:
+          print('  selecting all opt_in labels' )
+      else:
+        opt_in_selection_text = [opt_in_selection_text]
 
   # find opt_in Dict entries matching the opt_in text labels
   opt_in_dict = []
@@ -1027,7 +1032,7 @@ Get data, one of:
  - All
  - Individual
 '''
-def fetch_measurement_data_from_github(verbose=None):
+def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
   import pya, tempfile
   from .github import github_get_filenames, github_get_files, github_get_file
   
@@ -1035,10 +1040,16 @@ def fetch_measurement_data_from_github(verbose=None):
     print('Fetch measurement data from GitHub')
 
   tmp_folder = tempfile.mkdtemp()
-  folder_flatten_option = None
+  if opt_in_selection_text:
+    folder_flatten_option = True
+  else:
+    folder_flatten_option = None
+
+  if opt_in_selection_text:
+    include_path=False
 
   from .scripts import user_select_opt_in
-  opt_in_selection_text, opt_in_dict = user_select_opt_in(verbose=verbose)
+  opt_in_selection_text, opt_in_dict = user_select_opt_in(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   
   if verbose:
     print(' opt_in labels: %s' % opt_in_selection_text )
@@ -1105,7 +1116,7 @@ def fetch_measurement_data_from_github(verbose=None):
     # this launches open_PDF once for each opt_in label:
     if 0 and savefilepath:  
       if verbose:
-        print('All files for opt_in %s: %s' % (opt_in[0]['opt_in'], savefilepath1) )
+        print('All files for opt_in %s: %s' % (savefilepath1) )
       
       files = ''
       depth = lambda L: isinstance(L, list) and max(map(depth, L))+1
@@ -1125,16 +1136,68 @@ def fetch_measurement_data_from_github(verbose=None):
     files = ''
     for s in savefilepath:
       files += s + ' '        
+    
+    if verbose or not opt_in_selection_text:
+      open_PDF_files(files, savefilepath)
+      open_folder(tmp_folder)
+
+  if not opt_in_selection_text:
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Ok)
+    if savefilepath:  
+      warning.setText("Measurement Data: successfully downloaded files.")
+    else:
+      warning.setText("Measurement Data: 0 files downloaded.")
+    pya.QMessageBox_StandardButton(warning.exec_())
+            
+  return files, savefilepath
+
+
+'''
+Identify opt_in circuit, using one of:
+ - selected opt_in Text objects
+ - GUI
+    - All - first option
+    - Individual - selected
+
+Fetch measurement data from GitHub
+Run simulation
+
+Plot data together
+
+'''
+
+def measurement_vs_simulation(verbose=None):
+  import pya, tempfile
+  from .scripts import fetch_measurement_data_from_github
+  from .scripts import user_select_opt_in
+  from lumerical.interconnect import circuit_simulation
+  
+  
+  if verbose:
+    print('measurement_vs_simulation()')
+
+  opt_in_selection_text, opt_in_dict = user_select_opt_in(verbose=verbose)
+    
+  if verbose:
+    print(' opt_in labels: %s' % opt_in_selection_text )
+    print(' Begin looping through labels')
+    
+  # Loop through the opt_in text labels
+  for ot in opt_in_selection_text:
       
-    open_PDF_files(files, savefilepath)
+      # Fetch github data:
+      files, savefilepath = fetch_measurement_data_from_github(verbose=verbose, opt_in_selection_text=[ot])
+        
+      # simulate:
+      circuit_simulation(verbose=verbose,opt_in_selection_text=[ot], matlab_data_files=savefilepath)
 
   warning = pya.QMessageBox()
   warning.setStandardButtons(pya.QMessageBox.Ok)
-  if savefilepath:  
-    open_folder(tmp_folder)
-    warning.setText("Measurement Data: successfully downloaded files.")
+  if savefilepath:
+    warning.setText("Measurement versus Simulation: successfully downloaded files and simulated.")
   else:
     warning.setText("Measurement Data: 0 files downloaded.")
   pya.QMessageBox_StandardButton(warning.exec_())
             
-  return savefilepath
+  return files, savefilepath

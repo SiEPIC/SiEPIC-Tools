@@ -58,3 +58,4 @@ try:
   INTC
 except:
   INTC = None  
+  print('resetting INTERCONNECT Python integration')

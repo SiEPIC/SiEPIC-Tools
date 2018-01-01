@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Measurement vs Simulation, from opt_in label</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.measurements.end</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+
+SiEPIC.scripts.measurement_vs_simulation(verbose=False)
+
+</text>
+</klayout-macro>

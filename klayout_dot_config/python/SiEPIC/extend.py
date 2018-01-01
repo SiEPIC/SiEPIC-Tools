@@ -698,8 +698,10 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
 
   return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs
 
-
-def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=None):
+'''
+Find 1 opt_in label, and return lasers and detectors
+'''
+def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=None, opt_in_selection_text=[]):
   """
   From the opt_in label, find the trimmed circuit, and assign a laser and detectors
   
@@ -719,7 +721,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     return
     
   from .scripts import user_select_opt_in
-  opt_in_selection_text, opt_in_dict = user_select_opt_in(verbose=verbose)
+  opt_in_selection_text, opt_in_dict = user_select_opt_in(verbose=verbose, option_all=False, opt_in_selection_text=opt_in_selection_text)
   if not opt_in_dict:
     if verbose:
       print(' no opt_in selected.')
@@ -799,7 +801,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
   return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs
   
 
-def spice_netlist_export(self, verbose = False):
+def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   # list all Optical_component objects from an array
   # input array, optical_components
   # example output:         
@@ -884,7 +886,7 @@ def spice_netlist_export(self, verbose = False):
   if not laser_net or not detector_nets:  
     # Use opt_in labels    
     laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
-        get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=verbose)
+        get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=verbose, opt_in_selection_text=opt_in_selection_text)
         
     if not laser_net or not detector_nets:
       warning = pya.QMessageBox()
