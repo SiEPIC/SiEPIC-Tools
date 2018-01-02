@@ -330,7 +330,7 @@ Electrical Pins have:
  1) box on layer PinRec, indicating direction (out of component)
  2) text on layer PinRec, inside the path
 '''
-def find_pins(self, verbose=False):
+def find_pins(self, verbose=False, polygon_devrec=None):
   from .core import Pin
   from . import _globals
   from .utils import get_technology
@@ -434,6 +434,8 @@ def find_pins_component(self, component):
     p.component = component
   return pins
 
+
+
 '''
 Components:
 '''
@@ -513,6 +515,8 @@ def find_components(self, verbose=False, cell_selected=None):
               library = text.string[len("Lumerical_INTERCONNECT_library="):]
             if text.string.find("Lumerical_INTERCONNECT_component=") > -1:
               component = text.string[len("Lumerical_INTERCONNECT_component="):]
+            if text.string.find("Component=") > -1:
+              component = text.string[len("Component="):]
             if text.string.find("Spice_param:") > -1:
               spice_params = text.string[len("Spice_param:"):]
           iter2.next()

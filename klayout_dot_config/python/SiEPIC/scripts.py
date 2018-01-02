@@ -626,7 +626,7 @@ Jaspreet Jhoja           2017/12/29
 # nets, components = topcell.identify_nets()
 # selected_component = components[5]   (elsewhere the desired component is selected)
 
-def trim_netlist (nets, components, selected_component):
+def trim_netlist (nets, components, selected_component, verbose=None):
   selected = selected_component
   #>17        <2
   #nets[0].pins[0].component.idx
@@ -651,7 +651,8 @@ def trim_netlist (nets, components, selected_component):
     if(selected.idx in net):
       trimmed_components = [each for each in components if each.idx in net]
       trimmed_nets = [each for each in nets if (each.pins[0].component.idx in net or each.pins[1].component.idx in net)]
-      print("success - netlist trimmed")
+      if verbose:
+        print("success - netlist trimmed")
 
   return trimmed_nets, trimmed_components
   
@@ -707,7 +708,7 @@ def layout_check(cell = None, verbose=False):
 
   # Waveguide checking
   rdb_cell = next(rdb.each_cell())
-  rdb_cat_id_wg = rdb.create_category("Waveguide errors")
+  rdb_cat_id_wg = rdb.create_category("Waveguide")
   rdb_cat_id_wg_path = rdb.create_category(rdb_cat_id_wg, "Path")
   rdb_cat_id_wg_path.description = "Waveguide path: Only 2 points allowed in a path. Convert to a Waveguide if necessary."
   rdb_cat_id_wg_radius = rdb.create_category(rdb_cat_id_wg, "Radius")
@@ -719,7 +720,7 @@ def layout_check(cell = None, verbose=False):
 
   # Component checking
   rdb_cell = next(rdb.each_cell())
-  rdb_cat_id_comp = rdb.create_category("Component errors")
+  rdb_cat_id_comp = rdb.create_category("Component")
   rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
   rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
   rdb_cat_id_comp_overlap = rdb.create_category(rdb_cat_id_comp, "Overlapping component")
@@ -727,11 +728,17 @@ def layout_check(cell = None, verbose=False):
 
   # Connectivity checking
   rdb_cell = next(rdb.each_cell())
-  rdb_cat_id = rdb.create_category("Connectivity errors")
+  rdb_cat_id = rdb.create_category("Connectivity")
   rdb_cat_id_discpin = rdb.create_category(rdb_cat_id, "Disconnected pin")
   rdb_cat_id_discpin.description = "Disconnected pin"
   rdb_cat_id_mismatchedpin = rdb.create_category(rdb_cat_id, "Mismatched pin")
   rdb_cat_id_mismatchedpin.description = "Mismatched pin widths"
+
+  # Simulation checking
+  rdb_cell = next(rdb.each_cell())
+  rdb_cat_id = rdb.create_category("Simulation")
+  rdb_cat_id_sim_nomodel = rdb.create_category(rdb_cat_id, "Missing compact model")
+  rdb_cat_id_sim_nomodel.description = "A compact model for this component was not found. Possible reasons: 1) Please run SiEPIC | Simulation | Setup Lumerical INTERCONNECT and CML, to make sure that the Compact Model Library is installed in INTERCONNECT, and that KLayout has a list of all component models. 2) the library does not have a compact model for this component. "
 
   # Design for Test checking
   from SiEPIC.utils import load_DFT
@@ -740,7 +747,7 @@ def layout_check(cell = None, verbose=False):
     if verbose:
       print(DFT)
     rdb_cell = next(rdb.each_cell())
-    rdb_cat_id = rdb.create_category("Design for Test errors")
+    rdb_cat_id = rdb.create_category("Design for test")
     rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in label: same")
     rdb_cat_id_optin_unique.description = "Automated test opt_in labels should be unique."
     rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in label: missing")
@@ -838,10 +845,16 @@ def layout_check(cell = None, verbose=False):
         if gc_orientation_error:
           if verbose:
             print( " - Found DFT error, GC facing the wrong way: %s, %s"  % (c.component, c.trans.angle) )
-          polygon = c.polygon
           rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCorient.rdb_id())
-          rdb_item.add_value(pya.RdbItemValue( polygon.to_dtype(dbu) ) )
+          rdb_item.add_value(pya.RdbItemValue( c.polygon.to_dtype(dbu) ) )
     
+    # Pre-simulation check: do components have models?
+    if not c.has_model():
+      if verbose:
+        print( " - Missing compact model, for component: %s"  % (c.component) )
+      rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_sim_nomodel.rdb_id())
+      rdb_item.add_value(pya.RdbItemValue( c.polygon.to_dtype(dbu) ) )
+
 
   if DFT:
   # DFT verification
@@ -854,7 +867,8 @@ def layout_check(cell = None, verbose=False):
     # opt_in labels
     for ti1 in range(0,len(opt_in)):
       t = opt_in[ti1]['Text']
-      box = pya.Box(t.x-2*t.size, t.y-2*t.size, t.x+2*t.size, t.y+2*t.size)
+      box_s = 1000
+      box = pya.Box(t.x-box_s, t.y-box_s, t.x+box_s, t.y+box_s)
       # opt_in labels check for unique
       for ti2 in  range(ti1+1, len(opt_in)):
         if opt_in[ti1]['opt_in'] == opt_in[ti2]['opt_in']:

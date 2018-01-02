@@ -97,7 +97,7 @@ if 0:
   [n.display() for n in nets]
 
 # Verification
-if 0:
+if 1:
   from SiEPIC import scripts  
   
   scripts.layout_check(verbose=True)
