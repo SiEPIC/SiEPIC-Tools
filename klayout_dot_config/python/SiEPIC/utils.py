@@ -403,19 +403,49 @@ def points_per_circle(radius):
   err = 1e3*TECHNOLOGY['dbu']/2
   return int(ceil(2*pi/acos(2 * (1 - err / radius)**2 - 1))) if radius > 0.1 else 100
 
-#Create an arc spanning from start to stop in degrees
-def arc(radius, start, stop):
+def arc(r, theta_start, theta_stop):
+  # function to draw an arc of waveguide
+  # radius: radius
+  # w: waveguide width
+  # length units in dbu
+  # theta_start, theta_stop: angles for the arc
+  # angles in degrees
+
   from math import pi, cos, sin
   from .utils import points_per_circle
-  circle_fraction = abs(start-stop) / 360.0
-  n = int(points_per_circle(radius) * circle_fraction)
-  if n == 0: n = 1
-  # need to make sure that the increment exactly matches the start & stop
-  da = 2 * pi / n * circle_fraction # increment, in radians
-  start = start*pi/180.0
-  stop = stop*pi/180.0
   
-  return [pya.Point.from_dpoint(pya.DPoint(radius*cos(start+i*da), radius*sin(start+i*da))) for i in range(0, n+1) ]
+  circle_fraction = abs(theta_stop-theta_start) / 360.0
+  npoints = int(points_per_circle(r) * circle_fraction)
+  if npoints==0:
+    npoints = 1
+  da = 2 * pi / npoints * circle_fraction # increment, in radians
+  pts = []
+  th = theta_start / 360.0 * 2 * pi
+  for i in range(0, npoints+1):
+    pts.append(pya.Point.from_dpoint(pya.DPoint((r*cos(i*da+th))/1, (r*sin(i*da+th))/1)))
+  return pts
+
+def arc_xy(x, y, r, theta_start, theta_stop):
+  # function to draw an arc of waveguide
+  # radius: radius
+  # w: waveguide width
+  # length units in dbu
+  # theta_start, theta_stop: angles for the arc
+  # angles in degrees
+
+  from math import pi, cos, sin
+  from .utils import points_per_circle
+  
+  circle_fraction = abs(theta_stop-theta_start) / 360.0
+  npoints = int(points_per_circle(r) * circle_fraction)
+  if npoints==0:
+    npoints = 1
+  da = 2 * pi / npoints * circle_fraction # increment, in radians
+  pts = []
+  th = theta_start / 360.0 * 2 * pi
+  for i in range(0, npoints+1):
+    pts.append(pya.Point.from_dpoint(pya.DPoint((x+r*cos(i*da+th))/1, (y+r*sin(i*da+th))/1)))
+  return pts
 
 def arc_wg(radius, w, theta_start, theta_stop):
   # function to draw an arc of waveguide
@@ -470,10 +500,6 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop):
 #Create a bezier curve. While there are parameters for start and stop in degrees, this is currently only implemented for 90 degree bends
 def arc_bezier(radius, start, stop, bezier):
   from math import sin, cos, pi
-  TECHNOLOGY = get_technology()
-    
-  dbu = TECHNOLOGY['dbu']
-
   N=100
   L = radius  # effective bend radius / Length of the bend
   diff = 1./(N-1) # convert int to float
@@ -489,10 +515,11 @@ def arc_bezier(radius, start, stop, bezier):
   yD = yp[0]
   
   pts = [pya.Point(-L,0) + pya.Point(xD, yD)]
-  for i in range(1, N):
+  for i in range(1, N-1):
     t = i*diff
     pts.append(pya.Point(-L,0) + pya.Point(t**3*xA + t**2*xB + t*xC + xD, t**3*yA + t**2*yB + t*yC + yD))
-  return [pt + pya.Point(L, -L) for pt in pts]
+  pts.extend([pya.Point(0, L-1), pya.Point(0,L)])
+  return pts
 
 #Take a list of points and create a polygon of width 'width' 
 def arc_to_waveguide(pts, width):
@@ -500,21 +527,29 @@ def arc_to_waveguide(pts, width):
 
 #Translate each point by its normal a distance 'trans'
 def translate_from_normal(pts, trans):
+  pts = [pya.DPoint(pt) for pt in pts]
   from math import cos, sin, pi
   d = 1./(len(pts)-1)
-  print (d)
-  
   a = angle_vector(pts[1]-pts[0])*pi/180 + (pi/2 if trans > 0 else -pi/2)
-  tpts = [pts[0] + pya.Point(abs(trans)*cos(a), abs(trans)*sin(a))]
+  tpts = [pts[0] + pya.DPoint(abs(trans)*cos(a), abs(trans)*sin(a))]
   
   for i in range(1, len(pts)-1):
     dpt = (pts[i+1]-pts[i-1])*(2/d)
-    tpts.append(pts[i] + pya.Point(-dpt.y, dpt.x)*(trans/1/dpt.abs()))
+    tpts.append(pts[i] + pya.DPoint(-dpt.y, dpt.x)*(trans/1/dpt.abs()))
     
   a = angle_vector(pts[-1]-pts[-2])*pi/180 + (pi/2 if trans > 0 else -pi/2)
-  tpts.append(pts[-1] + pya.Point(abs(trans)*cos(a), abs(trans)*sin(a)))
+  tpts.append(pts[-1] + pya.DPoint(abs(trans)*cos(a), abs(trans)*sin(a)))
   
-  return tpts
+  #Make ends manhattan
+  if abs(tpts[0].x - pts[0].x) > abs(tpts[0].y - pts[0].y):
+    tpts[0].y = pts[0].y
+  else:
+    tpts[0].x = pts[0].x
+  if abs(tpts[-1].x - pts[-1].x) > abs(tpts[-1].y - pts[-1].y):
+    tpts[-1].y = pts[-1].y
+  else:
+    tpts[-1].x = pts[-1].x
+  return [pya.Point(pt) for pt in tpts]
 
 #Check if point c intersects the segment defined by pts a and b
 def pt_intersects_segment(a, b, c):

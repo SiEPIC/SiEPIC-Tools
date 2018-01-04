@@ -116,6 +116,7 @@ def remove_colinear_points(self):
 
   # this version removed all colinear points, which doesn't make sense for a path
   self.points = [pts[0]]+[pts[i] for i in range(1, len(pts)-1) if not pt_intersects_segment(pts[i+1], pts[i-1], pts[i])]+[pts[-1]]
+  return self
 
 def unique_points(self):
   if self.__class__ == pya.Path:
@@ -129,6 +130,7 @@ def unique_points(self):
     if pt not in output:
         output.append(pt)
   self.points = output
+  return self
 
   
 def translate_from_center(self, offset):
