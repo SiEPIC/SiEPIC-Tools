@@ -190,12 +190,13 @@ def waveguide_length():
 
   from .utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  import SiEPIC.utils
     
   selection = lv.object_selection
   if len(selection) == 1 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name():
     cell = selection[0].inst().cell
-    area = cell.each_shape(cell.layout().layer(TECHNOLOGY['DevRec'])).__next__().polygon.area()
-    width = 3*cell.pcell_parameters_by_name()['width']/cell.layout().dbu
+    area = SiEPIC.utils.advance_iterator(cell.each_shape(cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
+    width = cell.pcell_parameters_by_name()['width']/cell.layout().dbu
     pya.MessageBox.warning("Waveguide Length", "Waveguide length (um): %s" % str(area/width*cell.layout().dbu), pya.MessageBox.Ok)
   else:
     pya.MessageBox.warning("Selection is not a waveguide", "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
@@ -204,15 +205,16 @@ def waveguide_length_diff():
 
   from .utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  import SiEPIC.utils
     
   selection = lv.object_selection
   if len(selection) == 2 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name() and selection[1].inst().is_pcell() and "Waveguide" in selection[1].inst().cell.basic_name():
     cell = selection[0].inst().cell
-    area1 = cell.each_shape(cell.layout().layer(TECHNOLOGY['DevRec'])).__next__().polygon.area()
-    width1 = 3*cell.pcell_parameters_by_name()['width']/cell.layout().dbu
+    area1 = SiEPIC.utils.advance_iterator(cell.each_shape(cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
+    width1 = cell.pcell_parameters_by_name()['width']/cell.layout().dbu
     cell = selection[1].inst().cell
-    area2 = cell.each_shape(cell.layout().layer(TECHNOLOGY['DevRec'])).__next__().polygon.area()
-    width2 = 3*cell.pcell_parameters_by_name()['width']/cell.layout().dbu
+    area2 = SiEPIC.utils.advance_iterator(cell.each_shape(cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
+    width2 = cell.pcell_parameters_by_name()['width']/cell.layout().dbu
     pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(abs(area1/width1 - area2/width2)*cell.layout().dbu), pya.MessageBox.Ok)
   else:
     pya.MessageBox.warning("Selection are not a waveguides", "Select two waveguides you wish to measure.", pya.MessageBox.Ok)
