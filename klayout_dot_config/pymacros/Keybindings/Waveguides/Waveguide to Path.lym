@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Waveguide from Path</description>
+ <description>Waveguide to Path</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -15,7 +15,7 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function
-# SiEPIC Waveguide from Path
+# SiEPIC Waveguide to Path
 import pya
 from SiEPIC import scripts
 scripts.waveguide_to_path()

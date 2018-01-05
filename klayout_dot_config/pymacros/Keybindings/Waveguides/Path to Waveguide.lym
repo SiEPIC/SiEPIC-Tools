@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Waveguide to Path</description>
+ <description>Path to Waveguide, GUI</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
