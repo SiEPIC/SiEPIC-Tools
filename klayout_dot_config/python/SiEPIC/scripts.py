@@ -144,7 +144,7 @@ def waveguide_to_path(cell = None):
       # waveguide path and width from Waveguide PCell
       path1 = waveguide.cell.pcell_parameters_by_name()['path']
       path = pya.Path()
-      path.width = waveguide.cell.pcell_parameters_by_name()['width']
+      path.width = waveguide.cell.pcell_parameters_by_name()['width']/TECHNOLOGY['dbu']
       pts=[]
       for pt in [pt1 for pt1 in (path1).each_point()]:
         if type(pt) == pya.Point:

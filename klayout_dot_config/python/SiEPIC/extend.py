@@ -1069,10 +1069,17 @@ if int(pya.Application.instance().version().split('.')[1]) < 25:
     # > 15950 * 0.001 = 15.950000000000001
     # > 15950 / (1/ 0.001) = 15.95
 
+  def to_itype(self,dbu):
+    # create a new empty list.  Otherwise, this function would modify the original list
+    # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
+    return pya.Point(self.x / (dbu), self.y / (dbu))
+
+
   def to_p(self):
     return self
 
   pya.Point.to_dtype = to_dtype
+  pya.DPoint.to_itype = to_itype
   pya.Point.to_p = to_p
   pya.DPoint.to_p = to_p
 

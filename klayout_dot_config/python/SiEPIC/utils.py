@@ -527,7 +527,8 @@ def arc_to_waveguide(pts, width):
 
 #Translate each point by its normal a distance 'trans'
 def translate_from_normal(pts, trans):
-  pts = [pya.DPoint(pt) for pt in pts]
+#  pts = [pya.DPoint(pt) for pt in pts]
+  pts = [pt.to_dtype(1) for pt in pts]
   from math import cos, sin, pi
   d = 1./(len(pts)-1)
   a = angle_vector(pts[1]-pts[0])*pi/180 + (pi/2 if trans > 0 else -pi/2)
@@ -549,7 +550,8 @@ def translate_from_normal(pts, trans):
     tpts[-1].y = pts[-1].y
   else:
     tpts[-1].x = pts[-1].x
-  return [pya.Point(pt) for pt in tpts]
+#  return [pya.Point(pt) for pt in tpts]
+  return [pt.to_itype(1) for pt in tpts]
 
 #Check if point c intersects the segment defined by pts a and b
 def pt_intersects_segment(a, b, c):
