@@ -203,7 +203,7 @@ class WaveguideGUI():
     self.window.findChild('cancel').clicked(self.close)
     self.window.findChild('numLayers').valueChanged(self.updateTable)
     self.window.findChild('radioStrip').toggled(self.updateFields)
-    self.window.findChild('radioRidge').toggled(self.updateFields)
+    self.window.findChild('radioRib').toggled(self.updateFields)
     self.window.findChild('radioSlot').toggled(self.updateFields)
     self.window.findChild('radioCustom').toggled(self.updateFields)
     self.window.findChild('adiabatic').toggled(self.updateFields)
@@ -240,16 +240,16 @@ class WaveguideGUI():
       self.window.findChild('stripWidth').setEnabled(False)
       self.window.findChild('stripLayer').setEnabled(False)
       
-    if self.window.findChild('radioRidge').isChecked():
-      self.window.findChild('ridgeWidth1').setEnabled(True)
-      self.window.findChild('ridgeWidth2').setEnabled(True)
-      self.window.findChild('ridgeLayer1').setEnabled(True)
-      self.window.findChild('ridgeLayer2').setEnabled(True)
+    if self.window.findChild('radioRib').isChecked():
+      self.window.findChild('ribWidth1').setEnabled(True)
+      self.window.findChild('ribWidth2').setEnabled(True)
+      self.window.findChild('ribLayer1').setEnabled(True)
+      self.window.findChild('ribLayer2').setEnabled(True)
     else:
-      self.window.findChild('ridgeWidth1').setEnabled(False)
-      self.window.findChild('ridgeWidth2').setEnabled(False)
-      self.window.findChild('ridgeLayer1').setEnabled(False)
-      self.window.findChild('ridgeLayer2').setEnabled(False)
+      self.window.findChild('ribWidth1').setEnabled(False)
+      self.window.findChild('ribWidth2').setEnabled(False)
+      self.window.findChild('ribLayer1').setEnabled(False)
+      self.window.findChild('ribLayer2').setEnabled(False)
       
     if self.window.findChild('radioSlot').isChecked():
       self.window.findChild('slotWidth1').setEnabled(True)
@@ -274,8 +274,8 @@ class WaveguideGUI():
 
   def updateLayers(self, val):
     self.window.findChild("stripLayer").clear()
-    self.window.findChild("ridgeLayer1").clear()
-    self.window.findChild("ridgeLayer2").clear()
+    self.window.findChild("ribLayer1").clear()
+    self.window.findChild("ribLayer2").clear()
     self.window.findChild("slotLayer").clear()
     self.layers = []
     lv = pya.Application.instance().main_window().current_view()
@@ -290,11 +290,11 @@ class WaveguideGUI():
         self.layers.append(itr.current().name + " - " + itr.current().source.split('@')[0])
         itr.next()
     self.window.findChild("stripLayer").addItems(self.layers)
-    self.window.findChild("ridgeLayer1").addItems(self.layers)
-    self.window.findChild("ridgeLayer2").addItems(self.layers)
+    self.window.findChild("ribLayer1").addItems(self.layers)
+    self.window.findChild("ribLayer2").addItems(self.layers)
     self.window.findChild("slotLayer").addItems(self.layers)
     
-    self.window.findChild("ridgeLayer2").setCurrentIndex(2)
+    self.window.findChild("ribLayer2").setCurrentIndex(2)
 
   def show(self):
     self.updateLayers(0)
@@ -326,11 +326,11 @@ class WaveguideGUI():
       params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('stripWidth').text), 'offset': 0})
       params['width'] = params['wgs'][0]['width']
       
-    elif self.window.findChild('radioRidge').isChecked():
-      layer = self.window.findChild('ridgeLayer1').currentText
-      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ridgeWidth1').text), 'offset': 0})
-      layer = self.window.findChild('ridgeLayer2').currentText
-      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ridgeWidth2').text), 'offset': 0})
+    elif self.window.findChild('radioRib').isChecked():
+      layer = self.window.findChild('ribLayer1').currentText
+      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ribWidth1').text), 'offset': 0})
+      layer = self.window.findChild('ribLayer2').currentText
+      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ribWidth2').text), 'offset': 0})
       params['width'] = params['wgs'][0]['width']
       
     elif self.window.findChild('radioSlot').isChecked():

@@ -123,7 +123,7 @@
      <string>Strip</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="radioRidge">
+   <widget class="QRadioButton" name="radioRib">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -139,7 +139,7 @@
      </size>
     </property>
     <property name="text">
-     <string>Ridge</string>
+     <string>Rib</string>
     </property>
    </widget>
    <widget class="QRadioButton" name="radioSlot">
@@ -259,7 +259,7 @@
      <string>Internal Width:</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="ridgeWidth1">
+   <widget class="QLineEdit" name="ribWidth1">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -319,7 +319,7 @@
      <string>External Width:</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="ridgeWidth2">
+   <widget class="QLineEdit" name="ribWidth2">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -632,7 +632,7 @@
      </size>
     </property>
    </widget>
-   <widget class="QComboBox" name="ridgeLayer1">
+   <widget class="QComboBox" name="ribLayer1">
     <property name="geometry">
      <rect>
       <x>190</x>
@@ -648,7 +648,7 @@
      </size>
     </property>
    </widget>
-   <widget class="QComboBox" name="ridgeLayer2">
+   <widget class="QComboBox" name="ribLayer2">
     <property name="geometry">
      <rect>
       <x>190</x>
