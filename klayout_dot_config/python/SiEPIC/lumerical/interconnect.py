@@ -17,7 +17,7 @@ Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 - component_simulation: single component simulation
 
 usage:
- import SiEPIC.lumerical.interconnect:
+ import SiEPIC.lumerical.interconnect
 
 
 ################################################################################
@@ -96,7 +96,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
 
   if sys.platform.startswith('win'):
     pass
-  # end of Windows
+    # end of Windows
   
   
   ##################################################################

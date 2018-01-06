@@ -1,4 +1,4 @@
-from . import interconnect, fdtd
+from . import interconnect, fdtd, lumapi
 
 # Lumerical INTERCONNECT Python integration
 

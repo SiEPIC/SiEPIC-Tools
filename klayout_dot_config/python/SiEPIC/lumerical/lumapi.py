@@ -19,7 +19,14 @@ if platform.system() == 'Darwin':
 
 # Windows
 if platform.system() == 'Windows': 
-    INTEROPLIB = "interopapi.dll"
+    import sys
+    path = "C:\\Program Files\\Lumerical\\INTERCONNECT\\api\\python"
+    if os.path.exists(path):
+      if not path in sys.path:
+        sys.path.append(path) # windows
+      CWD = os.path.dirname(os.path.abspath(__file__))
+      os.chdir(path) 
+      INTEROPLIB = path + "\\interopapi.dll"
 
 class Session(Structure):
     _fields_ = [("p", c_void_p)]
@@ -64,7 +71,7 @@ ValUnion._fields_ = [("doubleVal", c_double),
 Any._fields_ = [("type", c_int), ("val", ValUnion)]
 
 def initLib():
-    print(INTEROPLIB)
+    print("lumapi: loading %s" % INTEROPLIB)
     iapi = CDLL(INTEROPLIB)
     
     iapi.appOpen.restype = Session
@@ -108,7 +115,11 @@ def initLib():
     
     return iapi
 
-iapi = initLib()
+if os.path.exists(path):
+  iapi = initLib()
+
+if platform.system() == 'Windows': 
+    os.chdir(CWD) # windows (current working path)
 
 class LumApiError(Exception):
      def __init__(self, value):

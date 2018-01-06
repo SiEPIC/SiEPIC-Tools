@@ -65,6 +65,15 @@ if 1:
 print ("***")
 
 
+if 1:
+  file=open("C:/Users/lukasc2/KLayout/tech/EBeam/libraries/klayout_Layers_EBeam.lyp",'r')
+  a=file.read()
+  file.close()
+  source=QXmlInputSource
+  source.data = a
+  reader = QXmlSimpleReader()
+  reader.parse(source)
+  
 if 0:
   import SiEPIC.utils
   DFT=SiEPIC.utils.load_DFT()
@@ -97,7 +106,7 @@ if 0:
   [n.display() for n in nets]
 
 # Verification
-if 1:
+if 0:
   from SiEPIC import scripts  
   
   scripts.layout_check(verbose=True)
