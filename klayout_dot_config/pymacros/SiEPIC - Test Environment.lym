@@ -64,16 +64,56 @@ if 1:
 
 print ("***")
 
-
+# test for finding Component based on selected object.
 if 1:
-  file=open("C:/Users/lukasc2/KLayout/tech/EBeam/libraries/klayout_Layers_EBeam.lyp",'r')
-  a=file.read()
-  file.close()
-  source=QXmlInputSource
-  source.data = a
-  reader = QXmlSimpleReader()
-  reader.parse(source)
+  from SiEPIC.utils import select_instances
+  selected_instances = select_instances()
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  for obj in selected_instances:
+    print("  selected component: %s" % obj.inst().cell )
+    c = cell.find_components(cell_selected=[obj.inst().cell])
+    print (c[0].component)
+    pass
   
+if 0:
+  import sys
+#  sys.path.append('C:\\Users\\lukasc2\\AppData\\Roaming\\KLayout\\lib\\python3.5\\DLLs')
+  sys.path.append('C:\\Program Files\\Anaconda3\\DLLs')
+  sys.path.append('C:\\Program Files\\Anaconda3')
+  sys.path.append('C:\\Program Files\\Anaconda3\\python35.zip')
+  sys.path.append('C:\\Program Files\\Anaconda3\\lib')
+  sys.path.append('C:\\Program Files\\Anaconda3\\lib\\site-packages')
+  sys.path.append('C:\\Program Files\\Anaconda3\\lib\\site-packages\\Sphinx-1.4.6-py3.5.egg')
+  sys.path.append('C:\\Program Files\\Anaconda3\\lib\\site-packages\\win32')
+  sys.path.append('C:\\Program Files\\Anaconda3\\lib\\site-packages\\win32\\lib')
+  sys.path.append('C:\\Program Files\\Anaconda3\\lib\\site-packages\\Pythonwin')
+  sys.path.append('C:\\Program Files\\Anaconda3\\lib\\site-packages\\setuptools-27.2.0-py3.5.egg')
+  from xml.etree import cElementTree as ET
+  e = ET.XML("")
+  import pyexpat
+
+if 0:
+  from xml.etree import cElementTree as ET
+  e = ET.XML("")
+
+if 0:
+  filepath = "C:/Users/lukasc2/KLayout/tech/EBeam/libraries/klayout_Layers_EBeam.lyp"
+#  file=open(filepath,'r')
+#  a=file.read()
+#  file.close()
+  qfile = QFile(filepath)
+  source=QXmlInputSource(qfile)
+  handler=QXmlContentHandler()
+  error_handler = QXmlErrorHandler()
+#  source.data = a
+#  reader = QXmlReader()  # error: Abstract method called...
+  reader = QXmlSimpleReader()
+  reader.setContentHandler(handler)
+  reader.setErrorHandler(error_handler)
+  reader.parse(source)
+  # Error: Ambiguous overload variants - multiple method declarations match arguments in QXmlSimpleReader.parse
+
 if 0:
   import SiEPIC.utils
   DFT=SiEPIC.utils.load_DFT()

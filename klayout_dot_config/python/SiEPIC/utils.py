@@ -110,27 +110,47 @@ def get_technology_by_name(tech_name, verbose=False):
         technology['INTC_CML_path'] = None
         technology['INTC_CML_version'] = None
     
-    print(lyp_file)
-    file = open(lyp_file, 'r') 
-    layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
-    file.close()
-     
-    for k in layer_dict:
-      layerInfo = k['source'].split('@')[0]
-      if 'group-members' in k:
-        # encoutered a layer group, look inside:
-        j = k['group-members']
-        if 'name' in j:
-          layerInfo_j = j['source'].split('@')[0]
-          technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
+    # Layers:
+    import platform
+    if platform.system() == 'Windows' and KLAYOUT_VERSION > 24: 
+      # *** XML not working in Windows
+      lv = pya.LayoutView()
+      lv.load_layer_props(lyp_file)
+      itr = lv.begin_layers()
+      while True:
+        if itr == lv.end_layers():
+          break
         else:
-          for j in k['group-members']:
+          layerInfo = itr.current().source.split('@')[0]
+          if layerInfo == '*/*':
+            # likely encoutered a layer group, skip it
+            pass
+          else:
+            technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+          itr.next()
+
+    else:
+      print(lyp_file)
+      file = open(lyp_file, 'r') 
+      layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
+      file.close()
+       
+      for k in layer_dict:
+        layerInfo = k['source'].split('@')[0]
+        if 'group-members' in k:
+          # encoutered a layer group, look inside:
+          j = k['group-members']
+          if 'name' in j:
             layerInfo_j = j['source'].split('@')[0]
             technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-        if k['source'] != '*/*@*':
+          else:
+            for j in k['group-members']:
+              layerInfo_j = j['source'].split('@')[0]
+              technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
+          if k['source'] != '*/*@*':
+            technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+        else:
           technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
-      else:
-        technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
     return technology
 # end of get_technology_by_name(tech_name)
 # test example: give it a name of a technology, e.g., GSiP
@@ -211,11 +231,19 @@ def load_DFT():
   if matches:
     DFT_file = matches[0]
     
-    file = open(DFT_file, 'r') 
-    DFT = xml_to_dict(file.read())
-    file.close()
-  
-    return DFT
+     
+    import platform
+    if platform.system() == 'Windows': 
+      # ***, XML not working on Windows
+      DFT_hardcoded = {'design-for-test': {'opt_in': {'max-distance-to-grating-coupler': '10'}, 'grating-couplers': {'minimum-gc-pitch-between-separate-circuits': '40', 'detectors-above-laser': '1', 'gc-orientation': {'ebeam_gc_te1550': '0', 'ebeam_gc_tm1550': '180'}, 'gc-array-orientation': '90', 'gc-pitch': '127', 'detectors-below-laser': '2'}, 'tunable-laser': {'wavelength-start': '1500', 'wavelength': '1550', 'wavelength-stop': '1600', 'wavelength-points': '3000'}}}
+      return DFT_hardcoded
+
+    else:
+      file = open(DFT_file, 'r') 
+      DFT = xml_to_dict(file.read())
+      file.close()
+    
+      return DFT
   else:
     return None
 
