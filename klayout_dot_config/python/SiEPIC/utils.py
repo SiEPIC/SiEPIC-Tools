@@ -130,7 +130,6 @@ def get_technology_by_name(tech_name, verbose=False):
           itr.next()
 
     else:
-      print(lyp_file)
       file = open(lyp_file, 'r') 
       layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
       file.close()

@@ -825,12 +825,12 @@ def layout_check(cell = None, verbose=False):
       area_raw = r.area()
       r.merged_semantics=True
       area_merged = r.area()
-      if area_merged != area_raw:
+      if abs(area_merged - area_raw) > 3:  # I don't know why they are sometimes different by exactly 3... other times exacty the same.
         from .utils import advance_iterator 
         polygon_merged = advance_iterator(r.each_merged())
 #        polygon_merged = r.each_merged().next()
         if verbose:
-          print( " - Found overlapping components: %s, %s"  % (c.component, c2.component) )
+          print( " - Found overlapping components: %s, %s. Area comparison: %s, %s"  % (c.component, c2.component, area_raw, area_merged) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_comp_overlap.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( polygon_merged.to_dtype(dbu) ) )
     
@@ -838,7 +838,7 @@ def layout_check(cell = None, verbose=False):
     # DFT verification
       # GC facing the right way
       if c.basic_name:
-        ci = c.basic_name.replace(' ','_').replace('$','_')
+        ci = c.basic_name #.replace(' ','_').replace('$','_')
         gc_orientation_error = False
         for gc in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys():
           if ci == gc and c.trans.angle != int(DFT['design-for-test']['grating-couplers']['gc-orientation'][gc]):
@@ -888,7 +888,7 @@ def layout_check(cell = None, verbose=False):
         print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (opt_in[ti1]['Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c*dbu) )
       if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler'])*1000:
         if verbose:
-          print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, opt_in[ti1].string) )
+          print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, opt_in[ti1]['opt_in']) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_toofar.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
         
