@@ -64,16 +64,32 @@ if 1:
 
 print ("***")
 
+if 1: 
+  import SiEPIC.utils
+  DFT = SiEPIC.utils.load_DFT()
+  print(DFT)
 
-if 1:
-  file=open("C:/Users/lukasc2/KLayout/tech/EBeam/libraries/klayout_Layers_EBeam.lyp",'r')
-  a=file.read()
-  file.close()
-  source=QXmlInputSource
-  source.data = a
+if 0:
+
+#  filepath = "C:/Users/lukasc2/KLayout/tech/EBeam/libraries/klayout_Layers_EBeam.lyp"
+  filepath = "/Users/lukasc/SiEPIC_EBeam_PDK/klayout_dot_config/tech/EBeam/libraries/klayout_Layers_EBeam.lyp"
+
+#  file=open(filepath,'r')
+#  a=file.read()
+#  file.close()
+  qfile = QFile(filepath)
+  source=QXmlInputSource(qfile)
+  handler=QXmlContentHandler()
+  error_handler = QXmlErrorHandler()
+#  source.data = a
+#  reader = QXmlReader()  # error: Abstract method called...
   reader = QXmlSimpleReader()
+  reader.setContentHandler(handler)
+  reader.setErrorHandler(error_handler)
   reader.parse(source)
-  
+  # Error: Ambiguous overload variants - multiple method declarations match arguments in QXmlSimpleReader.parse
+
+
 if 0:
   import SiEPIC.utils
   DFT=SiEPIC.utils.load_DFT()
