@@ -476,6 +476,7 @@ def find_components(self, verbose=False, cell_selected=None):
     subcell = iter1.cell() # cell (component) to which this shape belongs
     if cell_selected and not subcell in cell_selected:
       # check if subcell is one of the arguments to this function: cell_selected
+      iter1.next()
       continue
     component = subcell.basic_name().replace(' ','_')   # name library component
     instance = subcell.name      

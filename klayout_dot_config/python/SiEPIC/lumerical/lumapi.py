@@ -115,7 +115,7 @@ def initLib():
     
     return iapi
 
-if os.path.exists(path):
+if os.path.exists(INTEROPLIB):
   iapi = initLib()
 
 if platform.system() == 'Windows': 

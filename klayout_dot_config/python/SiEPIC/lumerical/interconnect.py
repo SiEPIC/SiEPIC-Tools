@@ -8,6 +8,7 @@
 Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 
 - run_INTC: run INTERCONNECT using Python integration
+- INTC_commandline: invoke INTC via the command line, with an lsf file as input.
 - Setup_Lumerical_KLayoutPython_integration
     Configure PATH env, import lumapi, run interconnect, 
     Install technology CML, read CML elements
@@ -44,6 +45,7 @@ def run_INTC(verbose=False):
     lumapi.evalScript(_globals.INTC, "?'KLayout integration test.';")
   except:
     raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
+
 
 def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   import sys, os, string
@@ -92,6 +94,21 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
       if b=='':
         # Not loaded    
         raise Exception ('The System paths have been updated. Please restart KLayout, and try again.')
+
+    # Also add path for use in the Terminal
+    home = os.path.expanduser("~")
+    if ~os.path.exists(home + "/.bash_profile"):
+      text_bash =  '\n'
+      text_bash += '# Setting PATH for Lumerical API\n'
+      text_bash += 'export PATH=/Applications/Lumerical/FDTD\ Solutions/FDTD\ Solutions.app/Contents/MacOS:$PATH\n'
+      text_bash += 'export PATH=/Applications/Lumerical/MODE\ Solutions/MODE\ Solutions.app/Contents/MacOS:$PATH\n'
+      text_bash += 'export PATH=/Applications/Lumerical/DEVICE/DEVICE.app/Contents/MacOS:$PATH\n'
+      text_bash += 'export PATH=/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS:$PATH\n'
+      text_bash +=  '\n'
+      file = open(home + "/.bash_profile", 'w')
+      file.write (text_bash)
+      file.close()
+
   # end of OSX 
 
   if sys.platform.startswith('win'):
@@ -140,13 +157,55 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   lumapi.evalScript(_globals.INTC, "?'KLayout integration successful, CML library (%s) is available.';" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
 
 
+def INTC_commandline(filename2):
+  print ("Running Lumerical INTERCONNECT using the command interface.")
+  import sys, os
+  
+  if sys.platform.startswith('linux'):
+    # Linux-specific code here...
+    if string.find(version,"2.") > -1:
+      import commands
+      print("Running INTERCONNECT")
+      commands.getstatusoutput('/opt/lumerical/interconnect/bin/interconnect -run %s' % filename2)
+  
+  elif sys.platform.startswith('darwin'):
+    # OSX specific
+    if string.find(version,"2.7.") > -1:
+      import commands
+      print("Running INTERCONNECT")
+      runcmd = 'source ~/.bash_profile; open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2
+      print("Running in shell: %s" % runcmd)
+      commands.getstatusoutput(runcmd)
+
+  
+  elif sys.platform.startswith('win'):
+    # Windows specific code here
+    import subprocess
+    print("Running INTERCONNECT")
+    #check Interconnect installation directory
+    file_path_a = 'C:\\Program Files\\Lumerical\\INTERCONNECT\\bin\\interconnect.exe'
+    file_path_b = 'C:\\Program Files (x86)\\Lumerical\\INTERCONNECT\\bin\\interconnect.exe'
+    if(os.path.isfile(file_path_a)==True):
+      subprocess.Popen(args=[file_path_a, '-run', filename2], shell=True)
+    elif(os.path.isfile(file_path_b)==True):
+      subprocess.Popen(args=[file_path_b, '-run', filename2], shell=True)
+    else:
+      warning_window = pya.QMessageBox()
+      warning_window.setText("Warning: The program could not find INTERCONNECT.")
+      warning_window.setInformativeText("Do you want to specify it manually?")
+      warning_window.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel);
+      warning_window.setDefaultButton(pya.QMessageBox.Yes)
+      response = warning_window.exec_()        
+      if(response == pya.QMessageBox.Yes):
+        dialog = pya.QFileDialog()
+        path = str(dialog.getOpenFileName())
+        path = path.replace('/', '\\')
+        subprocess.Popen(args=[path, '-run', filename2], shell=True)
+
+
 def component_simulation(verbose=False):
   import sys, os, string
   from .. import _globals
-    
-  # Run INTERCONNECT
-  # using Lumerical API: 
-  import lumapi
 
   # get selected instances
   from ..utils import select_instances
@@ -176,7 +235,9 @@ def component_simulation(verbose=False):
   for obj in selected_instances:
 # *** not working. .returns Flattened.
 #    c = obj.inst().cell.find_components()[0]
-    c = cell.find_components(obj.inst().cell)[0]
+    if verbose:
+      print("  selected component: %s" % obj.inst().cell )
+    c = cell.find_components(cell_selected=[obj.inst().cell])[0]
     
     if not c.has_model():
       if len(selected_instances) == 0:
@@ -221,22 +282,13 @@ def component_simulation(verbose=False):
       text_main += 'library="%s" %s \n' % (c.library, c.params)
     text_main += '.ends SUBCIRCUIT'
 
-    if sys.platform.startswith("win"):
-      folder_name = app.application_data_path()
-      if not os.path.isdir(folder_name+'/tmp'):
-        os.makedirs(folder_name+"/tmp")
-      filename = folder_name + '/tmp/%s_main.spi' % c.component
-      filename2 = folder_name + '/tmp/%s.lsf' % c.component
-      filename_icp = folder_name + '/tmp/%s.icp' % c.component
-    elif sys.platform.startswith("linux") or sys.platform.startswith("darwin"):
-      import getpass
-      username=getpass.getuser()
-      tmp_folder='/tmp/klayout_%s_%s' % (TECHNOLOGY['technology_name'], username)
-      if not os.path.isdir(tmp_folder):
-        os.makedirs(tmp_folder)
-      filename = '%s/%s_main.spi' % (tmp_folder, c.component)
-      filename2 = '%s/%s.lsf' % (tmp_folder, c.component)
-      filename_icp = '%s/%s.icp' % (tmp_folder, c.component)
+    import tempfile
+    tmp_folder = tempfile.mkdtemp()
+    import os    
+    filename = os.path.join(tmp_folder, '%s_main.spi' % c.component)
+    filename2 = os.path.join(tmp_folder, '%s.lsf' % c.component)
+    filename_icp = os.path.join(tmp_folder, '%s.icp' % c.component)
+
     # Write the Spice netlist to file
     file = open(filename, 'w')
     file.write (text_main)
@@ -272,10 +324,15 @@ def component_simulation(verbose=False):
       print(text_lsf)
     
     # Run using Python integration:
-    from .. import _globals
-    run_INTC()
-    lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-    lumapi.evalScript(_globals.INTC, c.component + ";")
+    try: 
+      import lumapi
+      from .. import _globals
+      run_INTC()
+      # Run using Python integration:
+      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+      lumapi.evalScript(_globals.INTC, c.component + ";")
+    except:
+      INTC_commandline(filename)
 
 
 def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[]):
@@ -292,25 +349,13 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   # Windows 7, 10
   # OSX Sierra, High Sierra
   # Linux
-  if not any ( [sys.platform.startswith("win"), sys.platform.startswith("linux"), sys.platform.startswith("darwin") ]):
+  if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
     raise Exception("Unsupported operating system: %s" % sys.platform)
   
-  from ..utils import get_technology
   from .. import _globals
-  TECHNOLOGY = get_technology()
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, layout, topcell = get_layout_variables()
   
-  
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-  if pya.Application.instance().main_window().current_view() == None:
-    raise Exception("Please create a layout before running a simulation.")
-  # find the currently selected cell:
-  topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
-  if topcell == None:
-    raise Exception("No cell")
-  layout = topcell.layout()
-
   # Save the layout prior to running simulations, if there are changes.
   mw = pya.Application.instance().main_window()
   if mw.manager().has_undo():
@@ -319,63 +364,23 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   if len(layout_filename) == 0:
     raise Exception("Please save your layout before running the simulation")
     
-  # *** todo
-  '''
-  # Ask user whether to trim the netlist
-  # Trim Netlist setting is saved in a "User Properties" defined via the Cells window.
-  # if missing, a dialog is presented.
-  Trim_Netlist_options = ['Trim netlist by finding components connected to the Laser', 'Export full circuit']
-  Trim_Netlist = topcell.property("Trim_Netlist")
-  if Trim_Netlist and Trim_Netlist in Trim_Netlist_options:
-    print("Trim_Netlist {%s}, taken from cell {%s}" % (Trim_Netlist, topcell.name) )
-  else:
-    Trim_Netlist = pya.InputDialog.ask_item("Trim_Netlist", "Do you want to export the complete circuit, or trim the netlist?  \nYour preference will be saved as a user property in cell {%s}." % topcell.name, Trim_Netlist_options, 0)
-    if Trim_Netlist == None:
-      Trim_Netlist = Trim_Netlist_options[1]
-    else:
-      # Record a transaction, to enable "undo"
-      lv.transaction("Trim_Netlist selection")
-      print("Trim_Netlist taken from the InputDialog = %s; for next time, saved in cell {%s}." % (Trim_Netlist, topcell.name) )
-      topcell.set_property("Trim_Netlist", Trim_Netlist)
-      lv.commit()
-  '''
-
   # *** todo    
   #   Add the "disconnected" component to all disconnected pins
-  #  optical_waveguides, optical_components = terminate_all_disconnected_pins(optical_pins, optical_waveguides, optical_components)
-
-  '''  
-  # Output the Spice netlist:
-  if Trim_Netlist == Trim_Netlist_options[1]:
-    text_Spice, text_Spice_main, num_detectors = generate_Spice_file(topcell, optical_waveguides, optical_components, optical_pins)
-  else:
-    text_Spice, text_Spice_main, num_detectors = generate_short_spice_files(topcell, optical_waveguides, optical_components, optical_pins)
-  '''
+  #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
 
   # Output the Spice netlist:
-  text_Spice, text_Spice_main, num_detectors = topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
+  text_Spice, text_Spice_main, num_detectors = \
+    topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   if verbose:   
     print(text_Spice)
   
-  if sys.platform.startswith("win"):
-    folder_name = pya.Application.instance().application_data_path()
-    if not os.path.isdir(folder_name+'/tmp'):
-      os.makedirs(folder_name+"/tmp")
-    filename = folder_name + '/tmp/%s_main.spi' % topcell.name
-    filename_subckt = folder_name + '/tmp/%s.spi' % topcell.name
-    filename2 = folder_name + '/tmp/%s.lsf' % topcell.name
-    filename_icp = folder_name + '/tmp/%s.icp' % topcell.name
-  elif sys.platform.startswith("linux") or sys.platform.startswith("darwin"):
-    import getpass
-    username=getpass.getuser()
-    tmp_folder='/tmp/klayout_%s_%s' % (TECHNOLOGY['technology_name'], username)
-    if not os.path.isdir(tmp_folder):
-      os.makedirs(tmp_folder)
-    filename = '%s/%s_main.spi' % (tmp_folder, topcell.name)
-    filename_subckt = '%s/%s.spi' % (tmp_folder, topcell.name)
-    filename2 = '%s/%s.lsf' % (tmp_folder, topcell.name)
-    filename_icp = '%s/%s.icp' % (tmp_folder, topcell.name)
-
+  import tempfile
+  tmp_folder = tempfile.mkdtemp()
+  import os    
+  filename = os.path.join(tmp_folder, '%s_main.spi' % topcell.name)
+  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % topcell.name)
+  filename2 = os.path.join(tmp_folder, '%s.lsf' % topcell.name)
+  filename_icp = os.path.join(tmp_folder, '%s.icp' % topcell.name)
   
   text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
   
@@ -448,77 +453,18 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   
   if verbose:
     print(text_lsf)
-  
-  if sys.platform.startswith('linux'):
-    # Linux-specific code here...
-    if string.find(version,"2.") > -1:
-      import commands
-      print("Running INTERCONNECT")
-      commands.getstatusoutput('/opt/lumerical/interconnect/bin/interconnect -run %s' % filename2)
-  
-  elif sys.platform.startswith('darwin'):
-    # OSX specific
 
-    try: 
-      import lumapi
-      from .. import _globals
-      run_INTC()
-      # Run using Python integration:
-      lumapi.evalScript(_globals.INTC, "switchtolayout;")
-      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, topcell.name + ";")
-
-    except:
-      print ("Can't connect to Lumerical INTERCONNECT using Python. Proceeding using command interface.")
-
-      if string.find(version,"2.7.") > -1:
-        import commands
-        home = os.path.expanduser("~")
-        if ~os.path.exists(home + "/.bash_profile"):
-          text_bash =  '\n'
-          text_bash += '# Setting PATH for Lumerical API\n'
-          text_bash += 'export PATH=/Applications/Lumerical/FDTD\ Solutions/FDTD\ Solutions.app/Contents/MacOS:$PATH\n'
-          text_bash += 'export PATH=/Applications/Lumerical/MODE\ Solutions/MODE\ Solutions.app/Contents/MacOS:$PATH\n'
-          text_bash += 'export PATH=/Applications/Lumerical/DEVICE/DEVICE.app/Contents/MacOS:$PATH\n'
-          text_bash += 'export PATH=/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS:$PATH\n'
-          text_bash +=  '\n'
-          file = open(home + "/.bash_profile", 'w')
-          file.write (text_bash)
-          file.close()
-        print("Running INTERCONNECT")
-        runcmd = 'source ~/.bash_profile; open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2
-        print("Running in shell: %s" % runcmd)
-        commands.getstatusoutput(runcmd)
-
+  # Run using Python integration:
+  try: 
+    import lumapi
+    from .. import _globals
+    run_INTC()
+    # Run using Python integration:
+    lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+    lumapi.evalScript(_globals.INTC, topcell.name + ";")
+  except:
+    INTC_commandline(filename)
     
-  
-  elif sys.platform.startswith('win'):
-    # Windows specific code here
-    import subprocess
-    print("Running INTERCONNECT")
-    #check Interconnect installation directory
-    file_path_a = 'C:\\Program Files\\Lumerical\\INTERCONNECT\\bin\\interconnect.exe'
-    file_path_b = 'C:\\Program Files (x86)\\Lumerical\\INTERCONNECT\\bin\\interconnect.exe'
-    
-    if(os.path.isfile(file_path_a)==True):
-      subprocess.Popen(args=[file_path_a, '-run', filename2], shell=True)
-      
-    elif(os.path.isfile(file_path_b)==True):
-      subprocess.Popen(args=[file_path_b, '-run', filename2], shell=True)
-    
-    else:
-      warning_window = pya.QMessageBox()
-      warning_window.setText("Warning: The program could not find INTERCONNECT.")
-      warning_window.setInformativeText("Do you want to specify it manually?")
-      warning_window.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel);
-      warning_window.setDefaultButton(pya.QMessageBox.Yes)
-      response = warning_window.exec_()        
-      if(response == pya.QMessageBox.Yes):
-        dialog = pya.QFileDialog()
-        path = str(dialog.getOpenFileName())
-        path = path.replace('/', '\\')
-        subprocess.Popen(args=[path, '-run', filename2], shell=True)
-
   if verbose:
     print('Done Lumerical INTERCONNECT circuit simulation.')
 
