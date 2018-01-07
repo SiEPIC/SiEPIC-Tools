@@ -23,7 +23,7 @@ SiEPIC installation and initalization
 pya.Application.instance().main_window().message('SiEPIC initialization',5000)
 print(pya.Application.instance().version())
 
-# import xml before lumapi, otherwise it doesn't work:
+# import xml before lumapi (SiEPIC.lumerical), otherwise XML doesn't work:
 from xml.etree import cElementTree
 # import ctypes before lumapi, otherwise it doesn't work:
 import ctypes

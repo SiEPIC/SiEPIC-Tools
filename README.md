@@ -1,6 +1,6 @@
-# SiEPIC_EBeam_PDK
+# SiEPIC-Tools
 
-- <a href="www.siepic.ubc.ca">SiEPIC</a> EBeam PDK, Library - for silicon photonics layout, design, verification and circuit simulation
+- <a href="www.siepic.ubc.ca">SiEPIC</a>-Tools - for silicon photonics layout, design, verification and circuit simulation
 - by <a href="https://ca.linkedin.com/in/chrostowski">Lukas Chrostowski</a>, (c) 2015-2016, with contributions by: <a href="https://ca.linkedin.com/in/zeqin-lu-13a52394">Zeqin Lu</a>, <a href="https://uk.linkedin.com/in/jaspreet-jhoja-00a56b64">Jaspreet Jhoja</a>, <a href="https://ca.linkedin.com/in/121comeon">Xu Wang</a>, <a href="https://ca.linkedin.com/in/jonas-flückiger-92a4831">Jonas Flueckiger</a>.
 - Package for KLayout, klayout.de (developed on KLayout version 0.24.3, OSX)
 - Instruction on design, layout, fabrication, test, data analysis for silicon photonics provided in the edX course: <a href="http://edx.org/course/silicon-photonics-design-fabrication-ubcx-phot1x">Silicon Photonics Design, Fabrication and Data Analysis</a> and textbook <a href="http://www.cambridge.org/ca/academic/subjects/engineering/electronic-optoelectronic-devices-and-nanotechnology/silicon-photonics-design-devices-systems">Silicon Photonics Design: From Devices to Systems</a> by Lukas Chrostowski and Michael Hochberg.
@@ -9,7 +9,8 @@
 "<a href="http://mina.ubc.ca/ref_design-and-simulation-sili">Design and simulation of silicon photonic schematics and layouts</a>," Proc. SPIE 9891, Silicon Photonics and Photonic Integrated Circuits V, 989114 (May 13, 2016); doi:10.1117/12.2230376.
 
 ## Download and Installation instructions:
- - <a href="https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/wiki/Installation-instructions">SiEPIC_EBeam_PDK download and installation instructions</a> on the wiki page.  
+ - in KLayout v0.25, use Tools | Package Manager, and find SiEPIC-Tools there
+ - in KLayout v0.24, see <a href="https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/wiki/Installation-instructions">SiEPIC_EBeam_PDK download and installation instructions</a> on the wiki page.  
 
  
 ## Objectives:
@@ -54,11 +55,10 @@
 
 ## Package includes:
 
-- Process Design Kit (PDK): this package, including fabrication documentation, scripts, etc.
-- EBeam Layer definitions for KLayout (klayout_Layers_EBeam.lyp).
-- PCells: directional couplers, ring resonator, taper, Bragg grating
-- Sample scripts to create a layout, including waveguide generation functions: Mach-Zehnder Interferometer test structures; Ring resonator test structure.
-- GDS Library, updated with marker layers for verification/netlist generation.
+- Generic Silicon Photonics (GSiP) Process Design Kit (PDK): this package, including fabrication documentation, scripts, etc.
+- PCells: ring modulator
+- GDS Library: grating coupler, detector, edge coupler.
+
 - Verification: 
   - Scanning the layout. Finding waveguides, devices, pins.  
   - Verification: Identifying if there are missing connections, mismatched waveguides, too few points in a bend, etc. 
@@ -82,7 +82,7 @@
 
 ## Contributing to this project:
 
-You can download the latest development version (master) of the PDK: <a href="https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/archive/master.zip">Zip file download of the PDK</a>
+You can download the latest development version (master) of the PDK: <a href="https://github.com/lukasc-ubc/SiEPIC-Tools/archive/master.zip">Zip file download of the PDK</a>
 
 It is posted on GitHub for 1) revision control, 2) so that others can contribute to it, find bugs, 3) easy download of the latest version.
 
