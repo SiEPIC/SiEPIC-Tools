@@ -241,6 +241,7 @@ def snap(self, pins):
 #################################################################################
 
 pya.Path.to_dtype = to_dtype
+pya.Path.to_itype = to_itype
 pya.Path.get_points = get_points
 pya.Path.get_dpoints = get_dpoints
 pya.Path.is_manhattan = is_manhattan

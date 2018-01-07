@@ -229,20 +229,10 @@ def load_DFT():
           matches.append(os.path.join(root, filename))
   if matches:
     DFT_file = matches[0]
-    
-     
-    import platform
-    if platform.system() == 'Windows': 
-      # ***, XML not working on Windows
-      DFT_hardcoded = {'design-for-test': {'opt_in': {'max-distance-to-grating-coupler': '10'}, 'grating-couplers': {'minimum-gc-pitch-between-separate-circuits': '40', 'detectors-above-laser': '1', 'gc-orientation': {'ebeam_gc_te1550': '0', 'ebeam_gc_tm1550': '180'}, 'gc-array-orientation': '90', 'gc-pitch': '127', 'detectors-below-laser': '2'}, 'tunable-laser': {'wavelength-start': '1500', 'wavelength': '1550', 'wavelength-stop': '1600', 'wavelength-points': '3000'}}}
-      return DFT_hardcoded
-
-    else:
-      file = open(DFT_file, 'r') 
-      DFT = xml_to_dict(file.read())
-      file.close()
-    
-      return DFT
+    file = open(DFT_file, 'r') 
+    DFT = xml_to_dict(file.read())
+    file.close()
+    return DFT
   else:
     return None
 

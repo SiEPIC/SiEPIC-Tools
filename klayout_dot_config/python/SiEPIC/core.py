@@ -172,18 +172,13 @@ class Component():
 
   def has_model(self):
  
-    import platform
-    if platform.system() == 'Windows': 
-      # problem with Windows KLayout.  XML not working.
-      return True
-    else:
-      # check if this component has a compact model in the INTC library
-      from .utils import get_technology, get_technology_by_name
-      TECHNOLOGY = get_technology()
-      TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
-  
-      from ._globals import INTC_ELEMENTS
-      return ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+self.component.lower()) in INTC_ELEMENTS
+    # check if this component has a compact model in the INTC library
+    from .utils import get_technology, get_technology_by_name
+    TECHNOLOGY = get_technology()
+    TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
+
+    from ._globals import INTC_ELEMENTS
+    return ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+self.component.lower()) in INTC_ELEMENTS
   
 
 

@@ -103,9 +103,10 @@ if 0:
   e = ET.XML("")
   import pyexpat
 
-if 0:
+if 1:
   from xml.etree import cElementTree as ET
-  e = ET.XML("")
+  e = ET.XML("&lt;message&gt;&lt;content&gt;hello&lt;/content&gt;&lt;/message&gt;")
+  print(e.getchildren()[0].text)
 
 if 0:
   filepath = "C:/Users/lukasc2/KLayout/tech/EBeam/libraries/klayout_Layers_EBeam.lyp"

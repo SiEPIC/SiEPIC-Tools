@@ -929,7 +929,7 @@ def layout_check(cell = None, verbose=False):
         if verbose:
           print( " - Found mismatched pin widths: %s"  % (pin_paths[0]) )
         r = pya.Region([pin_paths[0].to_itype(1).polygon(), pin_paths[-1].to_itype(1).polygon()])
-        polygon_merged = r.each_merged().next()
+        polygon_merged = advance_iterator(r.each_merged())
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_mismatchedpin.rdb_id())
         rdb_item.add_value(pya.RdbItemValue( polygon_merged.to_dtype(dbu) ) )
     
