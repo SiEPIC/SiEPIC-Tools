@@ -81,11 +81,12 @@ def get_technology_by_name(tech_name, verbose=False):
     else:
       technology['dbu'] = 0.001
 
+    import os
     if KLAYOUT_VERSION > 24:
       lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()	
       technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
     else:
-      import os, fnmatch
+      import fnmatch
       dir_path = pya.Application.instance().application_data_path()
       search_str = '*' + tech_name + '.lyp'
       matches = []
@@ -97,59 +98,42 @@ def get_technology_by_name(tech_name, verbose=False):
       else:
         raise Exception('Cannot find technology layer properties file %s' % search_str )
       # technology['base_path']
-      head, tail = os.path.split(lyp_file)
-      technology['base_path'] = os.path.split(head)[0]
-      # technology['INTC_CML']
-      cml_files = [x for x in os.listdir(technology['base_path']) if x.endswith(".cml")]
-      if cml_files:
-        technology['INTC_CML'] = cml_files[-1]
-        technology['INTC_CML_path'] = os.path.join(technology['base_path'],cml_files[-1])
-        technology['INTC_CML_version'] = cml_files[-1].replace(tech_name+'_','')
-      else:
-        technology['INTC_CML'] = None
-        technology['INTC_CML_path'] = None
-        technology['INTC_CML_version'] = None
-    
-    # Layers:
-    import platform
-    if platform.system() == 'Windows' and KLAYOUT_VERSION > 24: 
-      # *** XML not working in Windows
-      lv = pya.LayoutView()
-      lv.load_layer_props(lyp_file)
-      itr = lv.begin_layers()
-      while True:
-        if itr == lv.end_layers():
-          break
-        else:
-          layerInfo = itr.current().source.split('@')[0]
-          if layerInfo == '*/*':
-            # likely encoutered a layer group, skip it
-            pass
-          else:
-            technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
-          itr.next()
 
+    # Load CML file location
+    head, tail = os.path.split(lyp_file)
+    technology['base_path'] = os.path.split(head)[0]
+    cml_files = [x for x in os.listdir(technology['base_path']) if x.endswith(".cml")]
+    if cml_files:
+      technology['INTC_CML'] = cml_files[-1]
+      technology['INTC_CML_path'] = os.path.join(technology['base_path'],cml_files[-1])
+      technology['INTC_CML_version'] = cml_files[-1].replace(tech_name+'_','')
     else:
-      file = open(lyp_file, 'r') 
-      layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
-      file.close()
-       
-      for k in layer_dict:
-        layerInfo = k['source'].split('@')[0]
-        if 'group-members' in k:
-          # encoutered a layer group, look inside:
-          j = k['group-members']
-          if 'name' in j:
+      technology['INTC_CML'] = None
+      technology['INTC_CML_path'] = None
+      technology['INTC_CML_version'] = None
+
+    # Layers:
+    file = open(lyp_file, 'r') 
+    layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
+    file.close()
+     
+    for k in layer_dict:
+      layerInfo = k['source'].split('@')[0]
+      if 'group-members' in k:
+        # encoutered a layer group, look inside:
+        j = k['group-members']
+        if 'name' in j:
+          layerInfo_j = j['source'].split('@')[0]
+          technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
+        else:
+          for j in k['group-members']:
             layerInfo_j = j['source'].split('@')[0]
             technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-          else:
-            for j in k['group-members']:
-              layerInfo_j = j['source'].split('@')[0]
-              technology[j['name']] = pya.LayerInfo(int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-          if k['source'] != '*/*@*':
-            technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
-        else:
+        if k['source'] != '*/*@*':
           technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+      else:
+        technology[k['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+
     return technology
 # end of get_technology_by_name(tech_name)
 # test example: give it a name of a technology, e.g., GSiP
