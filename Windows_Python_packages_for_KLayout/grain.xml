@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<salt-grain>
+ <name>Windows_Python_packages_for_KLayout</name>
+ <version>1.0</version>
+ <api-version>0.25</api-version>
+ <title>Windows Python packages for KLayout</title>
+ <doc>A collection of missing Python packages for KLayout, including numpy, requests, urllib3, idna, chardet, certifi. </doc>
+ <url>https://github.com/lukasc-ubc/SiEPIC-Tools.git/trunk/Windows_Python_packages_for_KLayout</url>
+ <author>Lukas Chrostowski</author>
+ <author-contact>GitHub: lukasc-ubc</author-contact>
+</salt-grain>
