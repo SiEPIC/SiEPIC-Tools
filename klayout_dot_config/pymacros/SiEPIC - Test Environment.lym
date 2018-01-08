@@ -54,6 +54,7 @@ if 1:
     SiEPIC.examples = reload(SiEPIC.examples)
     SiEPIC.github = reload(SiEPIC.github)
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
+    SiEPIC.lumerical.lumapi_fdtd = reload(SiEPIC.lumerical.lumapi_fdtd)
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
     SiEPIC.scripts = reload(SiEPIC.scripts)
@@ -63,6 +64,17 @@ if 1:
 
 
 print ("***")
+
+
+if 1:
+  import SiEPIC.lumerical as lumerical
+  lumerical.fdtd.run_FDTD(verbose=True)
+
+if 0:
+  import SiEPIC.lumerical as lumerical
+  lumerical.interconnect.run_INTC(verbose=True)
+
+
 
 if 0: 
   import SiEPIC.utils
@@ -103,7 +115,7 @@ if 0:
   e = ET.XML("")
   import pyexpat
 
-if 1:
+if 0:
   from xml.etree import cElementTree as ET
   e = ET.XML("&lt;message&gt;&lt;content&gt;hello&lt;/content&gt;&lt;/message&gt;")
   print(e.getchildren()[0].text)

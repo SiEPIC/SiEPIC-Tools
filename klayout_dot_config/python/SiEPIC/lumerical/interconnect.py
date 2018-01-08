@@ -29,7 +29,7 @@ usage:
 import pya
 
 def run_INTC(verbose=False):
-  import lumapi
+  import lumapi_intc as lumapi
   from .. import _globals
   _globals.INTC  # Python Lumerical INTERCONNECT integration handle
   
@@ -119,7 +119,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   ##################################################################
   # Load Lumerical API: 
 
-  import lumapi
+  import lumapi_intc as lumapi
   from .. import _globals
   _globals.INTC  # Python Lumerical INTERCONNECT integration handle
   
