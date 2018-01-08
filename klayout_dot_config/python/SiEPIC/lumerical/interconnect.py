@@ -145,7 +145,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
     lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
     # Re-Read INTC element library
     lumapi.evalScript(_globals.INTC, "out=library;")
-    _globals.INTC_ELEMENTS=lumapi.getVar(INTC, "out")
+    _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
 
   # Save INTC element library to KLayout application data path
   if not os.path.exists(dir_path):
