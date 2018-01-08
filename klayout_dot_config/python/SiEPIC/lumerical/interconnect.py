@@ -31,16 +31,20 @@ import pya
 def run_INTC(verbose=False):
   import lumapi_intc as lumapi
   from .. import _globals
-  _globals.INTC  # Python Lumerical INTERCONNECT integration handle
+  if verbose:
+    print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
   
   if not _globals.INTC: # Not running, start a new session
     _globals.INTC = lumapi.open('interconnect')
-    print(_globals.INTC)
+    if verbose:
+      print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
   else: # found open INTC session
     try:
       lumapi.evalScript(_globals.INTC, "?'KLayout integration test.';")
     except: # but can't communicate with INTC; perhaps it was closed by the user
       INTC = lumapi.open('interconnect') # run again.
+      if verbose:
+        print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
   try: # check again
     lumapi.evalScript(_globals.INTC, "?'KLayout integration test.';")
   except:

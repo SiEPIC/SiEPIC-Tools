@@ -11,12 +11,12 @@ INTEROPLIB = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 
 # Mac OSX:
 if platform.system() == 'Darwin':
-  INTEROPLIB = "/Applications/Lumerical/FDTD/FDTD.app/Contents/API/Matlab/libinterop-api.1.dylib"
+  INTEROPLIB = '/Applications/Lumerical/FDTD Solutions/FDTD Solutions.app/Contents/API/Matlab/libinterop-api.1.dylib'
 
 # Windows
 if platform.system() == 'Windows': 
     import sys
-    path = "C:\\Program Files\\Lumerical\\FDTD\\api\\python"
+    path = "C:\\Program Files\\Lumerical\\FDTD Solutions\\api\\python"
     if os.path.exists(path):
       if not path in sys.path:
         sys.path.append(path) # windows

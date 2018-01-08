@@ -54,7 +54,6 @@ if 1:
     SiEPIC.examples = reload(SiEPIC.examples)
     SiEPIC.github = reload(SiEPIC.github)
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
-    SiEPIC.lumerical.lumapi_fdtd = reload(SiEPIC.lumerical.lumapi_fdtd)
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
     SiEPIC.scripts = reload(SiEPIC.scripts)
@@ -66,13 +65,15 @@ if 1:
 print ("***")
 
 
-if 1:
-  import SiEPIC.lumerical as lumerical
-  lumerical.fdtd.run_FDTD(verbose=True)
-
 if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.run_INTC(verbose=True)
+
+if 1:
+  import SiEPIC.lumerical as lumerical
+#  lumerical.fdtd.run_FDTD(verbose=True)
+  lumerical.fdtd.generate_component_sparam(verbose=True)
+
 
 
 
