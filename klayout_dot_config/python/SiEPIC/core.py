@@ -168,7 +168,7 @@ class Component():
     return text
 
   def find_pins(self):        
-    return self.instance.find_pins_component()
+    return self.cell.find_pins_component(self)
 
   def has_model(self):
  
@@ -180,7 +180,35 @@ class Component():
     from ._globals import INTC_ELEMENTS
     return ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+self.component.lower()) in INTC_ELEMENTS
   
+  def get_polygons(self):
+    from utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()  
 
+    r = pya.Region()
+
+    s = self.cell.begin_shapes_rec(ly.layer(TECHNOLOGY['Waveguide']))
+    while not(s.at_end()):
+      if s.shape().is_polygon() or s.shape().is_box() or s.shape().is_path():
+        r.insert ( s.shape().polygon.transformed(s.itrans()) )
+      s.next()
+
+    s = self.cell.begin_shapes_rec(ly.layer(TECHNOLOGY['PinRec']))
+    import math
+    from .utils import angle_vector
+    while not(s.at_end()):
+      if s.shape().is_path():
+        p = s.shape().path.transformed(s.itrans())
+        # extend the pin path by 1 micron for FDTD simulations
+        pts = [pt for pt in p.each_point()]
+        rotation = angle_vector(pts[0]-pts[1])*math.pi/180 # direction / angle of the optical pin
+        pts[1] = (pts[1]-pya.Point(int(math.cos(rotation)*1000),int(math.sin(rotation)*1000) )).to_p()
+        r.insert ( pya.Path(pts, p.width).polygon() )
+      s.next()
+
+    r.merge()
+    polygons = [p for p in r.each_merged()]
+    
+    return polygons
 
 class WaveguideGUI():
 

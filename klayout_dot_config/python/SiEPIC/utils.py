@@ -220,6 +220,39 @@ def load_DFT():
   else:
     return None
 
+'''
+Load FDTD settings
+These are technology specific, and located in the tech folder, named FDTD.xml
+'''
+def load_FDTD_settings():
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'FDTD.xml'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+  if matches:
+    f = matches[0]
+    file = open(f, 'r') 
+    FDTD = xml_to_dict(file.read())
+    file.close()
+    
+    FDTD = FDTD['FDTD']
+    FDTD1 = {}
+    for k in FDTD['floats'].keys():
+      FDTD1[k]=float(FDTD['floats'][k])
+    for k in FDTD['strings'].keys():
+      FDTD1[k]=FDTD['strings'][k]
+    return FDTD1
+  else:
+    return None
+
 def get_layout_variables():
   from .utils import get_technology
   TECHNOLOGY = get_technology()
