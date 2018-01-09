@@ -134,7 +134,7 @@ def generate_component_sparam(verbose = False):
     print(" polygons: %s" % [p for p in polygons] )
   polygons_vertices = [[[vertex.x*dbum, vertex.y*dbum] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
   if verbose:
-    print(" polygons' vertices: %s" % polygons_vertices )
+    print(" polygons' vertices: %s" % len(polygons_vertices) )
   if len(polygons_vertices) < 1:
     error.setText("Error: Component needs to have polygons.")
     return
@@ -167,30 +167,121 @@ def generate_component_sparam(verbose = False):
       direction = 'Forward'
     lumapi.evalScript(_globals.FDTD, " \
       set('name','%s'); set('direction', '%s'); set('frequency points', %s); set('mode selection', '%s'); \
-      ?'Added pin: %s'; " % (p.pin_name, direction, FDTD_settings['frequency_points_expansion'], mode_selection, p.pin_name)  )
+      ?'Added pin: %s'; " % (p.pin_name, direction, 1, mode_selection, p.pin_name)  )
       
     
   # Calculate mode sources
   # Get field profiles, to find |E| = 1e-6 points to find spans
+  min_z, max_z = 0,0
+  for p in [pins[0]]:  # if all pins are the same, only do it once
+    lumapi.evalScript(_globals.FDTD, " \
+      select('FDTD::ports::%s'); mode_profiles=getresult('FDTD::ports::%s','mode profiles'); E=mode_profiles.E1; x=mode_profiles.x; y=mode_profiles.y; z=mode_profiles.z; \
+      ?'Selected pin: %s'; " % (p.pin_name, p.pin_name, p.pin_name)  )
+    E=lumapi.getVar(_globals.FDTD, "E")
+    x=lumapi.getVar(_globals.FDTD, "x")
+    y=lumapi.getVar(_globals.FDTD, "y")
+    z=lumapi.getVar(_globals.FDTD, "z")
+
+    import numpy as np
+    # remove the wavelength from the array, 
+    # leaving two dimensions, and 3 field components
+    Efield_xyz = np.array(E[0,:,:,0,:])
+    # find the field intensity (|Ex|^2 + |Ey|^2 + |Ez|^2)
+    Efield_intensity = np.empty([Efield_xyz.shape[0],Efield_xyz.shape[1]])
+    print(Efield_xyz.shape)
+    for a in range(0,Efield_xyz.shape[0]):
+      for b in range(0,Efield_xyz.shape[1]):
+        Efield_intensity[a,b] = abs(Efield_xyz[a,b,0])**2+abs(Efield_xyz[a,b,1])**2+abs(Efield_xyz[a,b,2])**2
+    # find the max field for each z slice (b is the z axis)
+    Efield_intensity_b = np.empty([Efield_xyz.shape[1]])
+    for b in range(0,Efield_xyz.shape[1]):
+      Efield_intensity_b[b] = max(Efield_intensity[:,b])
+    # find the z thickness where the field has sufficiently decayed
+    indexes = np.argwhere ( Efield_intensity_b > 1e-6 )
+    min_index, max_index = int(min(indexes)), int(max(indexes))
+    if min_z > z[min_index]:
+      min_z = z[min_index]
+    if max_z < z[max_index]:
+      max_z = z[max_index]
+    if verbose:
+      print(' Port %s field decays at: %s, %s microns' % (p.pin_name, z[max_index], z[min_index]) )
+
+  if FDTDzspan > max_z-min_z:
+    FDTDzspan = max_z-min_z
+    if verbose:
+      print(' Updating FDTD Z-span to: %s microns' % (FDTDzspan) )
+ 
+  # Configure FDTD region, mesh accuracy 1
+  # run single simulation
+  from .. import _globals
+  import os
+  filename = os.path.join(_globals.TEMP_FOLDER, '%s.fsp' % component.instance)
+  lumapi.evalScript(_globals.FDTD, " \
+    select('FDTD'); set('z span',%s);\
+    save('%s');\
+    ?'FDTD Z-span updated to %s'; run; " % (FDTDzspan, filename, FDTDzspan) )
+  
   for p in pins:
     lumapi.evalScript(_globals.FDTD, " \
-      select('FDTD::ports::%s'); updateportmodes;  \
-      ?'Selected pin: %s'; " % (p.pin_name, p.pin_name)  )
+      Port_%s=getresult('FDTD::ports::%s','expansion for port monitor'); \
+       " % (p.pin_name,p.pin_name) )
+  
 
+  return  
   
-  # Configure FDTD region, mesh accuracy 1
-  
-  # run single simulation
-  
+
   # user verify ok
   
   # convergence test on simulation z-span (assume symmetric)
   # loop in Python so we can check if it is good enough
   
-  # Configure FDTD region, mesh accuracy 4
+  # Configure FDTD region, mesh accuracy 4, update FDTD ports mode source frequency points
+  lumapi.evalScript(_globals.FDTD, " \
+    select('FDTD'); set('mesh accuracy',%s);\
+    ?'FDTD mesh accuracy updated %s'; " % (FDTD_settings['mesh_accuracy'], FDTD_settings['mesh_accuracy']) )
+  for p in pins:
+    lumapi.evalScript(_globals.FDTD, " \
+      select('FDTD::ports::%s'); set('frequency points', %s); \
+      ?'updated pin: %s'; " % (p.pin_name, FDTD_settings['frequency_points_expansion'], p.pin_name)  )
   
   # Run full S-parameters
 
+'''
+# add s-parameter sweep task
+deletesweep("s-parameter sweep");
+addsweep(3);
+
+# perform simulations using the first 2 ports, use symmetry later.
+NsimPorts=2;
+ 
+# define index entries for s-matrix mapping table (rows)
+Nports=4;
+for (port=1:Nports) { # inject light into each port
+ for (mode = mode_selection) { # for each mode
+  index1 = struct;
+  index1.Port = "port "+num2str(port);
+  index1.Mode = "mode "+num2str(mode);
+  # add index entries to s-matrix mapping table
+  addsweepparameter("s-parameter sweep",index1);
+ }
+}
+
+# run s-parameter sweep
+runsweep("s-parameter sweep");
+ 
+# collect results
+S_matrix = getsweepresult("s-parameter sweep","S matrix");
+S_parameters = getsweepresult("s-parameter sweep","S parameters");
+S_diagnostic = getsweepresult("s-parameter sweep","S diagnostic");
+ 
+# visualize results
+#visualize(S_matrix);
+visualize(S_parameters);
+#visualize(S_diagnostic);
+ 
+# export S-parameter data to file named s_params.dat to be loaded in INTERCONNECT
+exportsweep("s-parameter sweep",s_filename);
+'''
   # Export S-Parameters
 
   # Create an INTC model

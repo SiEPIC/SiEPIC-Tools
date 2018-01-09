@@ -66,3 +66,10 @@ try:
 except:
   FDTD = None  
   print('resetting Lumerical FDTD Python integration')
+
+
+try:
+  TEMP_FOLDER
+except:
+  import tempfile
+  TEMP_FOLDER = tempfile.mkdtemp()
