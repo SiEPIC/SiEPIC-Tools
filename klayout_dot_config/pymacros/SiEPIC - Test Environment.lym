@@ -75,6 +75,11 @@ if 1:
   E = lumerical.fdtd.generate_component_sparam(verbose=True)
 
 if 0:
+  import SiEPIC.lumerical.lumapi_fdtd as lumapi
+  from SiEPIC import _globals
+  lumapi.putMatrix(_globals.FDTD, 'test', [[1,2],[2,6]])
+
+if 0:
   import numpy as np
   # remove the wavelength from the array, 
   # leaving two dimensions, and 3 field components

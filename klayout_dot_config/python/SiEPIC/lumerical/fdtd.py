@@ -105,13 +105,13 @@ def generate_component_sparam(verbose = False):
   # create FDTD simulation region (extra large)
   FDTDzspan=4e-6
   FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = devrec_box.left*dbum-200e-9, devrec_box.right*dbum+200e-9, devrec_box.bottom*dbum-200e-9, devrec_box.top*dbum+200e-9
-  sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.2 + 5e-6; 
+  sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5; 
   lumapi.evalScript(_globals.FDTD, " \
     newproject; \
     addfdtd; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z span',%s);\
     set('force symmetric z mesh', 1); set('mesh accuracy',1); \
     setglobalsource('wavelength start',%s); setglobalsource('wavelength stop', %s); \
-    setglobalmonitor('frequency points',%s); set('simulation time', %s/c); \
+    setglobalmonitor('frequency points',%s); set('simulation time', %s/c+400e-15); \
     ?'FDTD solver added';    " % (FDTDxmin,FDTDxmax,FDTDymin,FDTDymax,FDTDzspan,wavelength_start,wavelength_stop,FDTD_settings['frequency_points_monitor'], sim_time) )
 
   # add substrate and cladding:
@@ -162,12 +162,12 @@ def generate_component_sparam(verbose = False):
         addport; set('injection axis', 'y-axis'); set('x',%s); set('y',%s); set('x span',%s); set('z span',%s); \
         " % (p.center.x*dbum, p.center.y*dbum,2e-6,FDTDzspan)  )
     if p.rotation in [180.0, 90.0]:
-      direction = 'Backward'
+      p.direction = 'Backward'
     else:
-      direction = 'Forward'
+      p.direction = 'Forward'
     lumapi.evalScript(_globals.FDTD, " \
       set('name','%s'); set('direction', '%s'); set('frequency points', %s); set('mode selection', '%s'); \
-      ?'Added pin: %s'; " % (p.pin_name, direction, 1, mode_selection, p.pin_name)  )
+      ?'Added pin: %s'; " % (p.pin_name, p.direction, 1, mode_selection, p.pin_name)  )
       
     
   # Calculate mode sources
@@ -219,21 +219,71 @@ def generate_component_sparam(verbose = False):
   lumapi.evalScript(_globals.FDTD, " \
     select('FDTD'); set('z span',%s);\
     save('%s');\
-    ?'FDTD Z-span updated to %s'; run; " % (FDTDzspan, filename, FDTDzspan) )
-  
-  for p in pins:
-    lumapi.evalScript(_globals.FDTD, " \
-      Port_%s=getresult('FDTD::ports::%s','expansion for port monitor'); \
-       " % (p.pin_name,p.pin_name) )
-  
+    ?'FDTD Z-span updated to %s'; " % (FDTDzspan, filename, FDTDzspan) )
 
-  return  
+  # Calculate, plot, and get the S-Parameters, S21, S31, S41 ...
+  # optionally simulate a subset of the S-Parameters
+  # assume input on port 1  
+  def FDTD_run_Sparam_simple(pins, out_pins = None, plots = False):
+    if verbose:
+      print(' Run simulation S-Param FDTD')
+    lumapi.evalScript(_globals.FDTD, "run; ")
+    port_pins = [pins[0]]+out_pins if out_pins else pins
+    for p in port_pins:
+      lumapi.evalScript(_globals.FDTD, " \
+        P=Port_%s=getresult('FDTD::ports::%s','expansion for port monitor'); \
+         " % (p.pin_name,p.pin_name) )
+    lumapi.evalScript(_globals.FDTD, "wavelengths=c/P.f*1e6;")
+    wavelengths = lumapi.getVar(_globals.FDTD, "wavelengths") 
+    Sparams = []
+    for p in port_pins[1::]:
+      lumapi.evalScript(_globals.FDTD, " \
+        Sparam=S_%s_%s= Port_%s.%s/Port_%s.%s;  \
+         " % (p.pin_name, pins[0].pin_name, \
+              p.pin_name, 'b' if p.direction=='Forward' else 'a', \
+              pins[0].pin_name, 'a' if pins[0].direction=='Forward' else 'b') )
+      Sparams.append(lumapi.getVar(_globals.FDTD, "Sparam"))
+      if plots:
+        lumapi.evalScript(_globals.FDTD, " \
+          plot (wavelengths, 10*log10(abs(Sparam)^2),  'Wavelength (um)', 'Transmission (dB)', 'S_%s_%s'); \
+           " % (p.pin_name, pins[0].pin_name) )
+    return Sparams
   
+    
+    
+  
+  # user verify ok ?
 
-  # user verify ok
-  
+  # Convergence testing on S-Parameters:
+  # find the pin that has the highest Sparam (max over wavelength)
+  # use this Sparam for convergence testing
+  Sparams = FDTD_run_Sparam_simple(pins, plots = True)
+  Sparam_pin_max = np.amax(np.absolute(Sparams), axis=1).argmax() +1
   # convergence test on simulation z-span (assume symmetric)
   # loop in Python so we can check if it is good enough
+  test_converged = False
+  convergence = []
+  Sparams_abs_prev = np.array([np.absolute(Sparams)[Sparam_pin_max,:,:]])
+  while not test_converged:
+    FDTDzspan += 100e-9
+    lumapi.evalScript(_globals.FDTD, " \
+      switchtolayout; select('FDTD'); set('z span',%s);\
+      ?'FDTD Z-span updated to %s'; " % (FDTDzspan, FDTDzspan) )
+    Sparams = FDTD_run_Sparam_simple(pins, out_pins = [pins[Sparam_pin_max]], plots = True)
+    Sparams_abs = np.array(np.absolute(Sparams))
+    rms_error = np.sqrt(np.mean( (Sparams_abs_prev - Sparams_abs)**2 ))
+    convergence.append ( [FDTDzspan, rms_error] )
+    Sparams_abs_prev = Sparams_abs
+    if verbose:
+      print (' convergence: span %s, rms error %s' % (FDTDzspan, rms_error) ) 
+    if FDTDzspan > 2e-6:
+      test_converged=True
+
+  lumapi.putMatrix(_globals.FDTD, 'convergence', convergence)
+  lumapi.evalScript(_globals.FDTD, "plot(convergence(:,1), convergence(:,2), 'Simulation span','RMS error between simulation','Convergence testing');")
+  
+  return Sparams 
+  
   
   # Configure FDTD region, mesh accuracy 4, update FDTD ports mode source frequency points
   lumapi.evalScript(_globals.FDTD, " \
@@ -243,6 +293,9 @@ def generate_component_sparam(verbose = False):
     lumapi.evalScript(_globals.FDTD, " \
       select('FDTD::ports::%s'); set('frequency points', %s); \
       ?'updated pin: %s'; " % (p.pin_name, FDTD_settings['frequency_points_expansion'], p.pin_name)  )
+
+
+
   
   # Run full S-parameters
 
