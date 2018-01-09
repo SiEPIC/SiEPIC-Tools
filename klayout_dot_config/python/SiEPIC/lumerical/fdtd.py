@@ -92,9 +92,11 @@ def generate_component_sparam(verbose = False):
   component = cell.find_components(cell_selected=[selected_instances[0].inst().cell])[0]
 
   # Configure wavelength and polarization
-  # GUI for: pol = {'quasi-TE', 'quasi-TM', 'quasi-TE and -TM'}
+  # polarization = {'quasi-TE', 'quasi-TM', 'quasi-TE and -TM'}
   mode_selection = FDTD_settings['mode_selection']
-  # GUI for: wavelength = {'1450-1650'} 
+  mode_selection_choices = {'fundamental TE mode':1, 'fundamental TM mode':2}
+  mode_selection_index = mode_selection_choices[mode_selection]
+  # wavelength = {'1450-1650'} 
   wavelength_start = FDTD_settings['wavelength_start']
   wavelength_stop =  FDTD_settings['wavelength_stop']     
 
@@ -103,27 +105,35 @@ def generate_component_sparam(verbose = False):
   print("%s, %s, %s, %s"  % (devrec_box.left*dbum, devrec_box.right*dbum, devrec_box.bottom*dbum, devrec_box.top*dbum) )
 
   # create FDTD simulation region (extra large)
-  FDTDzspan=4e-6
+  FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
+  # Z_symmetry = 'Symmetric' if mode_selection_index==1 else 'Anti-Symmetric'
   FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = devrec_box.left*dbum-200e-9, devrec_box.right*dbum+200e-9, devrec_box.bottom*dbum-200e-9, devrec_box.top*dbum+200e-9
   sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5; 
   lumapi.evalScript(_globals.FDTD, " \
     newproject; \
     addfdtd; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z span',%s);\
     set('force symmetric z mesh', 1); set('mesh accuracy',1); \
+    set('x min bc','Metal'); set('x max bc','Metal'); \
+    set('y min bc','Metal'); set('y max bc','Metal'); \
+    set('z min bc','Metal'); set('z max bc','Metal'); \
     setglobalsource('wavelength start',%s); setglobalsource('wavelength stop', %s); \
     setglobalmonitor('frequency points',%s); set('simulation time', %s/c+400e-15); \
-    ?'FDTD solver added';    " % (FDTDxmin,FDTDxmax,FDTDymin,FDTDymax,FDTDzspan,wavelength_start,wavelength_stop,FDTD_settings['frequency_points_monitor'], sim_time) )
+    addmesh; set('override x mesh',0); set('override y mesh',0); set('override z mesh',1); set('z span', 0); set('dz', %s); set('z', %s); \
+    ?'FDTD solver with mesh override added'; " % ( FDTDxmin,FDTDxmax,FDTDymin,FDTDymax,FDTDzspan, \
+       wavelength_start,wavelength_stop, \
+       FDTD_settings['frequency_points_monitor'], sim_time, \
+       FDTD_settings['thickness_Si']/4, FDTD_settings['thickness_Si']/2) )
 
   # add substrate and cladding:
   lumapi.evalScript(_globals.FDTD, " \
     addrect; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z min', %s); set('z max',%s);\
-      set('material', '%s'); set('alpha',0.1);    \
+    set('material', '%s'); set('alpha',0.1);    \
     ?'oxide added';    " % (FDTDxmin-1e-6, FDTDxmax+1e-6, FDTDymin-1e-6, FDTDymax+1e-6, \
       -FDTD_settings['thickness_BOX']-FDTD_settings['thickness_Si']/2, -FDTD_settings['thickness_Si']/2, \
       FDTD_settings['material_Clad'] ) )
   lumapi.evalScript(_globals.FDTD, " \
     addrect; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z min', %s); set('z max',%s);\
-      set('material', '%s'); set('alpha',0.1);    \
+    set('material', '%s'); set('alpha',0.1);    \
     ?'oxide added';    " % (FDTDxmin-1e-6, FDTDxmax+1e-6, FDTDymin-1e-6, FDTDymax+1e-6, \
       -FDTD_settings['thickness_Si']/2, FDTD_settings['thickness_Clad']-FDTD_settings['thickness_Si']/2, \
       FDTD_settings['material_Clad'] ) )
@@ -152,6 +162,9 @@ def generate_component_sparam(verbose = False):
   pins = sorted(pins, key=lambda  p: p.pin_name)
   
   # create FDTD ports
+  # configure boundary conditions to be PML where we have ports
+#  FDTD_bc = {'y max bc': 'Metal', 'y min bc': 'Metal', 'x max bc': 'Metal', 'x min bc': 'Metal'}
+  port_dict = {0.0: 'x max bc', 90.0: 'y max bc', 180.0: 'x min bc', 270.0: 'y min bc'}
   for p in pins:
     if p.rotation in [180.0, 0.0]:
       lumapi.evalScript(_globals.FDTD, " \
@@ -167,16 +180,17 @@ def generate_component_sparam(verbose = False):
       p.direction = 'Forward'
     lumapi.evalScript(_globals.FDTD, " \
       set('name','%s'); set('direction', '%s'); set('frequency points', %s); set('mode selection', '%s'); \
-      ?'Added pin: %s'; " % (p.pin_name, p.direction, 1, mode_selection, p.pin_name)  )
-      
+      select('FDTD'); set('%s','PML'); \
+      ?'Added pin: %s, set %s to PML'; " % (p.pin_name, p.direction, 1, mode_selection, \
+          port_dict[p.rotation], p.pin_name, port_dict[p.rotation] )  )
     
   # Calculate mode sources
   # Get field profiles, to find |E| = 1e-6 points to find spans
   min_z, max_z = 0,0
   for p in [pins[0]]:  # if all pins are the same, only do it once
     lumapi.evalScript(_globals.FDTD, " \
-      select('FDTD::ports::%s'); mode_profiles=getresult('FDTD::ports::%s','mode profiles'); E=mode_profiles.E1; x=mode_profiles.x; y=mode_profiles.y; z=mode_profiles.z; \
-      ?'Selected pin: %s'; " % (p.pin_name, p.pin_name, p.pin_name)  )
+      select('FDTD::ports::%s'); mode_profiles=getresult('FDTD::ports::%s','mode profiles'); E=mode_profiles.E%s; x=mode_profiles.x; y=mode_profiles.y; z=mode_profiles.z; \
+      ?'Selected pin: %s'; " % (p.pin_name, p.pin_name, mode_selection_index, p.pin_name)  )
     E=lumapi.getVar(_globals.FDTD, "E")
     x=lumapi.getVar(_globals.FDTD, "x")
     y=lumapi.getVar(_globals.FDTD, "y")
@@ -197,7 +211,7 @@ def generate_component_sparam(verbose = False):
     for b in range(0,Efield_xyz.shape[1]):
       Efield_intensity_b[b] = max(Efield_intensity[:,b])
     # find the z thickness where the field has sufficiently decayed
-    indexes = np.argwhere ( Efield_intensity_b > 1e-6 )
+    indexes = np.argwhere ( Efield_intensity_b > FDTD_settings['Efield_intensity_cutoff_eigenmode'] )
     min_index, max_index = int(min(indexes)), int(max(indexes))
     if min_z > z[min_index]:
       min_z = z[min_index]
@@ -207,7 +221,7 @@ def generate_component_sparam(verbose = False):
       print(' Port %s field decays at: %s, %s microns' % (p.pin_name, z[max_index], z[min_index]) )
 
   if FDTDzspan > max_z-min_z:
-    FDTDzspan = max_z-min_z
+    FDTDzspan = float(max_z-min_z)
     if verbose:
       print(' Updating FDTD Z-span to: %s microns' % (FDTDzspan) )
  
@@ -249,96 +263,105 @@ def generate_component_sparam(verbose = False):
            " % (p.pin_name, pins[0].pin_name) )
     return Sparams
   
-    
-    
-  
-  # user verify ok ?
+  # Run the first FDTD simulation
+  Sparams = FDTD_run_Sparam_simple(pins, plots = True)
 
-  # Convergence testing on S-Parameters:
   # find the pin that has the highest Sparam (max over wavelength)
   # use this Sparam for convergence testing
-  Sparams = FDTD_run_Sparam_simple(pins, plots = True)
   Sparam_pin_max = np.amax(np.absolute(Sparams), axis=1).argmax() +1
+  Mean_IL_best_port = -10*np.log10(np.mean(np.absolute(Sparams)[Sparam_pin_max-1,:,:])**2)
+
+  # user verify ok?
+  warning = pya.QMessageBox()
+  warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
+  warning.setDefaultButton(pya.QMessageBox.Yes)
+  warning.setInformativeText("First FDTD simulation complete (coarse mesh, lowest accuracy). Highest transmission S-Param is S_%s_%s with %s dB average insertion loss." % (pins[Sparam_pin_max].pin_name, pins[0].pin_name, Mean_IL_best_port))
+  warning.setText("Do you want to Proceed?")
+  if not verbose:
+    if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+      return
+
+  # Convergence testing on S-Parameters:
   # convergence test on simulation z-span (assume symmetric)
   # loop in Python so we can check if it is good enough
   test_converged = False
   convergence = []
-  Sparams_abs_prev = np.array([np.absolute(Sparams)[Sparam_pin_max,:,:]])
+  Sparams_abs_prev = np.array([np.absolute(Sparams)[Sparam_pin_max-1,:,:]])
   while not test_converged:
-    FDTDzspan += 100e-9
+    FDTDzspan += FDTD_settings['convergence_test_span_incremement']
     lumapi.evalScript(_globals.FDTD, " \
       switchtolayout; select('FDTD'); set('z span',%s);\
-      ?'FDTD Z-span updated to %s'; " % (FDTDzspan, FDTDzspan) )
+      " % (FDTDzspan) )
     Sparams = FDTD_run_Sparam_simple(pins, out_pins = [pins[Sparam_pin_max]], plots = True)
     Sparams_abs = np.array(np.absolute(Sparams))
     rms_error = np.sqrt(np.mean( (Sparams_abs_prev - Sparams_abs)**2 ))
     convergence.append ( [FDTDzspan, rms_error] )
     Sparams_abs_prev = Sparams_abs
     if verbose:
-      print (' convergence: span %s, rms error %s' % (FDTDzspan, rms_error) ) 
-    if FDTDzspan > 2e-6:
+      print (' convergence: span and rms error %s' % convergence[-1] ) 
+    lumapi.evalScript(_globals.FDTD, " \
+      ?'FDTD Z-span: %s, rms error from previous: %s (convergence testing until < %s)'; " % (FDTDzspan, rms_error, FDTD_settings['convergence_test_rms_error_limit']) )
+    if rms_error < FDTD_settings['convergence_test_rms_error_limit']:
       test_converged=True
+    # check if the last 3 points have reducing rms
+    if len(convergence) > 2:
+      test_rms = np.polyfit(np.array(convergence)[0,-3:], np.array(convergence)[1,-3:], 1)
+      if verbose:
+        print ('  convergence rms trend: %s; fit data: %s' %  (test_rms, np.array(convergence)[:,-3:]) )
+      if test_rms[0] > 0:
+        if verbose:
+          print (' convergence problem, not improving rms. terminating convergence test.'  ) 
+        lumapi.evalScript(_globals.FDTD, "?'convergence problem, not improving rms. terminating convergence test.'; "  )
+        test_converged=True
 
   lumapi.putMatrix(_globals.FDTD, 'convergence', convergence)
   lumapi.evalScript(_globals.FDTD, "plot(convergence(:,1), convergence(:,2), 'Simulation span','RMS error between simulation','Convergence testing');")
-  
-  return Sparams 
-  
-  
+
+
   # Configure FDTD region, mesh accuracy 4, update FDTD ports mode source frequency points
   lumapi.evalScript(_globals.FDTD, " \
-    select('FDTD'); set('mesh accuracy',%s);\
+    switchtolayout; select('FDTD'); set('mesh accuracy',%s);\
+    set('z min bc','Metal'); set('z max bc','Metal'); \
     ?'FDTD mesh accuracy updated %s'; " % (FDTD_settings['mesh_accuracy'], FDTD_settings['mesh_accuracy']) )
   for p in pins:
     lumapi.evalScript(_globals.FDTD, " \
       select('FDTD::ports::%s'); set('frequency points', %s); \
       ?'updated pin: %s'; " % (p.pin_name, FDTD_settings['frequency_points_expansion'], p.pin_name)  )
-
-
-
   
   # Run full S-parameters
 
-'''
-# add s-parameter sweep task
-deletesweep("s-parameter sweep");
-addsweep(3);
+  # add s-parameter sweep task
+  lumapi.evalScript(_globals.FDTD, " \
+    deletesweep('s-parameter sweep'); \
+    addsweep(3); \
+    NPorts=%s; \
+    " % (len(pins))  )
+  for p in pins:
+    for m in [mode_selection]:
+      # add index entries to s-matrix mapping table
+      lumapi.evalScript(_globals.FDTD, " \
+        index1 = struct; \
+        index1.Port = '%s'; \
+        index1.Mode = 'mode %s'; \
+        addsweepparameter('s-parameter sweep',index1); \
+      " % (p.pin_name, 1))
+  
+  # run s-parameter sweep, collect results, visualize results
+  # export S-parameter data to file named xxx.dat to be loaded in INTERCONNECT
+  filename = os.path.join(_globals.TEMP_FOLDER, '%s.dat' % component.instance)
+  lumapi.evalScript(_globals.FDTD, " \
+    runsweep('s-parameter sweep'); \
+    S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
+    S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
+    S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
+    visualize(S_parameters); \
+    exportsweep('s-parameter sweep','%s'); \
+    " % (filename) )
 
-# perform simulations using the first 2 ports, use symmetry later.
-NsimPorts=2;
- 
-# define index entries for s-matrix mapping table (rows)
-Nports=4;
-for (port=1:Nports) { # inject light into each port
- for (mode = mode_selection) { # for each mode
-  index1 = struct;
-  index1.Port = "port "+num2str(port);
-  index1.Mode = "mode "+num2str(mode);
-  # add index entries to s-matrix mapping table
-  addsweepparameter("s-parameter sweep",index1);
- }
-}
-
-# run s-parameter sweep
-runsweep("s-parameter sweep");
- 
-# collect results
-S_matrix = getsweepresult("s-parameter sweep","S matrix");
-S_parameters = getsweepresult("s-parameter sweep","S parameters");
-S_diagnostic = getsweepresult("s-parameter sweep","S diagnostic");
- 
-# visualize results
-#visualize(S_matrix);
-visualize(S_parameters);
-#visualize(S_diagnostic);
- 
-# export S-parameter data to file named s_params.dat to be loaded in INTERCONNECT
-exportsweep("s-parameter sweep",s_filename);
-'''
-  # Export S-Parameters
-
+     
   # Create an INTC model
   
+  return filename
 
 
 
