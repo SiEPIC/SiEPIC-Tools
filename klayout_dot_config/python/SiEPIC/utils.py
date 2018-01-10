@@ -33,6 +33,7 @@ find_automated_measurement_labels
 etree_to_dict: XML parser
 xml_to_dict
 eng_str
+svg_from_component
 
 
 '''
@@ -189,6 +190,7 @@ def get_technology(verbose=False):
           pass
         else:
           technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+        technology[itr.current().name+'_color'] = itr.current().fill_color
         itr.next()
         
     return technology
@@ -744,5 +746,31 @@ def eng_str(x):
 #      return sign+ '%3.3f' % z +str(str_engr_exponent)
       else:
         return sign+ str(z) +str(str_engr_exponent)
+
+
+# Save an SVG file for the component, for INTC icons
+def svg_from_component(component, filename, verbose = False):
+  from utils import get_technology
+  TECHNOLOGY = get_technology() 
+  
+  # get polygons from component
+  polygons = component.get_polygons()
+
+  x,y = component.polygon.bbox().center().x, component.polygon.bbox().center().y
+  width,height = component.polygon.bbox().width(), component.polygon.bbox().height()
+  scale = max(width,height)/0.64
+  s1,s2 = (64,64*height/width) if width > height else (68*width/height,64)
+  
+  polygons_vertices = [[[round((vertex.x-x)*100./scale,2)+s1/2, round((y-vertex.y)*100./scale,2)+s2/2] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
+ 
+  import svgwrite
+  dwg = svgwrite.Drawing(filename, size=(str(s1)+'%', str(s2)+'%'))
+  c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+  color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
+  for i in range(0,len(polygons_vertices)):
+    print ('polygon: %s' %polygons_vertices[i])
+    p = dwg.add (dwg.polyline(polygons_vertices[i], fill=color,debug=True))  # stroke=color
+    
+  dwg.save()
 
 

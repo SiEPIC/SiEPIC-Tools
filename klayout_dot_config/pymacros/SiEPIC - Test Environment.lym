@@ -72,7 +72,54 @@ if 0:
 if 1:
   import SiEPIC.lumerical as lumerical
 #  lumerical.fdtd.run_FDTD(verbose=True)
-  E = lumerical.fdtd.generate_component_sparam(verbose=True)
+  component_name, file_sparam, file_sparam_mc, file_xml_lookuptable, svg_filename = lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=False)
+#  lumerical.interconnect.create_Sparameter_compact_model(component_name, file_sparam, file_sparam_mc, file_xml_lookuptable, svg_filename)
+
+if 0:
+  verbose = True
+  # Get technology and layout details
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()  
+  dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
+
+  # get selected instances; only one
+  from SiEPIC.utils import select_instances
+  selected_instances = select_instances()
+  error = pya.QMessageBox()
+  error.setStandardButtons(pya.QMessageBox.Ok )
+  if len(selected_instances) != 1:
+    error.setText("Error: Need to have one component selected.")
+#    return
+  
+  # get selected component
+  if verbose:
+    print(" selected component: %s" % selected_instances[0].inst().cell )
+  component = cell.find_components(cell_selected=[selected_instances[0].inst().cell])[0]
+
+  # get polygons from component
+  polygons = component.get_polygons()
+
+  x,y = component.polygon.bbox().center().x, component.polygon.bbox().center().y
+  width,height = component.polygon.bbox().width(), component.polygon.bbox().height()
+  scale = max(width,height)/0.64
+  s1,s2 = (64,68*height/width) if width &gt; height else (68*width/height,64)
+  
+  polygons_vertices = [[[round((vertex.x-x)*100./scale,2)+s1/2, round((y-vertex.y)*100./scale,2)+s2/2+2] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
+  if len(polygons_vertices) &lt; 1:
+    error.setText("Error: Component needs to have polygons.")
+#    return
+  
+  import svgwrite
+  dwg = svgwrite.Drawing('/tmp/test.svg', size=(str(s1)+'%', str(s2)+'%'))
+  c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+  color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
+  for i in range(0,len(polygons_vertices)):
+    print ('polygon: %s' %polygons_vertices[i])
+    p = dwg.add (dwg.polyline(polygons_vertices[i], fill=color,debug=True))  # stroke=color
+    
+  dwg.save()
+
+
 
 if 0:
   import SiEPIC.lumerical.lumapi_fdtd as lumapi

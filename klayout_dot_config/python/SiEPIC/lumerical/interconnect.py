@@ -329,7 +329,7 @@ def component_simulation(verbose=False):
     
     # Run using Python integration:
     try: 
-      import lumapi
+      import lumapi_intc as lumapi
       from .. import _globals
       run_INTC()
       # Run using Python integration:
@@ -460,7 +460,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
 
   # Run using Python integration:
   try: 
-    import lumapi
+    import lumapi_intc as lumapi
     from .. import _globals
     run_INTC()
     # Run using Python integration:
@@ -503,3 +503,119 @@ def circuit_simulation_monte_carlo(params = None, cell = None):
     if params is None: params = _globals.MC_GUI.get_parameters()
     
   print("monte_carlo")
+  
+  
+
+# Create an INTC model based on S-parameters
+# either a single S-Param, or including corners for Monte Carlo analysis
+def create_Sparameter_compact_model(component_name, file_sparam, file_sparam_mc, file_xml_lookuptable):
+
+  import lumapi_intc as lumapi
+  from .. import _globals
+  # Run using Python integration:
+  run_INTC()
+
+  # Copy files to the INTC Custom library folder
+  lumapi.evalScript(_globals.INTC, "out=customlibrary;")
+  INTC_custom=lumapi.getVar(_globals.INTC, "out")
+  
+  # Create a component
+  t = 'switchtodesign; deleteall; \n'
+  t+= 'addelement("Optical N Port S-Parameter"); createcompound; select("COMPOUND_1");\n'
+  t+= 'component = %s; set("name",component); \n'
+  for p in pins:
+    t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "Left");\n' %(p.pin_name)
+    t+= 'connect(component+"::RELAY_1", "port", component+"::SPAR_1", "port 1");\n'
+
+  '''      
+      select("component::SPAR_1");
+      set("load from file", true);
+      set("s parameters filename", "/var/folders/n8/z66379sd1n536hrnmp1h1xsh0000gn/T/tmpOEJvPl/ebeam_y_1550.dat");
+      setposition("component::SPAR_1",100,-100);
+      
+      seticon("component","/tmp/test.svg");
+      
+      select("component");
+      addtolibrary("EBeam_user",true);
+    ' % (component_name, 1))
+    lumapi.evalScript(_globals.INTC, t)  
+
+  '''
+
+
+  
+  
+  # Script for the component, to load S-Param data:
+  t= '###############################################\n'
+  t+='# SiEPIC ebeam compact model library (CML)\n'
+  t+='# custom generated component created by SiEPIC-Tools; script by Zeqin Lu, Xu Wang, Lukas Chrostowski\n'
+  t+='?filename = %local path%+"/source_data/%s/%s.xml";\n' % (component_name,component_name)
+  
+  
+  
+  # Monte Carlo part:
+  '''
+  if (MC_non_uniform==1) {
+  
+      x=%x coordinate%;
+      y=%y coordinate%;
+  
+      x1_wafer = floor(x/MC_grid); # location of component on the wafer map
+      y1_wafer = floor(y/MC_grid);
+  
+      devi_width = MC_uniformity_width(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;
+      devi_thickness = MC_uniformity_thickness(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;                     
+  
+      initial_width = 500e-9;
+      initial_thickness = 220e-9;
+  
+      waveguide_width = initial_width + devi_width;  # [m]
+      waveguide_thickness = initial_thickness + devi_thickness; # [m]
+  
+  
+      # effective index and group index interpolations
+      # The following built-in script interpolates effective index (neff), group index (ng), and dispersion, 
+      # and applies the interpolated results to the waveguide. 
+  
+      filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
+      table = "index_table";
+  
+      design = cell(2);
+      extracted = cell(1);
+  
+      #design (input parameters)
+      design{1} = struct;
+      design{1}.name = "width";
+      design{1}.value = waveguide_width;
+      design{2} = struct;
+      design{2}.name = "height";  
+      design{2}.value = waveguide_thickness; 
+  
+     M = lookupreadnportsparameter(filename, table, design, "y_sparam");
+  
+     setvalue('SPAR_1','s parameters',M);
+  
+  }
+  else {
+      filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
+      table = "index_table";
+  
+      design = cell(2);
+      extracted = cell(1);
+  
+      #design (input parameters)
+      design{1} = struct;
+      design{1}.name = "width";
+      design{1}.value = 500e-9;
+      design{2} = struct;
+      design{2}.name = "height";  
+      design{2}.value = 220e-9; 
+  
+     M = lookupreadnportsparameter(filename, table, design, "y_sparam");
+  
+     setvalue('SPAR_1','s parameters',M);
+      
+  }
+  
+  '''
+    

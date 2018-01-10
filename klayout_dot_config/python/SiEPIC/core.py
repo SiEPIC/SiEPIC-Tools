@@ -84,7 +84,7 @@ class Pin():
     if path:
       pts = path.get_points()
       self.center = (pts[0]+pts[1])*0.5  # center of the pin: a Point
-      self.rotation = angle_vector(pts[0]-pts[1]) # direction / angle of the optical pin
+      self.rotation = angle_vector(pts[1]-pts[0]) # direction / angle of the optical pin
     else:
       self.rotation = 0
     self.box = box              # the pin's Box (Electrical)
