@@ -181,7 +181,7 @@ class Component():
     from ._globals import INTC_ELEMENTS
     return ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+self.component.lower()) in INTC_ELEMENTS
   
-  def get_polygons(self, include_pins=True, transformed=False):
+  def get_polygons(self, include_pins=True):
     from utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()  
 
@@ -190,10 +190,7 @@ class Component():
     s = self.cell.begin_shapes_rec(ly.layer(TECHNOLOGY['Waveguide']))
     while not(s.at_end()):
       if s.shape().is_polygon() or s.shape().is_box() or s.shape().is_path():
-        if transformed:
-          r.insert ( s.shape().polygon.transformed(self.trans) )
-        else:
-          r.insert ( s.shape().polygon )
+        r.insert ( s.shape().polygon.transformed(s.itrans() ) )
       s.next()
 
     if include_pins:
@@ -202,10 +199,7 @@ class Component():
       from .utils import angle_vector
       while not(s.at_end()):
         if s.shape().is_path():
-          if transformed:
-            p = s.shape().path.transformed(s.itrans())
-          else:
-            p = s.shape().path
+          p = s.shape().path.transformed(s.itrans())
           # extend the pin path by 1 micron for FDTD simulations
           pts = [pt for pt in p.each_point()]
           rotation = angle_vector(pts[0]-pts[1])*math.pi/180 # direction / angle of the optical pin
