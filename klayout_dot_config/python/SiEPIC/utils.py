@@ -749,19 +749,19 @@ def eng_str(x):
 
 
 # Save an SVG file for the component, for INTC icons
-def svg_from_component(component, filename, verbose = False):
+def svg_from_component(component, filename, verbose = True):
   from utils import get_technology
   TECHNOLOGY = get_technology() 
   
   # get polygons from component
-  polygons = component.get_polygons()
+  polygons = component.get_polygons(include_pins=False)
 
-  x,y = component.polygon.bbox().center().x, component.polygon.bbox().center().y
-  width,height = component.polygon.bbox().width(), component.polygon.bbox().height()
+  x,y = component.DevRec_polygon.bbox().center().x, component.DevRec_polygon.bbox().center().y
+  width,height = component.DevRec_polygon.bbox().width(), component.DevRec_polygon.bbox().height()
   scale = max(width,height)/0.64
-  s1,s2 = (64,64*height/width) if width > height else (68*width/height,64)
+  s1,s2 = (64,64*height/width) if width > height else (64*width/height,64)
   
-  polygons_vertices = [[[round((vertex.x-x)*100./scale,2)+s1/2, round((y-vertex.y)*100./scale,2)+s2/2] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
+  polygons_vertices = [[[round((vertex.x-x)*100./scale+s1/2,2), round((y-vertex.y)*100./scale+s2/2,2)] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
  
   import svgwrite
   dwg = svgwrite.Drawing(filename, size=(str(s1)+'%', str(s2)+'%'))

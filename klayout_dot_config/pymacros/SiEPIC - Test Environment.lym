@@ -72,8 +72,7 @@ if 0:
 if 1:
   import SiEPIC.lumerical as lumerical
 #  lumerical.fdtd.run_FDTD(verbose=True)
-  component_name, file_sparam, file_sparam_mc, file_xml_lookuptable, svg_filename = lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=False)
-#  lumerical.interconnect.create_Sparameter_compact_model(component_name, file_sparam, file_sparam_mc, file_xml_lookuptable, svg_filename)
+  lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=False)
 
 if 0:
   verbose = True
@@ -164,7 +163,7 @@ if 0:
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   for obj in selected_instances:
     print("  selected component: %s" % obj.inst().cell )
-    c = cell.find_components(cell_selected=[obj.inst().cell])
+    c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
     print (c[0].component)
     pass
   

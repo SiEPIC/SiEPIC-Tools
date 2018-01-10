@@ -70,6 +70,7 @@ def generate_component_sparam(do_simulation = True, verbose = False):
   error.setStandardButtons(pya.QMessageBox.Ok )
   if len(selected_instances) != 1:
     error.setText("Error: Need to have one component selected.")
+    response = error.exec_()        
     return
   
   # get selected component
@@ -121,13 +122,13 @@ def generate_component_sparam(do_simulation = True, verbose = False):
     wavelength_stop =  FDTD_settings['wavelength_stop']     
   
     # get DevRec layer
-    devrec_box = component.polygon.bbox()
+    devrec_box = component.DevRec_polygon.bbox()
     print("%s, %s, %s, %s"  % (devrec_box.left*dbum, devrec_box.right*dbum, devrec_box.bottom*dbum, devrec_box.top*dbum) )
   
     # create FDTD simulation region (extra large)
     FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
     # Z_symmetry = 'Symmetric' if mode_selection_index==1 else 'Anti-Symmetric'
-    FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = devrec_box.left*dbum-200e-9, devrec_box.right*dbum+200e-9, devrec_box.bottom*dbum-200e-9, devrec_box.top*dbum+200e-9
+    FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = (devrec_box.left)*dbum-200e-9, (devrec_box.right)*dbum+200e-9, (devrec_box.bottom)*dbum-200e-9, (devrec_box.top)*dbum+200e-9
     sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5; 
     lumapi.evalScript(_globals.FDTD, " \
       newproject; \
@@ -181,7 +182,7 @@ def generate_component_sparam(do_simulation = True, verbose = False):
     # create FDTD ports
     # configure boundary conditions to be PML where we have ports
   #  FDTD_bc = {'y max bc': 'Metal', 'y min bc': 'Metal', 'x max bc': 'Metal', 'x min bc': 'Metal'}
-    port_dict = {0.0: 'x max bc', 90.0: 'y max bc', 180.0: 'x min bc', 270.0: 'y min bc'}
+    port_dict = {0.0: 'x max bc', 90.0: 'y max bc', 180.0: 'x min bc', -90.0: 'y min bc'}
     for p in pins:
       if p.rotation in [180.0, 0.0]:
         lumapi.evalScript(_globals.FDTD, " \
@@ -191,7 +192,7 @@ def generate_component_sparam(do_simulation = True, verbose = False):
         lumapi.evalScript(_globals.FDTD, " \
           addport; set('injection axis', 'y-axis'); set('x',%s); set('y',%s); set('x span',%s); set('z span',%s); \
           " % (p.center.x*dbum, p.center.y*dbum,2e-6,FDTDzspan)  )
-      if p.rotation in [180.0, 90.0]:
+      if p.rotation in [0.0, 90.0]:
         p.direction = 'Backward'
       else:
         p.direction = 'Forward'
@@ -216,7 +217,10 @@ def generate_component_sparam(do_simulation = True, verbose = False):
       import numpy as np
       # remove the wavelength from the array, 
       # leaving two dimensions, and 3 field components
-      Efield_xyz = np.array(E[0,:,:,0,:])
+      if p.rotation in [180.0, 0.0]:
+        Efield_xyz = np.array(E[0,:,:,0,:])
+      else:
+        Efield_xyz = np.array(E[:,0,:,0,:])
       # find the field intensity (|Ex|^2 + |Ey|^2 + |Ez|^2)
       Efield_intensity = np.empty([Efield_xyz.shape[0],Efield_xyz.shape[1]])
       print(Efield_xyz.shape)
@@ -393,8 +397,7 @@ def generate_component_sparam(do_simulation = True, verbose = False):
           <extracted> \n\
               <value name="sparam" type="string">%s</value> \n\
           </extracted> \n\
-      </association>\n' % ('%s.dat' % (FDTD_settings['thickness_Si'], pins[0].path.width*dbum, component.instance))
-  
+      </association>\n' % (FDTD_settings['thickness_Si'], pins[0].path.width*dbum, component.instance)
     fh = open(xml_filename, "w")
     fh.writelines(xml_out)
     fh.close()
@@ -411,7 +414,7 @@ def generate_component_sparam(do_simulation = True, verbose = False):
   INTC_custom=lumapi_intc.getVar(_globals.INTC, "out")
   
   # Create a component
-  port_dict = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', 270.0: 'Bottom'}
+  port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
   t = 'switchtodesign; deleteall; \n'
   t+= 'addelement("Optical N Port S-Parameter"); createcompound; select("COMPOUND_1");\n'
   t+= 'component = "%s"; set("name",component); \n' % component.instance
@@ -422,16 +425,16 @@ def generate_component_sparam(do_simulation = True, verbose = False):
   for p in pins:
     count += 1
     if p.rotation in [0.0, 180.0]:
-      location = 1-(p.center.y-component.polygon.bbox().bottom+0.)/component.polygon.bbox().height()
-      print(location)
-      print(p.rotation)
+      location = 1-(p.center.y-component.DevRec_polygon.bbox().bottom+0.)/component.DevRec_polygon.bbox().height()
+#      print(" p.y %s, c.bottom %s, location %s: " % (p.center.y,component.polygon.bbox().bottom, location) )
     else:
-      location = 1-(p.center.x-component.polygon.bbox().left+0.)/component.polygon.bbox().width()
+      location = (p.center.x-component.DevRec_polygon.bbox().left+0.)/component.DevRec_polygon.bbox().width()
       print(location)
-    t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "%s",%s);\n' %(p.pin_name,port_dict[p.rotation],location)
+    t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "%s",%s);\n' %(p.pin_name,port_dict2[p.rotation],location)
     t+= 'connect(component+"::RELAY_%s", "port", component+"::SPAR_1", "port %s");\n' % (count, count)
   t+= 'seticon(component,"%s");\n' %(svg_filename)
   t+= 'select(component); addtolibrary("SiEPIC_user",true);\n'
+  t+= '?"created and added " + component + " to library SiEPIC_user";\n'
   lumapi_intc.evalScript(_globals.INTC, t)  
 
 

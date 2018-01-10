@@ -490,9 +490,11 @@ def find_components(self, verbose=False, cell_selected=None):
       if verbose:
         print("%s: DevRec in cell {%s}, box -- %s; %s" % (idx, subcell.basic_name(), box.p1, box.p2) )
       polygon = pya.Polygon(box) # Save the component outline polygon
+      DevRec_polygon = pya.Polygon(iter1.shape().box)
       found_component = True
     if iter1.shape().is_polygon():
       polygon = iter1.shape().polygon.transformed(iter1.itrans()) # Save the component outline polygon
+      DevRec_polygon = iter1.shape().polygon
       if verbose:
         print("%s: DevRec in cell {%s}, polygon -- %s" % (idx, subcell.basic_name(), polygon))
       found_component = True
@@ -530,7 +532,7 @@ def find_components(self, verbose=False, cell_selected=None):
   
         # Save the component into the components list      
         components.append(Component(idx=idx, \
-           component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon, cell=subcell, basic_name=subcell.basic_name()) )
+           component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon, DevRec_polygon = DevRec_polygon, cell=subcell, basic_name=subcell.basic_name()) )
   
         # find the component pins, and Sort by pin text labels
         pins = sorted(subcell.find_pins_component(components[-1]), key=lambda  p: p.pin_name)
