@@ -55,7 +55,8 @@ class Net:
 Pin:
 This is a class that describes pins on components and waveguides.
 A pin consists of:
- - optical pin: a Path with 2 points, with it's vector giving the direction
+ - optical pin: a Path with 2 points, with it's vector giving the direction 
+    of how to leave the component
  - electrical pin: a Box
  - a Text label giving it's name
  - a type: OPTICAL, I/O, ELECTRICAL
@@ -84,7 +85,7 @@ class Pin():
     if path:
       pts = path.get_points()
       self.center = (pts[0]+pts[1])*0.5  # center of the pin: a Point
-      self.rotation = angle_vector(pts[0]-pts[1]) # direction / angle of the optical pin
+      self.rotation = angle_vector(pts[1]-pts[0]) # direction / angle of the optical pin
     else:
       self.rotation = 0
     self.box = box              # the pin's Box (Electrical)
@@ -107,7 +108,7 @@ class Pin():
       self.path = self.path.transformed(trans)
       pts = self.path.get_points()
       self.center = (pts[0]+pts[1])*0.5
-      self.rotation = angle_vector(pts[0]-pts[1])
+      self.rotation = angle_vector(pts[1]-pts[0])
     return self
 
   def display(self):

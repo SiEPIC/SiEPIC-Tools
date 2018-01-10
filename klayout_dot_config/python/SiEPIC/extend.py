@@ -200,7 +200,7 @@ def snap(self, pins):
   pts = self.get_points()
 
   # angles of all segments:
-  ang = angle_vector(pts[1]-pts[0])
+  ang = angle_vector(pts[0]-pts[1])
   
   # sort all the pins based on distance to the Path endpoint
   # only consider pins that are facing each other, 180 degrees 
@@ -220,7 +220,7 @@ def snap(self, pins):
         pts[1].x += dpt.x
         
   # do the same thing on the other end:  
-  ang = angle_vector(pts[-2]-pts[-1])
+  ang = angle_vector(pts[-1]-pts[-2])
   pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation)%360) == 180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
   if len(pins_sorted):
     dpt = pins_sorted[0].center - pts[-1]
