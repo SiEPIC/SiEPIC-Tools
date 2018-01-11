@@ -188,6 +188,8 @@ def get_technology(verbose=False):
           # likely encoutered a layer group, skip it
           pass
         else:
+          if ' ' in layerInfo:
+            layerInfo = layerInfo.split(' ')[1]
           technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
         itr.next()
         
