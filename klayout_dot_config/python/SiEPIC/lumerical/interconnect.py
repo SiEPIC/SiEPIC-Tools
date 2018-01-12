@@ -174,6 +174,7 @@ def INTC_commandline(filename2):
   
   elif sys.platform.startswith('darwin'):
     # OSX specific
+    import string
     if string.find(version,"2.7.") > -1:
       import commands
       print("Running INTERCONNECT")
