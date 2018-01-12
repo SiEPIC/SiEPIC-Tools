@@ -18,13 +18,13 @@ if platform.system() == 'Darwin':
   INTEROPLIB = "/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Matlab/libinterop-api.1.dylib"
 
 # Windows
+CWD = os.path.dirname(os.path.abspath(__file__))
 if platform.system() == 'Windows': 
     import sys
     path = "C:\\Program Files\\Lumerical\\INTERCONNECT\\api\\python"
     if os.path.exists(path):
       if not path in sys.path:
         sys.path.append(path) # windows
-      CWD = os.path.dirname(os.path.abspath(__file__))
       os.chdir(path) 
       INTEROPLIB = path + "\\interopapi.dll"
 
