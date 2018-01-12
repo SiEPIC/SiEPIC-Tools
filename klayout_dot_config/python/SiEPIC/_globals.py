@@ -54,8 +54,22 @@ if os.path.exists(path):
   fh = open(path, "r")
   INTC_ELEMENTS = fh.read()
   fh.close()
+  
 try:
   INTC
 except:
   INTC = None  
-  print('resetting INTERCONNECT Python integration')
+  print('resetting Lumerical INTERCONNECT Python integration')
+
+try:
+  FDTD
+except:
+  FDTD = None  
+  print('resetting Lumerical FDTD Python integration')
+
+
+try: 
+  TEMP_FOLDER
+except:
+  import tempfile
+  TEMP_FOLDER = tempfile.mkdtemp()
