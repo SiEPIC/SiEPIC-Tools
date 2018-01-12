@@ -3,6 +3,12 @@ try:
   from numpy import *
 except:
   print('Missing numpy')
+  import pya
+  warning = pya.QMessageBox()
+  warning.setStandardButtons(pya.QMessageBox.Ok)
+  warning.setText("Can't run Lumerical INTERCONNECT because we are missing the Python package 'numpy'.  This package is available in the KLayout Package 'Windows_Python_packages_for_KLayout'; please install and try again..")
+  pya.QMessageBox_StandardButton(warning.exec_())
+  
   
 import platform
 import inspect
