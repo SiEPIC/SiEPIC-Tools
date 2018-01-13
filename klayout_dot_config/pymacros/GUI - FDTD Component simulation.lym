@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+
+
+class GUI_FDTD_component_simulation():
+
+  def __init__(self):
+
+    self.window = QWidget()
+    self.window.setAttribute(pya.Qt.WA_DeleteOnClose)
+    self.window.setWindowTitle("FDTD Component Simulation configuration")
+    
+    grid = pya.QGridLayout(self.window)
+    grid_fields = pya.QGridLayout(self.window)
+    grid_buttons = pya.QGridLayout(self.window)
+  
+    cancel = pya.QPushButton("Cancel", self.window)
+    ok = pya.QPushButton("OK", self.window)
+  
+
+    tflabel1 = pya.QLabel('Number of testing wafer',self.window)
+    tftext1 = pya.QLineEdit(self.window)
+    tftext1.setAccessibleName('tftext1')
+    tftext1.setAccessibleDescription('number_of_wafer')
+#    tftext1.setFixedWidth(80)
+    
+    tflabel2 = pya.QLabel('Number of testing die per wafer', self.window)
+    tftext2 = pya.QLineEdit(self.window)
+    tftext2.setAccessibleName('tftext2')
+    tftext2.setAccessibleDescription('number_of_die')
+#    tftext2.setFixedWidth(80)
+  
+    grid.addWidget(tflabel1, 1,1)
+    grid.addWidget(tftext1, 1,2)
+    grid.addWidget(tflabel2, 2,1)
+    grid.addWidget(tftext2, 2,2)
+    
+    grid.addWidget(cancel, 3,1)
+    grid.addWidget(ok, 3,3)
+
+
+#    self.window.findChild('run').clicked(self.ok)
+#    self.window.findChild('cancel').clicked(self.close)
+#    self.status = None
+    
+  def show(self):
+    self.window.show()
+  
+  def close(self, val):
+    self.status = False
+    self.window.close()
+
+  def ok(self, val):
+    self.status = True
+    self.window.close()
+    from .lumerical import interconnect
+    interconnect.monte_carlo()
+    
+  def return_status(self):
+    status = self.status
+    self.status = None
+    return status
+
+  def get_parameters(self):
+    return {}
+    
+GUI_FDTD = GUI_FDTD_component_simulation()
+GUI_FDTD.show()
+</text>
+</klayout-macro>
