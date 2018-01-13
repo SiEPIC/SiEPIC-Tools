@@ -154,11 +154,6 @@ def open(product):
 def close(handle):
     iapi.appClose(handle)
 
-
-def evalScript_test(handle, code):
-    ec = iapi.appEvalScript(handle, code.encode())
-    return ec
-
 def evalScript(handle, code):
     ec = iapi.appEvalScript(handle, code.encode())
     if ec < 0:
