@@ -72,7 +72,7 @@ if 0:
 if 1:
   import SiEPIC.lumerical as lumerical
 #  lumerical.fdtd.run_FDTD(verbose=True)
-  lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=False)
+  lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=True)
 
 if 0:
   verbose = True

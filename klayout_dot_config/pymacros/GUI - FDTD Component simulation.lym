@@ -16,70 +16,64 @@
  <dsl-interpreter-name/>
  <text>import pya
 
+class GUI_FDTD_component_simulation(pya.QDialog):
+  def __init__(self, parent = None, verbose=None):
+    super(GUI_FDTD_component_simulation, self).__init__()
+    self.verbose = verbose
 
-class GUI_FDTD_component_simulation():
+    self.setWindowTitle("FDTD Component Simulation configuration")
 
-  def __init__(self):
+    mainLayout = pya.QVBoxLayout(self)
+    self.setLayout(mainLayout)
 
-    self.window = QWidget()
-    self.window.setAttribute(pya.Qt.WA_DeleteOnClose)
-    self.window.setWindowTitle("FDTD Component Simulation configuration")
-    
-    grid = pya.QGridLayout(self.window)
-    grid_fields = pya.QGridLayout(self.window)
-    grid_buttons = pya.QGridLayout(self.window)
-  
-    cancel = pya.QPushButton("Cancel", self.window)
-    ok = pya.QPushButton("OK", self.window)
-  
+    from SiEPIC.utils import load_FDTD_settings
+    FDTD_settings=load_FDTD_settings()
+    if self.verbose:
+      print(FDTD_settings)
 
-    tflabel1 = pya.QLabel('Number of testing wafer',self.window)
-    tftext1 = pya.QLineEdit(self.window)
-    tftext1.setAccessibleName('tftext1')
-    tftext1.setAccessibleDescription('number_of_wafer')
-#    tftext1.setFixedWidth(80)
-    
-    tflabel2 = pya.QLabel('Number of testing die per wafer', self.window)
-    tftext2 = pya.QLineEdit(self.window)
-    tftext2.setAccessibleName('tftext2')
-    tftext2.setAccessibleDescription('number_of_die')
-#    tftext2.setFixedWidth(80)
-  
-    grid.addWidget(tflabel1, 1,1)
-    grid.addWidget(tftext1, 1,2)
-    grid.addWidget(tflabel2, 2,1)
-    grid.addWidget(tftext2, 2,2)
-    
-    grid.addWidget(cancel, 3,1)
-    grid.addWidget(ok, 3,3)
+    paramsLayout = QVBoxLayout(self);
+    self.qtext=[]
+    self.qlabel=[]
+    for t in FDTD_settings:
+      paramLayout = QHBoxLayout(self);
+      self.qlabel.append ( pya.QLabel(t,self) )
+      self.qtext.append ( pya.QLineEdit(self) )
+      self.qtext[-1].fieldtype = type(FDTD_settings[t])
+      self.qtext[-1].text = str(FDTD_settings[t])
+      paramLayout.addWidget(self.qlabel[-1])
+      paramLayout.addWidget(self.qtext[-1])
+      paramsLayout.addLayout(paramLayout)
 
+    buttonsLayout = QHBoxLayout(self);
+    ok = pya.QPushButton("OK",self)
+    ok.clicked(self.ok)
+    cancel = pya.QPushButton("Cancel",self)
+    buttonsLayout.addWidget(cancel)
+    buttonsLayout.addWidget(ok)
 
-#    self.window.findChild('run').clicked(self.ok)
-#    self.window.findChild('cancel').clicked(self.close)
-#    self.status = None
-    
-  def show(self):
-    self.window.show()
-  
-  def close(self, val):
-    self.status = False
-    self.window.close()
+    mainLayout.addLayout(paramsLayout)
+    mainLayout.addLayout(buttonsLayout)
 
   def ok(self, val):
-    self.status = True
-    self.window.close()
-    from .lumerical import interconnect
-    interconnect.monte_carlo()
+    self.close()
+    FDTD_settings = {}
+    for i in range(0,len(self.qlabel)):
+      if self.verbose:
+        print("%s: %s (%s)" %(self.qlabel[i].text, self.qtext[i].text, self.qtext[i].fieldtype))
+      if self.qtext[i].fieldtype == float:
+        FDTD_settings[self.qlabel[i].text]=float(self.qtext[i].text)
+      else:
+        FDTD_settings[self.qlabel[i].text]=self.qtext[i].text
+    if self.verbose:
+      print(FDTD_settings)
+      
+    if self.verbose:
+      print('closing GUI')
+#    from .lumerical import interconnect
+#    interconnect.monte_carlo()
     
-  def return_status(self):
-    status = self.status
-    self.status = None
-    return status
-
-  def get_parameters(self):
-    return {}
     
-GUI_FDTD = GUI_FDTD_component_simulation()
+GUI_FDTD = GUI_FDTD_component_simulation(pya.Application.instance().main_window(), verbose=True)
 GUI_FDTD.show()
 </text>
 </klayout-macro>

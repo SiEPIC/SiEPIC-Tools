@@ -9,6 +9,7 @@ advance_iterator
 get_technology_by_name
 get_technology
 load_DFT
+load_FDTD_settings
 get_layout_variables
 enum
 find_paths
@@ -34,6 +35,7 @@ etree_to_dict: XML parser
 xml_to_dict
 eng_str
 svg_from_component
+
 
 
 '''
@@ -751,7 +753,7 @@ def eng_str(x):
 
 
 # Save an SVG file for the component, for INTC icons
-def svg_from_component(component, filename, verbose = True):
+def svg_from_component(component, filename, verbose = False):
   from utils import get_technology
   TECHNOLOGY = get_technology() 
   
@@ -770,7 +772,8 @@ def svg_from_component(component, filename, verbose = True):
   c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
   color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
   for i in range(0,len(polygons_vertices)):
-    print ('polygon: %s' %polygons_vertices[i])
+    if verbose:
+      print ('polygon: %s' %polygons_vertices[i])
     p = dwg.add (dwg.polyline(polygons_vertices[i], fill=color,debug=True))  # stroke=color
     
   dwg.save()

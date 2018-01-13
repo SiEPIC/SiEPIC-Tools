@@ -54,7 +54,7 @@ definitions:
        which will be better for convergence testing as the mesh won't move
 ################################################################################
 '''
-def generate_component_sparam(do_simulation = True, verbose = False):
+def generate_component_sparam(do_simulation = True, verbose = False, FDTD_settings = None):
   if verbose:
     print('SiEPIC.lumerical.fdtd: generate_component_sparam()')
 
@@ -106,11 +106,12 @@ def generate_component_sparam(do_simulation = True, verbose = False):
     run_FDTD()
   
     # get FDTD settings from XML file
-    from SiEPIC.utils import load_FDTD_settings
-    FDTD_settings=load_FDTD_settings()
-    if FDTD_settings:
-      if verbose:
-        print(FDTD_settings)
+    if not FDTD_settings:
+      from SiEPIC.utils import load_FDTD_settings
+      FDTD_settings=load_FDTD_settings()
+      if FDTD_settings:
+        if verbose:
+          print(FDTD_settings)
   
     # Configure wavelength and polarization
     # polarization = {'quasi-TE', 'quasi-TM', 'quasi-TE and -TM'}
