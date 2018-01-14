@@ -754,7 +754,7 @@ def eng_str(x):
 
 # Save an SVG file for the component, for INTC icons
 def svg_from_component(component, filename, verbose = False):
-  from utils import get_technology
+#  from utils import get_technology
   TECHNOLOGY = get_technology() 
   
   # get polygons from component

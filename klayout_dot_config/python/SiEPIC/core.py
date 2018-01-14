@@ -182,7 +182,7 @@ class Component():
     return ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+self.component.lower()) in INTC_ELEMENTS
   
   def get_polygons(self, include_pins=True):
-    from utils import get_layout_variables
+    from .utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()  
 
     r = pya.Region()
