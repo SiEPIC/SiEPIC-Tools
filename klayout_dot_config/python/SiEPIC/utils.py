@@ -769,7 +769,10 @@ def svg_from_component(component, filename, verbose = False):
  
   import svgwrite
   dwg = svgwrite.Drawing(filename, size=(str(s1)+'%', str(s2)+'%'),debug=False)
-  c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+  if TECHNOLOGY['Waveguide_color'] > 0:
+    c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+  else:
+    c=[150,50,50]
   color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
   for i in range(0,len(polygons_vertices)):
     if verbose:

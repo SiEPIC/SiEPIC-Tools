@@ -98,6 +98,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   
 
   if do_simulation:
+    import numpy as np
     # run Lumerical FDTD Solutions  
     from .. import _globals
     run_FDTD()
@@ -192,7 +193,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   
     # send polygons to FDTD
     for i in range(0,len(polygons_vertices)):
-      lumapi.putMatrix(_globals.FDTD, "polygon_vertices", polygons_vertices[i] )
+      lumapi.putMatrix(_globals.FDTD, "polygon_vertices", np.array(polygons_vertices[i]) )
       lumapi.evalScript(_globals.FDTD, " \
         addpoly; set('vertices',polygon_vertices); \
         set('material', '%s'); set('z span', %s);     \
@@ -223,7 +224,6 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       
     # Calculate mode sources
     # Get field profiles, to find |E| = 1e-6 points to find spans
-    import numpy as np
     min_z, max_z = 0,0
     for p in [pins[0]]:  # if all pins are the same, only do it once
       for m in mode_selection_index:

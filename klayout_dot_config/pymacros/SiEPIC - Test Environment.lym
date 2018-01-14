@@ -70,10 +70,10 @@ if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.run_INTC(verbose=True)
 
-if 0:
+if 1:
   import SiEPIC.lumerical as lumerical
 #  lumerical.fdtd.run_FDTD(verbose=True)
-  lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=False, addto_CML=False)
+  lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=True, addto_CML=True)
 
 if 0:
   verbose = True
