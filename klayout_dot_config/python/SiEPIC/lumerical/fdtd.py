@@ -224,48 +224,50 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       
     # Calculate mode sources
     # Get field profiles, to find |E| = 1e-6 points to find spans
-    min_z, max_z = 0,0
-    for p in [pins[0]]:  # if all pins are the same, only do it once
-      for m in mode_selection_index:
-        lumapi.evalScript(_globals.FDTD, " \
-          select('FDTD::ports::%s'); mode_profiles=getresult('FDTD::ports::%s','mode profiles'); E=mode_profiles.E%s; x=mode_profiles.x; y=mode_profiles.y; z=mode_profiles.z; \
-          ?'Selected pin: %s'; " % (p.pin_name, p.pin_name, m, p.pin_name)  )
-        E=lumapi.getVar(_globals.FDTD, "E")
-        x=lumapi.getVar(_globals.FDTD, "x")
-        y=lumapi.getVar(_globals.FDTD, "y")
-        z=lumapi.getVar(_globals.FDTD, "z")
-  
-        # remove the wavelength from the array, 
-        # leaving two dimensions, and 3 field components
-        if p.rotation in [180.0, 0.0]:
-          Efield_xyz = np.array(E[0,:,:,0,:])
-        else:
-          Efield_xyz = np.array(E[:,0,:,0,:])
-        # find the field intensity (|Ex|^2 + |Ey|^2 + |Ez|^2)
-        Efield_intensity = np.empty([Efield_xyz.shape[0],Efield_xyz.shape[1]])
-        print(Efield_xyz.shape)
-        for a in range(0,Efield_xyz.shape[0]):
+    import sys
+    if not 'win' in sys.platform:  # Windows getVar ("E") doesn't work.
+      min_z, max_z = 0,0
+      for p in [pins[0]]:  # if all pins are the same, only do it once
+        for m in mode_selection_index:
+          lumapi.evalScript(_globals.FDTD, " \
+            select('FDTD::ports::%s'); mode_profiles=getresult('FDTD::ports::%s','mode profiles'); E=mode_profiles.E%s; x=mode_profiles.x; y=mode_profiles.y; z=mode_profiles.z; \
+            ?'Selected pin: %s'; " % (p.pin_name, p.pin_name, m, p.pin_name)  )
+          E=lumapi.getVar(_globals.FDTD, "E")
+          x=lumapi.getVar(_globals.FDTD, "x")
+          y=lumapi.getVar(_globals.FDTD, "y")
+          z=lumapi.getVar(_globals.FDTD, "z")
+    
+          # remove the wavelength from the array, 
+          # leaving two dimensions, and 3 field components
+          if p.rotation in [180.0, 0.0]:
+            Efield_xyz = np.array(E[0,:,:,0,:])
+          else:
+            Efield_xyz = np.array(E[:,0,:,0,:])
+          # find the field intensity (|Ex|^2 + |Ey|^2 + |Ez|^2)
+          Efield_intensity = np.empty([Efield_xyz.shape[0],Efield_xyz.shape[1]])
+          print(Efield_xyz.shape)
+          for a in range(0,Efield_xyz.shape[0]):
+            for b in range(0,Efield_xyz.shape[1]):
+              Efield_intensity[a,b] = abs(Efield_xyz[a,b,0])**2+abs(Efield_xyz[a,b,1])**2+abs(Efield_xyz[a,b,2])**2
+          # find the max field for each z slice (b is the z axis)
+          Efield_intensity_b = np.empty([Efield_xyz.shape[1]])
           for b in range(0,Efield_xyz.shape[1]):
-            Efield_intensity[a,b] = abs(Efield_xyz[a,b,0])**2+abs(Efield_xyz[a,b,1])**2+abs(Efield_xyz[a,b,2])**2
-        # find the max field for each z slice (b is the z axis)
-        Efield_intensity_b = np.empty([Efield_xyz.shape[1]])
-        for b in range(0,Efield_xyz.shape[1]):
-          Efield_intensity_b[b] = max(Efield_intensity[:,b])
-        # find the z thickness where the field has sufficiently decayed
-        indexes = np.argwhere ( Efield_intensity_b > FDTD_settings['Efield_intensity_cutoff_eigenmode'] )
-        min_index, max_index = int(min(indexes)), int(max(indexes))
-        if min_z > z[min_index]:
-          min_z = z[min_index]
-        if max_z < z[max_index]:
-          max_z = z[max_index]
-        if verbose:
-          print(' Port %s, mode %s field decays at: %s, %s microns' % (p.pin_name, m, z[max_index], z[min_index]) )
-  
-      if FDTDzspan > max_z-min_z:
-        FDTDzspan = float(max_z-min_z)
-        if verbose:
-          print(' Updating FDTD Z-span to: %s microns' % (FDTDzspan) )
-   
+            Efield_intensity_b[b] = max(Efield_intensity[:,b])
+          # find the z thickness where the field has sufficiently decayed
+          indexes = np.argwhere ( Efield_intensity_b > FDTD_settings['Efield_intensity_cutoff_eigenmode'] )
+          min_index, max_index = int(min(indexes)), int(max(indexes))
+          if min_z > z[min_index]:
+            min_z = z[min_index]
+          if max_z < z[max_index]:
+            max_z = z[max_index]
+          if verbose:
+            print(' Port %s, mode %s field decays at: %s, %s microns' % (p.pin_name, m, z[max_index], z[min_index]) )
+    
+        if FDTDzspan > max_z-min_z:
+          FDTDzspan = float(max_z-min_z)
+          if verbose:
+            print(' Updating FDTD Z-span to: %s microns' % (FDTDzspan) )
+     
     # Configure FDTD region, mesh accuracy 1
     # run single simulation
     lumapi.evalScript(_globals.FDTD, " \

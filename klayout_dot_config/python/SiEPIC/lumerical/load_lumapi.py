@@ -16,12 +16,12 @@ def load_lumapi():
     if os.path.exists(path_intc):
       path = path_intc
   elif platform.system() == 'Windows': 
-    path_fdtd = "C:\\Program Files\\Lumerical\\FDTD Solutions\\api\\python"
-    if os.path.exists(path_fdtd):
-      path = path_fdtd
     path_intc = "C:\\Program Files\\Lumerical\\INTERCONNECT\\api\\python"
     if os.path.exists(path_intc):
       path = path_intc
+    path_fdtd = "C:\\Program Files\\Lumerical\\FDTD Solutions\\api\\python"
+    if os.path.exists(path_fdtd):
+      path = path_fdtd
   else:
     print('Not a supported OS')
     return
