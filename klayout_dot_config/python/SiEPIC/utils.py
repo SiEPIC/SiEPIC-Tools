@@ -768,13 +768,13 @@ def svg_from_component(component, filename, verbose = False):
   polygons_vertices = [[[round((vertex.x-x)*100./scale+s1/2,2), round((y-vertex.y)*100./scale+s2/2,2)] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
  
   import svgwrite
-  dwg = svgwrite.Drawing(filename, size=(str(s1)+'%', str(s2)+'%'))
+  dwg = svgwrite.Drawing(filename, size=(str(s1)+'%', str(s2)+'%'),debug=False)
   c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
   color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
   for i in range(0,len(polygons_vertices)):
     if verbose:
       print ('polygon: %s' %polygons_vertices[i])
-    p = dwg.add (dwg.polyline(polygons_vertices[i], fill=color,debug=True))  # stroke=color
+    p = dwg.add (dwg.polyline(polygons_vertices[i], fill=color,debug=False))  # stroke=color
     
   dwg.save()
 

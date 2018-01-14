@@ -60,6 +60,7 @@ else:
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
+    SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.setup = reload(SiEPIC.setup)

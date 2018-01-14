@@ -728,14 +728,14 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
   if not DFT:
     if verbose:
       print(' no DFT rules available.')
-    return
+    return False, False, False, False, False, False, False
     
   from .scripts import user_select_opt_in
   opt_in_selection_text, opt_in_dict = user_select_opt_in(verbose=verbose, option_all=False, opt_in_selection_text=opt_in_selection_text)
   if not opt_in_dict:
     if verbose:
       print(' no opt_in selected.')
-    return
+    return False, False, False, False, False, False, False
 
   # find closest GC to opt_in (pick the 1st one... ignore the others)
   t = opt_in_dict[0]['Text']
@@ -748,7 +748,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     warning.setStandardButtons(pya.QMessageBox.Ok)
     warning.setText("To run a simulation, you need to have an opt_in label with %s microns from the nearest grating coupler" % int(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']) )
     pya.QMessageBox_StandardButton(warning.exec_())
-    return
+    return False, False, False, False, False, False, False
   # starting with the opt_in label, identify the sub-circuit, then GCs
   detector_GCs = [ c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0,0)]
   if verbose:
@@ -769,7 +769,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     warning.setStandardButtons(pya.QMessageBox.Ok)
     warning.setText("No laser at %s nm is available. Tunable laser definition is in the technology's DFT.xml file." % opt_in_dict[0]['wavelength'])
     pya.QMessageBox_StandardButton(warning.exec_())
-    return
+    return False, False, False, False, False, False, False
 
   if opt_in_dict[0]['pol'] == 'TE':
     orthogonal_identifier = 1
@@ -780,7 +780,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     warning.setStandardButtons(pya.QMessageBox.Ok)
     warning.setText("Unknown polarization: %s." % opt_in_dict[0]['pol'])
     pya.QMessageBox_StandardButton(warning.exec_())
-    return
+    return False, False, False, False, False, False, False
   ignoreOpticalIOs = False
       
   # find the GCs in the circuit and connect detectors based on DFT rules
@@ -811,20 +811,49 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
   return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs
   
 
-def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
-  # list all Optical_component objects from an array
-  # input array, optical_components
-  # example output:         
-  # X_grating_coupler_1 N$7 N$6 grating_coupler library="custom/genericcml" sch_x=-1.42 sch_y=-0.265 sch_r=0 sch_f=false
+# generate spice netlist file
+# example output:         
+# X_grating_coupler_1 N$7 N$6 grating_coupler library="custom/genericcml" sch_x=-1.42 sch_y=-0.265 sch_r=0 sch_f=false
+def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):        
   import SiEPIC
   from . import _globals
   from time import strftime 
   from .utils import eng_str
 
+  # get the netlist from the entire layout
+  nets, components = self.identify_nets ()
+
+  # Get information about the laser and detectors:
+  # this updates the Optical IO Net
+  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
+        get_LumericalINTERCONNECT_analyzers(self, components, verbose=verbose)
+
+  # if Laser and Detectors are not defined
+  if not laser_net or not detector_nets:  
+    # Use opt_in labels    
+    laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
+        get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=verbose, opt_in_selection_text=opt_in_selection_text)
+        
+    if not laser_net or not detector_nets:
+      warning = pya.QMessageBox()
+      warning.setStandardButtons(pya.QMessageBox.Ok)
+      warning.setText("To run a simulation, you need to define a laser and detector(s), or have an opt_in label.")
+      pya.QMessageBox_StandardButton(warning.exec_())
+      return '', '', 0
+
+  # trim the netlist, based on where the laser is connected
+  laser_component = [c for c in components if any([p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO and 'laser' in p.pin_name]) ]
+  from .scripts import trim_netlist
+  nets, components = trim_netlist (nets, components, laser_component[0])
+
+  if verbose:
+    print ("* Display list of components:" )
+    [c.display() for c in components]
+    print ("* Display list of nets:" )
+    [n.display() for n in nets]
+
   text_main = '* Spice output from KLayout SiEPIC-Tools v%s, %s.\n\n' % (SiEPIC.__version__, strftime("%Y-%m-%d %H:%M:%S") )
   text_subckt = text_main
-
-  nets, components = self.identify_nets ()
 
   # convert KLayout GDS rotation/flip to Lumerical INTERCONNECT
   # KLayout defines mirror as an x-axis flip, whereas INTERCONNECT does y-axis flip
@@ -887,35 +916,6 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
           electricalIO_pins_subckt += NetName
           DCsources = "N1" + NetName + " 0 dcsource amplitude=0 sch_x=-2 sch_y=0\n"
 
-  # Get information about the laser and detectors:
-  # this updates the Optical IO Net
-  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
-        get_LumericalINTERCONNECT_analyzers(self, components, verbose=verbose)
-
-  # if Laser and Detectors are not defined
-  if not laser_net or not detector_nets:  
-    # Use opt_in labels    
-    laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
-        get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=verbose, opt_in_selection_text=opt_in_selection_text)
-        
-    if not laser_net or not detector_nets:
-      warning = pya.QMessageBox()
-      warning.setStandardButtons(pya.QMessageBox.Ok)
-      warning.setText("To run a simulation, you need to define a laser and detector(s), or have an opt_in label.")
-      pya.QMessageBox_StandardButton(warning.exec_())
-      return
-
-  # trim the netlist, based on where the laser is connected
-  laser_component = [c for c in components if any([p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO and 'laser' in p.pin_name]) ]
-  from .scripts import trim_netlist
-  nets, components = trim_netlist (nets, components, laser_component[0])
-
-  if verbose:
-    print ("* Display list of components:" )
-    [c.display() for c in components]
-    print ("* Display list of nets:" )
-    [n.display() for n in nets]
-        
 
   # find optical IO pins
   opticalIO_pins=''
@@ -948,7 +948,6 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
       if p.type == _globals.PIN_TYPES.OPTICAL:
         nets_str += " N$" + str(p.net.idx)
 
-
     trans = KLayoutInterconnectRotFlip[(c.trans.angle, c.trans.is_mirror())]
      
     flip = ' sch_f=true' if trans[1] else ''
@@ -977,7 +976,6 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
          eng_str(x * 1e-6), eng_str(y * 1e-6), \
          eng_str(x * Lumerical_schematic_scaling), eng_str(y * Lumerical_schematic_scaling), \
          rotate, flip)
-
 
   text_subckt += '.ends %s\n\n' % (self.name)
 

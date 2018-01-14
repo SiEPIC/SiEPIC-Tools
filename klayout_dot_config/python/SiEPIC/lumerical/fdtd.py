@@ -21,8 +21,8 @@ import pya
 
 
 def run_FDTD(verbose=False):
-  import lumapi_fdtd as lumapi
   from .. import _globals
+  lumapi = _globals.LUMAPI
   if verbose:
     print(_globals.FDTD)  # Python Lumerical FDTD integration handle
   
@@ -32,13 +32,13 @@ def run_FDTD(verbose=False):
       print(_globals.FDTD)  # Python Lumerical FDTD integration handle
   else: # found open FDTD session
     try:
-      lumapi.evalScript(_globals.FDTD, "?'KLayout integration test.';")
+      lumapi.evalScript(_globals.FDTD, "?'KLayout integration test.\n';\n")
     except: # but can't communicate with FDTD; perhaps it was closed by the user
       _globals.FDTD = lumapi.open('fdtd') # run again.
       if verbose:
         print(_globals.FDTD)  # Python Lumerical FDTD integration handle
   try: # check again
-    lumapi.evalScript(_globals.FDTD, "?'KLayout integration test.';")
+    lumapi.evalScript(_globals.FDTD, "?'KLayout integration test.\n';\n")
   except:
     raise Exception ("Can't run Lumerical FDTD. Unknown error.")
 
@@ -54,7 +54,7 @@ definitions:
        which will be better for convergence testing as the mesh won't move
 ################################################################################
 '''
-def generate_component_sparam(do_simulation = True, verbose = False, FDTD_settings = None):
+def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = False, FDTD_settings = None):
   if verbose:
     print('SiEPIC.lumerical.fdtd: generate_component_sparam()')
 
@@ -99,11 +99,11 @@ def generate_component_sparam(do_simulation = True, verbose = False, FDTD_settin
 
   if do_simulation:
     # run Lumerical FDTD Solutions  
-    import lumapi_fdtd as lumapi
     from .. import _globals
-    if verbose:
-      print(_globals.FDTD)  # Python Lumerical INTERCONNECT integration handle
     run_FDTD()
+    lumapi = _globals.LUMAPI
+    if verbose:
+      print(lumapi)  # Python Lumerical INTERCONNECT integration handle
   
     # get FDTD settings from XML file
     if not FDTD_settings:
@@ -184,7 +184,10 @@ def generate_component_sparam(do_simulation = True, verbose = False, FDTD_settin
     if verbose:
       print(" polygons' vertices: %s" % len(polygons_vertices) )
     if len(polygons_vertices) < 1:
+      error = pya.QMessageBox()
+      error.setStandardButtons(pya.QMessageBox.Ok )
       error.setText("Error: Component needs to have polygons.")
+      response = error.exec_()        
       return
   
     # send polygons to FDTD
@@ -456,113 +459,116 @@ def generate_component_sparam(do_simulation = True, verbose = False, FDTD_settin
       print(" XML file: %s" % xml_filename)
 
 
-  import lumapi_intc, interconnect
-  from .. import _globals
-  # Run using Python integration:
-  interconnect.run_INTC()
-
-  # Copy files to the INTC Custom library folder
-  lumapi_intc.evalScript(_globals.INTC, "out=customlibrary;")
-  INTC_custom=lumapi_intc.getVar(_globals.INTC, "out")
+  if addto_CML:
+    # Run using Python integration:
+    import interconnect
+    interconnect.run_INTC()
+    from .. import _globals
+    lumapi = _globals.LUMAPI
   
-  # Create a component
-  port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
-  t = 'switchtodesign; deleteall; \n'
-  t+= 'addelement("Optical N Port S-Parameter"); createcompound; select("COMPOUND_1");\n'
-  t+= 'component = "%s"; set("name",component); \n' % component.instance
-  t+= 'select(component+"::SPAR_1"); set("load from file", true);\n'
-  t+= 'set("s parameters filename", "%s");\n' % (file_sparam)
-  t+= 'setposition(component+"::SPAR_1",100,-100);\n'
-  count=0
-  for p in pins:
-    count += 1
-    if p.rotation in [0.0, 180.0]:
-      location = 1-(p.center.y-component.DevRec_polygon.bbox().bottom+0.)/component.DevRec_polygon.bbox().height()
-#      print(" p.y %s, c.bottom %s, location %s: " % (p.center.y,component.polygon.bbox().bottom, location) )
-    else:
-      location = (p.center.x-component.DevRec_polygon.bbox().left+0.)/component.DevRec_polygon.bbox().width()
-      print(location)
-    t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "%s",%s);\n' %(p.pin_name,port_dict2[p.rotation],location)
-    t+= 'connect(component+"::RELAY_%s", "port", component+"::SPAR_1", "port %s");\n' % (count, count)
-  t+= 'seticon(component,"%s");\n' %(svg_filename)
-  t+= 'select(component); addtolibrary("SiEPIC_user",true);\n'
-  t+= '?"created and added " + component + " to library SiEPIC_user";\n'
-  lumapi_intc.evalScript(_globals.INTC, t)  
-
-
-  # Script for the component, to load S-Param data:
-  t= '###############################################\n'
-  t+='# SiEPIC ebeam compact model library (CML)\n'
-  t+='# custom generated component created by SiEPIC-Tools; script by Zeqin Lu, Xu Wang, Lukas Chrostowski\n'
-  t+='?filename = %local path%+"/source_data/' + '%s/%s.xml";\n' % (component.instance,component.instance)
+    # Copy files to the INTC Custom library folder
+    lumapi.evalScript(_globals.INTC, "out=customlibrary;")
+    INTC_custom=lumapi.getVar(_globals.INTC, "out")
+    
+    # Create a component
+    port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
+    t = 'switchtodesign; deleteall; \n'
+    t+= 'addelement("Optical N Port S-Parameter"); createcompound; select("COMPOUND_1");\n'
+    t+= 'component = "%s"; set("name",component); \n' % component.instance
+    t+= 'seticon(component,"%s");\n' %(svg_filename)
+    t+= 'select(component+"::SPAR_1"); set("load from file", true);\n'
+    t+= 'set("s parameters filename", "%s");\n' % (file_sparam)
+    t+= 'set("load from file", false);\n'
+    t+= 'setposition(component+"::SPAR_1",100,-100);\n'
+    count=0
+    for p in pins:
+      count += 1
+      if p.rotation in [0.0, 180.0]:
+        location = 1-(p.center.y-component.DevRec_polygon.bbox().bottom+0.)/component.DevRec_polygon.bbox().height()
+  #      print(" p.y %s, c.bottom %s, location %s: " % (p.center.y,component.polygon.bbox().bottom, location) )
+      else:
+        location = (p.center.x-component.DevRec_polygon.bbox().left+0.)/component.DevRec_polygon.bbox().width()
+        print(location)
+      t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "%s",%s);\n' %(p.pin_name,port_dict2[p.rotation],location)
+      t+= 'connect(component+"::RELAY_%s", "port", component+"::SPAR_1", "port %s");\n' % (count, count)
+    t+= 'select(component); addtolibrary("SiEPIC_user",true);\n'
+    t+= '?"created and added " + component + " to library SiEPIC_user";\n'
+    lumapi.evalScript(_globals.INTC, t)  
   
   
-  
-  # Monte Carlo part:
-  '''
-  if (MC_non_uniform==1) {
-  
-      x=%x coordinate%;
-      y=%y coordinate%;
-  
-      x1_wafer = floor(x/MC_grid); # location of component on the wafer map
-      y1_wafer = floor(y/MC_grid);
-  
-      devi_width = MC_uniformity_width(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;
-      devi_thickness = MC_uniformity_thickness(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;                     
-  
-      initial_width = 500e-9;
-      initial_thickness = 220e-9;
-  
-      waveguide_width = initial_width + devi_width;  # [m]
-      waveguide_thickness = initial_thickness + devi_thickness; # [m]
-  
-  
-      # effective index and group index interpolations
-      # The following built-in script interpolates effective index (neff), group index (ng), and dispersion, 
-      # and applies the interpolated results to the waveguide. 
-  
-      filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
-      table = "index_table";
-  
-      design = cell(2);
-      extracted = cell(1);
-  
-      #design (input parameters)
-      design{1} = struct;
-      design{1}.name = "width";
-      design{1}.value = waveguide_width;
-      design{2} = struct;
-      design{2}.name = "height";  
-      design{2}.value = waveguide_thickness; 
-  
-     M = lookupreadnportsparameter(filename, table, design, "y_sparam");
-  
-     setvalue('SPAR_1','s parameters',M);
-  
-  }
-  else {
-      filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
-      table = "index_table";
-  
-      design = cell(2);
-      extracted = cell(1);
-  
-      #design (input parameters)
-      design{1} = struct;
-      design{1}.name = "width";
-      design{1}.value = 500e-9;
-      design{2} = struct;
-      design{2}.name = "height";  
-      design{2}.value = 220e-9; 
-  
-     M = lookupreadnportsparameter(filename, table, design, "y_sparam");
-  
-     setvalue('SPAR_1','s parameters',M);
-      
-  }
-  
-  '''
+    # Script for the component, to load S-Param data:
+    t= '###############################################\n'
+    t+='# SiEPIC ebeam compact model library (CML)\n'
+    t+='# custom generated component created by SiEPIC-Tools; script by Zeqin Lu, Xu Wang, Lukas Chrostowski\n'
+    t+='?filename = %local path%+"/source_data/' + '%s/%s.xml";\n' % (component.instance,component.instance)
+    
+    
+    
+    # Monte Carlo part:
+    '''
+    if (MC_non_uniform==1) {
+    
+        x=%x coordinate%;
+        y=%y coordinate%;
+    
+        x1_wafer = floor(x/MC_grid); # location of component on the wafer map
+        y1_wafer = floor(y/MC_grid);
+    
+        devi_width = MC_uniformity_width(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;
+        devi_thickness = MC_uniformity_thickness(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;                     
+    
+        initial_width = 500e-9;
+        initial_thickness = 220e-9;
+    
+        waveguide_width = initial_width + devi_width;  # [m]
+        waveguide_thickness = initial_thickness + devi_thickness; # [m]
+    
+    
+        # effective index and group index interpolations
+        # The following built-in script interpolates effective index (neff), group index (ng), and dispersion, 
+        # and applies the interpolated results to the waveguide. 
+    
+        filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
+        table = "index_table";
+    
+        design = cell(2);
+        extracted = cell(1);
+    
+        #design (input parameters)
+        design{1} = struct;
+        design{1}.name = "width";
+        design{1}.value = waveguide_width;
+        design{2} = struct;
+        design{2}.name = "height";  
+        design{2}.value = waveguide_thickness; 
+    
+       M = lookupreadnportsparameter(filename, table, design, "y_sparam");
+    
+       setvalue('SPAR_1','s parameters',M);
+    
+    }
+    else {
+        filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
+        table = "index_table";
+    
+        design = cell(2);
+        extracted = cell(1);
+    
+        #design (input parameters)
+        design{1} = struct;
+        design{1}.name = "width";
+        design{1}.value = 500e-9;
+        design{2} = struct;
+        design{2}.name = "height";  
+        design{2}.value = 220e-9; 
+    
+       M = lookupreadnportsparameter(filename, table, design, "y_sparam");
+    
+       setvalue('SPAR_1','s parameters',M);
+        
+    }
+    
+    '''
 
   return component.instance, file_sparam, [], xml_filename, svg_filename
 
