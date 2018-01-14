@@ -1,5 +1,12 @@
 
 def load_lumapi():
+
+  try:
+    import numpy
+  except:
+    print('Missing numpy. Cannot load Lumerical Python integration')
+    return
+
   import os, platform, sys, inspect
   if platform.system() == 'Darwin':
     path_fdtd = "/Applications/Lumerical/FDTD Solutions/FDTD Solutions.app/Contents/API/Python"

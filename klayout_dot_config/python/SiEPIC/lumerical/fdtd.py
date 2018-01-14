@@ -40,7 +40,7 @@ def run_FDTD(verbose=False):
   try: # check again
     lumapi.evalScript(_globals.FDTD, "?'KLayout integration test.\n';\n")
   except:
-    raise Exception ("Can't run Lumerical FDTD. Unknown error.")
+    raise Exception ("Can't run Lumerical FDTD via Python integration.")
 
 
 '''

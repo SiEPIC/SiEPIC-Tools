@@ -48,7 +48,7 @@ def run_INTC(verbose=False):
   try: # check again
     lumapi.evalScript(_globals.INTC, "?'KLayout integration test.\n';\n")
   except:
-    raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
+    raise Exception ("Can't run Lumerical INTERCONNECT via Python integration.")
 
 
 def Setup_Lumerical_KLayoutPython_integration(verbose=False):
