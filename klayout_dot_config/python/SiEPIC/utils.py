@@ -9,6 +9,7 @@ advance_iterator
 get_technology_by_name
 get_technology
 load_DFT
+load_FDTD_settings
 get_layout_variables
 enum
 find_paths
@@ -33,6 +34,8 @@ find_automated_measurement_labels
 etree_to_dict: XML parser
 xml_to_dict
 eng_str
+svg_from_component
+
 
 
 '''
@@ -191,6 +194,7 @@ def get_technology(verbose=False):
           if ' ' in layerInfo:
             layerInfo = layerInfo.split(' ')[1]
           technology[itr.current().name] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+        technology[itr.current().name+'_color'] = itr.current().fill_color
         itr.next()
         
     return technology
@@ -219,6 +223,39 @@ def load_DFT():
     DFT = xml_to_dict(file.read())
     file.close()
     return DFT
+  else:
+    return None
+
+'''
+Load FDTD settings
+These are technology specific, and located in the tech folder, named FDTD.xml
+'''
+def load_FDTD_settings():
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'FDTD.xml'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+  if matches:
+    f = matches[0]
+    file = open(f, 'r') 
+    FDTD = xml_to_dict(file.read())
+    file.close()
+    
+    FDTD = FDTD['FDTD']
+    FDTD1 = {}
+    for k in FDTD['floats'].keys():
+      FDTD1[k]=float(FDTD['floats'][k])
+    for k in FDTD['strings'].keys():
+      FDTD1[k]=FDTD['strings'][k]
+    return FDTD1
   else:
     return None
 
@@ -713,5 +750,35 @@ def eng_str(x):
 #      return sign+ '%3.3f' % z +str(str_engr_exponent)
       else:
         return sign+ str(z) +str(str_engr_exponent)
+
+
+# Save an SVG file for the component, for INTC icons
+def svg_from_component(component, filename, verbose = False):
+#  from utils import get_technology
+  TECHNOLOGY = get_technology() 
+  
+  # get polygons from component
+  polygons = component.get_polygons(include_pins=False)
+
+  x,y = component.DevRec_polygon.bbox().center().x, component.DevRec_polygon.bbox().center().y
+  width,height = component.DevRec_polygon.bbox().width(), component.DevRec_polygon.bbox().height()
+  scale = max(width,height)/0.64
+  s1,s2 = (64,64*height/width) if width > height else (64*width/height,64)
+  
+  polygons_vertices = [[[round((vertex.x-x)*100./scale+s1/2,2), round((y-vertex.y)*100./scale+s2/2,2)] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
+ 
+  import svgwrite
+  dwg = svgwrite.Drawing(filename, size=(str(s1)+'%', str(s2)+'%'),debug=False)
+  if TECHNOLOGY['Waveguide_color'] > 0:
+    c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+  else:
+    c=[150,50,50]
+  color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
+  for i in range(0,len(polygons_vertices)):
+    if verbose:
+      print ('polygon: %s' %polygons_vertices[i])
+    p = dwg.add (dwg.polyline(polygons_vertices[i], fill=color,debug=False))  # stroke=color
+    
+  dwg.save()
 
 

@@ -67,8 +67,14 @@ except:
   FDTD = None  
   print('resetting Lumerical FDTD Python integration')
 
+try:
+  LUMAPI
+except:
+  LUMAPI = None  
+  print('resetting Lumerical Python integration')
 
-try: 
+
+try:
   TEMP_FOLDER
 except:
   import tempfile

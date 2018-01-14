@@ -56,6 +56,7 @@ if 1:
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
+    SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.setup = reload(SiEPIC.setup)
@@ -64,6 +65,87 @@ if 1:
 
 print ("***")
 
+
+if 0:
+  import SiEPIC.lumerical as lumerical
+  lumerical.interconnect.run_INTC(verbose=True)
+
+if 1:
+  import SiEPIC.lumerical as lumerical
+#  lumerical.fdtd.run_FDTD(verbose=True)
+  lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=True, addto_CML=True)
+
+if 0:
+  verbose = True
+  # Get technology and layout details
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()  
+  dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
+
+  # get selected instances; only one
+  from SiEPIC.utils import select_instances
+  selected_instances = select_instances()
+  error = pya.QMessageBox()
+  error.setStandardButtons(pya.QMessageBox.Ok )
+  if len(selected_instances) != 1:
+    error.setText("Error: Need to have one component selected.")
+#    return
+  
+  # get selected component
+  if verbose:
+    print(" selected component: %s" % selected_instances[0].inst().cell )
+  component = cell.find_components(cell_selected=[selected_instances[0].inst().cell])[0]
+
+  # get polygons from component
+  polygons = component.get_polygons()
+
+  x,y = component.polygon.bbox().center().x, component.polygon.bbox().center().y
+  width,height = component.polygon.bbox().width(), component.polygon.bbox().height()
+  scale = max(width,height)/0.64
+  s1,s2 = (64,68*height/width) if width &gt; height else (68*width/height,64)
+  
+  polygons_vertices = [[[round((vertex.x-x)*100./scale,2)+s1/2, round((y-vertex.y)*100./scale,2)+s2/2+2] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
+  if len(polygons_vertices) &lt; 1:
+    error.setText("Error: Component needs to have polygons.")
+#    return
+  
+  import svgwrite
+  dwg = svgwrite.Drawing('/tmp/test.svg', size=(str(s1)+'%', str(s2)+'%'))
+  c=bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+  color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
+  for i in range(0,len(polygons_vertices)):
+    print ('polygon: %s' %polygons_vertices[i])
+    p = dwg.add (dwg.polyline(polygons_vertices[i], fill=color,debug=True))  # stroke=color
+    
+  dwg.save()
+
+
+
+if 0:
+  import SiEPIC.lumerical.lumapi_fdtd as lumapi
+  from SiEPIC import _globals
+  lumapi.putMatrix(_globals.FDTD, 'test', [[1,2],[2,6]])
+
+if 0:
+  import numpy as np
+  # remove the wavelength from the array, 
+  # leaving two dimensions, and 3 field components
+  Efield_xyz = np.array(E[0,:,:,5,:])
+  # find the field intensity (|Ex|^2 + |Ey|^2 + |Ez|^2)
+  Efield_intensity = np.empty([Efield_xyz.shape[0],Efield_xyz.shape[1]])
+  print(Efield_xyz.shape)
+  for a in range(0,Efield_xyz.shape[0]):
+    for b in range(0,Efield_xyz.shape[1]):
+      Efield_intensity[a,b] = abs(Efield_xyz[a,b,0])**2+abs(Efield_xyz[a,b,1])**2+abs(Efield_xyz[a,b,2])**2
+  # find the max field for each z slice (b is the z axis)
+  Efield_intensity_b = np.empty([Efield_xyz.shape[1]])
+  for b in range(0,Efield_xyz.shape[1]):
+    Efield_intensity_b[b] = max(Efield_intensity[:,b])
+  # 
+  indexes = np.argwhere ( Efield_intensity_b &gt; 1e-6 )
+  min_index, max_index = int(min(indexes)), int(max(indexes))
+  
+    
 if 0: 
   import SiEPIC.utils
   DFT = SiEPIC.utils.load_DFT()
@@ -82,7 +164,7 @@ if 0:
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   for obj in selected_instances:
     print("  selected component: %s" % obj.inst().cell )
-    c = cell.find_components(cell_selected=[obj.inst().cell])
+    c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
     print (c[0].component)
     pass
   
@@ -103,7 +185,7 @@ if 0:
   e = ET.XML("")
   import pyexpat
 
-if 1:
+if 0:
   from xml.etree import cElementTree as ET
   e = ET.XML("&lt;message&gt;&lt;content&gt;hello&lt;/content&gt;&lt;/message&gt;")
   print(e.getchildren()[0].text)

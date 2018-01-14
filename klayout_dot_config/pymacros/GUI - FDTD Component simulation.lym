@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+
+class GUI_FDTD_component_simulation(pya.QDialog):
+  def __init__(self, parent = None, verbose=None):
+    super(GUI_FDTD_component_simulation, self).__init__()
+    self.verbose = verbose
+
+    self.setWindowTitle("FDTD Component Simulation configuration")
+
+    mainLayout = pya.QVBoxLayout(self)
+    self.setLayout(mainLayout)
+
+    from SiEPIC.utils import load_FDTD_settings
+    FDTD_settings=load_FDTD_settings()
+    if self.verbose:
+      print(FDTD_settings)
+
+    paramsLayout = QVBoxLayout(self);
+    self.qtext=[]
+    self.qlabel=[]
+    for t in FDTD_settings:
+      paramLayout = QHBoxLayout(self);
+      self.qlabel.append ( pya.QLabel(t,self) )
+      self.qtext.append ( pya.QLineEdit(self) )
+      self.qtext[-1].fieldtype = type(FDTD_settings[t])
+      self.qtext[-1].text = str(FDTD_settings[t])
+      paramLayout.addWidget(self.qlabel[-1])
+      paramLayout.addWidget(self.qtext[-1])
+      paramsLayout.addLayout(paramLayout)
+
+    buttonsLayout = QHBoxLayout(self);
+    ok = pya.QPushButton("OK",self)
+    ok.clicked(self.ok)
+    cancel = pya.QPushButton("Cancel",self)
+    buttonsLayout.addWidget(cancel)
+    buttonsLayout.addWidget(ok)
+
+    mainLayout.addLayout(paramsLayout)
+    mainLayout.addLayout(buttonsLayout)
+
+  def ok(self, val):
+    self.close()
+    FDTD_settings = {}
+    for i in range(0,len(self.qlabel)):
+      if self.verbose:
+        print("%s: %s (%s)" %(self.qlabel[i].text, self.qtext[i].text, self.qtext[i].fieldtype))
+      if self.qtext[i].fieldtype == float:
+        FDTD_settings[self.qlabel[i].text]=float(self.qtext[i].text)
+      else:
+        FDTD_settings[self.qlabel[i].text]=self.qtext[i].text
+    if self.verbose:
+      print(FDTD_settings)
+      
+    if self.verbose:
+      print('closing GUI')
+#    from .lumerical import interconnect
+#    interconnect.monte_carlo()
+    
+    
+GUI_FDTD = GUI_FDTD_component_simulation(pya.Application.instance().main_window(), verbose=True)
+GUI_FDTD.show()
+</text>
+</klayout-macro>

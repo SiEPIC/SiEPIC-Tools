@@ -92,7 +92,7 @@ class Pin():
     if box:
       self.center = box.center()# center of the pin: a Point
     if polygon:
-      self.center = polygon.center()# center of the pin: a Point
+      self.center = polygon.center()# center of the pin: a Point (relative coordinates, within component)
     self.type = _type           # one of PIN_TYPES, defined in SiEPIC._globals.PINTYPES 
     if net:                     # Net for netlist generation
       self.net = net            # which net this pin is connected to
@@ -140,7 +140,7 @@ Component defs:
  
 '''
 class Component():
-  def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, cell=None, basic_name=None ):
+  def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, DevRec_polygon=None, cell=None, basic_name=None ):
     self.idx = idx             # component index, should be unique, 0, 1, 2, ...
     self.component = component # which component (name) this pin belongs to
     self.instance = instance   # which component (instance) this pin belongs to
@@ -149,7 +149,8 @@ class Component():
     self.pins = pins           # an array of all the optical pins, Pin[]
     self.npins = len(pins)     # number of pins
     self.params = params       # Spice parameters
-    self.polygon = polygon     # The component's DevRec polygon/box outline
+    self.polygon = polygon     # The component's DevRec polygon/box outline (absolute coordinates, i.e., transformed)
+    self.DevRec_polygon = DevRec_polygon # The component's DevRec polygon/box outline (relative coordinates, i.e., inside cell, just like the pins)
     self.center = polygon.bbox().center()  # Point
     self.cell = cell           # component's cell
     self.basic_name = basic_name # component's basic_name (especially for PCells)
@@ -169,7 +170,7 @@ class Component():
     return text
 
   def find_pins(self):        
-    return self.instance.find_pins_component()
+    return self.cell.find_pins_component(self)
 
   def has_model(self):
  
@@ -181,7 +182,36 @@ class Component():
     from ._globals import INTC_ELEMENTS
     return ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+self.component.lower()) in INTC_ELEMENTS
   
+  def get_polygons(self, include_pins=True):
+    from .utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()  
 
+    r = pya.Region()
+
+    s = self.cell.begin_shapes_rec(ly.layer(TECHNOLOGY['Waveguide']))
+    while not(s.at_end()):
+      if s.shape().is_polygon() or s.shape().is_box() or s.shape().is_path():
+        r.insert ( s.shape().polygon.transformed(s.itrans() ) )
+      s.next()
+
+    if include_pins:
+      s = self.cell.begin_shapes_rec(ly.layer(TECHNOLOGY['PinRec']))
+      import math
+      from .utils import angle_vector
+      while not(s.at_end()):
+        if s.shape().is_path():
+          p = s.shape().path.transformed(s.itrans())
+          # extend the pin path by 1 micron for FDTD simulations
+          pts = [pt for pt in p.each_point()]
+          rotation = angle_vector(pts[0]-pts[1])*math.pi/180 # direction / angle of the optical pin
+          pts[1] = (pts[1]-pya.Point(int(math.cos(rotation)*1000),int(math.sin(rotation)*1000) )).to_p()
+          r.insert ( pya.Path(pts, p.width).polygon() )
+        s.next()
+
+    r.merge()
+    polygons = [p for p in r.each_merged()]
+    
+    return polygons
 
 class WaveguideGUI():
 

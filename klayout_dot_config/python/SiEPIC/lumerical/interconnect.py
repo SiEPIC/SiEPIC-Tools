@@ -29,107 +29,41 @@ usage:
 import pya
 
 def run_INTC(verbose=False):
-  import lumapi
   from .. import _globals
-  _globals.INTC  # Python Lumerical INTERCONNECT integration handle
+  lumapi = _globals.LUMAPI
+  if verbose:
+    print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
   
   if not _globals.INTC: # Not running, start a new session
     _globals.INTC = lumapi.open('interconnect')
-    print(_globals.INTC)
+    if verbose:
+      print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
   else: # found open INTC session
     try:
-      lumapi.evalScript(_globals.INTC, "?'KLayout integration test.';")
+      lumapi.evalScript(_globals.INTC, "?'KLayout integration test.\n';\n")
     except: # but can't communicate with INTC; perhaps it was closed by the user
-      INTC = lumapi.open('interconnect') # run again.
+      _globals.INTC = lumapi.open('interconnect') # run again.
+      if verbose:
+        print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
   try: # check again
-    lumapi.evalScript(_globals.INTC, "?'KLayout integration test.';")
+    lumapi.evalScript(_globals.INTC, "?'KLayout integration test.\n';\n")
   except:
-    raise Exception ("Can't run Lumerical INTERCONNECT. Unknown error.")
+    raise Exception ("Can't run Lumerical INTERCONNECT via Python integration.")
 
 
 def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   import sys, os, string
-  if sys.platform.startswith('darwin'):
-
-    if string.find(sys.version,"2.7.") > -1:
-      import commands
-    else:
-      raise Exception ('Unknown Python version: %s' % file_name)
-  
-    ##################################################################
-    # Configure OSX Path to include Lumerical tools: 
-          
-    # Copy the launch control file into user's Library folder
-    # execute launctl to register the new paths
-    import os, fnmatch
-    dir_path = pya.Application.instance().application_data_path()
-    file_name = 'SiEPIC_Tools_Lumerical_KLayout_environment.plist'
-    matches = []
-    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
-        for filename in fnmatch.filter(filenames, file_name):
-            matches.append(os.path.join(root, filename))
-    
-    if not matches[0]:
-      raise Exception ('Missing file: %s' % file_name)
-
-    # Check if Paths are correctly set, and KLayout Python sees them
-    a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
-    if b=='':
-      # Not yet installed... copy files, install
-      cmd1='launchctl unload  %s' % matches[0]
-      a,b=commands.getstatusoutput(cmd1)
-      if a != 0:
-        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-      cmd1='launchctl load  %s' % matches[0]
-      a,b=commands.getstatusoutput(cmd1)
-      if a != 0 or b !='':
-        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-      cmd1='killall Dock'
-      a,b=commands.getstatusoutput(cmd1)
-      if a != 0 or b !='':
-        raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-
-      # Check if Paths are correctly set, and KLayout Python sees them
-      a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
-      if b=='':
-        # Not loaded    
-        raise Exception ('The System paths have been updated. Please restart KLayout, and try again.')
-
-    # Also add path for use in the Terminal
-    home = os.path.expanduser("~")
-    if ~os.path.exists(home + "/.bash_profile"):
-      text_bash =  '\n'
-      text_bash += '# Setting PATH for Lumerical API\n'
-      text_bash += 'export PATH=/Applications/Lumerical/FDTD\ Solutions/FDTD\ Solutions.app/Contents/MacOS:$PATH\n'
-      text_bash += 'export PATH=/Applications/Lumerical/MODE\ Solutions/MODE\ Solutions.app/Contents/MacOS:$PATH\n'
-      text_bash += 'export PATH=/Applications/Lumerical/DEVICE/DEVICE.app/Contents/MacOS:$PATH\n'
-      text_bash += 'export PATH=/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS:$PATH\n'
-      text_bash +=  '\n'
-      file = open(home + "/.bash_profile", 'w')
-      file.write (text_bash)
-      file.close()
-
-  # end of OSX 
-
-  if sys.platform.startswith('win'):
-    pass
-    # end of Windows
-  
   
   ##################################################################
   # Load Lumerical API: 
-
-  import lumapi
   from .. import _globals
-  _globals.INTC  # Python Lumerical INTERCONNECT integration handle
-  
   run_INTC()
-  lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+  lumapi = _globals.LUMAPI
 
   import os 
   # Read INTC element library
   lumapi.evalScript(_globals.INTC, "out=library;")
-  INTC_libs=lumapi.getVar(_globals.INTC, "out")
+  _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
 
   # Install technology CML if missing in INTC
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
@@ -139,7 +73,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   # load more technology details (CML file location)
   TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
   # check if the latest version of the CML is in KLayout's tech
-  if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].replace('.cml','').lower()) in INTC_libs:
+  if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
     # install CML
     print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
     lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
@@ -154,8 +88,27 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   fh.writelines(_globals.INTC_ELEMENTS)
   fh.close()
 
-  lumapi.evalScript(_globals.INTC, "?'KLayout integration successful, CML library (%s) is available.';" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
+  lumapi.evalScript(_globals.INTC, "?'KLayout integration successful, CML library (%s) is available.';switchtodesign;\n" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
 
+  # instantiate all library elements onto the canvas
+  question = pya.QMessageBox()
+  question.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.No)
+  question.setDefaultButton(pya.QMessageBox.Yes)
+  question.setText("Do you wish to see all the components in the library?")
+#  question.setInformativeText("Do you wish to see all the components in the library?")
+  if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
+    lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+    return
+  intc_elements = _globals.INTC_ELEMENTS.split('\n')
+#  tech_elements = [ e.split('::')[-1] for e in intc_elements if "design kits::"+TECHNOLOGY['technology_name'].lower()+"::" in e ]
+  tech_elements = [ e for e in intc_elements if "design kits::"+TECHNOLOGY['technology_name'].lower()+"::" in e ]
+  i, x, y, num = 0, 0, 0, len(tech_elements)
+  for i in range(0, num):
+    lumapi.evalScript(_globals.INTC, "a=addelement('%s'); setposition(a,%s,%s); " % (tech_elements[i],x,y) )
+    y += 250
+    if (i+1) % int(num**0.5) == 0:
+      x += 250
+      y = 0
 
 def INTC_commandline(filename2):
   print ("Running Lumerical INTERCONNECT using the command interface.")
@@ -170,6 +123,7 @@ def INTC_commandline(filename2):
   
   elif sys.platform.startswith('darwin'):
     # OSX specific
+    import string
     if string.find(version,"2.7.") > -1:
       import commands
       print("Running INTERCONNECT")
@@ -325,10 +279,10 @@ def component_simulation(verbose=False):
     
     # Run using Python integration:
     try: 
-      import lumapi
       from .. import _globals
       run_INTC()
       # Run using Python integration:
+      lumapi = _globals.LUMAPI
       lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
       lumapi.evalScript(_globals.INTC, c.component + ";")
     except:
@@ -338,17 +292,12 @@ def component_simulation(verbose=False):
 def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[]):
   if verbose:
     print('*** circuit_simulation()')
-
-  import os, platform, sys, string
-  print(os.name)
-  print(platform.system())
-  print(platform.release())
-  version = sys.version
   
   # check for supported operating system, tested on:
   # Windows 7, 10
   # OSX Sierra, High Sierra
   # Linux
+  import sys
   if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
     raise Exception("Unsupported operating system: %s" % sys.platform)
   
@@ -371,6 +320,8 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   # Output the Spice netlist:
   text_Spice, text_Spice_main, num_detectors = \
     topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
+  if not text_Spice:
+    return
   if verbose:   
     print(text_Spice)
   
@@ -456,10 +407,10 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
 
   # Run using Python integration:
   try: 
-    import lumapi
     from .. import _globals
     run_INTC()
     # Run using Python integration:
+    lumapi = _globals.LUMAPI
     lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
     lumapi.evalScript(_globals.INTC, topcell.name + ";")
   except:
@@ -467,7 +418,6 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
     
   if verbose:
     print('Done Lumerical INTERCONNECT circuit simulation.')
-
 
   
 def circuit_simulation_update_netlist():
@@ -499,3 +449,4 @@ def circuit_simulation_monte_carlo(params = None, cell = None):
     if params is None: params = _globals.MC_GUI.get_parameters()
     
   print("monte_carlo")
+  

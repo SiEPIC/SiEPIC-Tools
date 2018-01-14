@@ -1015,7 +1015,7 @@ def user_select_opt_in(verbose=None, option_all=True, opt_in_selection_text=[]):
       if not opt_in_selection_text: # user pressed cancel
         if verbose:
           print (' user cancel!')
-        return 
+        return False, False
       if opt_in_selection_text == 'All opt-in labels':
         opt_in_selection_text = [o['opt_in'] for o in opt_in]
         if verbose:
