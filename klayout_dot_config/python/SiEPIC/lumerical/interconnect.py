@@ -448,5 +448,5 @@ def circuit_simulation_monte_carlo(params = None, cell = None):
     if status is False: return
     if params is None: params = _globals.MC_GUI.get_parameters()
     
-  print(params)
+  print("monte_carlo")
   
