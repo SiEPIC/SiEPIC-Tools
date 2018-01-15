@@ -226,9 +226,6 @@ class WaveguideGUI():
     table = self.window.findChild('layerTable')
     table.setColumnCount(3)
     table.setHorizontalHeaderLabels([ "Layer","Width","Offset"])
-    table.setColumnWidth(0, 140)
-    table.setColumnWidth(1, 50)
-    table.setColumnWidth(2, 50)
 
     #Button Bindings
     self.window.findChild('ok').clicked(self.ok)
@@ -435,6 +432,7 @@ class MonteCarloGUI():
     
     self.window.findChild('run').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
+    self.window.findChild('variation').tabBar().expanding = True
     self.status = None
     
   def show(self):
@@ -443,14 +441,14 @@ class MonteCarloGUI():
   def close(self, val):
     self.status = False
     self.window.close()
-    from . import lumerical
-    lumerical.interconnect.monte_carlo()
+    from .lumerical import interconnect
+    interconnect.circuit_simulation_monte_carlo()
 
   def ok(self, val):
     self.status = True
     self.window.close()
     from .lumerical import interconnect
-    interconnect.monte_carlo()
+    interconnect.circuit_simulation_monte_carlo()
     
   def return_status(self):
     status = self.status
@@ -458,4 +456,31 @@ class MonteCarloGUI():
     return status
 
   def get_parameters(self):
-    return {}
+    return {
+      'num_wafers': self.window.findChild('num_wafers').value,
+      'num_dies': self.window.findChild('num_dies').value,
+      'technology': self.window.findChild('technology').currentText,
+      'histograms': {
+        'fsp': self.window.findChild('fsp').isChecked(),
+        'gain': self.window.findChild('gain').isChecked(),
+        'wavelength': self.window.findChild('wavelength').isChecked()
+      },
+      'waf_var': {
+        'width': {
+          'std_dev': self.window.findChild('std_dev').text,
+          'corr_len': self.window.findChild('corr_len').text
+        },
+        'height': {
+          'std_dev': self.window.findChild('std_dev_2').text,
+          'corr_len': self.window.findChild('corr_len_2').text
+        }
+      },
+      'waf_to_waf_var': {
+        'width': {
+          'std_dev': self.window.findChild('std_dev_3').text
+        },
+        'thickness': {
+          'std_dev': self.window.findChild('std_dev_4').text
+        }
+      }
+    }
