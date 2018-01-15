@@ -432,7 +432,7 @@ class MonteCarloGUI():
     
     self.window.findChild('run').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
-    self.window.findChild('variation').tabBar().expanding = True
+#    self.window.findChild('variation').tabBar().expanding = True
     self.status = None
     
   def show(self):
