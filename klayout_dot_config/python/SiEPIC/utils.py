@@ -144,7 +144,7 @@ def get_technology_by_name(tech_name, verbose=False):
 # print(get_technology_by_name('GSiP'))
 
 # Get the current Technology
-def get_technology(verbose=False):
+def get_technology(verbose=False, query_activecellview_technology=False):
     if verbose:
       print("get_technology()")
     from ._globals import KLAYOUT_VERSION
@@ -168,7 +168,7 @@ def get_technology(verbose=False):
       return technology
 
     # "lv.active_cellview().technology" crashes in KLayout 0.24.10 when loading a GDS file (technology not defined yet?)
-    if KLAYOUT_VERSION > 24:
+    if KLAYOUT_VERSION > 24 or query_activecellview_technology:
       technology_name = lv.active_cellview().technology
 
     technology['technology_name'] = technology_name

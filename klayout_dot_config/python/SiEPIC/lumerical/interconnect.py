@@ -69,7 +69,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
   from ..utils import get_technology, get_technology_by_name
   # get current technology
-  TECHNOLOGY = get_technology() 
+  TECHNOLOGY = get_technology(query_activecellview_technology=True) 
   # load more technology details (CML file location)
   TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
   # check if the latest version of the CML is in KLayout's tech
