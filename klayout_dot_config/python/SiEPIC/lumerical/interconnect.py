@@ -123,13 +123,11 @@ def INTC_commandline(filename2):
   
   elif sys.platform.startswith('darwin'):
     # OSX specific
-    import string
-    if string.find(version,"2.7.") > -1:
-      import commands
-      print("Running INTERCONNECT")
-      runcmd = 'source ~/.bash_profile; open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2
-      print("Running in shell: %s" % runcmd)
-      commands.getstatusoutput(runcmd)
+    import commands
+    print("Running INTERCONNECT")
+    runcmd = 'source ~/.bash_profile; open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2
+    print("Running in shell: %s" % runcmd)
+    commands.getstatusoutput(runcmd)
 
   
   elif sys.platform.startswith('win'):
@@ -209,11 +207,16 @@ def component_simulation(verbose=False):
     TECHNOLOGY = get_technology()  # get current technology
     import SiEPIC
     from time import strftime 
-    text_main = '* Spice output from KLayout SiEPIC-Tools v%s, %s technology, %s.\n\n' % (SiEPIC.__version__, TECHNOLOGY['technology_name'], strftime("%Y-%m-%d %H:%M:%S") )
+    text_main = '* Spice output from KLayout SiEPIC-Tools v%s, %s technology (SiEPIC.lumerical.interconnect.component_simulation), %s.\n\n' % (SiEPIC.__version__, TECHNOLOGY['technology_name'], strftime("%Y-%m-%d %H:%M:%S") )
+    # optical nets: must be ordered electrical, optical IO, then optical
     nets_str = ''
-    for p in c.pins:
+    for p in c.pins: 
+      if p.type == _globals.PIN_TYPES.ELECTRICAL:
+        nets_str += " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
       if p.type == _globals.PIN_TYPES.OPTICAL or p.type == _globals.PIN_TYPES.OPTICALIO:
         nets_str += " " + str(p.pin_name)
+
+        
     # *** todo: some other way of getting this information; not hard coded.
     # GUI? Defaults from PCell?
     orthogonal_identifier=1
@@ -261,16 +264,21 @@ def component_simulation(verbose=False):
 
     # Write the Lumerical INTERCONNECT start-up script.
     text_lsf =  'switchtolayout;\n'
+    text_lsf +=  'cd("%s");\n' % tmp_folder
     text_lsf += 'deleteall;\n'
     text_lsf += 'importnetlist("%s");\n' % filename
     text_lsf += 'save("%s");\n' % filename_icp
     text_lsf += 'run;\n'
-    for i in range(0, len(pin_names)):
-      text_lsf += 't%s = getresult("ONA_1", "input %s/mode 1/gain");\n' % (i+1, i+1)
-    text_lsf += 'visualize(t1'
-    for i in range(1, len(pin_names)):
-      text_lsf += ', t%s' % (i+1)
-    text_lsf += ');\n'
+    if 1:
+      for i in range(0, len(pin_names)):
+        text_lsf += 'h%s = haveresult("ONA_1", "input %s/mode 1/gain");\n' % (i+1, i+1)
+        text_lsf += 'if (h%s>0) { visualize(getresult("ONA_1", "input %s/mode 1/gain")); } \n' % (i+1, i+1)
+    if 0:
+      text_lsf += 't = "";\n'
+      for i in range(0, len(pin_names)):
+        text_lsf += 'h%s = haveresult("ONA_1", "input %s/mode 1/gain");\n' % (i+1, i+1)
+        text_lsf += 'if (h%s>0) { t%s = getresult("ONA_1", "input %s/mode 1/gain"); t=t+"t%s,"; } \n' % (i+1, i+1, i+1, i+1)
+      text_lsf += 'visualize(substring(t,1,length(t)-1));\n'  # doesn't work.
     file = open(filename2, 'w')
     file.write (text_lsf)
     file.close()
