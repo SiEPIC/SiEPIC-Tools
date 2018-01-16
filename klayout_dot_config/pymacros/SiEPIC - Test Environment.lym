@@ -70,7 +70,7 @@ if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.run_INTC(verbose=True)
 
-if 1:
+if 0:
   import SiEPIC.lumerical as lumerical
 #  lumerical.fdtd.run_FDTD(verbose=True)
   lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=True, addto_CML=True)
@@ -222,11 +222,11 @@ if 0:
   
 
 # Netlist, Netlist trimming:
-if 0:
+if 1:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
-  nets, components = cell.identify_nets(verbose=False)
+  nets, components = cell.identify_nets(verbose=True)
   print ("* Display list of components:" )
   [c.display() for c in components]
   print ("* Display list of nets:" )

@@ -79,14 +79,24 @@ def waveguide_from_path(params = None, cell = None):
 #    path.width = path.width * TECHNOLOGY['dbu']
     Dpath = path.to_dtype(TECHNOLOGY['dbu'])
     width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
-    pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": Dpath,
-                                                                   "radius": params['radius'],
-                                                                   "width": params['width'],
-                                                                   "adiab": params['adiabatic'],
-                                                                   "bezier": params['bezier'],
-                                                                   "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
-                                                                   "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
-                                                                   "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
+    try:
+      pcell = ly.create_cell("Waveguide", TECHNOLOGY['technology_name'], { "path": Dpath,
+                                                                     "radius": params['radius'],
+                                                                     "width": params['width'],
+                                                                     "adiab": params['adiabatic'],
+                                                                     "bezier": params['bezier'],
+                                                                     "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
+                                                                     "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
+                                                                     "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
+    except:
+      pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": Dpath,
+                                                                     "radius": params['radius'],
+                                                                     "width": params['width'],
+                                                                     "adiab": params['adiabatic'],
+                                                                     "bezier": params['bezier'],
+                                                                     "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
+                                                                     "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
+                                                                     "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
     if pcell==None:
       raise Exception("'Waveguide' in 'SiEPIC General' library is not available. Check that the library was loaded successfully.")
     selection.append(pya.ObjectInstPath())
