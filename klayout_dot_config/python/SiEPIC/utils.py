@@ -168,7 +168,7 @@ def get_technology(verbose=False, query_activecellview_technology=False):
       return technology
 
     # "lv.active_cellview().technology" crashes in KLayout 0.24.10 when loading a GDS file (technology not defined yet?)
-    if KLAYOUT_VERSION > 24 or query_activecellview_technology:
+    if KLAYOUT_VERSION > 24 or query_activecellview_technology: 
       technology_name = lv.active_cellview().technology
 
     technology['technology_name'] = technology_name
