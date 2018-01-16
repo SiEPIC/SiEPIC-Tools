@@ -555,6 +555,9 @@ def identify_nets(self, verbose=False):
   # use the data in Optical_pin, Optical_waveguide to find overlaps
   # and save results in components
 
+  if verbose:
+    print( "SiEPIC.extend.identify_nets():")
+
   from . import _globals
   from .core import Net
 
@@ -572,25 +575,24 @@ def identify_nets(self, verbose=False):
   for c1 in components:
     for c2 in components [ c1.idx+1: len(components) ]:
       if verbose:
-        print( " - Components: [%s-%s], [%s-%s]"
-          % (c1.component, c1.idx, c2.component, c2.idx) )      
+        print( " - Components: [%s-%s], [%s-%s].  Pins: %s, %s"
+          % (c1.component, c1.idx, c2.component, c2.idx, c1.pins, c2.pins ) )     
 
       if c1.polygon.bbox().overlaps(c2.polygon.bbox()) or c1.polygon.bbox().touches(c2.polygon.bbox()):
         # Loop through all the pins (p1) in c1
         # - Compare to all other pins, find other overlapping pins (p2) in c2
         for p1 in c1.pins:
           for p2 in c2.pins:
-            if 0:
+            if verbose:
               print( " - Components, pins: [%s-%s, %s, %s, %s], [%s-%s, %s, %s, %s]"
                 % (c1.component, c1.idx, p1.pin_name, p1.center, p1.rotation, c2.component, c2.idx, p2.pin_name, p2.center, p2.rotation) )      
-      
             # check that pins are facing each other, 180 degree
             check1 = ((p1.rotation - p2.rotation)%360) == 180
       
             # check that the pin centres are perfectly overlapping 
             # (to avoid slight disconnections, and phase errors in simulations)
             check2 = (p1.center == p2.center)
-      
+
             if check1 and check2:  # found connected pins:
               # make a new optical net index
               net_idx = len(nets)
@@ -843,8 +845,10 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
 
   # trim the netlist, based on where the laser is connected
   laser_component = [c for c in components if any([p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO and 'laser' in p.pin_name]) ]
+
   from .scripts import trim_netlist
   nets, components = trim_netlist (nets, components, laser_component[0])
+  
 
   if verbose:
     print ("* Display list of components:" )
