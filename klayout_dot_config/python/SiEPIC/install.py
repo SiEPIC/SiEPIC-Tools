@@ -26,50 +26,51 @@ def check_dependency(module):
     install.setText("Error: This tool requires " + module + " in order to run.")
     install.setInformativeText("Would you like SiEPIC to install it?")
     if(pya.QMessageBox_StandardButton(install.exec_()) == pya.QMessageBox.Cancel):
-      return False
+      return None
     else:
       if not check_external_python_install():
         install.setText("Error: SiEPIC needs Anaconda3 for Python 3.4 to run on Windows.")
         install.setInformativeText("Please install Anaconda and create an environment for Python 3.4. For more information visit https://conda.io/docs/user-guide/tasks/manage-python.html. When finished, click continue.")
         if(pya.QMessageBox_StandardButton(install.exec_()) == pya.QMessageBox.Cancel):
-          return False
+          return None
         else:
           if not setup_anaconda():
             install.setStandardButtons(pya.QMessageBox.Ok)
             install.setDefaultButton(pya.QMessageBox.Ok)
             install.setText("Error: Could not install required module.")
-            if(install.exec_()): return False
+            if(install.exec_()): return None
       if not sys.platform.startswith('win'):
         try:
           import pip
           pip.main(['install', module])
-          return True
+          return __import__(module)
         except ImportError:
           install.setStandardButtons(pya.QMessageBox.Ok)
           install.setDefaultButton(pya.QMessageBox.Ok)
           install.setText("Error: Pip not installed. Could not install required module.")
           install.setInformativeText("")
-          if(install.exec_()): return False
+          if(install.exec_()): return None
         except:
           print("Unexpected error:", sys.exc_info()[0])
           install.setStandardButtons(pya.QMessageBox.Ok)
           install.setDefaultButton(pya.QMessageBox.Ok)
           install.setText("Error: Could not install required module.")
           install.setInformativeText("")
-          if(install.exec_()): return False
+          if(install.exec_()): return None
       else:
         try:
           import subprocess
           anaconda = pya.Application.instance().get_config('siepic-tools-anaconda')
-          subprocess.run(anaconda + "\\Scripts\\activate.bat " + anaconda + "\\envs\\py34 && pip install " + module + " && " + anaconda + "\\Scripts\\deactivate.bat", shell=True)
-          return True
+          returned = subprocess.run(anaconda + "\\Scripts\\activate.bat " + anaconda + "\\envs\\py34 && pip install " + module + " && " + anaconda + "\\Scripts\\deactivate.bat", stdout=subprocess.PIPE, shell=True)
+          print(returned.stdout)
+          return __import__(module)
         except:
           print("Unexpected error:", sys.exc_info()[0])
           install.setStandardButtons(pya.QMessageBox.Ok)
           install.setDefaultButton(pya.QMessageBox.Ok)
           install.setText("Error: Could not install required module.")
           install.setInformativeText("")
-          if(install.exec_()): return False
+          if(install.exec_()): return None
   
 def check_external_python_install():
   if not sys.platform.startswith('win'): return True
