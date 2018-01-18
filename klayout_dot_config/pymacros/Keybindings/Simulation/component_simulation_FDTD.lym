@@ -34,6 +34,14 @@ class GUI_FDTD_component_simulation(pya.QDialog):
     if self.verbose:
       print(FDTD_settings)
 
+    if not FDTD_settings:
+      warning = pya.QMessageBox()
+      warning.setStandardButtons(pya.QMessageBox.Ok)
+      warning.setText("No FDTD simulation configuration file (FDTD.xml) was found for present technology.")
+      pya.QMessageBox_StandardButton(warning.exec_())
+      self.close()
+      return
+
     paramsLayout = QVBoxLayout(self);
     self.qtext=[]
     self.qlabel=[]
@@ -51,11 +59,19 @@ class GUI_FDTD_component_simulation(pya.QDialog):
     ok = pya.QPushButton("OK",self)
     ok.clicked(self.ok)
     cancel = pya.QPushButton("Cancel",self)
+    cancel.clicked(self.cancel)
     buttonsLayout.addWidget(cancel)
     buttonsLayout.addWidget(ok)
 
     mainLayout.addLayout(paramsLayout)
     mainLayout.addLayout(buttonsLayout)
+
+    self.show()
+
+  def cancel(self, val):
+    self.close()
+    if self.verbose:
+      print('closing GUI')
 
   def ok(self, val):
     self.close()
@@ -77,8 +93,7 @@ class GUI_FDTD_component_simulation(pya.QDialog):
     lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=True, FDTD_settings=FDTD_settings)
     
     
-GUI_FDTD = GUI_FDTD_component_simulation(pya.Application.instance().main_window())
-GUI_FDTD.show()
+GUI_FDTD = GUI_FDTD_component_simulation(pya.Application.instance().main_window(), verbose=True)
 
 
 

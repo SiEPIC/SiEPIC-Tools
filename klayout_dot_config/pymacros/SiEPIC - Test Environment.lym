@@ -56,14 +56,18 @@ if 1:
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
-    SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
+#    SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.setup = reload(SiEPIC.setup)
     print('Reloaded SiEPIC')
 
 
-print ("***")
+print ("*** SiEPIC test environment ***")
+
+if 1:
+  from SiEPIC import _globals
+  print("lumapi: %s" % _globals.LUMAPI)
 
 
 if 0:
@@ -273,7 +277,7 @@ if 0:
   print(matches)
   
 
-if 1:
+if 0:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 

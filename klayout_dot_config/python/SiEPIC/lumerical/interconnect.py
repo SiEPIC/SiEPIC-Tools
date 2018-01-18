@@ -29,8 +29,23 @@ usage:
 import pya
 
 def run_INTC(verbose=False):
+  import load_lumapi
   from .. import _globals
   lumapi = _globals.LUMAPI
+  if not lumapi:
+    print("SiEPIC.lumerical.interconnect.run_INTC: lumapi not loaded; reloading load_lumapi.")
+    load_lumapi = reload(load_lumapi)
+
+  if not lumapi:
+    print("SiEPIC.lumerical.interconnect.run_INTC: lumapi not loaded")
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Cancel)
+    warning.setText("Cannot load Lumerical Python integration.") 
+    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
+    pya.QMessageBox_StandardButton(warning.exec_())
+    return
+    
+  
   if verbose:
     print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
   
@@ -59,6 +74,9 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   from .. import _globals
   run_INTC()
   lumapi = _globals.LUMAPI
+  if not lumapi:
+    print('SiEPIC.lumerical.interconnect.Setup_Lumerical_KLayoutPython_integration: lumapi not loaded')
+    return
 
   import os 
   # Read INTC element library
@@ -125,9 +143,10 @@ def INTC_commandline(filename2):
     # OSX specific
     import commands
     print("Running INTERCONNECT")
-    runcmd = 'source ~/.bash_profile; open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2
+    runcmd = ('source ~/.bash_profile; /usr/bin/open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2)
     print("Running in shell: %s" % runcmd)
-    commands.getstatusoutput(runcmd)
+    a=commands.getstatusoutput(runcmd)
+    print(a)
 
   
   elif sys.platform.startswith('win'):

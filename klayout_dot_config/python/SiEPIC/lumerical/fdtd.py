@@ -21,6 +21,22 @@ import pya
 
 
 def run_FDTD(verbose=False):
+  import load_lumapi
+  from .. import _globals
+  lumapi = _globals.LUMAPI
+  if not lumapi:
+    print("SiEPIC.lumerical.interconnect.run_FDTD: lumapi not loaded; reloading load_lumapi.")
+    load_lumapi = reload(load_lumapi)
+
+  if not lumapi:
+    print("SiEPIC.lumerical.interconnect.run_FDTD: lumapi not loaded")
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Cancel)
+    warning.setText("Cannot load Lumerical Python integration.") 
+    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
+    pya.QMessageBox_StandardButton(warning.exec_())
+    return
+    
   from .. import _globals
   lumapi = _globals.LUMAPI
   if verbose:
@@ -103,6 +119,10 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     from .. import _globals
     run_FDTD()
     lumapi = _globals.LUMAPI
+    if not lumapi:
+      print('SiEPIC.lumerical.fdtd.generate_component_sparam: lumapi not loaded')
+      return
+      
     if verbose:
       print(lumapi)  # Python Lumerical INTERCONNECT integration handle
   
@@ -472,12 +492,15 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     lumapi.evalScript(_globals.INTC, "out=customlibrary;")
     INTC_custom=lumapi.getVar(_globals.INTC, "out")
     
+      
     # Create a component
     port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
     t = 'switchtodesign; deleteall; \n'
     t+= 'addelement("Optical N Port S-Parameter"); createcompound; select("COMPOUND_1");\n'
     t+= 'component = "%s"; set("name",component); \n' % component.instance
-    t+= 'seticon(component,"%s");\n' %(svg_filename)
+    import os
+    if os.path.exists(svg_filename):
+      t+= 'seticon(component,"%s");\n' %(svg_filename)
     t+= 'select(component+"::SPAR_1"); set("load from file", true);\n'
     t+= 'set("s parameters filename", "%s");\n' % (file_sparam)
     t+= 'set("load from file", false);\n'
