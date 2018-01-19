@@ -5,6 +5,7 @@ v0.3.11
 * updates to the ring modulator transceiver example
 * electrical pins can now be either box or simple_polygon
 * version number in the menu title
+* fix for DC Sources working in netlist import in INTERCONNECT
 
 v0.3.10
 * error checking and improvements to the Lumerical tool integration
