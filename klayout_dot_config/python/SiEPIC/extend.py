@@ -915,7 +915,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
       if p.type == _globals.PIN_TYPES.ELECTRICAL:
         NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
         electricalIO_pins += NetName
-        DCsources += "N" + str(Vn) + NetName + " 0 dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/10., -2+Vn/8.)
+        DCsources += "N" + str(Vn) + NetName + " dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/10., -2+Vn/8.)
         Vn += 1
   electricalIO_pins_subckt = electricalIO_pins
 
@@ -926,7 +926,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
         if p.type == _globals.PIN_TYPES.ELECTRICAL:
           NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
           electricalIO_pins_subckt += NetName
-          DCsources = "N1" + NetName + " 0 dcsource amplitude=0 sch_x=-2 sch_y=0\n"
+          DCsources = "N1" + NetName + " dcsource amplitude=0 sch_x=-2 sch_y=0\n"
 
 
   # find optical IO pins
@@ -1009,7 +1009,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   else:
     text_main += '\n\n'
 
-  if 0: # **** presently causes this to crease... not sure why
+  if 1: # **** presently causes this to crease... not sure why
     text_main += DCsources
 
   return text_subckt, text_main, len(detector_nets)
