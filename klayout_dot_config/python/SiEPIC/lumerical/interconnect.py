@@ -38,11 +38,12 @@ def run_INTC(verbose=False):
 
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_INTC: lumapi not loaded")
-    warning = pya.QMessageBox()
-    warning.setStandardButtons(pya.QMessageBox.Cancel)
-    warning.setText("Cannot load Lumerical Python integration.") 
-    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
-    pya.QMessageBox_StandardButton(warning.exec_())
+    pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Some SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
+#    warning = pya.QMessageBox()
+#    warning.setStandardButtons(pya.QMessageBox.Cancel)
+#    warning.setText("Cannot load Lumerical Python integration.") 
+#    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
+#    pya.QMessageBox_StandardButton(warning.exec_())
     return
     
   
@@ -288,16 +289,18 @@ def component_simulation(verbose=False):
     text_lsf += 'importnetlist("%s");\n' % filename
     text_lsf += 'save("%s");\n' % filename_icp
     text_lsf += 'run;\n'
-    if 1:
+    if 0:
       for i in range(0, len(pin_names)):
         text_lsf += 'h%s = haveresult("ONA_1", "input %s/mode 1/gain");\n' % (i+1, i+1)
         text_lsf += 'if (h%s>0) { visualize(getresult("ONA_1", "input %s/mode 1/gain")); } \n' % (i+1, i+1)
-    if 0:
+    if 1:
       text_lsf += 't = "";\n'
       for i in range(0, len(pin_names)):
         text_lsf += 'h%s = haveresult("ONA_1", "input %s/mode 1/gain");\n' % (i+1, i+1)
         text_lsf += 'if (h%s>0) { t%s = getresult("ONA_1", "input %s/mode 1/gain"); t=t+"t%s,"; } \n' % (i+1, i+1, i+1, i+1)
-      text_lsf += 'visualize(substring(t,1,length(t)-1));\n'  # doesn't work.
+      text_lsf += 't = substring(t, 1, length(t) - 1);\n'
+      text_lsf += 'eval("visualize(" + t + ");");\n'
+
     file = open(filename2, 'w')
     file.write (text_lsf)
     file.close()

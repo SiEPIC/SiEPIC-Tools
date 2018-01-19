@@ -30,11 +30,7 @@ def run_FDTD(verbose=False):
 
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_FDTD: lumapi not loaded")
-    warning = pya.QMessageBox()
-    warning.setStandardButtons(pya.QMessageBox.Cancel)
-    warning.setText("Cannot load Lumerical Python integration.") 
-    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
-    pya.QMessageBox_StandardButton(warning.exec_())
+    pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Some SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
     return
     
   from .. import _globals
