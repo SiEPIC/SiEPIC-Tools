@@ -1,11 +1,16 @@
 # SiEPIC-Tools version history
 
+next version:
+* migrating GSiP examples to SiEPIC-Tools and GSiP library
+
 v0.3.11
 * adding generic silicon photonics (GSiP) technology to this package; removing from SiEPIC-EBeam-PDK
 * updates to the ring modulator transceiver example
 * electrical pins can now be either box or simple_polygon
 * version number in the menu title
 * fix for DC Sources working in netlist import in INTERCONNECT
+* added new functionality to migrate ROUND_PATH waveguides from SiEPIC-EBeam-PDK pre 0.1.41 layouts to SiEPIC-Tools
+
 
 v0.3.10
 * error checking and improvements to the Lumerical tool integration
