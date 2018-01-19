@@ -3,6 +3,7 @@ import pya
 def registerMenuItems():
     import os
     from . import scripts, examples, lumerical, install
+    import SiEPIC.__init__
     
     global ACTIONS
     count = 0
@@ -11,7 +12,7 @@ def registerMenuItems():
     
     s1 = "siepic_menu"
     if not(menu.is_menu(s1)):
-        menu.insert_menu("help_menu",s1,"SiEPIC") 
+        menu.insert_menu("help_menu",s1,"SiEPIC %s" % SiEPIC.__init__.__version__) 
 
     s2 = "waveguides"
     if not(menu.is_menu(s1 + "." + s2)):
