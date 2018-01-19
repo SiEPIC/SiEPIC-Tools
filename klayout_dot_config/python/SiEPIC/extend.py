@@ -330,10 +330,10 @@ Optical Pins have:
  1) path on layer PinRec, indicating direction (out of component)
  2) text on layer PinRec, inside the path
 Electrical Pins have: 
- 1) box on layer PinRec, indicating direction (out of component)
- 2) text on layer PinRec, inside the path
+ 1) box on layer PinRec
+ 2) text on layer PinRec, inside the box
 '''
-def find_pins(self, verbose=False, polygon_devrec=None):
+def find_pins(self, verbose=True, polygon_devrec=None):
   from .core import Pin
   from . import _globals
   from .utils import get_technology
@@ -348,6 +348,8 @@ def find_pins(self, verbose=False, polygon_devrec=None):
   # iterate through all the PinRec shapes in the cell
   it = self.begin_shapes_rec(LayerPinRecN)
   while not(it.at_end()):
+    if verbose:
+      print(it.shape().to_s())
     # Assume a PinRec Path is an optical pin
     if it.shape().is_path():
       if verbose:
@@ -371,15 +373,21 @@ def find_pins(self, verbose=False, polygon_devrec=None):
 
     # Assume a PinRec Box is an electrical pin
     # similar to optical pin
+    if it.shape().is_simple_polygon():
+      pin_box = it.shape().bbox().transformed(it.itrans())
     if it.shape().is_box():
-#      print ("Box: %s" % it.shape() )
+      if verbose:
+        print ("Box: %s" % it.shape() )
       pin_box = it.shape().box.transformed(it.itrans())
+    if it.shape().is_simple_polygon() or it.shape().is_box():
       pin_name = None
       subcell = it.cell()  # cell (component) to which this shape belongs
       iter2 = subcell.begin_shapes_rec_touching(LayerPinRecN, it.shape().bbox())
-#      print ("Box: %s" % it.shape().bbox() )
+      if verbose:
+        print ("Box: %s" % it.shape().bbox() )
       while not(iter2.at_end()):
-#        print ("shape touching: %s" % iter2.shape() )
+        if verbose:
+          print ("shape touching: %s" % iter2.shape() )
         if iter2.shape().is_text():
           pin_name = iter2.shape().text.string
         iter2.next()
