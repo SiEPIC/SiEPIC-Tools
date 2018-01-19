@@ -157,7 +157,7 @@ class Waveguide(PCellDeclarationHelper):
     self.cell.shapes(LayerPinRecN).insert(Text("pin2", t, 0.3/dbu, -1))
 
     LayerDevRecN = self.layout.layer(TECHNOLOGY['DevRec'])
-
+    
     # Compact model information
     angle_vec = angle_vector(pts[0]-pts[1])/90
     halign = 0 # left
@@ -186,11 +186,11 @@ class Waveguide(PCellDeclarationHelper):
       pt3=pts[0] + Point(-self.width/dbu,0)
       
     t = Trans(angle, False, pts[0]) 
-    text = Text ('Lumerical_INTERCONNECT_library=Design kits/GSiP', t, 0.1/dbu, -1)
+    text = Text ('Lumerical_INTERCONNECT_library=Design kits/ebeam', t, 0.1/dbu, -1)
     text.halign=halign
     shape = self.cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt2)
-    text = Text ('Component=wg_strip_integral_1550', t, 0.1/dbu, -1)
+    text = Text ('Component=ebeam_wg_integral_1550', t, 0.1/dbu, -1)
     text.halign=halign
     shape = self.cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt3)
@@ -502,21 +502,21 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     # Create the pins, as short paths:
     from SiEPIC._globals import PIN_LENGTH as pin_length
     
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2 + taper_length) + pin_length/2, 0),
-                                          pya.Point(x0 - (w_Si3 / 2 + taper_length) - pin_length/2, 0)], w))
-    shapes(LayerPinRecN).insert(pya.Text("opt1", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2 + taper_length), 0))).text_size = 0.5/dbu
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2. + taper_length) + pin_length/2., 0),
+                                          pya.Point(x0 - (w_Si3 / 2. + taper_length) - pin_length/2., 0)], w))
+    shapes(LayerPinRecN).insert(pya.Text("opt1", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2. + taper_length), 0))).text_size = 0.5/dbu
 
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 + (w_Si3 / 2 + taper_length) - pin_length/2, 0),
-                                pya.Point(x0 + (w_Si3 / 2 + taper_length)           + pin_length/2, 0)], w))
     shapes(LayerPinRecN).insert(pya.Text("opt2", pya.Trans(pya.Trans.R0,x0 + (w_Si3 / 2 + taper_length), 0))).text_size = 0.5/dbu
+                                pya.Point(x0 + (w_Si3 / 2 + taper_length)           + pin_length/2., 0)], w))
+    shapes(LayerPinRecN).insert(pya.Text("opt2", pya.Trans(pya.Trans.R0,x0 + (w_Si3 / 2. + taper_length), 0))).text_size = 0.5/dbu
 
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2 + taper_length) + pin_length/2, y_offset),
-                                          pya.Point(x0 - (w_Si3 / 2 + taper_length) - pin_length/2, y_offset)], w))
-    shapes(LayerPinRecN).insert(pya.Text("opt3", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2 + taper_length), y_offset))).text_size = 0.5/dbu
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2. + taper_length) + pin_length/2., y_offset),
+                                          pya.Point(x0 - (w_Si3 / 2. + taper_length) - pin_length/2., y_offset)], w))
+    shapes(LayerPinRecN).insert(pya.Text("opt3", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2. + taper_length), y_offset))).text_size = 0.5/dbu
 
-    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 + (w_Si3 / 2 + taper_length) - pin_length/2, y_offset),
-                                          pya.Point(x0 + (w_Si3 / 2 + taper_length) + pin_length/2, y_offset)], w))
-    shapes(LayerPinRecN).insert(pya.Text("opt4", pya.Trans(pya.Trans.R0,x0 + (w_Si3 / 2 + taper_length), y_offset))).text_size = 0.5/dbu
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 + (w_Si3 / 2. + taper_length) - pin_length/2., y_offset),
+                                          pya.Point(x0 + (w_Si3 / 2. + taper_length) + pin_length/2., y_offset)], w))
+    shapes(LayerPinRecN).insert(pya.Text("opt4", pya.Trans(pya.Trans.R0,x0 + (w_Si3 / 2. + taper_length), y_offset))).text_size = 0.5/dbu
 
     # Create the device recognition layer
     shapes(LayerDevRecN).insert(pya.Box(x0 - (w_Si3 / 2 + taper_length), -w/2.0 -  12.5/dbu, x0 + (w_Si3 / 2 + taper_length), y0 + r_m1_out + w_m1_out+h_via ))

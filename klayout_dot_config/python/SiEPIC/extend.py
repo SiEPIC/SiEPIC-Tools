@@ -334,6 +334,9 @@ Electrical Pins have:
  2) text on layer PinRec, inside the box
 '''
 def find_pins(self, verbose=True, polygon_devrec=None):
+  if verbose:
+    print("SiEPIC.extend.find_pins()")
+
   from .core import Pin
   from . import _globals
   from .utils import get_technology
@@ -348,8 +351,8 @@ def find_pins(self, verbose=True, polygon_devrec=None):
   # iterate through all the PinRec shapes in the cell
   it = self.begin_shapes_rec(LayerPinRecN)
   while not(it.at_end()):
-    if verbose:
-      print(it.shape().to_s())
+#    if verbose:
+#      print(it.shape().to_s())
     # Assume a PinRec Path is an optical pin
     if it.shape().is_path():
       if verbose:
@@ -592,8 +595,8 @@ def identify_nets(self, verbose=False):
         for p1 in c1.pins:
           for p2 in c2.pins:
             if verbose:
-              print( " - Components, pins: [%s-%s, %s, %s, %s], [%s-%s, %s, %s, %s]"
-                % (c1.component, c1.idx, p1.pin_name, p1.center, p1.rotation, c2.component, c2.idx, p2.pin_name, p2.center, p2.rotation) )      
+              print( " - Components, pins: [%s-%s, %s, %s, %s], [%s-%s, %s, %s, %s]; difference: %s"
+                % (c1.component, c1.idx, p1.pin_name, p1.center, p1.rotation, c2.component, c2.idx, p2.pin_name, p2.center, p2.rotation, p1.center-p2.center) )      
             # check that pins are facing each other, 180 degree
             check1 = ((p1.rotation - p2.rotation)%360) == 180
       
