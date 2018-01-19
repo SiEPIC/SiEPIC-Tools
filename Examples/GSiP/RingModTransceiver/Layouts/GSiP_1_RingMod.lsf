@@ -4,8 +4,8 @@
 # this script sweeps the DC voltage on the PN junction and/or heater
 # and plots the spectra
 
-SIM_PN = 1;  # simulate PN junction effect
-SIM_H = 0;   # simulate heater effect
+SIM_PN = 0;  # simulate PN junction effect
+SIM_H = 1;   # simulate heater effect
 
 switchtolayout;
 select("ONA_1");
