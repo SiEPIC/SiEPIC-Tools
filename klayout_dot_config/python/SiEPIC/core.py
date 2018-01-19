@@ -337,7 +337,7 @@ class WaveguideGUI():
   def ok(self, val):
     self.window.close()
     from . import scripts
-    scripts.waveguide_from_path()
+    scripts.path_to_waveguide()
   
   def get_parameters(self):
     if not self.initialized:

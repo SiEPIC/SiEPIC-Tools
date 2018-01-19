@@ -4,7 +4,8 @@
 #################################################################################
 '''
 
-waveguide_from_path
+path_to_waveguide
+roundpath_to_waveguide
 waveguide_to_path
 waveguide_length
 waveguide_length_diff
@@ -29,26 +30,14 @@ measurement_vs_simulation
 
 import pya
 
-def waveguide_from_path(params = None, cell = None):
+def path_to_waveguide(params = None, cell = None, lv_commit=True):
   from . import _globals
-  from .utils import select_paths, get_technology
-  TECHNOLOGY = get_technology()
-
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-    
-  if cell is None:
-    ly = lv.active_cellview().layout() 
-    if ly == None:
-      raise Exception("No active layout")
-    cell = lv.active_cellview().cell
-    if cell == None:
-      raise Exception("No active cell")
-  else:
-    ly = cell.layout()
+  from .utils import select_paths
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
   
-  lv.transaction("waveguide from path")
+  if lv_commit:
+    lv.transaction("Path to Waveguide")
 
   if params is None: params = _globals.WG_GUI.get_parameters()
   if params is None: return
@@ -88,8 +77,12 @@ def waveguide_from_path(params = None, cell = None):
                                                                      "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
                                                                      "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
                                                                      "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
+      print ("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" % (TECHNOLOGY['technology_name'],pcell))
     except:
-      pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": Dpath,
+      pass
+    if not pcell:
+      try:
+        pcell = ly.create_cell("Waveguide", "SiEPIC General", { "path": Dpath,
                                                                      "radius": params['radius'],
                                                                      "width": params['width'],
                                                                      "adiab": params['adiabatic'],
@@ -97,7 +90,10 @@ def waveguide_from_path(params = None, cell = None):
                                                                      "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
                                                                      "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
                                                                      "offsets": [wg['offset'] for wg in params['wgs']] + [0]} )
-    if pcell==None:
+        print ("SiEPIC.scripts.path_to_waveguide(): Waveguide from SiEPIC General, %s" % pcell)
+      except:
+        pass
+    if not pcell:
       raise Exception("'Waveguide' in 'SiEPIC General' library is not available. Check that the library was loaded successfully.")
     selection.append(pya.ObjectInstPath())
     selection[-1].top = obj.top
@@ -107,7 +103,123 @@ def waveguide_from_path(params = None, cell = None):
 
   lv.clear_object_selection()
   lv.object_selection = selection
+  if lv_commit:
+    lv.commit()
+
+'''
+convert a KLayout ROUND_PATH, which was used to make a waveguide 
+in SiEPIC_EBeam_PDK versions up to v0.1.41, back to a Path.
+This allows the user to migrate designs to the new Waveguide PCell.
+'''
+def roundpath_to_waveguide(verbose=False):
+
+  from . import _globals
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  dbu = TECHNOLOGY['dbu']
+  
+  # Record a transaction, to enable "undo"
+  lv.transaction("ROUND_PATH to Waveguide")
+  
+  if verbose:
+    print("SiEPIC.scripts.roundpath_to_waveguide()")
+  
+  # record objects to delete:
+  to_delete = []
+  # new objects will become selected after the waveguide-to-path operation
+  new_selection = []  
+  # Find the selected objects
+  object_selection = lv.object_selection   # returns ObjectInstPath[].
+
+  Waveguide_Types = ["ROUND_PATH"]
+  
+  if object_selection == []:
+    if verbose:
+      print("Nothing selected.  Automatically selecting waveguides.")
+    # find all instances, specifically, Waveguides:
+    for inst in topcell.each_inst():
+      if verbose:
+        print("Cell: %s" % (inst.cell.basic_name() ) )
+      if inst.cell.basic_name() in Waveguide_Types:
+        n = len(object_selection)
+        object_selection.append( pya.ObjectInstPath() )
+        object_selection[n].top = topcell.cell_index()
+        object_selection[n].append_path(pya.InstElement.new(inst))
+    # Select the newly added objects
+    lv.object_selection = object_selection
+  
+  is_ROUNDPATH = False
+  for o in object_selection:
+    # Find the selected waveguides
+    if o.is_cell_inst():
+      if verbose:
+        print("Selected object is a cell.")
+      oinst = o.inst()
+      if oinst.is_pcell():
+        c = oinst.cell
+        if c.basic_name() in Waveguide_Types: # and c.pcell_parameters_by_name()['layer'] == LayerSi:
+          LayerSiN = c.pcell_parameters_by_name()['layer'] 
+          radius = c.pcell_parameters_by_name()['radius'] 
+          if verbose:
+            print("%s on Layer %s." % (c.basic_name(), LayerSiN) )
+          is_ROUNDPATH = True
+          trans = oinst.trans
+  
+    elif o.shape:
+      if verbose:
+        print("Selected object is a shape.")
+      c = o.shape.cell
+      if c.basic_name() in Waveguide_Types and c.is_pcell_variant(): # and c.pcell_parameters_by_name()['layer'] == LayerSi:
+        # we have a waveguide GUIDING_LAYER selected
+        LayerSiN = c.pcell_parameters_by_name()['layer'] 
+        radius = c.pcell_parameters_by_name()['radius'] 
+        if verbose:
+          print("Selected object is a GUIDING_LAYER in %s on Layer %s." % (c.basic_name(),LayerSiN) )
+        trans = o.source_trans().s_trans()
+        o_instpathlen = o.path_length()
+        oinst = o.path_nth(o_instpathlen-1).inst()
+        is_ROUNDPATH = True
+  
+    # We now have a waveguide ROUND_PATH PCell, with variables: o (ObjectInstPath), oinst (Instance), c (Cell)
+    if is_ROUNDPATH == True:
+      path_obj = c.pcell_parameters_by_name()['path']
+      if verbose:
+        print( path_obj ) 
+      wg_width = path_obj.width/dbu
+      # convert wg_path (in microns) to database numbers
+  
+      from ._globals import KLAYOUT_VERSION
+      if KLAYOUT_VERSION > 24:
+        new_wg = cell.shapes(ly.layer(LayerSiN)).insert(path_obj.transformed(trans))
+      else:
+        v = pya.MessageBox.warning("KLayout 0.25 or higher required.", "ROUND_PATH to Waveguide is implemented using KLayout 0.25 or higher functionality.", pya.MessageBox.Ok)
+  
+      # Leave the newly created path selected, to make it obvious to the user.
+      # http://klayout.de/forum/comments.php?DiscussionID=747
+      new_selection.append( pya.ObjectInstPath() )
+      new_selection[-1].layer = ly.layer(LayerSiN)
+      new_selection[-1].shape = new_wg
+      new_selection[-1].top = o.top
+      new_selection[-1].cv_index = o.cv_index
+      
+      # Convert the path to a Waveguide:
+      from SiEPIC import scripts
+      scripts.path_to_waveguide(lv_commit=False)
+
+      to_delete.append(oinst) # delete the instance; leaves behind the cell if it's not used
+          
+  for t in to_delete:
+    t.delete()
+  
+  # Clear the layout view selection, since we deleted some objects (but others may still be selected):
+  lv.clear_object_selection()
+  # Select the newly added objects
+  lv.object_selection = new_selection       
+  # Record a transaction, to enable "undo"
   lv.commit()
+    
+  if not(is_ROUNDPATH):
+    v = pya.MessageBox.warning("No ROUND_PATH selected", "No ROUND_PATH selected.\nPlease select a ROUND_PATH. \nIt will get converted to a path.", pya.MessageBox.Ok)
 
 
 def waveguide_to_path(cell = None):
@@ -185,8 +297,6 @@ def waveguide_to_path(cell = None):
 
   # deleting instance or cell should be done outside of the for loop, otherwise each deletion changes the instance pointers in KLayout's internal structure
   [t.delete() for t in to_delete]
-  #  for t in to_delete:
-  #    t.delete()
 
   # Clear the layout view selection, since we deleted some objects (but others may still be selected):
   lv.clear_object_selection()
@@ -358,6 +468,8 @@ def snap_component():
         else:
           v = pya.MessageBox.warning("Snapping failed", 
             "Snapping failed. \nNo matching pins found. \nNote that pins must have exactly matching orientations (180 degrees)", pya.MessageBox.Ok)
+
+        pya.Application.instance().main_window().message('SiEPIC snap_components: moved by %s.' %trans, 2000)
 
         return
 # end def snap_component()
