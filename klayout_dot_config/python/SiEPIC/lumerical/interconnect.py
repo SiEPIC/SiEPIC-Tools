@@ -29,7 +29,7 @@ usage:
 import pya
 
 def run_INTC(verbose=False):
-  import load_lumapi
+  from . import load_lumapi
   from .. import _globals
   lumapi = _globals.LUMAPI
   if not lumapi:
