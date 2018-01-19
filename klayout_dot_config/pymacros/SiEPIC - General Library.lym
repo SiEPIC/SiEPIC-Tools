@@ -279,8 +279,8 @@ class SiEPIC_General(Library):
     #self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP.gds"))
     #[self.layout().rename_cell(i, self.layout().cell_name(i).replace('_', ' ')) for i in range(0, self.layout().cells())]
     
-    self.layout().register_pcell("Lumerical INTERCONNECT Laser", LumericalINTERCONNECT_Laser())
-    self.layout().register_pcell("Lumerical INTERCONNECT Detector", LumericalINTERCONNECT_Detector())
+    self.layout().register_pcell("Lumerical_INTERCONNECT_Laser", LumericalINTERCONNECT_Laser())
+    self.layout().register_pcell("Lumerical_INTERCONNECT_Detector", LumericalINTERCONNECT_Detector())
     self.layout().register_pcell("Waveguide", Waveguide())
     
     # Register us the library with the technology name

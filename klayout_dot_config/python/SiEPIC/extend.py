@@ -661,7 +661,7 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
     subcell = iter1.cell()             # cell (component) to which this shape belongs
     if iter1.shape().is_box():
       box = iter1.shape().box.transformed(iter1.itrans())
-      if iter1.cell().basic_name() == "Lumerical INTERCONNECT Detector":
+      if iter1.cell().basic_name() == ("Lumerical_INTERCONNECT_Detector"):
         n_IO += 1
         # *** todo read parameters from Text labels rather than PCell:
         detector_number = subcell.pcell_parameters_by_name()["number"]
@@ -682,7 +682,7 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
           if verbose:
             print(" - pin_name: %s"   % (p[0].pin_name) )
 
-      if iter1.cell().basic_name() == "Lumerical INTERCONNECT Laser":
+      if iter1.cell().basic_name() == ("Lumerical_INTERCONNECT_Laser"):
         n_IO += 1
         # *** todo read parameters from Text labels rather than PCell:
         wavelength_start = subcell.pcell_parameters_by_name()["wavelength_start"]
