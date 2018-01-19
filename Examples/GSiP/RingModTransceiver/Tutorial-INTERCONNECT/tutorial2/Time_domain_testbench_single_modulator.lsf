@@ -1,0 +1,91 @@
+switchtodesign;
+#remove ONA
+
+
+lambda1 = 1547.4e-9;
+
+BITRATE = 1.5e10;
+sequence_length = 64;
+SPB = 512; 
+f0 = c/1550e-9; #center of frequency band
+
+#set up simulation 
+setnamed("::Root Element", "simulation input" , "sequence length");
+setnamed("::Root Element", "bitrate", BITRATE); 
+setnamed("::Root Element", "samples per bit", SPB);
+setnamed("::Root Element", "sequence length", sequence_length);  
+setnamed("::Root Element", "sample mode frequency band", "single");
+setnamed("::Root Element", "sample mode center frequency", f0);
+
+
+# MODIFY CIRCUIT #################################
+selectpartial("ONA");
+delete;
+
+#add laser sources
+selectpartial("CWL");
+delete;
+addelement("::sources::optical::cw laser");
+set("frequency", c/lambda1); set("x position", -400); set("y position", 0); 
+connect("CWL_1", "output", "GSiP_1_RingMod","N$0");
+
+#add ground
+#remove DC source
+selectpartial("N");
+delete;
+selectpartial("DC");
+delete;
+ 
+
+addelement("DC source"); set("x position", -500); set("y position", 350);
+addelement("DC source"); set("x position", -450); set("y position", 400);
+addelement("DC source"); set("x position", -400); set("y position", 450);
+connect("DC_1", "output", "GSiP_1_RingMod", "N$Ring_Modulator_DB_0_elec2h2"); 
+connect("DC_2", "output", "GSiP_1_RingMod", "N$Ring_Modulator_DB_0_elec2h1");
+
+connect("DC_3", "output", "GSiP_1_RingMod", "N$Ring_Modulator_DB_0_elec1a");
+
+
+#add bit sequency generator
+selectpartial("PRBS");
+delete;
+addelement("::sequence generators::prbs generator"); set("x position", -700); set("y position", 200); set("vertical flipped", false);set("rotated", 0);
+
+selectpartial("NRZ");
+delete;
+addelement("::pulse generators::electrical::nrz pulse generator"); set("x position", -500); set("y position", 200); set("vertical flipped", false);set("rotated", 0);
+set("bias", -2); set("amplitude", 2);
+
+
+connect("PRBS_1", "output", "NRZ_1", "modulation");
+connect("NRZ_1", "output", "GSiP_1_RingMod", "N$Ring_Modulator_DB_0_elec1c");
+
+#add a detector
+selectpartial("PIN");
+delete;
+addelement("::photodetectors::pin photodetector");set("x position", 0); set("y position", 0);
+connect("PIN_1", "input", "GSiP_1_RingMod", "N$1");
+
+#add output filters
+selectpartial("LPF");
+delete;
+addelement("::filters::electrical::lp bessel filter"); set("x position", 200); set("y position", 0);
+
+connect("LPF_1", "input", "PIN_1","output");
+
+#add oscilloscope and eye diagram
+selectpartial("OSC");
+delete;
+selectpartial("EYE");
+delete;
+addelement("::analyzers::electrical::oscilloscope"); set("x position", 350); set("y position",100);
+addelement("::analyzers::electrical::eye diagram"); set("x position", 350); set("y position", 200);
+set("signal reference input", false);
+set("calculate measurements", true); 
+set("calculate graphs", true); 
+
+
+connect("OSC_1", "input", "LPF_1", "output");
+connect("EYE_1", "input", "LPF_1", "output");
+
+

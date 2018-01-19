@@ -65,7 +65,7 @@ if 1:
 
 print ("*** SiEPIC test environment ***")
 
-if 1:
+if 0:
   from SiEPIC import _globals
   print("lumapi: %s" % _globals.LUMAPI)
 

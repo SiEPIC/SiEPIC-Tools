@@ -1,0 +1,129 @@
+closeall;
+clear;
+switchtodesign;
+
+
+library_name = "::custom::gsip::";
+rm_name = "Ring_Modulator_DB";
+
+
+lambda0 = 1547.43e-9; # m, resonance wavelenth
+f0 = c/lambda0; # Hz
+lambda1 = 1530e-9;
+lambda2 = 1570e-9;
+f1 = c/lambda2;
+f2 = c/lambda1;
+fspan = abs(f2-f1);
+ 
+######################################################################################################
+# TEST TIME AND FREQUENCY DOMAIN SIMULATIONS, VERIFY FSR
+    
+fspan = max([fspan,8e12]); #CLAMP sample rate to min value from time domain simulation!!!!!!!!!
+    
+# frequency domain
+switchtolayout;
+setnamed("ONA_1", "plot kind", "wavelength"); 
+setnamed("ONA_1","analysis type","scattering data");
+setnamed("ONA_1","center frequency",f0);
+setnamed("ONA_1","frequency range",fspan);
+setnamed("ONA_1","number of points",round( fspan*1e-9 ) );
+setnamed("ONA_1","peak at maximum",false);
+setnamed("ONA_1","peak threshold",20);
+setnamed("ONA_1","include delays",true);
+    
+setnamed("DC_1","amplitude",0);
+setnamed("DC_2","amplitude",0);
+    
+   
+run;
+
+gain_f = getresult("ONA_1","input 1/mode 1/gain");
+T_f = getresult("ONA_1","input 1/mode 1/transmission");
+fsr_f = getresult("ONA_1","input 1/mode 1/peak/free spectral range");
+fsr_lambda = fsr_f.wavelength;
+    
+fsr_f = fsr_f.getattribute("TE free spectral range (m)");
+fsr_f = fsr_f(find(fsr_lambda,c/f0));
+fsr_lambda = fsr_lambda(find(fsr_lambda,c/f0));
+q_f = getresult("ONA_1","input 1/mode 1/peak/quality factor");
+q_lambda = q_f.wavelength;
+q_f = q_f.getattribute("TE quality factor");
+q_f = q_f(find(q_lambda,c/f0));
+q_lambda = q_lambda(find(q_lambda,c/f0));
+ 
+?msg = "FSR at "+num2str(fsr_lambda*1e9) + "nm is : " + num2str(fsr_f*1e9) + " nm";
+?msg = "Q at "+num2str(q_lambda*1e9) + "nm is : " + num2str(q_f);
+ 
+plotxy((gain_f.wavelength-c/f0)*1e9,gain_f.getattribute("TE gain (dB)"),
+    "wavelength-"+num2str(c/f0*1e9)+" (nm)","gain (dB)",rm_name);
+legend("frequency domain","time domain");
+setplot("y max",5);
+setplot("y min",-30);
+ 
+ 
+ 
+######################################################################################################
+# VOLTAGE SWEEP
+ 
+ 
+voltage = linspace(-4,0.5,5);
+fspan2 = 8e12/80; # ~0.8 nm
+
+fpoints = 1000;
+gainV = matrix(fpoints,length(voltage));
+legends = cell(length(voltage));
+
+for(i = 1:length(voltage)) {
+    ?"voltage sweep " + num2str(i) + " of " + num2str(length(voltage));
+    switchtolayout;
+    
+    setnamed("ONA_1","analysis type","scattering data");
+    setnamed("ONA_1","center frequency",f0);
+    setnamed("ONA_1","frequency range",fspan2);
+    setnamed("ONA_1","number of points",fpoints);
+    
+    setnamed("DC_1","amplitude",voltage(i));
+    
+    run;
+    
+    gain_fv = getresult("ONA_1","input 1/mode 1/gain");
+    lambdaV = gain_fv.wavelength;
+    gainV(1:fpoints,i) = gain_fv.getattribute("TE gain (dB)");
+    legends{i} = num2str(voltage(i)) + " V";
+}
+
+plot((lambdaV-c/f0)*1e9,gainV,"wavelength-"+num2str(c/f0*1e9)+" (nm)","IL (dB)");
+legend(legends);
+
+V0 = find(voltage,0);
+V0p5 = find(voltage,0.5);
+Vm1 = find(voltage,-1);
+l0 = lambdaV(findpeaks( 1/pinch(gainV,2,V0) ) );
+l0p5 = lambdaV(findpeaks( 1/pinch(gainV,2,V0p5) ) );
+lm1 = lambdaV(findpeaks( 1/pinch(gainV,2,Vm1) ) );
+
+resonance_shift_0_to_minus_1    = lm1-l0;
+resonance_shift_0p5_to_minus_1  = lm1-l0p5;
+?msg = "Resonance shift (0 to -1) is : " + num2str(resonance_shift_0_to_minus_1*1e12) + " pm "; 
+?msg = "Resonance shift (0.5 to -1) is : " + num2str(resonance_shift_0p5_to_minus_1*1e12) + " pm";
+V1 = [0,0.5]; # V
+V2 = [-4,-4]; # V
+ymax = [25,18];
+
+for(j=1:length(V1)) {
+    IL = matrix(fpoints);
+    ER = gainV(1:fpoints,find(voltage,V1(j)))-gainV(1:fpoints,find(voltage,V2(j)));
+    for(i=1:fpoints) {
+        if(ER(i) > 0) { IL(i) = -gainV(i,find(voltage,V1(j))); }
+        else { IL(i) = -gainV(i,find(voltage,V2(j))); }
+        #IL(i) = 0.5*(10^(0.1*gainV(i,find(voltage,V1(j)))) + 10^(0.1*gainV(i,find(voltage,V2(j)))));
+        #IL(i) = -10*log10(IL(i));
+    }
+    ER = abs(ER); # dB
+    TP = 10*log10( (2*10^(ER/10))/(10^(ER/10)-1) ) + IL; # dB
+    plot((lambdaV-c/f0)*1e9,ER,TP,IL,"wavelength (nm)", "ER, TP, IL (dB)", num2str(-V1(j))+"V to "+num2str(-V2(j))+"V");
+    legend("ER", "TP", "IL");
+}
+    
+     
+
