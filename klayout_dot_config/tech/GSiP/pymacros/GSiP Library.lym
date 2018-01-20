@@ -506,8 +506,8 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
                                           pya.Point(x0 - (w_Si3 / 2. + taper_length) - pin_length/2., 0)], w))
     shapes(LayerPinRecN).insert(pya.Text("opt1", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2. + taper_length), 0))).text_size = 0.5/dbu
 
-    shapes(LayerPinRecN).insert(pya.Text("opt2", pya.Trans(pya.Trans.R0,x0 + (w_Si3 / 2 + taper_length), 0))).text_size = 0.5/dbu
-                                pya.Point(x0 + (w_Si3 / 2 + taper_length)           + pin_length/2., 0)], w))
+    shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 + (w_Si3 / 2. + taper_length) - pin_length/2., 0),
+                                          pya.Point(x0 + (w_Si3 / 2. + taper_length)           + pin_length/2., 0)], w))
     shapes(LayerPinRecN).insert(pya.Text("opt2", pya.Trans(pya.Trans.R0,x0 + (w_Si3 / 2. + taper_length), 0))).text_size = 0.5/dbu
 
     shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2. + taper_length) + pin_length/2., y_offset),
