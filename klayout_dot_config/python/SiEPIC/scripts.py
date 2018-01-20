@@ -137,13 +137,13 @@ def roundpath_to_waveguide(verbose=False):
     if verbose:
       print("Nothing selected.  Automatically selecting waveguides.")
     # find all instances, specifically, Waveguides:
-    for inst in topcell.each_inst():
+    for inst in cell.each_inst():
       if verbose:
         print("Cell: %s" % (inst.cell.basic_name() ) )
       if inst.cell.basic_name() in Waveguide_Types:
         n = len(object_selection)
         object_selection.append( pya.ObjectInstPath() )
-        object_selection[n].top = topcell.cell_index()
+        object_selection[n].top = cell.cell_index()
         object_selection[n].append_path(pya.InstElement.new(inst))
     # Select the newly added objects
     lv.object_selection = object_selection
