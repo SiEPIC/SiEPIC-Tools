@@ -13,7 +13,8 @@ export SRC=$HOME/Documents/GitHub
 export DEST=$HOME/.klayout
 export INTC=$HOME/.config/Lumerical
 
-ln -s $SRC/SiEPIC-Tools/klayout_dot_config/pymacros $DEST/pymacros/SiEPIC-Tools
+mkdir $DEST/pymacros/SiEPIC-Tools
+ln -s $SRC/SiEPIC-Tools/klayout_dot_config/pymacros/* $DEST/pymacros/SiEPIC-Tools/
 ln -s $SRC/SiEPIC-Tools/klayout_dot_config/python/* $DEST/python/
 mkdir $DEST/tech
 ln -s $SRC/SiEPIC-Tools/klayout_dot_config/tech/* $DEST/tech/
