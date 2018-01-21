@@ -186,11 +186,11 @@ class Waveguide(PCellDeclarationHelper):
       pt3=pts[0] + Point(-self.width/dbu,0)
       
     t = Trans(angle, False, pts[0]) 
-    text = Text ('Lumerical_INTERCONNECT_library=Design kits/ebeam', t, 0.1/dbu, -1)
+    text = Text ('Lumerical_INTERCONNECT_library=Design kits/GSiP', t, 0.1/dbu, -1)
     text.halign=halign
     shape = self.cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt2)
-    text = Text ('Component=ebeam_wg_integral_1550', t, 0.1/dbu, -1)
+    text = Text ('Component=wg_strip_integral_1550', t, 0.1/dbu, -1)
     text.halign=halign
     shape = self.cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt3)
