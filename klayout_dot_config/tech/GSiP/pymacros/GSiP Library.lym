@@ -272,7 +272,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
 
   def display_text_impl(self):
     # Provide a descriptive text for the cell
-    return "Ring_Modulator_DB(R=" + ('%.3f' % self.r) + ",g=" + ('%g' % (1000*self.g)) + ")"
+    return "Ring_Modulator_DB(R=" + ('%.3f' % self.r) + ",g=" + ('%g' % (1000*self.g)) + ",gmon=" + ('%g' % (1000*self.gmon)) + ")"
 
   def can_create_from_shape_impl(self):
     return False
@@ -564,7 +564,7 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
 
   def display_text_impl(self):
     # Provide a descriptive text for the cell
-    return "Ring_Filter_DB(R=" + ('%.3f' % self.r) + ",g=" + ('%g' % (1000*self.g)) + ")"
+    return "Ring_Filter_DB(R=" + ('%.3f' % self.r) + ",g=" + ('%g' % (1000*self.g)) + ",gmon=" + ('%g' % (1000*self.gmon)) + ")"
 
   def can_create_from_shape_impl(self):
     return False
