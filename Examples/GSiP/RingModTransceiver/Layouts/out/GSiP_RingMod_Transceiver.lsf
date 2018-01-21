@@ -1,0 +1,16 @@
+switchtolayout;
+deleteall;
+importnetlist("/var/folders/n8/z66379sd1n536hrnmp1h1xsh0000gs/T/tmp3rpzJu/GSiP_RingMod_Transceiver_main.spi");
+addproperty("::Root Element::GSiP_RingMod_Transceiver", "MC_uniformity_thickness", "wafer", "Matrix");
+addproperty("::Root Element::GSiP_RingMod_Transceiver", "MC_uniformity_width", "wafer", "Matrix");
+addproperty("::Root Element::GSiP_RingMod_Transceiver", "MC_grid", "wafer", "Number");
+addproperty("::Root Element::GSiP_RingMod_Transceiver", "MC_resolution_x", "wafer", "Number");
+addproperty("::Root Element::GSiP_RingMod_Transceiver", "MC_resolution_y", "wafer", "Number");
+addproperty("::Root Element::GSiP_RingMod_Transceiver", "MC_non_uniform", "wafer", "Number");
+select("::Root Element::GSiP_RingMod_Transceiver");
+set("run setup script",2);
+save("/var/folders/n8/z66379sd1n536hrnmp1h1xsh0000gs/T/tmp3rpzJu/GSiP_RingMod_Transceiver.icp");
+run;
+t1 = getresult("ONA_1", "input 1/mode 1/gain");
+t2 = getresult("ONA_1", "input 2/mode 1/gain");
+visualize(t1, t2);

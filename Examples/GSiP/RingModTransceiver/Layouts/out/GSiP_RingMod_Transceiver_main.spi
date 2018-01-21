@@ -1,0 +1,58 @@
+* Spice output from KLayout SiEPIC-Tools v0.3.12, 2018-01-21 12:18:56.
+
+* Optical Network Analyzer:
+.ona input_unit=wavelength input_parameter=start_and_stop
+  + minimum_loss=80
+  + analysis_type=scattering_data
+  + multithreading=user_defined number_of_threads=1
+  + orthogonal_identifier=1
+  + start=1500.000e-9
+  + stop=1600.000e-9
+  + number_of_points=2000
+  + input(1)=GSiP_RingMod_Transceiver,edgecoupler_1550_detector3
+  + input(2)=GSiP_RingMod_Transceiver,edgecoupler_1550_detector2
+  + output=GSiP_RingMod_Transceiver,edgecoupler_1550_laser1
+GSiP_RingMod_Transceiver  Ring_Modulator_DB_1_elec1a Ring_Modulator_DB_1_elec1c Ring_Modulator_DB_1_elec2h1 Ring_Modulator_DB_1_elec2h2 Ring_Modulator_DB_2_elec1a Ring_Modulator_DB_2_elec1c Ring_Modulator_DB_2_elec2h1 Ring_Modulator_DB_2_elec2h2 Ring_Modulator_DB_3_elec1a Ring_Modulator_DB_3_elec1c Ring_Modulator_DB_3_elec2h1 Ring_Modulator_DB_3_elec2h2 Ring_Modulator_DB_4_elec1a Ring_Modulator_DB_4_elec1c Ring_Modulator_DB_4_elec2h1 Ring_Modulator_DB_4_elec2h2 Detector_Ge_floating_4_elecN Detector_Ge_floating_4_elecP Detector_Ge_floating_5_elecN Detector_Ge_floating_5_elecP Detector_Ge_floating_6_elecN Detector_Ge_floating_6_elecP Detector_Ge_floating_7_elecN Detector_Ge_floating_7_elecP Ring_Filter_DB_3_elec2h1 Ring_Filter_DB_3_elec2h2 Ring_Filter_DB_4_elec2h1 Ring_Filter_DB_4_elec2h2 Ring_Filter_DB_2_elec2h1 Ring_Filter_DB_2_elec2h2 Ring_Filter_DB_1_elec2h1 Ring_Filter_DB_1_elec2h2 Detector_Ge_floating_27_elecN Detector_Ge_floating_27_elecP Detector_Ge_floating_28_elecN Detector_Ge_floating_28_elecP Detector_Ge_floating_29_elecN Detector_Ge_floating_29_elecP Detector_Ge_floating_30_elecN Detector_Ge_floating_30_elecP  edgecoupler_1550_laser1 edgecoupler_1550_detector3 edgecoupler_1550_detector2 GSiP_RingMod_Transceiver sch_x=-1 sch_y=-1 sch_r=270
+
+N1 Ring_Modulator_DB_1_elec1a dcsource amplitude=0 sch_x=-2.33333333333 sch_y=-1.875
+N2 Ring_Modulator_DB_1_elec1c dcsource amplitude=0 sch_x=-2.66666666667 sch_y=-1.75
+N3 Ring_Modulator_DB_1_elec2h1 dcsource amplitude=0 sch_x=-3.0 sch_y=-1.625
+N4 Ring_Modulator_DB_1_elec2h2 dcsource amplitude=0 sch_x=-3.33333333333 sch_y=-1.5
+N5 Ring_Modulator_DB_2_elec1a dcsource amplitude=0 sch_x=-3.66666666667 sch_y=-1.375
+N6 Ring_Modulator_DB_2_elec1c dcsource amplitude=0 sch_x=-4.0 sch_y=-1.25
+N7 Ring_Modulator_DB_2_elec2h1 dcsource amplitude=0 sch_x=-4.33333333333 sch_y=-1.125
+N8 Ring_Modulator_DB_2_elec2h2 dcsource amplitude=0 sch_x=-4.66666666667 sch_y=-1.0
+N9 Ring_Modulator_DB_3_elec1a dcsource amplitude=0 sch_x=-5.0 sch_y=-0.875
+N10 Ring_Modulator_DB_3_elec1c dcsource amplitude=0 sch_x=-5.33333333333 sch_y=-0.75
+N11 Ring_Modulator_DB_3_elec2h1 dcsource amplitude=0 sch_x=-5.66666666667 sch_y=-0.625
+N12 Ring_Modulator_DB_3_elec2h2 dcsource amplitude=0 sch_x=-6.0 sch_y=-0.5
+N13 Ring_Modulator_DB_4_elec1a dcsource amplitude=0 sch_x=-6.33333333333 sch_y=-0.375
+N14 Ring_Modulator_DB_4_elec1c dcsource amplitude=0 sch_x=-6.66666666667 sch_y=-0.25
+N15 Ring_Modulator_DB_4_elec2h1 dcsource amplitude=0 sch_x=-7.0 sch_y=-0.125
+N16 Ring_Modulator_DB_4_elec2h2 dcsource amplitude=0 sch_x=-7.33333333333 sch_y=0.0
+N17 Detector_Ge_floating_4_elecN dcsource amplitude=0 sch_x=-7.66666666667 sch_y=0.125
+N18 Detector_Ge_floating_4_elecP dcsource amplitude=0 sch_x=-8.0 sch_y=0.25
+N19 Detector_Ge_floating_5_elecN dcsource amplitude=0 sch_x=-8.33333333333 sch_y=0.375
+N20 Detector_Ge_floating_5_elecP dcsource amplitude=0 sch_x=-8.66666666667 sch_y=0.5
+N21 Detector_Ge_floating_6_elecN dcsource amplitude=0 sch_x=-9.0 sch_y=0.625
+N22 Detector_Ge_floating_6_elecP dcsource amplitude=0 sch_x=-9.33333333333 sch_y=0.75
+N23 Detector_Ge_floating_7_elecN dcsource amplitude=0 sch_x=-9.66666666667 sch_y=0.875
+N24 Detector_Ge_floating_7_elecP dcsource amplitude=0 sch_x=-10.0 sch_y=1.0
+N25 Ring_Filter_DB_3_elec2h1 dcsource amplitude=0 sch_x=-10.3333333333 sch_y=1.125
+N26 Ring_Filter_DB_3_elec2h2 dcsource amplitude=0 sch_x=-10.6666666667 sch_y=1.25
+N27 Ring_Filter_DB_4_elec2h1 dcsource amplitude=0 sch_x=-11.0 sch_y=1.375
+N28 Ring_Filter_DB_4_elec2h2 dcsource amplitude=0 sch_x=-11.3333333333 sch_y=1.5
+N29 Ring_Filter_DB_2_elec2h1 dcsource amplitude=0 sch_x=-11.6666666667 sch_y=1.625
+N30 Ring_Filter_DB_2_elec2h2 dcsource amplitude=0 sch_x=-12.0 sch_y=1.75
+N31 Ring_Filter_DB_1_elec2h1 dcsource amplitude=0 sch_x=-12.3333333333 sch_y=1.875
+N32 Ring_Filter_DB_1_elec2h2 dcsource amplitude=0 sch_x=-12.6666666667 sch_y=2.0
+N33 Detector_Ge_floating_27_elecN dcsource amplitude=0 sch_x=-13.0 sch_y=2.125
+N34 Detector_Ge_floating_27_elecP dcsource amplitude=0 sch_x=-13.3333333333 sch_y=2.25
+N35 Detector_Ge_floating_28_elecN dcsource amplitude=0 sch_x=-13.6666666667 sch_y=2.375
+N36 Detector_Ge_floating_28_elecP dcsource amplitude=0 sch_x=-14.0 sch_y=2.5
+N37 Detector_Ge_floating_29_elecN dcsource amplitude=0 sch_x=-14.3333333333 sch_y=2.625
+N38 Detector_Ge_floating_29_elecP dcsource amplitude=0 sch_x=-14.6666666667 sch_y=2.75
+N39 Detector_Ge_floating_30_elecN dcsource amplitude=0 sch_x=-15.0 sch_y=2.875
+N40 Detector_Ge_floating_30_elecP dcsource amplitude=0 sch_x=-15.3333333333 sch_y=3.0
+.INCLUDE "/var/folders/n8/z66379sd1n536hrnmp1h1xsh0000gs/T/tmp3rpzJu/GSiP_RingMod_Transceiver.spi"
+
