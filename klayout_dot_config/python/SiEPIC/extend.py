@@ -910,10 +910,12 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   electricalIO_pins = ""
   DCsources = "" # string to create DC sources for each pin
   Vn = 1
-  SINGLE_DC_SOURCE = 2
+  SINGLE_DC_SOURCE = 3
   # (1) attach all electrical pins to the same DC source
   # (2) or to individual DC sources
   # (3) or choose based on number of DC sources, if > 5, use single DC source
+  
+  # create individual sources:
   for c in components:
     for p in c.pins:
       if p.type == _globals.PIN_TYPES.ELECTRICAL:
@@ -922,16 +924,16 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
         DCsources += "N" + str(Vn) + NetName + " dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/10., -2+Vn/8.)
         Vn += 1
   electricalIO_pins_subckt = electricalIO_pins
-
-  if (SINGLE_DC_SOURCE == 1) or ( (SINGLE_DC_SOURCE == 2) and (Vn > 5)):
+  
+  # create 1 source
+  if (SINGLE_DC_SOURCE == 1) or ( (SINGLE_DC_SOURCE == 3) and (Vn > 5)):
     electricalIO_pins_subckt = ""
     for c in components:
       for p in c.pins:
         if p.type == _globals.PIN_TYPES.ELECTRICAL:
-          NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
+          NetName = " N$"
           electricalIO_pins_subckt += NetName
           DCsources = "N1" + NetName + " dcsource amplitude=0 sch_x=-2 sch_y=0\n"
-
 
   # find optical IO pins
   opticalIO_pins=''
