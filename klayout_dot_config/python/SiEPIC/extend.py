@@ -910,7 +910,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   electricalIO_pins = ""
   DCsources = "" # string to create DC sources for each pin
   Vn = 1
-  SINGLE_DC_SOURCE = 3
+  SINGLE_DC_SOURCE = 2
   # (1) attach all electrical pins to the same DC source
   # (2) or to individual DC sources
   # (3) or choose based on number of DC sources, if > 5, use single DC source
