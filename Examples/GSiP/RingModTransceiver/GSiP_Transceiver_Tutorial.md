@@ -117,6 +117,19 @@
 	* <img src="img/10d.png" width="100%">
 
 
+### Frequency domain analysis
 
+* menu SiEPIC | Simulation | Circuit Simulation: Lumerical INTERCONNECT
 
+	* Observe the transmission spectrum of the chip
 
+	* <img src="img/11.png" width="100%">
+
+### Time domain analysis
+
+* Characterize the transceiver in the time domain:
+
+	* In INTERCONNECT, open the LSF file: GSiP_RingMod_Transceiver_Analysis_TimeDomain.lsf
+	* This file adds voltage sources, four pattern generators, four lasers combined into a single input, and oscilloscopes.
+	* Run the LSF file
+	* <img src="img/12.png" width="100%">
