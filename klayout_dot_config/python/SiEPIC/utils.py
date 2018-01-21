@@ -323,7 +323,10 @@ def selected_opt_in_text():
   
   
 #Return all selected paths. If nothing is selected, select paths automatically
-def select_paths(layer, cell = None):
+def select_paths(layer, cell = None, verbose=None):
+  if verbose:
+    print ("SiEPIC.utils.select_paths: layer: %s" % layer)
+
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
     raise Exception("No view selected")
@@ -342,7 +345,11 @@ def select_paths(layer, cell = None):
   if selection == []:
     itr = cell.begin_shapes_rec(ly.layer(layer))
     while not(itr.at_end()):
+      if verbose:
+        print ("SiEPIC.utils.select_paths: itr: %s" % itr)
       if itr.shape().is_path():
+        if verbose:
+          print ("SiEPIC.utils.select_paths: path: %s" % itr.shape())
         selection.append(pya.ObjectInstPath())
         selection[-1].layer = ly.layer(layer)
         selection[-1].shape = itr.shape()
@@ -352,7 +359,8 @@ def select_paths(layer, cell = None):
     lv.object_selection = selection
   else:
     lv.object_selection = [o for o in selection if (not o.is_cell_inst()) and o.shape.is_path()]
-    
+  if verbose:
+    print ("SiEPIC.utils.select_paths: selection: %s" % lv.object_selection)
   return lv.object_selection
   
 #Return all selected waveguides. If nothing is selected, select waveguides automatically
