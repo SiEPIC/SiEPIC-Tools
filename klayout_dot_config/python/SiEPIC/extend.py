@@ -333,7 +333,7 @@ Electrical Pins have:
  1) box on layer PinRec
  2) text on layer PinRec, inside the box
 '''
-def find_pins(self, verbose=True, polygon_devrec=None):
+def find_pins(self, verbose=False, polygon_devrec=None):
   if verbose:
     print("SiEPIC.extend.find_pins()")
 
@@ -485,6 +485,7 @@ def find_components(self, verbose=False, cell_selected=None):
   
   while not(iter1.at_end()):
     idx = len(components) # component index value to be assigned to Component.idx
+    component_ID = idx
     subcell = iter1.cell() # cell (component) to which this shape belongs
     if cell_selected and not subcell in cell_selected:
       # check if subcell is one of the arguments to this function: cell_selected
@@ -523,6 +524,7 @@ def find_components(self, verbose=False, cell_selected=None):
         # for flat layout... check within the DevRec shape.
         iter2 = subcell.begin_shapes_rec(LayerDevRecN)
         spice_params = ""
+        library = None
         while not(iter2.at_end()):
           if iter2.shape().is_text():
             text = iter2.shape().text
@@ -534,6 +536,10 @@ def find_components(self, verbose=False, cell_selected=None):
               component = text.string[len("Lumerical_INTERCONNECT_component="):]
             if text.string.find("Component=") > -1:
               component = text.string[len("Component="):]
+            if text.string.find("Component_ID=") > -1:
+              cID = int(text.string[len("Component_ID="):]) 
+              if cID > 0:
+                component_ID = cID
             if text.string.find("Spice_param:") > -1:
               spice_params = text.string[len("Spice_param:"):]
           iter2.next()
@@ -542,7 +548,7 @@ def find_components(self, verbose=False, cell_selected=None):
             print("Missing library information for component: %s" % component )
   
         # Save the component into the components list      
-        components.append(Component(idx=idx, \
+        components.append(Component(idx=component_ID, \
            component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon, DevRec_polygon = DevRec_polygon, cell=subcell, basic_name=subcell.basic_name()) )
   
         # find the component pins, and Sort by pin text labels

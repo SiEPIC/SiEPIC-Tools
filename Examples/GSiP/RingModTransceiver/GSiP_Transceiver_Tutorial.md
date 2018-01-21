@@ -108,7 +108,7 @@
 		
 	* <img src="img/10b.png" width="100%">
 
-	* Next the ring modulators are connected to RF pads:
+	* Next the ring modulators are connected to RF pads. Each modulator is manually assigned a unique Component_ID so we can identify it in the schematic.
 	
 	* <img src="img/10c.png" width="100%">
 
