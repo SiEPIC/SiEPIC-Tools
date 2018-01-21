@@ -15,7 +15,7 @@ lambda4 = 1554.82e-9+dlambda;
 Vh = 0.5; # heater voltage for modulator; 
 
  
- BITRATE = 1.5e10;
+ BITRATE = 0.5e10;	#Changed
  sequence_length = 64;
  SPB = 512; 
  f0 = c/1550e-9; 
@@ -85,14 +85,14 @@ connect("SPLT_1", "port 1", "GSiP_RingMod_Transceiver", "edgecoupler_1550_laser1
 addelement("DC source"); set("x position", -360); set("y position", 70);
 addelement("DC source"); set("x position", -360); set("y position", 170);
 set("amplitude", Vh);
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_21_elec2h2");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_21_elec2h1");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_22_elec2h2");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_22_elec2h1");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_25_elec2h2");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_25_elec2h1");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_26_elec2h2");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_26_elec2h1");
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_1_elec2h2"); #Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_1_elec2h1"); #Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_2_elec2h2"); #Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_2_elec2h1"); #Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_4_elec2h2"); #Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_4_elec2h1"); #Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_3_elec2h2"); #Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Filter_DB_3_elec2h1"); #Changed
  
 connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Detector_Ge_floating_7_elecP");
 connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Detector_Ge_floating_7_elecN");
@@ -103,9 +103,9 @@ connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Detector_Ge_floating_5_el
 connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Detector_Ge_floating_4_elecP");
 connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Detector_Ge_floating_4_elecN");
 
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_0_elec1a");
-connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_0_elec2h1");
-connect("DC_2", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_0_elec2h2");
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_4_elec1a"); 	#Changed
+connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_4_elec2h1");	#Changed
+connect("DC_2", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_4_elec2h2");	#Changed
 
 connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_1_elec1a");
 connect("DC_1", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_1_elec2h1");
@@ -139,7 +139,7 @@ connect("PRBS_2", "output", "NRZ_2", "modulation");
 connect("PRBS_3", "output", "NRZ_3", "modulation");
 connect("PRBS_4", "output", "NRZ_4", "modulation");
 
-connect("NRZ_4", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_0_elec1c");
+connect("NRZ_4", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_4_elec1c");	#Changed
 connect("NRZ_3", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_1_elec1c");
 connect("NRZ_2", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_2_elec1c");
 connect("NRZ_1", "output", "GSiP_RingMod_Transceiver", "Ring_Modulator_DB_3_elec1c");
