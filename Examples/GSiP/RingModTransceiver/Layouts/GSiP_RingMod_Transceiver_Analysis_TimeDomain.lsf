@@ -159,31 +159,31 @@ connect("LPF_4", "input", "GSiP_RingMod_Transceiver", "Detector_Ge_floating_7_el
 addelement("::analyzers::electrical::oscilloscope"); set("x position", 750); set("y position", 200);
 addelement("::analyzers::electrical::eye diagram"); set("x position", 750); set("y position", 100);
 set("signal reference input", false); 
+set('calculate measurements',true);
 
 addelement("::analyzers::electrical::oscilloscope"); set("x position", 850); set("y position", 0);
 addelement("::analyzers::electrical::eye diagram"); set("x position", 850); set("y position", -100);
 set("signal reference input", false); 
+set('calculate measurements',true);
 
 addelement("::analyzers::electrical::oscilloscope"); set("x position", 950); set("y position", -200);
 addelement("::analyzers::electrical::eye diagram"); set("x position", 950); set("y position", -300);
 set("signal reference input", false); 
+set('calculate measurements',true);
 
 addelement("::analyzers::electrical::oscilloscope"); set("x position", 1050); set("y position", -400);
 addelement("::analyzers::electrical::eye diagram"); set("x position", 1050); set("y position", -500);
 set("signal reference input", false); 
+set('calculate measurements',true);
 
 connect("OSC_1", "input", "LPF_4", "output");
 connect("EYE_1", "input", "LPF_4", "output");
-set('calculate measurements',true);
 connect("OSC_2", "input", "LPF_3", "output");
 connect("EYE_2", "input", "LPF_3", "output");
-set('calculate measurements',true);
 connect("OSC_3", "input", "LPF_2", "output");
 connect("EYE_3", "input", "LPF_2", "output");
-set('calculate measurements',true);
 connect("OSC_4", "input", "LPF_1", "output");
 connect("EYE_4", "input", "LPF_1", "output");
-set('calculate measurements',true);
 
 
 addelement("::analyzers::optical::optical oscilloscope"); set("x position", 500); set("y position", -800);
