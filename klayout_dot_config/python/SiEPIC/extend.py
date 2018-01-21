@@ -921,7 +921,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
       if p.type == _globals.PIN_TYPES.ELECTRICAL:
         NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
         electricalIO_pins += NetName
-        DCsources += "N" + str(Vn) + NetName + " dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/10., -2+Vn/8.)
+        DCsources += "N" + str(Vn) + NetName + " dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/3., -2+Vn/8.)
         Vn += 1
   electricalIO_pins_subckt = electricalIO_pins
   

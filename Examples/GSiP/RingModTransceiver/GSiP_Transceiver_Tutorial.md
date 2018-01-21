@@ -62,6 +62,7 @@
 
 
 
+## Ring Filter Analysis
 
 ### Layout: GSiP_4_RingFilter_gds
 
@@ -85,3 +86,37 @@
 	* <img src="img/8.png" width="50%">
 
 * The ring resonator peaks should match the wavelengths set on the transmitter and the CW laser.
+
+* If the receiver doesn't match the transmitter, we need to characterize the filters versus the heater current:
+
+	* In INTERCONNECT, open the LSF file: GSiP_4_RingFilter_Analysis_DC.lsf
+	* Choose the voltages in amplitude_values.
+	* Run the LSF file
+	* Determine the appropriate heater voltage so that the ring modulator matches the ring filter
+
+## Transceiver Analysis
+
+### Layout: GSiP_RingMod_Transceiver_gds
+
+* Open the layout using KLayout, with the SiEPIC-Tools package installed
+
+	* The layout consists of a transmitter (left) and a receiver (right):
+	
+	* <img src="img/10a.png" width="100%">
+
+	* The transmitter begins with an edge coupler for the laser input. Next are DC monitor detectors to measure the modulator performance using DC electrical pads, as well as DC pads for thermal tuning of the ring modulator:
+		
+	* <img src="img/10b.png" width="100%">
+
+	* Next the ring modulators are connected to RF pads:
+	
+	* <img src="img/10c.png" width="100%">
+
+	* And the receiver, consists of 4 ring filters, each connected to a high-speed photodetector and RF electrical pads. The filters are connected to DC pads for tuning.
+
+	* <img src="img/10d.png" width="100%">
+
+
+
+
+
