@@ -887,7 +887,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   # Determine the Layout-to-Schematic (x,y) coordinate scaling       
   # Find the distances between all the components, in order to determine scaling
   sch_positions = [o.Dcenter for o in components]
-  sch_distances = [1e6]
+  sch_distances = []
   for j in range(len(sch_positions)):
     for k in range(j+1,len(sch_positions)):
       dist = (sch_positions[j] - sch_positions[k]).abs()
@@ -898,9 +898,10 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   # remove any 0 distances:
   while 0.0 in sch_distances: sch_distances.remove(0.0)
   # scaling based on nearest neighbour:
-  Lumerical_schematic_scaling = 0.0006 / min(sch_distances)
+  Lumerical_schematic_scaling = 0.6 / min(sch_distances)
+  print ("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
   # but if the layout is too big, limit the size
-  MAX_size = 0.05
+  MAX_size = 0.05*1e3
   if max(sch_distances)*Lumerical_schematic_scaling > MAX_size:
     Lumerical_schematic_scaling = MAX_size / max(sch_distances) 
   print ("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
