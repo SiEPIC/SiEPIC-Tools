@@ -9,17 +9,17 @@
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
  <shortcut/>
- <show-in-menu>true</show-in-menu>
+ <show-in-menu>false</show-in-menu>
  <group-name/>
  <menu-path>siepic_menu.layout.begin</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function
-# SiEPIC Compute Areas
+# SiEPIC Calculate Areas
 
 import pya
 from SiEPIC import scripts
 
-scripts.compute_area()
+scripts.calculate_area()
 </text>
 </klayout-macro>
