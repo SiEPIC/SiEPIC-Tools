@@ -308,10 +308,10 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
 
     # Define variables for the Modulator
     # Variables for the Si waveguide
-    w = self.w/dbu
-    r = self.r/dbu
-    g = self.g/dbu
-    gmon = self.gmon/dbu
+    w = round(self.w/dbu)
+    r = round(self.r/dbu)
+    g = round(self.g/dbu)
+    gmon = round(self.gmon/dbu)
     
     #Variables for the N layer
     w_1 = 2.0/dbu  #same for N, P, N+, P+ layer
@@ -596,10 +596,10 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     
     # Define variables for the Modulator
     # Variables for the Si waveguide
-    w = self.w/dbu
-    r = self.r/dbu
-    g = self.g/dbu
-    gmon = self.gmon/dbu
+    w = round(self.w/dbu)
+    r = round(self.r/dbu)
+    g = round(self.g/dbu)
+    gmon = round(self.gmon/dbu)
     
     #Variables for the N layer
     w_1 = 2.0/dbu  #same for N, P, N+, P+ layer
