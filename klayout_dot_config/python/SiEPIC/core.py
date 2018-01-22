@@ -160,7 +160,8 @@ class Component():
   def display(self):
     from . import _globals
     c = self
-    text = ("- component: %s-%s / %s, (%s), (%s), npins %s, opt pins %s, elec pins %s, IO pins %s, has compact model: %s" %\
+    c.npins = len(c.pins)
+    text = ("- component: %s-%s / %s; transformation: %s; center position: %s; number of pins: %s; optical pins: %s; electrical pins: %s; optical IO pins: %s; has compact model: %s" %\
       ( c.component, c.idx, c.instance, c.trans, c.Dcenter, c.npins, \
       [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL], \
       [[p.pin_name, p.center.to_s(), p.net.idx] for p in c.pins if p.type == _globals.PIN_TYPES.ELECTRICAL], \

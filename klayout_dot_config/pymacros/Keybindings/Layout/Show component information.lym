@@ -18,22 +18,75 @@
 
 # test for finding Component based on selected object.
 def show_component_info():
+
+  def gen_ui():
+    global wdg_show_component_info
+    if 'wdg_show_component_info' in globals():
+      if wdg_show_component_info is not None and not wdg_show_component_info.destroyed():
+        wdg_show_component_info.destroy()
+    global wtext_show_component_info
+  
+    def button_clicked(checked):
+      """ Event handler: "OK" button clicked """
+      wdg_show_component_info.destroy()
+  
+    wdg_show_component_info = pya.QDialog(pya.Application.instance().main_window())
+  
+    wdg_show_component_info.setAttribute(pya.Qt.WA_DeleteOnClose)
+    wdg_show_component_info.setWindowTitle("SiEPIC-Tools: Information on selected components")
+  
+    wdg_show_component_info.resize(800, 500)
+    wdg_show_component_info.move(1, 1)
+  
+    grid = pya.QGridLayout(wdg_show_component_info)
+  
+    windowlabel1 = pya.QLabel(wdg_show_component_info)
+    windowlabel1.setText("Information on selected components:")
+    wtext_show_component_info = pya.QTextEdit(wdg_show_component_info)
+    wtext_show_component_info.enabled = True
+    wtext_show_component_info.setText('')
+  
+    ok = pya.QPushButton("OK", wdg_show_component_info)
+    ok.clicked(button_clicked)   # attach the event handler
+  
+    grid.addWidget(windowlabel1, 0, 0, 1, 3)
+    grid.addWidget(wtext_show_component_info, 1, 1, 3, 3)
+    grid.addWidget(ok, 4, 3)
+  
+    grid.setRowStretch(3, 1)
+    grid.setColumnStretch(1, 1)
+  
+    wdg_show_component_info.show()
+  
+
   from SiEPIC.utils import select_instances
   selected_instances = select_instances()
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
-  text = 'Information on selected components:\n'
+#  text = 'Information on selected components:&lt;br&gt;&lt;br&gt;'
+  text = ''
   
   for obj in selected_instances:
     print("  selected component: %s" % obj.inst().cell )
     c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
     if c:
-      text += c[0].display()
-      text += '\n'
+      text += c[0].display().replace(';','&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;')
+      if c[0].cell.is_pcell_variant():
+        params = c[0].cell.pcell_parameters_by_name()
+        text += ('PCell parameters:')
+        for key in params.keys():
+          text += ('&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;')
+          text += ("Parameter: %s, Value: %s") % (key, params[key])
+      text += '&lt;br&gt;&lt;br&gt;'
 
 
-  pya.MessageBox.warning("Information on selected components", text, pya.MessageBox.Ok)
+
+#  pya.MessageBox.warning("Information on selected components", text, pya.MessageBox.Ok)
+
+  # Create a GUI for the output:
+  gen_ui()
+  wtext_show_component_info.insertHtml (text)
 
 
 show_component_info()
