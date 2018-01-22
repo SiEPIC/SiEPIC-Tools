@@ -375,7 +375,8 @@ def find_pins(self, verbose=False, polygon_devrec=None):
         iter2.next()
       if pin_name == None:
         print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
-        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
+        pya.MessageBox.warning("Problem with component pin", "Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name), pya.MessageBox.Ok)
+#        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
       # Store the pin information in the pins array
       pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
 
@@ -400,7 +401,8 @@ def find_pins(self, verbose=False, polygon_devrec=None):
           pin_name = iter2.shape().text.string
         iter2.next()
       if pin_name == None:
-        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_box)
+        pya.MessageBox.warning("Problem with component pin", "Invalid pin Box detected: %s, Cell: %s.\nElectrical Pins must have a pin name." % (pin_box, subcell.name), pya.MessageBox.Ok)
+#        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_box)
       pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
       
     it.next()
