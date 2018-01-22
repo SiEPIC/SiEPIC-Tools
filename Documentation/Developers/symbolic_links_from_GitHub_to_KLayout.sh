@@ -19,7 +19,7 @@ ln -s $SRC/SiEPIC-Tools/klayout_dot_config/python/* $DEST/python/
 mkdir $DEST/tech
 ln -s $SRC/SiEPIC-Tools/klayout_dot_config/tech/* $DEST/tech/
 
-ln -s $SRC/SiEPIC-Tools/Lumerical_CML_GSiP/* $INTC/Custom
+ln -s $SRC/SiEPIC-Tools/Lumerical_CML_GSiP/GSiP $INTC/Custom
 
 grep -q -F '[Design%20kits]' $INTC/INTERCONNECT.ini || echo '[Design%20kits]' >> $INTC/INTERCONNECT.ini
 
