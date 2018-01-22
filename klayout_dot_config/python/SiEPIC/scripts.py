@@ -675,11 +675,11 @@ def auto_coord_extract():
   
     ok = pya.QPushButton("OK", wdg)
     ok.clicked(button_clicked)   # attach the event handler
-    netlist = pya.QPushButton("Save", wdg) # not implemented
+#    netlist = pya.QPushButton("Save", wdg) # not implemented
   
     grid.addWidget(windowlabel1, 0, 0, 1, 3)
     grid.addWidget(wtext, 1, 1, 3, 3)
-    grid.addWidget(netlist, 4, 2)
+#    grid.addWidget(netlist, 4, 2)
     grid.addWidget(ok, 4, 3)
   
     grid.setRowStretch(3, 1)
