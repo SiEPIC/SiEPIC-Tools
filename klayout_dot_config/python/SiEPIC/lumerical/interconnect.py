@@ -183,7 +183,7 @@ def INTC_commandline(filename2):
         subprocess.Popen(args=[path, '-run', filename2], shell=True)
 
 
-def component_simulation(verbose=False):
+def component_simulation(verbose=False, simulate=True):
   import sys, os, string
   from .. import _globals
 
@@ -317,19 +317,24 @@ def component_simulation(verbose=False):
     if verbose:
       print(text_lsf)
     
-    # Run using Python integration:
-    try: 
-      from .. import _globals
-      run_INTC()
+    if simulate:
       # Run using Python integration:
-      lumapi = _globals.LUMAPI
-      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, c.component + ";")
-    except:
-      INTC_commandline(filename)
+      try: 
+        from .. import _globals
+        run_INTC()
+        # Run using Python integration:
+        lumapi = _globals.LUMAPI
+        lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+        lumapi.evalScript(_globals.INTC, c.component + ";")
+      except:
+        from .. import scripts
+        scripts.open_folder(tmp_folder)
+        INTC_commandline(filename)
+    else:
+      from .. import scripts
+      scripts.open_folder(tmp_folder)
 
-
-def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[]):
+def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True):
   if verbose:
     print('*** circuit_simulation()')
   
@@ -445,16 +450,22 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   if verbose:
     print(text_lsf)
 
-  # Run using Python integration:
-  try: 
-    from .. import _globals
-    run_INTC()
+  if simulate:
     # Run using Python integration:
-    lumapi = _globals.LUMAPI
-    lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-    lumapi.evalScript(_globals.INTC, topcell.name + ";")
-  except:
-    INTC_commandline(filename)
+    try: 
+      from .. import _globals
+      run_INTC()
+      # Run using Python integration:
+      lumapi = _globals.LUMAPI
+      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+      lumapi.evalScript(_globals.INTC, topcell.name + ";")
+    except:
+      from .. import scripts
+      scripts.open_folder(tmp_folder)
+      INTC_commandline(filename)
+  else:
+    from .. import scripts
+    scripts.open_folder(tmp_folder)
     
   if verbose:
     print('Done Lumerical INTERCONNECT circuit simulation.')
