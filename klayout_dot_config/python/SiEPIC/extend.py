@@ -847,6 +847,9 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   # get the netlist from the entire layout
   nets, components = self.identify_nets ()
 
+  if not components:
+    return '', '', 0
+
   # Get information about the laser and detectors:
   # this updates the Optical IO Net
   laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
@@ -870,6 +873,9 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
 
   from .scripts import trim_netlist
   nets, components = trim_netlist (nets, components, laser_component[0])
+  
+  if not components:
+    return '', '', 0
   
 
   if verbose:
@@ -1090,22 +1096,25 @@ pya.Instance.find_pins = find_pins
 #                    SiEPIC Class Extension of Point Class                      #
 #################################################################################
 
+# multiply an integer Point by a constant to get a float DPoint
+# new DPoint = Point.to_dtype(TECHNOLOGY['dbu'])
+def to_dtype(self,dbu):
+  # create a new empty list.  Otherwise, this function would modify the original list
+  # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
+  return pya.DPoint(self.x / (1/dbu), self.y / (1/dbu))
+  # > 15950 * 0.001 = 15.950000000000001
+  # > 15950 / (1/ 0.001) = 15.95
+
+def to_itype(self,dbu):
+  # create a new empty list.  Otherwise, this function would modify the original list
+  # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
+  return pya.Point(self.x / (dbu), self.y / (dbu))
+
+# *** Required for two Windows computers, but not others. Unknown.
+pya.Point.to_dtype = to_itype
+
 # in v > 0.24, these are built-in to KLayout
 if int(pya.Application.instance().version().split('.')[1]) < 25:
-  # multiply an integer Point by a constant to get a float DPoint
-  # new DPoint = Point.to_dtype(TECHNOLOGY['dbu'])
-  def to_dtype(self,dbu):
-    # create a new empty list.  Otherwise, this function would modify the original list
-    # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
-    return pya.DPoint(self.x / (1/dbu), self.y / (1/dbu))
-    # > 15950 * 0.001 = 15.950000000000001
-    # > 15950 / (1/ 0.001) = 15.95
-
-  def to_itype(self,dbu):
-    # create a new empty list.  Otherwise, this function would modify the original list
-    # http://stackoverflow.com/questions/240178/python-list-of-lists-changes-reflected-across-sublists-unexpectedly
-    return pya.Point(self.x / (dbu), self.y / (dbu))
-
 
   def to_p(self):
     return self
