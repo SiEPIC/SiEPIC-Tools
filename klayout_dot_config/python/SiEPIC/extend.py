@@ -565,7 +565,7 @@ def find_components(self, verbose=False, cell_selected=None):
            component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon, DevRec_polygon = DevRec_polygon, cell=subcell, basic_name=subcell.basic_name()) )
   
         # find the component pins, and Sort by pin text labels
-        pins = sorted(subcell.find_pins_component(components[-1]), key=lambda  p: p.pin_name)
+        pins = sorted(subcell.find_pins_component(components[-1]), key=lambda  p:  '' if p.pin_name==None else p.pin_name)
   
         # find_pins returns pin locations within the subcell; transform to the top cell:
         [p.transform(iter1.trans()) for p in pins]
