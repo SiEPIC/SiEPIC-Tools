@@ -353,6 +353,8 @@ def find_pins(self, verbose=False, polygon_devrec=None):
   # Pin Recognition layer
   LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
 
+  error_text = ''
+
   # iterate through all the PinRec shapes in the cell
   it = self.begin_shapes_rec(LayerPinRecN)
   while not(it.at_end()):
@@ -375,7 +377,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
         iter2.next()
       if pin_name == None:
         print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
-        pya.MessageBox.warning("Problem with component pin", "Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name), pya.MessageBox.Ok)
+        error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name." % (pin_path, subcell.name))
 #        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
       # Store the pin information in the pins array
       pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
@@ -401,7 +403,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
           pin_name = iter2.shape().text.string
         iter2.next()
       if pin_name == None:
-        pya.MessageBox.warning("Problem with component pin", "Invalid pin Box detected: %s, Cell: %s.\nElectrical Pins must have a pin name." % (pin_box, subcell.name), pya.MessageBox.Ok)
+        error_text += ("Invalid pin Box detected: %s, Cell: %s, Electrical Pins must have a pin name." % (pin_box, subcell.name))
 #        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_box)
       pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
       
@@ -421,6 +423,10 @@ def find_pins(self, verbose=False, polygon_devrec=None):
          pin_name=self.basic_name().replace(' ', '_')))
 #         pin_name=it.cell().basic_name())) # 'OpticalFibre 9micron'
     it.next()
+
+  if error_text:
+    pya.MessageBox.warning("Problem with component pin", error_text, pya.MessageBox.Ok)
+
 
   # return the array of pins
   return pins
