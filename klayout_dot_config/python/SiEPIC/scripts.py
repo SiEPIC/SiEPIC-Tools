@@ -903,7 +903,7 @@ def layout_check(cell = None, verbose=False):
     # basic_name is assigned in Cell.find_components, by reading the PCell parameter
     # if the layout is flattened, we don't have an easy way to get the path
     # it could be done perhaps as a parameter (points)
-    if c.basic_name == "Waveguide":
+    if c.basic_name == "Waveguide" and c.cell.is_pcell_variant():
       Dpath =  c.cell.pcell_parameters_by_name()['path']
       radius = c.cell.pcell_parameters_by_name()['radius']
       if verbose:
