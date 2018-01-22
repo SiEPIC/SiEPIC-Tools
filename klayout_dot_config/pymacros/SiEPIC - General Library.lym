@@ -65,6 +65,9 @@ class Waveguide(PCellDeclarationHelper):
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from math import cos, sin, pi, sqrt
     import pya
+    from SiEPIC.extend import to_dbu, from_dbu
+    
+    print("SiEPIC General.Waveguide")
     
     TECHNOLOGY = get_technology()
     
@@ -77,8 +80,8 @@ class Waveguide(PCellDeclarationHelper):
     for lr in range(0, len(self.layers)):
       layer = self.layout.layer(TECHNOLOGY[self.layers[lr]])
       
-      width = float(self.widths[lr])/dbu
-      offset = float(self.offsets[lr])/dbu
+      width = round(float(self.widths[lr])/dbu)
+      offset = round(float(self.offsets[lr])/dbu)
 
       pts = path.get_points()
       wg_pts = [pts[0]]
@@ -119,11 +122,11 @@ class Waveguide(PCellDeclarationHelper):
     LayerPinRecN = self.layout.layer(TECHNOLOGY['PinRec'])
     
     t1 = Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
-    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], self.width/dbu).transformed(t1))
+    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], round(self.width/dbu)).transformed(t1))
     self.cell.shapes(LayerPinRecN).insert(Text("pin1", t1, 0.3/dbu, -1))
     
     t = Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
-    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], self.width/dbu).transformed(t))
+    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], round(self.width/dbu)).transformed(t))
     self.cell.shapes(LayerPinRecN).insert(Text("pin2", t, 0.3/dbu, -1))
 
     LayerDevRecN = self.layout.layer(TECHNOLOGY['DevRec'])

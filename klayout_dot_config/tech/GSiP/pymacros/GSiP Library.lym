@@ -95,11 +95,16 @@ class Waveguide(PCellDeclarationHelper):
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from math import cos, sin, pi, sqrt
     import pya
+    from SiEPIC.extend import to_itype
     
+    print("GSiP.Waveguide")
+
     TECHNOLOGY = get_technology_by_name('GSiP')
     
     dbu = self.layout.dbu
-    path = self.path*(1/dbu)
+    wg_width = to_itype(self.width,dbu)
+    path = self.path.to_itype(dbu)
+
     if not (len(self.layers)==len(self.widths) and len(self.layers)==len(self.offsets) and len(self.offsets)==len(self.widths)):
       raise Exception("There must be an equal number of layers, widths and offsets")
     path.unique_points()
@@ -107,8 +112,8 @@ class Waveguide(PCellDeclarationHelper):
     for lr in range(0, len(self.layers)):
       layer = self.layout.layer(TECHNOLOGY[self.layers[lr]])
       
-      width = float(self.widths[lr])/dbu
-      offset = float(self.offsets[lr])/dbu
+      width = to_itype(self.widths[lr],dbu)
+      offset = to_itype(self.offsets[lr],dbu)
 
       pts = path.get_points()
       wg_pts = [pts[0]]
@@ -117,7 +122,7 @@ class Waveguide(PCellDeclarationHelper):
         dis1 = pts[i].distance(pts[i-1])
         dis2 = pts[i].distance(pts[i+1])
         angle = angle_vector(pts[i]-pts[i-1])/90
-        pt_radius = self.radius/dbu
+        pt_radius = to_itype(self.radius,dbu)
         # determine the radius, based on how much space is available
         if len(pts)==3:
           pt_radius = min (dis1, dis2, pt_radius)
@@ -149,13 +154,12 @@ class Waveguide(PCellDeclarationHelper):
     LayerPinRecN = self.layout.layer(TECHNOLOGY['PinRec'])
     
     t1 = Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
-    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], self.width/dbu).transformed(t1))
+    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], wg_width).transformed(t1))
     self.cell.shapes(LayerPinRecN).insert(Text("pin1", t1, 0.3/dbu, -1))
     
     t = Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
-    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], self.width/dbu).transformed(t))
+    self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], wg_width).transformed(t))
     self.cell.shapes(LayerPinRecN).insert(Text("pin2", t, 0.3/dbu, -1))
-
     LayerDevRecN = self.layout.layer(TECHNOLOGY['DevRec'])
     
     # Compact model information
@@ -167,23 +171,23 @@ class Waveguide(PCellDeclarationHelper):
     if angle_vec == 0: # horizontal
       halign = 2 # right
       angle=0
-      pt2=pts[0] + Point(0, self.width/dbu)
-      pt3=pts[0] + Point(0, -self.width/dbu)
+      pt2=pts[0] + Point(0, wg_width)
+      pt3=pts[0] + Point(0, -wg_width)
     if angle_vec == 2: # horizontal
       halign = 0 # left
       angle = 0
-      pt2=pts[0] + Point(0, self.width/dbu)
-      pt3=pts[0] + Point(0, -self.width/dbu)
+      pt2=pts[0] + Point(0, wg_width)
+      pt3=pts[0] + Point(0, -wg_width)
     if angle_vec == 1: # vertical
       halign = 2 # right
       angle = 1
-      pt2=pts[0] + Point(self.width/dbu,0)
-      pt3=pts[0] + Point(-self.width/dbu,0)
+      pt2=pts[0] + Point(wg_width,0)
+      pt3=pts[0] + Point(-wg_width,0)
     if angle_vec == -1: # vertical
       halign = 0 # left
       angle = 1
-      pt2=pts[0] + Point(self.width/dbu,0)
-      pt3=pts[0] + Point(-self.width/dbu,0)
+      pt2=pts[0] + Point(wg_width,0)
+      pt3=pts[0] + Point(-wg_width,0)
       
     t = Trans(angle, False, pts[0]) 
     text = Text ('Lumerical_INTERCONNECT_library=Design kits/GSiP', t, 0.1/dbu, -1)
@@ -224,12 +228,13 @@ class Ring(pya.PCellDeclarationHelper):
         
   def produce_impl(self):
     from SiEPIC.utils import arc
+    from SiEPIC.extend import to_itype
     
     dbu = self.layout.dbu
     
     layer = self.layout.layer(self.layer)
-    radius = self.radius/dbu
-    width = self.width/dbu
+    radius = to_itype(self.radius,dbu)
+    width = to_itype(self.width,dbu)
     
     poly = pya.Polygon(arc(radius+width/2, 0, 360))
     hole = pya.Polygon(arc(radius-width/2, 0, 360))
@@ -282,6 +287,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
 
     # This is the main part of the implementation: create the layout
     from math import pi, cos, sin
+    from SiEPIC.extend import to_itype
     
     # fetch the parameters
 #    TECHNOLOGY = get_technology_by_name('GSiP')
@@ -308,66 +314,66 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
 
     # Define variables for the Modulator
     # Variables for the Si waveguide
-    w = round(self.w/dbu)
-    r = round(self.r/dbu)
-    g = round(self.g/dbu)
-    gmon = round(self.gmon/dbu)
+    w = to_itype(self.w,dbu)
+    r = to_itype(self.r,dbu)
+    g = to_itype(self.g,dbu)
+    gmon = to_itype(self.gmon,dbu)
     
     #Variables for the N layer
     w_1 = 2.0/dbu  #same for N, P, N+, P+ layer
-    r_n = (self.r - 1.0)/dbu
+    r_n = to_itype(self.r - 1.0,dbu)
     
     #Variables for the P layer
-    r_p = (self.r + 1.0)/dbu
+    r_p = to_itype(self.r + 1.0.dbu)
      
     #Variables for the N+layer
-    r_np = (self.r - 1.5)/dbu
+    r_np = to_itype(self.r - 1.5,dbu)
     
     #Variables for the P+layer
-    r_pp = (self.r + 1.5)/dbu
+    r_pp = to_itype(self.r + 1.5,dbu)
 
     #Variables for the N++ layer
-    w_2 = 5.5/dbu  #same for N++, P++ layer
-    r_npp = (self.r - 3.75)/dbu
+    w_2 = to_itype(5.5.dbu)  #same for N++, P++ layer
+    r_npp = to_itype(self.r - 3.75,dbu)
 
     #Variables for the P+layer
-    r_ppp = (self.r + 3.75)/dbu
+    r_ppp = to_itype(self.r + 3.75,dbu)
 
     #Variables for the VC layer
-    w_vc = 4.0/dbu
-    r_vc1 = (self.r - 3.75)/dbu
-    r_vc2 = (self.r + 3.75)/dbu
+    w_vc = to_itype(4.0,dbu)
+    r_vc1 = to_itype(self.r - 3.75,dbu)
+    r_vc2 = to_itype(self.r + 3.75,dbu)
    
     #Variables for the M1 layer
-    w_m1_in = (r_vc1 + w_vc/2.0 + 0.5/dbu)
-    r_m1_in = (r_vc1 + w_vc/2.0 + 0.5/dbu) /2.0
-    w_m1_out = 6.0/dbu
-    r_m1_out = (self.r + 4.25)/dbu
+    w_m1_in = r_vc1 + w_vc/2.0 + to_itype(0.5,dbu)
+    r_m1_in = r_vc1 + w_vc/2.0 + to_itype(0.5,dbu)) /2.0
+    w_m1_out = to_itype(6.0,dbu)
+    r_m1_out = to_itype(self.r + 4.25,dbu)
     
     #Variables for the VL layer
     #r_vl =  w_m1_in/2.0 -  2.1/dbu
-    r_vl =  r_vc1 - w_vc/2.0 - 2.01/dbu
-    if r_vl &lt; 1.42/dbu:
-      r_vl = 1.42/dbu
-      w_vc = (self.r-1.75)/dbu - (r_vl + 2.01)
-      r_vc1 = (self.r-1.75)/dbu - w_vc/2.0
-      r_vc2 = (self.r+1.75)/dbu + w_vc/2.0
-      w_2 = (r-w/2.0 - 0.75/dbu) - (r_vc1 - w_vc/2.0 - 0.75) # same for N++, P++ layer
-      r_npp = ((r-w/2.0 - 0.75/dbu) + (r_vc1 - w_vc/2.0 - 0.75))/2.0
-      r_ppp = 2*(self.r)/dbu - r_npp
-    w_via = 5.0/dbu
-    h_via = 5.0/dbu
+    r_vl =  r_vc1 - w_vc/2.0 - to_itype(2.01,dbu)
+    if r_vl &lt; to_itype(1.42,dbu):
+      r_vl = to_itype(1.42,dbu)
+      w_vc = r - to_itype(1.75,dbu) - (r_vl + 2.01)
+      r_vc1 = r - to_itype(1.75,dbu) - w_vc/2.0
+      r_vc2 = r + to_itype(1.75,dbu) + w_vc/2.0
+      w_2 = (r-w/2.0 - to_itype(0.75,dbu)) - (r_vc1 - w_vc/2.0 - 0.75) # same for N++, P++ layer
+      r_npp = ((r-w/2.0 - to_itype(0.75,dbu)) + (r_vc1 - w_vc/2.0 - 0.75))/2.0
+      r_ppp = 2*r - r_npp
+    w_via = to_itype(5.0,dbu)
+    h_via = to_itype(5.0,dbu)
 
     # Variables for the SiEtch2 layer  (Slab)
-    w_Si3 = w_m1_out + 2*(r_m1_out)+ 0/dbu
+    w_Si3 = round(w_m1_out + 2*(r_m1_out)+ 0/dbu)
     h_Si3 = w_Si3
-    taper_bigend =  2/dbu
-    taper_smallend =  0.3/dbu
-    taper_length =  5/dbu
+    taper_bigend =  to_itype(2,dbu)
+    taper_smallend =  to_itype(0.3,dbu)
+    taper_length =  to_itype(5,dbu)
 
     #Variables for the MH layer
-    w_mh = 2.0/dbu
-    r_mh = self.r/dbu
+    w_mh = to_itype(2.0,dbu)
+    r_mh = r
     r_mh_in = r_mh - w_mh/2.0
     
     #Define Ring centre   
@@ -502,7 +508,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     
     # Create the pins, as short paths:
     from SiEPIC._globals import PIN_LENGTH as pin_length
-    
+        
     shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2. + taper_length) + pin_length/2., 0),
                                           pya.Point(x0 - (w_Si3 / 2. + taper_length) - pin_length/2., 0)], w))
     shapes(LayerPinRecN).insert(pya.Text("opt1", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2. + taper_length), 0))).text_size = 0.5/dbu
@@ -576,6 +582,7 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
   def produce_impl(self):
     # This is the main part of the implementation: create the layout
     from math import pi, cos, sin
+    from SiEPIC.extend import to_itype
     
     # fetch the parameters
 #    TECHNOLOGY = get_technology_by_name('GSiP')
@@ -706,6 +713,13 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     # Create the pins, as short paths:
     from SiEPIC._globals import PIN_LENGTH as pin_length
     
+    print(x0)
+    print(w_Si3)
+    print(w_Si3/2.)
+    print(taper_length)
+    print(pin_length)
+    print(pin_length/2.)
+
     shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2 + taper_length) + pin_length/2, 0),
                                           pya.Point(x0 - (w_Si3 / 2 + taper_length) - pin_length/2, 0)], w))
     shapes(LayerPinRecN).insert(pya.Text("opt1", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2 + taper_length), 0))).text_size = 0.5/dbu

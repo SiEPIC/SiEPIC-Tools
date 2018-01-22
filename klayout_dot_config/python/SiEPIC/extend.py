@@ -4,6 +4,10 @@
 '''
 This module extends several pya classes that are useful for the library.
 
+dbu float-int extension:
+  - to_dbu and to_itype, convert float (microns) to integer (nanometers) using dbu
+  - from_dbu and to_dtype, convert integer (nanometers) to float (microns) using dbu
+
 pya.Path and pya.DPath Extensions:
   - get_points(), returns list of pya.Points
   - get_dpoints(), returns list of pya.DPoints
@@ -49,6 +53,7 @@ pya.Point Extensions:
 '''
 #################################################################################
 
+
 import pya
 
 warning = pya.QMessageBox()
@@ -68,8 +73,8 @@ def to_dtype(self, dbu):
   return Dpath
 
 def to_itype(self, dbu):
-  path = pya.Path(self.get_points(), self.width) * (1/dbu)
-  path.width = self.width / dbu
+  path = pya.Path([pt.to_itype(dbu) for pt in self.each_point()], round(self.width/dbu))
+  path.width = round(self.width / dbu)
   return path
 
 def get_points(self):
@@ -1119,3 +1124,23 @@ def angle_vector(u):
 
 pya.Point.angle_vector = angle_vector
 pya.DPoint.angle_vector = angle_vector
+
+
+
+
+'''
+dbu float-int extension:
+  - to_dbu, convert float (microns) to integer (nanometers) using dbu
+  - from_dbu, convert integer (nanometers) to float (microns) using dbu
+'''
+def to_dbu(f, dbu):
+  return int(round(f / dbu))
+
+def to_itype(f, dbu):
+  return int(round(f / dbu))
+
+def from_dbu(i, dbu):
+  return i*dbu
+
+def to_dtype(i, dbu):
+  return i*dbu
