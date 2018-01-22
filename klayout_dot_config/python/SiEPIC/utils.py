@@ -580,6 +580,10 @@ def translate_from_normal(pts, trans):
   from math import cos, sin, pi
   d = 1./(len(pts)-1)
   a = angle_vector(pts[1]-pts[0])*pi/180 + (pi/2 if trans > 0 else -pi/2)
+  print(pts[0])
+  print(type(pts[0]))
+  print(pya.DPoint(abs(trans)*cos(a), abs(trans)*sin(a)))
+  print(type(pya.DPoint(abs(trans)*cos(a), abs(trans)*sin(a))))
   tpts = [pts[0] + pya.DPoint(abs(trans)*cos(a), abs(trans)*sin(a))]
   
   for i in range(1, len(pts)-1):
