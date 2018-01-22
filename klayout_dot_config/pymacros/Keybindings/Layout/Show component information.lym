@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Show Selected Component Information</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.layout.end</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+
+# test for finding Component based on selected object.
+def show_component_info():
+  from SiEPIC.utils import select_instances
+  selected_instances = select_instances()
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  text = 'Information on selected components:\n'
+  
+  for obj in selected_instances:
+    print("  selected component: %s" % obj.inst().cell )
+    c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
+    if c:
+      text += c[0].display()
+      text += '\n'
+
+
+  pya.MessageBox.warning("Information on selected components", text, pya.MessageBox.Ok)
+
+
+show_component_info()
+
+</text>
+</klayout-macro>
