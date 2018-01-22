@@ -217,7 +217,11 @@ def component_simulation(verbose=False, simulate=True):
 #    c = obj.inst().cell.find_components()[0]
     if verbose:
       print("  selected component: %s" % obj.inst().cell )
-    c = cell.find_components(cell_selected=[obj.inst().cell])[0]
+    c = cell.find_components(cell_selected=[obj.inst().cell])
+    if c:
+      c=c[0]
+    else:
+      return
     
     if not c.has_model():
       if len(selected_instances) == 0:
