@@ -100,7 +100,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   # load more technology details (CML file location)
   TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
   # check if the latest version of the CML is in KLayout's tech
-  if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
+  if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
     # install CML
     print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
     lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
