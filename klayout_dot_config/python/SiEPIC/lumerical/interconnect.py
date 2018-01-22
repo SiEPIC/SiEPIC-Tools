@@ -227,6 +227,8 @@ def component_simulation(verbose=False):
     # GUI to ask which pin to inject light into
     pin_names = [p.pin_name for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL or p.type == _globals.PIN_TYPES.OPTICALIO]
     pin_injection = pya.InputDialog.ask_item("Pin selection", "Choose one of the pins in component '%s' to inject light into." % c.component, pin_names, 0)
+    if not pin_injection:
+      return
     if verbose:
       print("Pin selected from InputDialog = %s, for component '%s'." % (pin_injection, c.component) )
     
