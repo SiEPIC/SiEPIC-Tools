@@ -1111,7 +1111,7 @@ def to_itype(self,dbu):
   return pya.Point(self.x / (dbu), self.y / (dbu))
 
 # *** Required for two Windows computers, but not others. Unknown.
-pya.Point.to_dtype = to_itype
+pya.Point.to_dtype = to_dtype
 
 # in v > 0.24, these are built-in to KLayout
 if int(pya.Application.instance().version().split('.')[1]) < 25:
