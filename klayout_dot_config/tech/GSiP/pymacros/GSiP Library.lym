@@ -324,7 +324,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     r_n = to_itype(self.r - 1.0,dbu)
     
     #Variables for the P layer
-    r_p = to_itype(self.r + 1.0.dbu)
+    r_p = to_itype(self.r + 1.0, dbu)
      
     #Variables for the N+layer
     r_np = to_itype(self.r - 1.5,dbu)
@@ -333,7 +333,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     r_pp = to_itype(self.r + 1.5,dbu)
 
     #Variables for the N++ layer
-    w_2 = to_itype(5.5.dbu)  #same for N++, P++ layer
+    w_2 = to_itype(5.5,dbu)  #same for N++, P++ layer
     r_npp = to_itype(self.r - 3.75,dbu)
 
     #Variables for the P+layer
@@ -346,7 +346,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
    
     #Variables for the M1 layer
     w_m1_in = r_vc1 + w_vc/2.0 + to_itype(0.5,dbu)
-    r_m1_in = r_vc1 + w_vc/2.0 + to_itype(0.5,dbu)) /2.0
+    r_m1_in = r_vc1 + w_vc/2.0 + to_itype(0.5,dbu) /2.0
     w_m1_out = to_itype(6.0,dbu)
     r_m1_out = to_itype(self.r + 4.25,dbu)
     
@@ -548,6 +548,10 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     shapes(TextLayerN).insert(pya.Text ("Ref: Raphael Dube-Demers, JLT, 2015", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2 + taper_length), -w/2.0 -  12.5/dbu+4.0/dbu))).text_size = 0.7/dbu
     shapes(TextLayerN).insert(pya.Text ("http://dx.doi.org/10.1109/JLT.2015.2462804", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2 + taper_length), -w/2.0 -  12.5/dbu+1.0/dbu))).text_size = 0.7/dbu
 
+
+
+
+
 class Ring_Filter_DB(pya.PCellDeclarationHelper):
   """
   The PCell declaration for thermally tunable ring filter.
@@ -603,41 +607,41 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     
     # Define variables for the Modulator
     # Variables for the Si waveguide
-    w = round(self.w/dbu)
-    r = round(self.r/dbu)
-    g = round(self.g/dbu)
-    gmon = round(self.gmon/dbu)
-    
+    w = to_itype(self.w,dbu)
+    r = to_itype(self.r,dbu)
+    g = to_itype(self.g,dbu)
+    gmon = to_itype(self.gmon,dbu)
+
     #Variables for the N layer
     w_1 = 2.0/dbu  #same for N, P, N+, P+ layer
-    r_n = (self.r - 1.0)/dbu
-
+    r_n = to_itype(self.r - 1.0,dbu)
+    
     #Variables for the VC layer
-    w_vc = 4.0/dbu
-    r_vc1 = (self.r - 3.75)/dbu
-    r_vc2 = (self.r + 3.75)/dbu
+    w_vc = to_itype(4.0,dbu)
+    r_vc1 = to_itype(self.r - 3.75,dbu)
+    r_vc2 = to_itype(self.r + 3.75,dbu)
    
     #Variables for the M1 layer
-    w_m1_in = (r_vc1 + w_vc/2.0 + 0.5/dbu)
-    r_m1_in = (r_vc1 + w_vc/2.0 + 0.5/dbu) /2.0
-    w_m1_out = 6.0/dbu
-    r_m1_out = (self.r + 4.25)/dbu
+    w_m1_in = r_vc1 + w_vc/2.0 + to_itype(0.5,dbu)
+    r_m1_in = r_vc1 + w_vc/2.0 + to_itype(0.5,dbu) /2.0
+    w_m1_out = to_itype(6.0,dbu)
+    r_m1_out = to_itype(self.r + 4.25,dbu)
     
     #Variables for the VL layer
-    r_vl =  w_m1_in/2.0 -  2.1/dbu
-    w_via = 5.0/dbu
-    h_via = 5.0/dbu
+    r_vl =  w_m1_in/2.0 -  to_itype(2.1,dbu)
+    w_via = to_itype(5.0,dbu)
+    h_via = to_itype(5.0,dbu)
 
     # Variables for the SiEtch2 layer  (Slab)
-    w_Si3 = w_m1_out + 2*(r_m1_out)+ 0/dbu
+    w_Si3 = w_m1_out + 2*(r_m1_out)
     h_Si3 = w_Si3
-    taper_bigend =  2/dbu
-    taper_smallend =  0.3/dbu
-    taper_length =  5/dbu
+    taper_bigend =  to_itype(2,dbu)
+    taper_smallend =  to_itype(0.3,dbu)
+    taper_length =  to_itype(5,dbu)
 
     #Variables for the MH layer
-    w_mh = 2.0/dbu
-    r_mh = self.r/dbu
+    w_mh = to_itype(2.0,dbu)
+    r_mh = r
     r_mh_in = r_mh - w_mh/2.0
     
     #Define Ring centre   
@@ -713,13 +717,6 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     # Create the pins, as short paths:
     from SiEPIC._globals import PIN_LENGTH as pin_length
     
-    print(x0)
-    print(w_Si3)
-    print(w_Si3/2.)
-    print(taper_length)
-    print(pin_length)
-    print(pin_length/2.)
-
     shapes(LayerPinRecN).insert(pya.Path([pya.Point(x0 - (w_Si3 / 2 + taper_length) + pin_length/2, 0),
                                           pya.Point(x0 - (w_Si3 / 2 + taper_length) - pin_length/2, 0)], w))
     shapes(LayerPinRecN).insert(pya.Text("opt1", pya.Trans(pya.Trans.R0,x0 - (w_Si3 / 2 + taper_length), 0))).text_size = 0.5/dbu
