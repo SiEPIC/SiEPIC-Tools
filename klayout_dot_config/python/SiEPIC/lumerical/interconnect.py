@@ -264,8 +264,8 @@ def component_simulation(verbose=False):
     text_main += '.subckt SUBCIRCUIT %s\n' % (nets_str)
     text_main += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_1", nets_str, c.component.replace(' ', '_') ) 
     if c.library != None:
-      text_main += 'library="%s" %s \n' % (c.library, c.params)
-    text_main += '.ends SUBCIRCUIT'
+      text_main += 'library="%s" %s ' % (c.library, c.params)
+    text_main += '\n.ends SUBCIRCUIT\n'
 
     import tempfile
     tmp_folder = tempfile.mkdtemp()
