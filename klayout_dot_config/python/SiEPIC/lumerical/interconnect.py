@@ -34,6 +34,13 @@ def run_INTC(verbose=False):
   lumapi = _globals.LUMAPI
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_INTC: lumapi not loaded; reloading load_lumapi.")
+    if sys.version_info[0] == 3:
+        if sys.version_info[1] < 4:
+            from imp import reload
+        else:
+            from importlib import reload
+    elif sys.version_info[0] == 2:
+        pass    
     load_lumapi = reload(load_lumapi)
 
   if not lumapi:
