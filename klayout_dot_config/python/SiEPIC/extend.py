@@ -1115,6 +1115,8 @@ def to_itype(self,dbu):
 # *** Required for two Windows computers, but not others. Unknown.
 pya.Point.to_dtype = to_dtype
 
+pya.Point.to_itype = to_itype
+
 # in v > 0.24, these are built-in to KLayout
 if int(pya.Application.instance().version().split('.')[1]) < 25:
 
@@ -1148,6 +1150,8 @@ def to_dbu(f, dbu):
   return int(round(f / dbu))
 
 def to_itype(f, dbu):
+  if type(f) == str:
+    f = float(f)
   return int(round(f / dbu))
 
 def from_dbu(i, dbu):
