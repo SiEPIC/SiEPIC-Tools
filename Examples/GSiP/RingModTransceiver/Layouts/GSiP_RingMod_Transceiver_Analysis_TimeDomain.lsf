@@ -8,14 +8,17 @@ select("ONA_1");
 delete;
 dlambda = 0.2e-9; 
 lambda1 = 1547.41e-9+dlambda;
+dlambda = 0.2e-9; 
 lambda2 = 1549.88e-9+dlambda;
+dlambda = 0.2e-9; 
 lambda3 = 1552.35e-9+dlambda;
+dlambda = 0.2e-9; 
 lambda4 = 1554.82e-9+dlambda;
 
 Vh = 0.5; # heater voltage for modulator; 
 
  
- BITRATE = 0.5e10;	
+ BITRATE = 1.5e10;	
  sequence_length = 64;
  SPB = 1024;  # as recommended by INTERCONNECT
  f0 = c/1550e-9; 
