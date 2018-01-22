@@ -221,15 +221,17 @@ def component_simulation(verbose=False, simulate=True):
     if c:
       c=c[0]
     else:
-      return
+      continue
     
     if not c.has_model():
       if len(selected_instances) == 0:
         error.setText("Error: Component '%s' does not have a compact model. Cannot perform simulation." % c)
-        return
+        continue
 
     # GUI to ask which pin to inject light into
     pin_names = [p.pin_name for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL or p.type == _globals.PIN_TYPES.OPTICALIO]
+    if not pin_names:
+      continue
     pin_injection = pya.InputDialog.ask_item("Pin selection", "Choose one of the pins in component '%s' to inject light into." % c.component, pin_names, 0)
     if not pin_injection:
       return
@@ -246,6 +248,8 @@ def component_simulation(verbose=False, simulate=True):
     nets_str = ''
     for p in c.pins: 
       if p.type == _globals.PIN_TYPES.ELECTRICAL:
+        if not p.pin_name:
+          continue
         nets_str += " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
       if p.type == _globals.PIN_TYPES.OPTICAL or p.type == _globals.PIN_TYPES.OPTICALIO:
         nets_str += " " + str(p.pin_name)
