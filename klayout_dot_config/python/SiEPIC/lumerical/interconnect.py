@@ -46,7 +46,7 @@ def run_INTC(verbose=False):
 
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_INTC: lumapi not loaded")
-    pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Some SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
+    pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Cannot load Lumerical Python integration. \nSome SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
 #    warning = pya.QMessageBox()
 #    warning.setStandardButtons(pya.QMessageBox.Cancel)
 #    warning.setText("Cannot load Lumerical Python integration.") 
@@ -107,6 +107,10 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
     # Re-Read INTC element library
     lumapi.evalScript(_globals.INTC, "out=library;")
     _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
+    # Close INTERCONNECT so that the library information is saved, then re-open
+    lumapi.close(_globals.INTC)
+    run_INTC()
+ 
 
   # Save INTC element library to KLayout application data path
   if not os.path.exists(dir_path):
@@ -116,6 +120,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   fh.close()
 
   lumapi.evalScript(_globals.INTC, "?'KLayout integration successful, CML library (%s) is available.';switchtodesign;\n" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
+
 
   # instantiate all library elements onto the canvas
   question = pya.QMessageBox()
