@@ -1040,8 +1040,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   else:
     text_main += '\n\n'
 
-  if 1: # **** presently causes this to crease... not sure why
-    text_main += DCsources
+  text_main += DCsources
 
   return text_subckt, text_main, len(detector_nets)
 

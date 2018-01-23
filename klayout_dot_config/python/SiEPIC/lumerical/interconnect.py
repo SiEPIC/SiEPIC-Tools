@@ -249,15 +249,39 @@ def component_simulation(verbose=False, simulate=True):
     import SiEPIC
     from time import strftime 
     text_main = '* Spice output from KLayout SiEPIC-Tools v%s, %s technology (SiEPIC.lumerical.interconnect.component_simulation), %s.\n\n' % (SiEPIC.__version__, TECHNOLOGY['technology_name'], strftime("%Y-%m-%d %H:%M:%S") )
-    # optical nets: must be ordered electrical, optical IO, then optical
+
+
+
+    # find electrical IO pins
+    electricalIO_pins = ""
+    DCsources = "" # string to create DC sources for each pin
+    Vn = 1
+    # (2) or to individual DC sources
+    # create individual sources:
+    for p in c.pins:
+      if p.type == _globals.PIN_TYPES.ELECTRICAL:
+        NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
+        electricalIO_pins += NetName
+        DCsources += "N" + str(Vn) + NetName + " dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/3., -2+Vn/8.)
+        Vn += 1
+    electricalIO_pins_subckt = electricalIO_pins
+
+
+    # component nets: must be ordered electrical, optical IO, then optical
     nets_str = ''
+    DCsources = "" # string to create DC sources for each pin
+    Vn = 1
     for p in c.pins: 
       if p.type == _globals.PIN_TYPES.ELECTRICAL:
         if not p.pin_name:
           continue
-        nets_str += " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
+        NetName = " " + c.component +'_' + str(c.idx) + '_' + p.pin_name
+        nets_str += NetName
+        DCsources += "N" + str(Vn) + NetName + " dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2-Vn/3., -2+Vn/8.)
+        Vn += 1
       if p.type == _globals.PIN_TYPES.OPTICAL or p.type == _globals.PIN_TYPES.OPTICALIO:
         nets_str += " " + str(p.pin_name)
+
 
         
     # *** todo: some other way of getting this information; not hard coded.
@@ -275,12 +299,16 @@ def component_simulation(verbose=False, simulate=True):
     for i in range(0,len(pin_names)):
       text_main += '  + input(%s)=SUBCIRCUIT,%s\n' % (i+1, pin_names[i])
     text_main += '  + output=SUBCIRCUIT,%s\n\n' % (pin_injection)
+
+    text_main += DCsources
+
     text_main += 'SUBCIRCUIT %s SUBCIRCUIT sch_x=-1 sch_y=-1 \n\n' % (nets_str)
     text_main += '.subckt SUBCIRCUIT %s\n' % (nets_str)
     text_main += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_1", nets_str, c.component.replace(' ', '_') ) 
     if c.library != None:
       text_main += 'library="%s" %s ' % (c.library, c.params)
     text_main += '\n.ends SUBCIRCUIT\n'
+
 
     import tempfile
     tmp_folder = tempfile.mkdtemp()
