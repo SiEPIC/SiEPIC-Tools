@@ -485,7 +485,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
 
   if addto_CML:
     # Run using Python integration:
-    import interconnect
+    from . import interconnect
     interconnect.run_INTC()
     from .. import _globals
     lumapi = _globals.LUMAPI
