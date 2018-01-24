@@ -503,6 +503,8 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     import os
     if os.path.exists(svg_filename):
       t+= 'seticon(component,"%s");\n' %(svg_filename)
+    else:
+      print(" SiEPIC.lumerical.fdtd.component... missing SVG icon: %s" % svg_filename)
     t+= 'select(component+"::SPAR_1"); set("load from file", true);\n'
     t+= 'set("s parameters filename", "%s");\n' % (file_sparam)
     t+= 'set("load from file", false);\n'
