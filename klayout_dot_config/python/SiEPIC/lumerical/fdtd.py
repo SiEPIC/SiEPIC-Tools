@@ -21,7 +21,7 @@ import pya
 
 
 def run_FDTD(verbose=False):
-  import load_lumapi
+  from . import load_lumapi
   from .. import _globals
   lumapi = _globals.LUMAPI
   if not lumapi:
@@ -33,16 +33,14 @@ def run_FDTD(verbose=False):
         else:
             from importlib import reload
     elif sys.version_info[0] == 2:
-        pass
-    load_lumapi = reload(load_lumapi)
+        from imp import reload    
+    reload(load_lumapi)
 
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_FDTD: lumapi not loaded")
     pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Some SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
     return
     
-  from .. import _globals
-  lumapi = _globals.LUMAPI
   if verbose:
     print(_globals.FDTD)  # Python Lumerical FDTD integration handle
   
