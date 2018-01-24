@@ -337,8 +337,8 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
             if verbose:
               print(' Plot S_%s_%s Sparam' % (p.pin_name,in_pin.pin_name) )
             lumapi.evalScript(_globals.FDTD, " \
-              plot (wavelengths, 10*log10(abs(Sparam(:,%s))^2),  'Wavelength (um)', 'Transmission (dB)', 'S_%s_%s'); \
-               " % (modes.index(m)+1, p.pin_name, in_pin.pin_name) )
+              plot (wavelengths, 10*log10(abs(Sparam(:,%s))^2),  'Wavelength (um)', 'Transmission (dB)', 'S_%s_%s, mode %s'); \
+               " % (modes.index(m)+1, p.pin_name, in_pin.pin_name, modes.index(m)+1) )
         Sparams_modes.append(Sparams)
       return Sparams, Sparams_modes
     
