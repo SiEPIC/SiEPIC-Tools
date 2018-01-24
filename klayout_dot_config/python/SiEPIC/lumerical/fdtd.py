@@ -509,6 +509,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     t+= 'set("s parameters filename", "%s");\n' % (file_sparam)
     t+= 'set("load from file", false);\n'
     t+= 'set("passivity", "enforce");\n'
+    t+= 'set("prefix", component);\n'
     t+= 'setposition(component+"::SPAR_1",100,-100);\n'
     count=0
     for p in pins:
