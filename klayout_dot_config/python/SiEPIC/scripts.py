@@ -596,7 +596,9 @@ def calibreDRC(params = None, cell = None, GUI = False):
       cal_deck += 'INCLUDE "%s/%s"\n' % (params['pdk'], params['remote_calibre_rule_deck_main_file'])
       file.write(cal_deck)
 
-    version = sys.version
+    import platform
+    version = platform.python_version()
+    out = ''
     if version.find("2.") > -1:
       import commands
       cmd = commands.getstatusoutput
@@ -605,7 +607,7 @@ def calibreDRC(params = None, cell = None, GUI = False):
       progress.format = "Uploading Layout and Scripts"
       pya.Application.instance().main_window().repaint()
       
-      out  = cmd('ssh drc "mkdir -p %s"' % (remote_path))[1]
+      out += cmd('ssh drc "mkdir -p %s"' % (remote_path))[1]
       out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path))[1]
       out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path))[1]
       out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path))[1]
@@ -634,23 +636,31 @@ def calibreDRC(params = None, cell = None, GUI = False):
       progress.set(2, True)
       pya.Application.instance().main_window().repaint()
       
-      out  = cmd('ssh drc "mkdir -p %s"' % (remote_path), shell=True)[1]
-      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)[1]
-      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)[1]
-      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)[1]
+      try:
+        out += cmd('ssh drc "mkdir -p %s"' % (remote_path), shell=True)[1]
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)[1]
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)[1]
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)[1]
 
-      progress.format = "Checking Layout for Errors"
-      progress.set(3, True)
-      pya.Application.instance().main_window().repaint()
+        progress.format = "Checking Layout for Errors"
+        progress.set(3, True)
+        pya.Application.instance().main_window().repaint()
 
-      out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)[1]
+        out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)[1]
       
-      progress.format = "Downloading Results"
-      progress.set(4, True)
-      pya.Application.instance().main_window().repaint()
+        progress.format = "Downloading Results"
+        progress.set(4, True)
+        pya.Application.instance().main_window().repaint()
       
-      out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file), shell=True)[1]
-
+        out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file), shell=True)[1]
+      except subprocess.CalledProcessError as e:
+        out += '\nError running ssh or scp commands. Please check that these programs are available.\n'
+        out += str(e.output)
+#        if e.output.startswith('error: {'):
+#          import json
+#          error = json.loads(e.output[7:])
+#          print (error['code'])
+#          print (error['message'])
       progress.format = "Finishing"
       progress.set(5, True)
 
