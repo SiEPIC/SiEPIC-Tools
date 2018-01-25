@@ -199,6 +199,35 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     return technology
 
 
+
+
+'''
+Load Calibre configuration
+These are technology specific, and located in the tech folder, named CALIBRE.xml
+'''
+def load_Calibre():
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'CALIBRE.xml'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+  if matches:
+    CALIBRE_file = matches[0]
+    file = open(CALIBRE_file, 'r') 
+    CALIBRE = xml_to_dict(file.read())
+    file.close()
+    return CALIBRE
+  else:
+    return None
+
+
 '''
 Load Design-for-Test (DFT) rules
 These are technology specific, and located in the tech folder, named DFT.xml
