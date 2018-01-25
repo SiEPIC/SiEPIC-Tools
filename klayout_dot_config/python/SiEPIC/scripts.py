@@ -500,6 +500,7 @@ def compute_area():
   
 def calibreDRC(params = None, cell = None):
   from . import _globals
+  import sys, os, pipes, codecs
 
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
@@ -517,6 +518,14 @@ def calibreDRC(params = None, cell = None):
   
   status = _globals.DRC_GUI.return_status()
   if status is None and params is None:
+    #Load defaults from CALIBRE.xml:
+    from .utils import load_Calibre
+    CALIBRE = load_Calibre()
+    if CALIBRE:
+      _globals.DRC_GUI.window.findChild('pdk').text = CALIBRE['Calibre']['remote_pdk_location']
+      _globals.DRC_GUI.window.findChild('calibre').text = CALIBRE['Calibre']['remote_calibre_script']
+      print('loaded CALIBRE.xml')
+  
     _globals.DRC_GUI.show()
   else:
     if status is False: return
@@ -533,19 +542,22 @@ def calibreDRC(params = None, cell = None):
     progress.set(1, True)
     time.sleep(1)
     pya.Application.instance().main_window().repaint()
-    
-    # Python version
-    import sys, os, pipes, codecs
-    if sys.platform.startswith('win'):
-      local_path = os.path.join(os.environ['USERPROFILE'], 'AppData', 'Local', 'Temp')
-    else:
-      local_path = "/tmp"
+
+    # Local temp folder:
+    local_path = _globals.TEMP_FOLDER
+    print("SiEPIC.scripts.calibreDRC; local tmp folder: %s" % local_path )
     local_file = os.path.basename(lv.active_cellview().filename())
     local_pathfile = os.path.join(local_path, local_file)
+
+    # Layout path and filename:
+    mw = pya.Application.instance().main_window()
+    layout_path = mw.current_view().active_cellview().filename()  # /path/file.gds
+    layout_filename = os.path.basename(layout_path)               # file.gds
+    layout_basefilename = layout_filename.split('.')[0]           # file   
+     
+    remote_path = "/tmp/${USER}_%s" % layout_basefilename
     
-    remote_path = "/tmp"
-    
-    results_file = os.path.basename(local_pathfile) + ".rve"
+    results_file = layout_basefilename + ".rve"
     results_pathfile = os.path.join(os.path.dirname(local_pathfile), results_file)
     tmp_ly = ly.dup()
     [cell.flatten(True) for cell in tmp_ly.each_cell()]
@@ -577,26 +589,28 @@ def calibreDRC(params = None, cell = None):
     version = sys.version
     if version.find("2.") > -1:
       import commands
+      cmd = commands.getstatusoutput
 
       progress.set(2, True)
       progress.format = "Uploading Layout and Scripts"
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path))
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path))
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path))
+      out  = cmd('ssh drc "mkdir -p %s"' % (remote_path))[1]
+      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path))[1]
+      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path))[1]
+      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path))[1]
 
       progress.set(3, True)
       progress.format = "Checking Layout for Errors"
       pya.Application.instance().main_window().repaint()
     
-      out = cmd('ssh drc "cd %s && source run_calibre"' % (remote_path))
+      out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path))[1]
 
       progress.set(4, True)
       progress.format = "Downloading Results"
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, remote_path + "/drc.rve", results_file))
+      out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file))[1]
 
       progress.set(5, True)
       progress.format = "Finishing"
@@ -610,25 +624,27 @@ def calibreDRC(params = None, cell = None):
       progress.set(2, True)
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)
+      out  = cmd('ssh drc "mkdir -p %s"' % (remote_path), shell=True)[1]
+      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)[1]
+      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)[1]
+      out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)[1]
 
       progress.format = "Checking Layout for Errors"
       progress.set(3, True)
       pya.Application.instance().main_window().repaint()
 
-      out = cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)
+      out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)[1]
       
       progress.format = "Downloading Results"
       progress.set(4, True)
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, remote_path + "/drc.rve", results_file), shell=True)
+      out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file), shell=True)[1]
 
       progress.format = "Finishing"
       progress.set(5, True)
-      
+
+    print(out)
     progress._destroy()
     if os.path.exists(results_pathfile):
       rdb_i = lv.create_rdb("Calibre Verification")
@@ -638,7 +654,7 @@ def calibreDRC(params = None, cell = None):
       rdb_cell = rdb.create_cell(cell.name)
       lv.show_rdb(rdb_i, lv.active_cellview().cell_index)
     else:
-      pya.MessageBox.warning("Errors", "Something failed during the server Calibre DRC check.",  pya.MessageBox.Ok)
+      pya.MessageBox.warning("Errors", "Something failed during the server Calibre DRC check: %s" % out,  pya.MessageBox.Ok)
 
     pya.Application.instance().main_window().update()
     lv.commit()
