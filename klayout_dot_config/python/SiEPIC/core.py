@@ -415,11 +415,8 @@ class CalibreGUI():
     return status
   
   def get_parameters(self):
-    return {'url': self.window.findChild('url').text,
-            'port': self.window.findChild('port').text,
-            'pdk': self.window.findChild('pdk').text,
-            'calibre': self.window.findChild('calibre').text,
-            'identity': self.window.findChild('identity').text}
+    return {'pdk': self.window.findChild('pdk').text,
+            'calibre': self.window.findChild('calibre').text}
 
 class MonteCarloGUI():
 

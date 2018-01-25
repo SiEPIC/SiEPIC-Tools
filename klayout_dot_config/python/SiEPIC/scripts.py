@@ -582,21 +582,21 @@ def calibreDRC(params = None, cell = None):
       progress.format = "Uploading Layout and Scripts"
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s "%s" %s:%s' % (os.path.dirname(local_pathfile), params['port'], os.path.basename(local_pathfile), params['url'], remote_path))
-      out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s %s:%s' % (local_path, params['port'], 'run_calibre', params['url'], remote_path))
-      out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s %s:%s' % (local_path, params['port'], 'drc.cal', params['url'], remote_path))
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path))
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path))
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path))
 
       progress.set(3, True)
       progress.format = "Checking Layout for Errors"
       pya.Application.instance().main_window().repaint()
     
-      out = cmd('ssh -i C:/Users/bpoul/.ssh/drc -p%s %s "%s"' % (params['port'], params['url'], "cd " + remote_path +" && source run_calibre"))
+      out = cmd('ssh drc "cd %s && source run_calibre"' % (remote_path))
 
       progress.set(4, True)
       progress.format = "Downloading Results"
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp -i C:/Users/bpoul/.ssh/drc -P%s %s:%s %s' % (os.path.dirname(local_pathfile), params['port'], params['url'], remote_path + "/drc.rve", results_file))
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, remote_path + "/drc.rve", results_file))
 
       progress.set(5, True)
       progress.format = "Finishing"
@@ -610,21 +610,21 @@ def calibreDRC(params = None, cell = None):
       progress.set(2, True)
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp -i %s -P%s "%s" %s:%s' % (os.path.dirname(local_pathfile), params['identity'], params['port'], os.path.basename(local_pathfile), params['url'], remote_path), shell=True)
-      out = cmd('cd "%s" && scp -i %s -P%s %s %s:%s' % (local_path, params['identity'], params['port'], 'run_calibre', params['url'], remote_path), shell=True)
-      out = cmd('cd "%s" && scp -i %s -P%s %s %s:%s' % (local_path, params['identity'], params['port'], 'drc.cal', params['url'], remote_path), shell=True)
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)
 
       progress.format = "Checking Layout for Errors"
       progress.set(3, True)
       pya.Application.instance().main_window().repaint()
 
-      out = cmd('ssh -i %s -p%s %s "%s"' % (params['identity'], params['port'], params['url'], "cd " + remote_path +" && source run_calibre"), shell=True)
+      out = cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)
       
       progress.format = "Downloading Results"
       progress.set(4, True)
       pya.Application.instance().main_window().repaint()
       
-      out = cmd('cd "%s" && scp -i %s -P%s %s:%s %s' % (os.path.dirname(local_pathfile), params['identity'], params['port'], params['url'], remote_path + "/drc.rve", results_file), shell=True)
+      out = cmd('cd "%s" && scp "%s" drc:%s' % (local_path, remote_path + "/drc.rve", results_file), shell=True)
 
       progress.format = "Finishing"
       progress.set(5, True)
