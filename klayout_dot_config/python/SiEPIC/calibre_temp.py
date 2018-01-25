@@ -1,11 +1,9 @@
-  
+
 def calibreDRC(params = None, cell = None):
-  from . import _globals
 
   lv = pya.Application.instance().main_window().current_view()
   if lv == None:
     raise Exception("No view selected")
-
   if cell is None:
     ly = lv.active_cellview().layout() 
     if ly == None:
@@ -15,17 +13,16 @@ def calibreDRC(params = None, cell = None):
       raise Exception("No active cell")
   else:
     ly = cell.layout()
-  
-  status = _globals.DRC_GUI.return_status()
-  if status is None and params is None:
-    _globals.DRC_GUI.show()
-  else:
-    if status is False: return
-    if params is None: params = _globals.DRC_GUI.get_parameters()
-    
-    if any(value == '' for key, value in params.items()):
-      raise Exception("Missing information")
 
+  from . import _globals
+
+  from .utils import load_Calibre
+  CALIBRE = load_Calibre()
+  if not CALIBRE:
+    pya.MessageBox.warning("Missing CALIBRE.xml", "Missing CALIBRE.xml. This configuration file should be located in the tech folder for the active technology.",  pya.MessageBox.Ok)
+    return    
+  
+  if 1:
     lv.transaction("calibre drc")
     
     import time
@@ -34,17 +31,30 @@ def calibreDRC(params = None, cell = None):
     progress.set(1, True)
     time.sleep(1)
     pya.Application.instance().main_window().repaint()
-    
-    # Python version
-    import sys, os, pipes, codecs
-    if sys.platform.startswith('win'):
-      local_path = os.path.join(os.environ['USERPROFILE'], 'AppData', 'Local', 'Temp')
-    else:
-      local_path = "/tmp"
+
+    # Local temp folder:
+    from . import _globals
+    import os
+    local_path = _globals.TEMP_FOLDER
     local_file = os.path.basename(lv.active_cellview().filename())
     local_pathfile = os.path.join(local_path, local_file)
     
-    remote_path = "/tmp"
+    remote_path = "/tmp/%s" % layout_basefilename
+    remote_pathfile = remote_path + "/" + layout_filename
+    print(" Creating remote temp folder: ")
+    cmd = '/usr/bin/ssh %s "%s"' % (ssh_server, "mkdir -p %s" % remote_path ) 
+    print(cmd)
+    out = commands.getstatusoutput( cmd )
+    print (out)
+
+    results_file = layout_basefilename + "_litho.gds"
+    results_pathfile = os.path.dirname(layout_path) + "/" + results_file
+
+    cal_script = "#!/bin/tcsh \n"
+    cal_script += "source %s \n" % remote_calibre_env_script
+    cal_script += "cd %s\n" % remote_path
+
+
     
     results_file = os.path.basename(local_pathfile) + ".rve"
     results_pathfile = os.path.join(os.path.dirname(local_pathfile), results_file)
@@ -56,8 +66,8 @@ def calibreDRC(params = None, cell = None):
     
     with codecs.open(os.path.join(local_path, 'run_calibre'), 'w', encoding="utf-8") as file:
       cal_script  = '#!/bin/tcsh \n'
-      cal_script += 'source %s \n' % params['calibre']
-      cal_script += 'setenv SIEPIC_IME_PDK %s \n' % params['pdk']
+      cal_script += 'source %s \n' % CALIBRE['remote_calibre_script']
+      cal_script += '%s \n' % CALIBRE['remote_additional_commands']
       cal_script += '$MGC_HOME/bin/calibre -drc -hier -turbo -nowait drc.cal \n'
       file.write(cal_script)
 
@@ -72,9 +82,33 @@ def calibreDRC(params = None, cell = None):
       cal_deck += 'VIRTUAL CONNECT COLON NO\n'
       cal_deck += 'VIRTUAL CONNECT REPORT NO\n'
       cal_deck += 'DRC ICSTATION YES\n'
-      cal_deck += 'INCLUDE "%s/calibre_rule_decks/CMC_SiEPIC_IMESP.drc.cal"\n' % params['pdk']
+      cal_deck += 'INCLUDE "%s"\n' % CALIBRE['remote_calibre_rule_deck_main_file']
       file.write(cal_deck)
 
+    import platform
+    if 'Darwin' in platform.version():
+      # OSX
+      print("Uploading layout and Calibre scripts: ")
+      cmd = 'cd %s; ' % pipes.quote(os.path.dirname(layout_filename))
+      cmd += '/usr/bin/scp %s %s %s %s:%s' % (os.path.basename(layout_filename), "/tmp/run_calibre", "/tmp/drc.cal", ssh_server, remote_path) 
+      print(cmd)
+      out = commands.getstatusoutput( cmd )
+      print (out)
+           
+      print("Checking layout for errors: ")
+      cmd = '/usr/bin/ssh %s "%s"' % (ssh_server, "cd " + remote_path +"; source run_calibre;" ) 
+      print(cmd)
+      out = commands.getstatusoutput( cmd )
+      print (out)
+      
+      print("Downloading results file: ")
+      cmd = '/usr/bin/scp %s:%s %s' % ( ssh_server, remote_path + "/drc.rve", pipes.quote(results_pathfile) ) 
+      print(cmd)
+      out = commands.getstatusoutput( cmd )
+      print (out)
+      
+      
+       
     version = sys.version
     if version.find("2.") > -1:
       import commands
