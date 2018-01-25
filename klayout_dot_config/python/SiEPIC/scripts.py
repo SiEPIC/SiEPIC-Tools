@@ -498,7 +498,7 @@ def delete_top_cells():
 def compute_area():
   print("compute_area")
   
-def calibreDRC(params = None, cell = None):
+def calibreDRC(params = None, cell = None, GUI = False):
   from . import _globals
   import sys, os, pipes, codecs
 
@@ -517,17 +517,27 @@ def calibreDRC(params = None, cell = None):
     ly = cell.layout()
   
   status = _globals.DRC_GUI.return_status()
-  if status is None and params is None:
-    #Load defaults from CALIBRE.xml:
-    from .utils import load_Calibre
-    CALIBRE = load_Calibre()
-    if CALIBRE:
-      _globals.DRC_GUI.window.findChild('pdk').text = CALIBRE['Calibre']['remote_pdk_location']
-      _globals.DRC_GUI.window.findChild('calibre').text = CALIBRE['Calibre']['remote_calibre_script']
-      print('loaded CALIBRE.xml')
-  
-    _globals.DRC_GUI.show()
+  if GUI:
+    if status is None and params is None:
+      #Load defaults from CALIBRE.xml:
+      from .utils import load_Calibre
+      CALIBRE = load_Calibre()
+      if CALIBRE:
+        _globals.DRC_GUI.window.findChild('pdk').text = CALIBRE['Calibre']['remote_pdk_location']
+        _globals.DRC_GUI.window.findChild('calibre').text = CALIBRE['Calibre']['remote_calibre_script']
+        print('loaded CALIBRE.xml')
+      _globals.DRC_GUI.show()
   else:
+    if not params:
+      from .utils import load_Calibre
+      CALIBRE = load_Calibre()
+      params={}
+      params['pdk'] = CALIBRE['Calibre']['remote_pdk_location']
+      params['calibre'] = CALIBRE['Calibre']['remote_calibre_script']
+      params['remote_calibre_rule_deck_main_file'] = CALIBRE['Calibre']['remote_calibre_rule_deck_main_file']
+      params['remote_additional_commands'] = CALIBRE['Calibre']['remote_additional_commands']
+
+  if not GUI or not (status is None and params is None):
     if status is False: return
     if params is None: params = _globals.DRC_GUI.get_parameters()
     
@@ -568,7 +578,7 @@ def calibreDRC(params = None, cell = None):
     with codecs.open(os.path.join(local_path, 'run_calibre'), 'w', encoding="utf-8") as file:
       cal_script  = '#!/bin/tcsh \n'
       cal_script += 'source %s \n' % params['calibre']
-      cal_script += 'setenv SIEPIC_IME_PDK %s \n' % params['pdk']
+      cal_script += '%s \n' % params['remote_additional_commands']
       cal_script += '$MGC_HOME/bin/calibre -drc -hier -turbo -nowait drc.cal \n'
       file.write(cal_script)
 
@@ -583,7 +593,7 @@ def calibreDRC(params = None, cell = None):
       cal_deck += 'VIRTUAL CONNECT COLON NO\n'
       cal_deck += 'VIRTUAL CONNECT REPORT NO\n'
       cal_deck += 'DRC ICSTATION YES\n'
-      cal_deck += 'INCLUDE "%s/calibre_rule_decks/CMC_SiEPIC_IMESP.drc.cal"\n' % params['pdk']
+      cal_deck += 'INCLUDE "%s/%s"\n' % (params['pdk'], params['remote_calibre_rule_deck_main_file'])
       file.write(cal_deck)
 
     version = sys.version
