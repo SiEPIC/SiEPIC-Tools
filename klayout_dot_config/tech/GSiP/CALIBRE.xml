@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Calibre>
+	<remote_calibre_rule_deck_main_file>calibre_rule_decks/CMC_SiEPIC_IMESP.drc.cal</remote_calibre_rule_deck_main_file>
+	<remote_calibre_script>/CMC/scripts/mentor.calibre.2013.2_18.13.csh</remote_calibre_script>
+	<remote_additional_commands>setenv SIEPIC_IME_PDK /CMC/kits/SiEPIC_IME_Active.2017.09/SiEPIC_IME_PDK</remote_additional_commands>
+	<remote_pdk_location>/CMC/kits/SiEPIC_IME_Active.2017.09/SiEPIC_IME_PDK</remote_pdk_location>
+</Calibre>
+
