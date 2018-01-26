@@ -639,22 +639,22 @@ def calibreDRC(params = None, cell = None, GUI = False):
       pya.Application.instance().main_window().repaint()
       
       try:
-        out += cmd('ssh drc "mkdir -p %s"' % (remote_path), shell=True)
-        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)
-        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)
-        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)
+        out += cmd('ssh drc "mkdir -p %s"' % (remote_path), shell=True).decode('utf-8')
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True).decode('utf-8')
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True).decode('utf-8')
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True).decode('utf-8')
 
         progress.format = "Checking Layout for Errors"
         progress.set(3, True)
         pya.Application.instance().main_window().repaint()
 
-        out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)
+        out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True).decode('utf-8')
       
         progress.format = "Downloading Results"
         progress.set(4, True)
         pya.Application.instance().main_window().repaint()
       
-        out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file), shell=True)
+        out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file), shell=True).decode('utf-8')
       except subprocess.CalledProcessError as e:
         out += '\nError running ssh or scp commands. Please check that these programs are available.\n'
         out += str(e.output)
