@@ -557,6 +557,8 @@ def calibreDRC(params = None, cell = None, GUI = False):
     local_path = _globals.TEMP_FOLDER
     print("SiEPIC.scripts.calibreDRC; local tmp folder: %s" % local_path )
     local_file = os.path.basename(lv.active_cellview().filename())
+    if not local_file:
+      local_file = 'layout'
     local_pathfile = os.path.join(local_path, local_file)
 
     # Layout path and filename:
@@ -637,22 +639,22 @@ def calibreDRC(params = None, cell = None, GUI = False):
       pya.Application.instance().main_window().repaint()
       
       try:
-        out += cmd('ssh drc "mkdir -p %s"' % (remote_path), shell=True)[1]
-        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)[1]
-        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)[1]
-        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)[1]
+        out += cmd('ssh drc "mkdir -p %s"' % (remote_path), shell=True)
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, local_file, remote_path), shell=True)
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'run_calibre', remote_path), shell=True)
+        out += cmd('cd "%s" && scp "%s" drc:%s' % (local_path, 'drc.cal', remote_path), shell=True)
 
         progress.format = "Checking Layout for Errors"
         progress.set(3, True)
         pya.Application.instance().main_window().repaint()
 
-        out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)[1]
+        out += cmd('ssh drc "cd %s && source run_calibre"' % (remote_path), shell=True)
       
         progress.format = "Downloading Results"
         progress.set(4, True)
         pya.Application.instance().main_window().repaint()
       
-        out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file), shell=True)[1]
+        out += cmd('cd "%s" && scp drc:%s "%s"' % (local_path, remote_path + "/drc.rve", results_file), shell=True)
       except subprocess.CalledProcessError as e:
         out += '\nError running ssh or scp commands. Please check that these programs are available.\n'
         out += str(e.output)
