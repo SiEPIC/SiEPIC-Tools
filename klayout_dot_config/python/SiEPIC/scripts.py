@@ -577,7 +577,7 @@ def calibreDRC(params = None, cell = None, GUI = False):
     results_file = layout_basefilename + ".rve"
     results_pathfile = os.path.join(os.path.dirname(local_pathfile), results_file)
     tmp_ly = ly.dup()
-    [cell.flatten(True) for cell in tmp_ly.each_cell()]
+    [c.flatten(True) for c in tmp_ly.each_cell()]
     opts = pya.SaveLayoutOptions()
     opts.format = "GDS2"
     tmp_ly.write(local_pathfile, opts)
