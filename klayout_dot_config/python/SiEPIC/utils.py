@@ -221,6 +221,8 @@ def load_Waveguides():
         if not isinstance(waveguide['component'], list):
           waveguide['component'] = [waveguide['component']]
 
+  # *** lukasc comment: I think the following piece can be combined with the above.
+  # if not paths, then load GSiP's WAVEGUIDE.xml, then proceed to "if paths"
   if not tech_name == 'GSiP':
     paths = []
     for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks = True):
@@ -233,6 +235,12 @@ def load_Waveguides():
           if not isinstance(waveguide['component'], list):
             waveguide['component'] = [waveguide['component']]
 
+  # *** lukasc comment:
+  # all this assumes that the waveguide types are always Strip+Slot+Rib
+  # for some technologies, this may not make sense, e.g., there may be multiple rib types
+  # such as shallow etch 60 nm, or shallow etch 150 nm.
+  # and some people might not want slots
+  # better if the waveguide types is something that is read from the XML, and GUI adjusted accordingly
   if waveguides:
     if not any([waveguide['name'] == 'Strip' for waveguide in waveguides]):
       waveguides.append([x for x in defaults if x['name'] == 'Strip'][0])
@@ -772,7 +780,7 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
           params_txt += ', ' + str(f)
         text_out += "%s, %s, %s, %s, %s, %s%s<br>" %(int(text2.x*dbu), int(text2.y*dbu), fields[2], fields[3],fields[4],fields[5],params_txt )
     iter.next()
-  text_out += "<br>*** Number of automated measurement labels: %s.<br>" % i
+  text_out += "<br> Number of automated measurement labels: %s.<br>" % i
   return text_out, opt_in
 
 
