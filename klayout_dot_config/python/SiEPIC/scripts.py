@@ -30,7 +30,7 @@ measurement_vs_simulation
 
 import pya
 
-def path_to_waveguide(params = None, cell = None, lv_commit=True):
+def path_to_waveguide(params = None, cell = None, lv_commit = True, GUI = False):
   from . import _globals
   from .utils import select_paths, get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -38,7 +38,7 @@ def path_to_waveguide(params = None, cell = None, lv_commit=True):
   if lv_commit:
     lv.transaction("Path to Waveguide")
 
-  if params is None: params = _globals.WG_GUI.get_parameters()
+  if params is None: params = _globals.WG_GUI.get_parameters(GUI)
   if params is None: return
   selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell)
   selection = []

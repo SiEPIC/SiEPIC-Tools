@@ -201,7 +201,7 @@ def get_technology(verbose=False, query_activecellview_technology=False):
 
 '''
 Load Waveguide configuration
-These are technology specific, and located in the tech folder, in the folder waveguides
+These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
 '''
 def load_Waveguides():
   import os, fnmatch
@@ -219,29 +219,7 @@ def load_Waveguides():
       for waveguide in waveguides:
         if not isinstance(waveguide['component'], list):
           waveguide['component'] = [waveguide['component']]
-
-  if not tech_name == 'GSiP':
-    paths = []
-    for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks = True):
-      [paths.append(os.path.join(root, filename)) for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if 'GSiP' in root]
-    if paths:
-      with open(paths[0], 'r') as file:
-        defaults = xml_to_dict(file.read())
-        defaults = defaults['waveguides']['waveguide']
-        for waveguide in defaults:
-          if not isinstance(waveguide['component'], list):
-            waveguide['component'] = [waveguide['component']]
-
-  if waveguides:
-    if not any([waveguide['name'] == 'Strip' for waveguide in waveguides]):
-      waveguides.append([x for x in defaults if x['name'] == 'Strip'][0])
-    if not any([waveguide['name'] == 'Slot' for waveguide in waveguides]):
-      waveguides.append([x for x in defaults if x['name'] == 'Slot'][0])
-    if not any([waveguide['name'] == 'Ridge' for waveguide in waveguides]):
-      waveguides.append([x for x in defaults if x['name'] == 'Ridge'][0])
-    return waveguides
-  else:
-    return defaults
+  return waveguides if waveguides else None
 
 '''
 Load Calibre configuration
@@ -270,8 +248,8 @@ def load_Calibre():
     return None
 
 '''
-Load Calibre configuration
-These are technology specific, and located in the tech folder, named CALIBRE.xml
+Load Monte Carlo configuration
+These are technology specific, and located in the tech folder, named MONTECARLO.xml
 '''
 def load_Monte_Carlo():
   import os, fnmatch

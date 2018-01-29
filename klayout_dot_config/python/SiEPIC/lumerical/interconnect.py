@@ -518,27 +518,14 @@ def circuit_simulation_update_netlist():
   
 def circuit_simulation_monte_carlo(params = None, cell = None):
   from .. import _globals
-
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-
+  from ..utils import get_layout_variables
   if cell is None:
-    ly = lv.active_cellview().layout() 
-    if ly == None:
-      raise Exception("No active layout")
-    cell = lv.active_cellview().cell
-    if cell == None:
-      raise Exception("No active cell")
+    _, lv, ly, cell = get_layout_variables()
   else:
+    _, lv, _, _ = get_layout_variables()
     ly = cell.layout()
   
-  status = _globals.MC_GUI.return_status()
-  if status is None and params is None:
-    _globals.MC_GUI.show()
-  else:
-    if status is False: return
-    if params is None: params = _globals.MC_GUI.get_parameters()
-    
+  if params is None: params = _globals.MC_GUI.get_parameters()
+  if params is None: return
   print(params)
   

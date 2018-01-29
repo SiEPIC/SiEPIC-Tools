@@ -227,48 +227,12 @@ class WaveguideGUI():
     #Button Bindings
     self.window.findChild('ok').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
-    self.window.findChild('radioStrip').toggled(self.enable)
-    self.window.findChild('radioRib').toggled(self.enable)
-    self.window.findChild('radioSlot').toggled(self.enable)
-    self.window.findChild('radioCustom').toggled(self.enable)
     self.window.findChild('adiabatic').toggled(self.enable)
-    self.window.findChild('radioStrip').click()
+    self.window.findChild('bezier').setEnabled(False)
     self.loaded_technology = ''
     self.clicked = True
     
   def enable(self, val):
-    if self.window.findChild('radioStrip').isChecked():
-      self.window.findChild('stripWidth').setEnabled(True)
-      self.window.findChild('stripLayer').setEnabled(True)
-    else:
-      self.window.findChild('stripWidth').setEnabled(False)
-      self.window.findChild('stripLayer').setEnabled(False)
-      
-    if self.window.findChild('radioRib').isChecked():
-      self.window.findChild('ribWidth1').setEnabled(True)
-      self.window.findChild('ribWidth2').setEnabled(True)
-      self.window.findChild('ribLayer1').setEnabled(True)
-      self.window.findChild('ribLayer2').setEnabled(True)
-    else:
-      self.window.findChild('ribWidth1').setEnabled(False)
-      self.window.findChild('ribWidth2').setEnabled(False)
-      self.window.findChild('ribLayer1').setEnabled(False)
-      self.window.findChild('ribLayer2').setEnabled(False)
-      
-    if self.window.findChild('radioSlot').isChecked():
-      self.window.findChild('slotWidth1').setEnabled(True)
-      self.window.findChild('slotWidth2').setEnabled(True)
-      self.window.findChild('slotLayer').setEnabled(True)
-    else:
-      self.window.findChild('slotWidth1').setEnabled(False)
-      self.window.findChild('slotWidth2').setEnabled(False)
-      self.window.findChild('slotLayer').setEnabled(False)
-      
-    if self.window.findChild('radioCustom').isChecked():
-      self.window.findChild('custom').setEnabled(True)
-    else:
-      self.window.findChild('custom').setEnabled(False)
-      
     if self.window.findChild('adiabatic').isChecked():
       self.window.findChild('bezier').setEnabled(True)
     else:
@@ -277,49 +241,10 @@ class WaveguideGUI():
   def update(self):
     from .utils import get_layout_variables, load_Waveguides
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
-    self.window.findChild("stripLayer").clear()
-    self.window.findChild("ribLayer1").clear()
-    self.window.findChild("ribLayer2").clear()
-    self.window.findChild("slotLayer").clear()
-    self.window.findChild("custom").clear()
-    self.layers = []
-    self.customs = []
-    
-    itr = lv.begin_layers()
-    while True:
-      if itr == lv.end_layers():
-        break
-      else:
-        self.layers.append(itr.current().name + " - " + itr.current().source.split('@')[0])
-        itr.next()
-        
-    self.window.findChild("stripLayer").addItems(self.layers)
-    self.window.findChild("ribLayer1").addItems(self.layers)
-    self.window.findChild("ribLayer2").addItems(self.layers)
-    self.window.findChild("slotLayer").addItems(self.layers)
-    
+    self.window.findChild("configuration").clear()
     self.waveguides = load_Waveguides()
-    for waveguide in self.waveguides:
-      if waveguide['name'] == 'Strip':
-        self.window.findChild('stripWidth').text = waveguide['component'][0]['width']
-        index = [i for i, layer in enumerate(self.layers) if '' in layer][0]
-        self.window.findChild('stripLayer').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][0]['layer'] in layer][0])
-      elif waveguide['name'] == 'Ridge':
-        self.window.findChild('ribWidth1').text = waveguide['component'][0]['width']
-        self.window.findChild('ribWidth2').text = waveguide['component'][1]['width']
-        self.window.findChild('ribLayer1').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][0]['layer'] in layer][0])
-        self.window.findChild('ribLayer2').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][1]['layer'] in layer][0])
-      elif waveguide['name'] == 'Slot':
-        inner = (float(waveguide['component'][0]['width']) - float(waveguide['component'][0]['offset']))*2
-        inner = round(inner, len(str(TECHNOLOGY['dbu']).split('.')[1]))
-        outer = (float(waveguide['component'][0]['width']))*2 + inner
-        outer = round(outer, len(str(TECHNOLOGY['dbu']).split('.')[1]))
-        self.window.findChild('slotWidth1').text = str(outer)
-        self.window.findChild('slotWidth2').text = str(inner)
-        self.window.findChild('slotLayer').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][0]['layer'] in layer][0])
-      else:
-        self.customs.append(waveguide['name'])
-    self.window.findChild("custom").addItems(self.customs)
+    self.options = [waveguide['name'] for waveguide in self.waveguides]
+    self.window.findChild("configuration").addItems(self.options)
 
   def close(self, val):
     self.clicked = False
@@ -329,13 +254,16 @@ class WaveguideGUI():
     self.clicked = True
     self.window.close()
   
-  def get_parameters(self):
+  def get_parameters(self, show):
     from .utils import get_technology
     TECHNOLOGY = get_technology()
     
     if not self.loaded_technology == TECHNOLOGY['technology_name']:
       self.update()
       self.window.exec_()
+    elif show:
+      self.window.exec_()
+      
     if not self.clicked:
       self.loaded_technology = ''
       return None
@@ -348,31 +276,16 @@ class WaveguideGUI():
                'bezier': float(self.window.findChild('bezier').text),
                'wgs':[] }
 
-    if self.window.findChild('radioStrip').isChecked():
-      layer = self.window.findChild('stripLayer').currentText
-      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('stripWidth').text), 'offset': 0})
-      params['width'] = params['wgs'][0]['width']
-    elif self.window.findChild('radioRib').isChecked():
-      layer = self.window.findChild('ribLayer1').currentText
-      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ribWidth1').text), 'offset': 0})
-      layer = self.window.findChild('ribLayer2').currentText
-      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ribWidth2').text), 'offset': 0})
-      params['width'] = params['wgs'][0]['width']
-    elif self.window.findChild('radioSlot').isChecked():
-      w1 = float(self.window.findChild('slotWidth1').text)
-      w2 = float(self.window.findChild('slotWidth2').text)
-      layer = self.window.findChild('slotLayer').currentText
-      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': (w1-w2)/2,'offset': (w1+w2)/4})
-      params['wgs'].append({'layer': layer.split(' - ')[0], 'width': (w1-w2)/2,'offset': -(w1+w2)/4})
-      params['width'] = w1
-    elif self.window.findChild('radioCustom').isChecked():
-      waveguide = [wg for wg in self.waveguides if wg['name'] == self.window.findChild('custom').currentText][0]
+    if not self.window.findChild('configuration').currentText == '':
+      waveguide = [wg for wg in self.waveguides if wg['name'] == self.window.findChild('configuration').currentText][0]
       for component in waveguide['component']:
         params['wgs'].append({'layer': component['layer'], 'width': float(component['width']), 'offset': float(component['offset'])})
         w = (params['wgs'][-1]['width']/2+params['wgs'][-1]['offset'])*2
         if params['width'] < w:
           params['width'] = w
-    return params
+      return params
+    else:
+      return None
 
 class MonteCarloGUI():
 
@@ -389,9 +302,6 @@ class MonteCarloGUI():
     self.window.findChild("technology").currentTextChanged(self.tech_changed)
     self.loaded_technology = ''
     self.clicked = True
-    
-  def show(self):
-    self.window.show()
   
   def close(self, val):
     self.clicked = False
