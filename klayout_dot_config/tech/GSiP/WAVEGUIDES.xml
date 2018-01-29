@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <waveguides>
+
   <waveguide>
     <name>Strip</name>
     <component>
@@ -35,7 +36,53 @@
     </component>
   </waveguide>
   <waveguide>
-    <name>Example</name>
+    <name>Strip TE 1310 nm</name>
+    <component>
+      <layer>Si</layer>
+      <width>0.35</width>
+      <offset>0.0</offset>
+      <radius>5.0</bezier>
+      <bezier>0.35</bezier>
+      <adiabatic>1</adiabatic>
+    </component>
+  </waveguide>
+  <waveguide>
+    <name>Strip TE 2900 nm</name>
+    <component>
+      <layer>Si</layer>
+      <width>1.00</width>
+      <offset>0.0</offset>
+      <radius>15.0</bezier>
+      <bezier>0.35</bezier>
+      <adiabatic>1</adiabatic>
+    </component>
+  </waveguide>
+  <waveguide>
+    <name>Strip TE 1550 nm</name>
+    <component>
+      <layer>Si</layer>
+      <width>0.5</width>
+      <offset>0.0</offset>
+      <radius>5.0</bezier>
+      <bezier>0.35</bezier>
+      <adiabatic>1</adiabatic>
+    </component>
+  </waveguide>
+  <waveguide>
+    <name>Rib with 90 nm slab</name>
+    <component>
+      <layer>Si</layer>
+      <width>0.5</width>
+      <offset>0.0</offset>
+    </component>
+    <component>
+      <layer>SiEtch1</layer>
+      <width>2.0</width>
+      <offset>0.0</offset>
+    </component>
+  </waveguide> 
+  <waveguide>
+    <name>Double Rib with 150 nm step and 90 nm slab</name>
     <component>
       <layer>Si</layer>
       <width>0.5</width>
@@ -43,6 +90,11 @@
     </component>
     <component>
       <layer>SiEtch2</layer>
+      <width>0.7</width>
+      <offset>0.0</offset>
+    </component>
+    <component>
+      <layer>SiEtch1</layer>
       <width>2.0</width>
       <offset>0.0</offset>
     </component>
