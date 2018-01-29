@@ -41,7 +41,7 @@
       <layer>Si</layer>
       <width>0.35</width>
       <offset>0.0</offset>
-      <radius>5.0</bezier>
+      <radius>5.0</radius>
       <bezier>0.35</bezier>
       <adiabatic>1</adiabatic>
     </component>
@@ -52,7 +52,7 @@
       <layer>Si</layer>
       <width>1.00</width>
       <offset>0.0</offset>
-      <radius>15.0</bezier>
+      <radius>15.0</radius>
       <bezier>0.35</bezier>
       <adiabatic>1</adiabatic>
     </component>
@@ -63,7 +63,7 @@
       <layer>Si</layer>
       <width>0.5</width>
       <offset>0.0</offset>
-      <radius>5.0</bezier>
+      <radius>5.0</radius>
       <bezier>0.35</bezier>
       <adiabatic>1</adiabatic>
     </component>
