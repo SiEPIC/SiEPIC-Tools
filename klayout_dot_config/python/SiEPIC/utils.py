@@ -212,6 +212,7 @@ def load_Waveguides():
   for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks = True):
     [paths.append(os.path.join(root, filename)) for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name in root]
   
+  waveguides=[]
   if paths:
     with open(paths[0], 'r') as file:
       waveguides = xml_to_dict(file.read())
@@ -749,7 +750,7 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
           params_txt += ', ' + str(f)
         text_out += "%s, %s, %s, %s, %s, %s%s<br>" %(int(text2.x*dbu), int(text2.y*dbu), fields[2], fields[3],fields[4],fields[5],params_txt )
     iter.next()
-  text_out += "<br>*** Number of automated measurement labels: %s.<br>" % i
+  text_out += "<br> Number of automated measurement labels: %s.<br>" % i
   return text_out, opt_in
 
 

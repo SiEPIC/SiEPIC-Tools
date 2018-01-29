@@ -224,6 +224,12 @@ class WaveguideGUI():
     self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
     ui_file.close
     
+    # *** lukasc comment:
+    # waveguide types shouldn't be hardcoded, but rather read from WAVEGUIDES.xml.
+    # I'm don't see the advantage of the waveguide_gui.ui approach, rather than coding the GUI generation within
+    # Python like I did for the FDTD settings GUI in file:
+    # Keybindings: GUI_FDTD_component_simulation
+    
     #Button Bindings
     self.window.findChild('ok').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
