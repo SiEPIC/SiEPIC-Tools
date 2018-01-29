@@ -212,6 +212,7 @@ def load_Waveguides():
   for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks = True):
     [paths.append(os.path.join(root, filename)) for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name in root]
   
+  waveguides=[]
   if paths:
     with open(paths[0], 'r') as file:
       waveguides = xml_to_dict(file.read())
