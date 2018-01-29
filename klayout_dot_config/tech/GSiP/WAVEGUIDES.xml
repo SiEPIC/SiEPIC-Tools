@@ -47,6 +47,7 @@
   </waveguide>
   <waveguide>
     <name>Strip TE 2900 nm</name>
+    <radius>10</radius>
     <bezier>0.35</bezier>
     <component>
       <layer>Si</layer>
