@@ -235,6 +235,7 @@ class WaveguideGUI():
     self.window.findChild('cancel').clicked(self.close)
     self.window.findChild('adiabatic').toggled(self.enable)
     self.window.findChild('bezier').setEnabled(False)
+    self.window.findChild("configuration").currentTextChanged(self.config_changed)
     self.loaded_technology = ''
     self.clicked = True
     
@@ -259,7 +260,22 @@ class WaveguideGUI():
   def ok(self, val):
     self.clicked = True
     self.window.close()
-  
+
+  def config_changed(self, val):
+    options = [t for t in self.waveguides if t['name'] == self.window.findChild('configuration').currentText]
+    if options:
+      waveguide = options[0]
+      if 'radius' in waveguide:
+        self.window.findChild('radius').text = waveguide['radius']
+      else:
+        self.window.findChild('radius').text = '5'
+      if 'bezier' in waveguide:
+        self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Checked
+        self.window.findChild('bezier').text = waveguide['bezier']
+      else:
+        self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Unchecked
+        self.window.findChild('bezier').text = '0.45'
+
   def get_parameters(self, show):
     from .utils import get_technology
     TECHNOLOGY = get_technology()
