@@ -224,45 +224,19 @@ class WaveguideGUI():
     self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
     ui_file.close
     
-    table = self.window.findChild('layerTable')
-    table.setColumnCount(3)
-    table.setHorizontalHeaderLabels([ "Layer","Width","Offset"])
-
     #Button Bindings
     self.window.findChild('ok').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
-    self.window.findChild('numLayers').valueChanged(self.updateTable)
-    self.window.findChild('radioStrip').toggled(self.updateFields)
-    self.window.findChild('radioRib').toggled(self.updateFields)
-    self.window.findChild('radioSlot').toggled(self.updateFields)
-    self.window.findChild('radioCustom').toggled(self.updateFields)
-    self.window.findChild('adiabatic').toggled(self.updateFields)
+    self.window.findChild('radioStrip').toggled(self.enable)
+    self.window.findChild('radioRib').toggled(self.enable)
+    self.window.findChild('radioSlot').toggled(self.enable)
+    self.window.findChild('radioCustom').toggled(self.enable)
+    self.window.findChild('adiabatic').toggled(self.enable)
     self.window.findChild('radioStrip').click()
-    self.initialized = False
-    self.layers = []
+    self.loaded_technology = ''
+    self.clicked = True
     
-  def updateTable(self, val):
-    table = self.window.findChild("layerTable")
-    cur = table.rowCount
-    if cur > val:
-      for i in range(val, cur):
-        table.removeRow(i)
-    else:
-      for i in range(cur, val):
-        table.insertRow(i)
-        item = pya.QComboBox(table)
-        item.clear()
-        item.addItems(self.layers)
-        table.setCellWidget(i, 0, item)
-        item = pya.QLineEdit(table)
-        item.setText("0.5")
-        table.setCellWidget(i, 1, item)
-        item = pya.QLineEdit(table)
-        item.setText("0")
-        table.setCellWidget(i, 2, item)
-        
-  def updateFields(self, val):
-  
+  def enable(self, val):
     if self.window.findChild('radioStrip').isChecked():
       self.window.findChild('stripWidth').setEnabled(True)
       self.window.findChild('stripLayer').setEnabled(True)
@@ -291,27 +265,26 @@ class WaveguideGUI():
       self.window.findChild('slotLayer').setEnabled(False)
       
     if self.window.findChild('radioCustom').isChecked():
-      self.window.findChild('numLayers').setEnabled(True)
-      self.window.findChild('layerTable').setEnabled(True)
+      self.window.findChild('custom').setEnabled(True)
     else:
-      self.window.findChild('numLayers').setEnabled(False)
-      self.window.findChild('layerTable').setEnabled(False)
+      self.window.findChild('custom').setEnabled(False)
       
     if self.window.findChild('adiabatic').isChecked():
       self.window.findChild('bezier').setEnabled(True)
     else:
       self.window.findChild('bezier').setEnabled(False)
 
-  def updateLayers(self, val):
+  def update(self):
+    from .utils import get_layout_variables, load_Waveguides
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
     self.window.findChild("stripLayer").clear()
     self.window.findChild("ribLayer1").clear()
     self.window.findChild("ribLayer2").clear()
     self.window.findChild("slotLayer").clear()
+    self.window.findChild("custom").clear()
     self.layers = []
-    lv = pya.Application.instance().main_window().current_view()
-    if lv == None:
-      raise Exception("No view selected")
-
+    self.customs = []
+    
     itr = lv.begin_layers()
     while True:
       if itr == lv.end_layers():
@@ -319,31 +292,56 @@ class WaveguideGUI():
       else:
         self.layers.append(itr.current().name + " - " + itr.current().source.split('@')[0])
         itr.next()
+        
     self.window.findChild("stripLayer").addItems(self.layers)
     self.window.findChild("ribLayer1").addItems(self.layers)
     self.window.findChild("ribLayer2").addItems(self.layers)
     self.window.findChild("slotLayer").addItems(self.layers)
     
-    self.window.findChild("ribLayer2").setCurrentIndex(2)
+    self.waveguides = load_Waveguides()
+    for waveguide in self.waveguides:
+      if waveguide['name'] == 'Strip':
+        self.window.findChild('stripWidth').text = waveguide['component'][0]['width']
+        index = [i for i, layer in enumerate(self.layers) if '' in layer][0]
+        self.window.findChild('stripLayer').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][0]['layer'] in layer][0])
+      elif waveguide['name'] == 'Ridge':
+        self.window.findChild('ribWidth1').text = waveguide['component'][0]['width']
+        self.window.findChild('ribWidth2').text = waveguide['component'][1]['width']
+        self.window.findChild('ribLayer1').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][0]['layer'] in layer][0])
+        self.window.findChild('ribLayer2').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][1]['layer'] in layer][0])
+      elif waveguide['name'] == 'Slot':
+        inner = (float(waveguide['component'][0]['width']) - float(waveguide['component'][0]['offset']))*2
+        inner = round(inner, len(str(TECHNOLOGY['dbu']).split('.')[1]))
+        outer = (float(waveguide['component'][0]['width']))*2 + inner
+        outer = round(outer, len(str(TECHNOLOGY['dbu']).split('.')[1]))
+        self.window.findChild('slotWidth1').text = str(outer)
+        self.window.findChild('slotWidth2').text = str(inner)
+        self.window.findChild('slotLayer').setCurrentIndex([i for i, layer in enumerate(self.layers) if waveguide['component'][0]['layer'] in layer][0])
+      else:
+        self.customs.append(waveguide['name'])
+    self.window.findChild("custom").addItems(self.customs)
 
-  def show(self):
-    self.updateLayers(0)
-    self.updateTable(0)
-    self.initialized = True
-    self.window.show()
-  
   def close(self, val):
+    self.clicked = False
     self.window.close()
 
   def ok(self, val):
+    self.clicked = True
     self.window.close()
-    from . import scripts
-    scripts.path_to_waveguide()
   
   def get_parameters(self):
-    if not self.initialized:
-      self.show()
+    from .utils import get_technology
+    TECHNOLOGY = get_technology()
+    
+    if not self.loaded_technology == TECHNOLOGY['technology_name']:
+      self.update()
+      self.window.exec_()
+    if not self.clicked:
+      self.loaded_technology = ''
       return None
+    
+    self.loaded_technology = TECHNOLOGY['technology_name']
+    
     params = { 'radius': float(self.window.findChild('radius').text),
                'width': 0,
                'adiabatic': self.window.findChild('adiabatic').isChecked(),
@@ -351,18 +349,15 @@ class WaveguideGUI():
                'wgs':[] }
 
     if self.window.findChild('radioStrip').isChecked():
-    
       layer = self.window.findChild('stripLayer').currentText
       params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('stripWidth').text), 'offset': 0})
       params['width'] = params['wgs'][0]['width']
-      
     elif self.window.findChild('radioRib').isChecked():
       layer = self.window.findChild('ribLayer1').currentText
       params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ribWidth1').text), 'offset': 0})
       layer = self.window.findChild('ribLayer2').currentText
       params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(self.window.findChild('ribWidth2').text), 'offset': 0})
       params['width'] = params['wgs'][0]['width']
-      
     elif self.window.findChild('radioSlot').isChecked():
       w1 = float(self.window.findChild('slotWidth1').text)
       w2 = float(self.window.findChild('slotWidth2').text)
@@ -371,52 +366,13 @@ class WaveguideGUI():
       params['wgs'].append({'layer': layer.split(' - ')[0], 'width': (w1-w2)/2,'offset': -(w1+w2)/4})
       params['width'] = w1
     elif self.window.findChild('radioCustom').isChecked():
-      table = self.window.findChild('layerTable')
-      for i in range(0, int(self.window.findChild('numLayers').value)):
-        layer = table.cellWidget(i,0).currentText
-        params['wgs'].append({'layer': layer.split(' - ')[0], 'width': float(table.cellWidget(i,1).text), 'offset': float(table.cellWidget(i,2).text)})
+      waveguide = [wg for wg in self.waveguides if wg['name'] == self.window.findChild('custom').currentText][0]
+      for component in waveguide['component']:
+        params['wgs'].append({'layer': component['layer'], 'width': float(component['width']), 'offset': float(component['offset'])})
         w = (params['wgs'][-1]['width']/2+params['wgs'][-1]['offset'])*2
         if params['width'] < w:
           params['width'] = w
     return params
-
-class CalibreGUI():
-  def __init__(self):
-    import os
-  
-    ui_file = pya.QFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "calibre_drc_gui.ui"))
-    ui_file.open(pya.QIODevice().ReadOnly)
-    self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
-    ui_file.close
-    
-    #Button Bindings
-    self.window.findChild('connect').clicked(self.ok)
-    self.window.findChild('cancel').clicked(self.close)
-    self.status = None
-    
-  def show(self):
-    self.window.show()
-  
-  def close(self, val):
-    self.status = False
-    self.window.close()
-    from . import scripts
-    scripts.calibreDRC()
-
-  def ok(self, val):
-    self.status = True
-    self.window.close()
-    from . import scripts
-    scripts.calibreDRC()
-    
-  def return_status(self):
-    status = self.status
-    self.status = None
-    return status
-  
-  def get_parameters(self):
-    return {'pdk': self.window.findChild('pdk').text,
-            'calibre': self.window.findChild('calibre').text}
 
 class MonteCarloGUI():
 
@@ -430,30 +386,53 @@ class MonteCarloGUI():
     
     self.window.findChild('run').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
-#    self.window.findChild('variation').tabBar().expanding = True
-    self.status = None
+    self.window.findChild("technology").currentTextChanged(self.tech_changed)
+    self.loaded_technology = ''
+    self.clicked = True
     
   def show(self):
     self.window.show()
   
   def close(self, val):
-    self.status = False
+    self.clicked = False
     self.window.close()
-    from .lumerical import interconnect
-    interconnect.circuit_simulation_monte_carlo()
 
   def ok(self, val):
-    self.status = True
+    self.clicked = True
     self.window.close()
-    from .lumerical import interconnect
-    interconnect.circuit_simulation_monte_carlo()
-    
-  def return_status(self):
-    status = self.status
-    self.status = None
-    return status
 
+  def update(self):
+    from .utils import get_layout_variables, load_Monte_Carlo
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    self.montecarlos = load_Monte_Carlo()
+    self.technologies = [mc['name'] for mc in self.montecarlos]
+    self.window.findChild("technology").clear()
+    self.window.findChild("technology").addItems(self.technologies)
+    self.window.findChild('technology').setCurrentIndex(0)
+    
+  def tech_changed(self, val):
+    options = [t for t in self.montecarlos if t['name'] == self.window.findChild('technology').currentText]
+    if options:
+      technology = options[0]
+      self.window.findChild('std_dev').text = technology['wafer']['width']['std_dev']
+      self.window.findChild('corr_len').text = technology['wafer']['width']['corr_length']
+      self.window.findChild('std_dev_2').text = technology['wafer']['height']['std_dev']
+      self.window.findChild('corr_len_2').text = technology['wafer']['height']['corr_length']
+      self.window.findChild('std_dev_3').text = technology['wafer_to_wafer']['width']['std_dev']
+      self.window.findChild('std_dev_4').text = technology['wafer_to_wafer']['thickness']['std_dev']
+    
   def get_parameters(self):
+    from .utils import get_technology
+    TECHNOLOGY = get_technology()
+    
+    if not self.loaded_technology == TECHNOLOGY['technology_name']:
+      self.update()
+      self.loaded_technology = TECHNOLOGY['technology_name']
+      
+    self.window.exec_()
+    if not self.clicked:
+      return None
+    
     return {
       'num_wafers': self.window.findChild('num_wafers').value,
       'num_dies': self.window.findChild('num_dies').value,
@@ -465,20 +444,20 @@ class MonteCarloGUI():
       },
       'waf_var': {
         'width': {
-          'std_dev': self.window.findChild('std_dev').text,
-          'corr_len': self.window.findChild('corr_len').text
+          'std_dev': float(self.window.findChild('std_dev').text),
+          'corr_len': float(self.window.findChild('corr_len').text)
         },
         'height': {
-          'std_dev': self.window.findChild('std_dev_2').text,
-          'corr_len': self.window.findChild('corr_len_2').text
+          'std_dev': float(self.window.findChild('std_dev_2').text),
+          'corr_len': float(self.window.findChild('corr_len_2').text)
         }
       },
       'waf_to_waf_var': {
         'width': {
-          'std_dev': self.window.findChild('std_dev_3').text
+          'std_dev': float(self.window.findChild('std_dev_3').text)
         },
         'thickness': {
-          'std_dev': self.window.findChild('std_dev_4').text
+          'std_dev': float(self.window.findChild('std_dev_4').text)
         }
       }
     }

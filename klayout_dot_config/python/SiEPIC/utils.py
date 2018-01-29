@@ -199,7 +199,49 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     return technology
 
 
+'''
+Load Waveguide configuration
+These are technology specific, and located in the tech folder, in the folder waveguides
+'''
+def load_Waveguides():
+  import os, fnmatch
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+  paths = []
+  for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks = True):
+    [paths.append(os.path.join(root, filename)) for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name in root]
+  
+  if paths:
+    with open(paths[0], 'r') as file:
+      waveguides = xml_to_dict(file.read())
+      waveguides = waveguides['waveguides']['waveguide']
+      for waveguide in waveguides:
+        if not isinstance(waveguide['component'], list):
+          waveguide['component'] = [waveguide['component']]
 
+  if not tech_name == 'GSiP':
+    paths = []
+    for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks = True):
+      [paths.append(os.path.join(root, filename)) for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if 'GSiP' in root]
+    if paths:
+      with open(paths[0], 'r') as file:
+        defaults = xml_to_dict(file.read())
+        defaults = defaults['waveguides']['waveguide']
+        for waveguide in defaults:
+          if not isinstance(waveguide['component'], list):
+            waveguide['component'] = [waveguide['component']]
+
+  if waveguides:
+    if not any([waveguide['name'] == 'Strip' for waveguide in waveguides]):
+      waveguides.append([x for x in defaults if x['name'] == 'Strip'][0])
+    if not any([waveguide['name'] == 'Slot' for waveguide in waveguides]):
+      waveguides.append([x for x in defaults if x['name'] == 'Slot'][0])
+    if not any([waveguide['name'] == 'Ridge' for waveguide in waveguides]):
+      waveguides.append([x for x in defaults if x['name'] == 'Ridge'][0])
+    return waveguides
+  else:
+    return defaults
 
 '''
 Load Calibre configuration
@@ -227,7 +269,26 @@ def load_Calibre():
   else:
     return None
 
-
+'''
+Load Calibre configuration
+These are technology specific, and located in the tech folder, named CALIBRE.xml
+'''
+def load_Monte_Carlo():
+  import os, fnmatch
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+  paths = []
+  for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
+    [paths.append(os.path.join(root, filename)) for filename in fnmatch.filter(filenames, 'MONTECARLO.xml') if tech_name in root]
+  if paths:
+    with open(paths[0], 'r') as file:
+      montecarlo = xml_to_dict(file.read())
+      montecarlo = montecarlo['technologies']['technology']
+      if not isinstance(montecarlo, list):
+        montecarlo = [montecarlo]
+  return montecarlo if montecarlo else None
+  
 '''
 Load Design-for-Test (DFT) rules
 These are technology specific, and located in the tech folder, named DFT.xml

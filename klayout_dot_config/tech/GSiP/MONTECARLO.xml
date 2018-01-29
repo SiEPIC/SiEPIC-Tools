@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<technologies>
+  <technology>
+    <name>240nm Dry Lithography</name>
+    <wafer>
+      <width>
+        <std_dev>0.0</std_dev>
+        <corr_length>0.0</corr_length>
+      </width>
+      <height>
+        <std_dev>0.0</std_dev>
+        <corr_length>0.0</corr_length>
+      </height>
+    </wafer>
+    <wafer_to_wafer>
+      <width>
+        <std_dev>0.0</std_dev>
+      </width>
+      <thickness>
+        <std_dev>0.0</std_dev>
+      </thickness>
+    </wafer_to_wafer>
+  </technology>
+</technologies>

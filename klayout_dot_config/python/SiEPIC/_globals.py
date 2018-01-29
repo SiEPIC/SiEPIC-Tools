@@ -6,10 +6,9 @@ import pya
 SIMPLIFY_NETLIST_EXTRACTION = True
 
 #Create GUI's
-from .core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net, Component
+from .core import WaveguideGUI, MonteCarloGUI, Net, Component
 WG_GUI = WaveguideGUI()
 MC_GUI = MonteCarloGUI()
-DRC_GUI = CalibreGUI()
 
 # ******** lukasc
 # don't use a global one.. based on cells

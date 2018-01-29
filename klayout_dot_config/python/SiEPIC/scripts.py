@@ -32,8 +32,7 @@ import pya
 
 def path_to_waveguide(params = None, cell = None, lv_commit=True):
   from . import _globals
-  from .utils import select_paths
-  from .utils import get_layout_variables
+  from .utils import select_paths, get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   
   if lv_commit:
@@ -62,10 +61,6 @@ def path_to_waveguide(params = None, cell = None, lv_commit=True):
         return
 
     path.snap(cell.find_pins())
-    
-    # 0.25: path.to_dtype
-#    path = pya.DPath(path.get_dpoints(), path.width) * TECHNOLOGY['dbu']
-#    path.width = path.width * TECHNOLOGY['dbu']
     Dpath = path.to_dtype(TECHNOLOGY['dbu'])
     width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
     try:
@@ -221,24 +216,14 @@ def roundpath_to_waveguide(verbose=False):
   if not(is_ROUNDPATH):
     v = pya.MessageBox.warning("No ROUND_PATH selected", "No ROUND_PATH selected.\nPlease select a ROUND_PATH. \nIt will get converted to a path.", pya.MessageBox.Ok)
 
-
 def waveguide_to_path(cell = None):
-  from SiEPIC import _globals
-  from SiEPIC.utils import select_waveguides, get_technology
-  TECHNOLOGY = get_technology()
-  
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-  
+  from . import _globals
+  from .utils import select_waveguides, get_layout_variables
+
   if cell is None:
-    ly = lv.active_cellview().layout()
-    if ly == None:
-      raise Exception("No active layout")
-    cell = lv.active_cellview().cell
-    if cell == None:
-      raise Exception("No active cell")
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
   else:
+    TECHNOLOGY, lv, _, _ = get_layout_variables()
     ly = cell.layout()
     
   lv.transaction("waveguide to path")
@@ -251,12 +236,6 @@ def waveguide_to_path(cell = None):
   for obj in waveguides:
     # path from waveguide guiding shape
     waveguide = obj.inst()
-
-    if 0:
-      # Python 2 & 3 fix:
-      from SiEPIC.utils import advance_iterator
-      itr = waveguide.cell.shapes(waveguide.layout().guiding_shape_layer()).each()
-      path1 = advance_iterator(itr)
 
     from ._globals import KLAYOUT_VERSION
     
@@ -284,17 +263,9 @@ def waveguide_to_path(cell = None):
     selection[-1].top = obj.top
     selection[-1].cv_index = obj.cv_index
     
-    if 1:
-      # deleting the instance was ok, but would leave the cell which ends up as an uninstantiated top cell
-      # obj.inst().delete()
-      to_delete.append(obj.inst())
-    else:
-      # delete the cell (KLayout also removes the PCell)
-      # deleting it removes the cell entirely (which may be used elsewhere ?)
-      # intermittent crashing...
-      to_delete.append(waveguide.cell) 
-
-
+    # deleting the instance was ok, but would leave the cell which ends up as an uninstantiated top cell
+    to_delete.append(obj.inst())
+    
   # deleting instance or cell should be done outside of the for loop, otherwise each deletion changes the instance pointers in KLayout's internal structure
   [t.delete() for t in to_delete]
 
@@ -498,178 +469,154 @@ def delete_top_cells():
 def compute_area():
   print("compute_area")
   
-def calibreDRC(params = None, cell = None, GUI = False):
-  from . import _globals
+def calibreDRC(params = None, cell = None):
   import sys, os, pipes, codecs
-
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
+  from . import _globals
+  from .utils import get_layout_variables
 
   if cell is None:
-    ly = lv.active_cellview().layout() 
-    if ly == None:
-      raise Exception("No active layout")
-    cell = lv.active_cellview().cell
-    if cell == None:
-      raise Exception("No active cell")
+    _, lv, ly, cell = get_layout_variables()
   else:
+    _, lv, _, _ = get_layout_variables()
     ly = cell.layout()
     
   # the server can be configured via ~/.ssh/config, and named "drc"
   server = "drc"
   
-  status = _globals.DRC_GUI.return_status()
-  if GUI:
-    if status is None and params is None:
-      #Load defaults from CALIBRE.xml:
-      from .utils import load_Calibre
-      CALIBRE = load_Calibre()
-      if CALIBRE:
-        _globals.DRC_GUI.window.findChild('pdk').text = CALIBRE['Calibre']['remote_pdk_location']
-        _globals.DRC_GUI.window.findChild('calibre').text = CALIBRE['Calibre']['remote_calibre_script']
-        print('loaded CALIBRE.xml')
-      _globals.DRC_GUI.show()
-  else:
-    if not params:
-      from .utils import load_Calibre
-      CALIBRE = load_Calibre()
-      params={}
-      params['pdk'] = CALIBRE['Calibre']['remote_pdk_location']
-      params['calibre'] = CALIBRE['Calibre']['remote_calibre_script']
-      params['remote_calibre_rule_deck_main_file'] = CALIBRE['Calibre']['remote_calibre_rule_deck_main_file']
-      params['remote_additional_commands'] = CALIBRE['Calibre']['remote_additional_commands']
-      if 'server' in CALIBRE['Calibre'].keys():
-        server = CALIBRE['Calibre']['server']
-
-  if not GUI or not (status is None and params is None):
-    if status is False: return
-    if params is None: params = _globals.DRC_GUI.get_parameters()
+  if not params:
+    from .utils import load_Calibre
+    CALIBRE = load_Calibre()
+    params = {}
+    params['pdk'] = CALIBRE['Calibre']['remote_pdk_location']
+    params['calibre'] = CALIBRE['Calibre']['remote_calibre_script']
+    params['remote_calibre_rule_deck_main_file'] = CALIBRE['Calibre']['remote_calibre_rule_deck_main_file']
+    params['remote_additional_commands'] = CALIBRE['Calibre']['remote_additional_commands']
+    if 'server' in CALIBRE['Calibre'].keys():
+      server = CALIBRE['Calibre']['server']
     
-    if any(value == '' for key, value in params.items()):
-      raise Exception("Missing information")
+  if any(value == '' for key, value in params.items()):
+    raise Exception("Missing information")
 
-    lv.transaction("Calibre DRC")
-    
-    import time
-    progress = pya.RelativeProgress("Calibre DRC", 5)
-    progress.format = "Saving Layout to Temporary File"
-    progress.set(1, True)
-    time.sleep(1)
+  lv.transaction("Calibre DRC")
+  import time
+  progress = pya.RelativeProgress("Calibre DRC", 5)
+  progress.format = "Saving Layout to Temporary File"
+  progress.set(1, True)
+  time.sleep(1)
+  pya.Application.instance().main_window().repaint()
+
+  # Local temp folder:
+  local_path = _globals.TEMP_FOLDER
+  print("SiEPIC.scripts.calibreDRC; local tmp folder: %s" % local_path )
+  local_file = os.path.basename(lv.active_cellview().filename())
+  if not local_file:
+    local_file = 'layout'
+  local_pathfile = os.path.join(local_path, local_file)
+
+  # Layout path and filename:
+  mw = pya.Application.instance().main_window()
+  layout_path = mw.current_view().active_cellview().filename()  # /path/file.gds
+  layout_filename = os.path.basename(layout_path)               # file.gds
+  layout_basefilename = layout_filename.split('.')[0]           # file   
+  import getpass
+  remote_path = "/tmp/%s_%s" % (getpass.getuser(), layout_basefilename)
+
+  results_file = layout_basefilename + ".rve"
+  results_pathfile = os.path.join(os.path.dirname(local_pathfile), results_file)
+  tmp_ly = ly.dup()
+  [c.flatten(True) for c in tmp_ly.each_cell()]
+  opts = pya.SaveLayoutOptions()
+  opts.format = "GDS2"
+  tmp_ly.write(local_pathfile, opts)
+
+  with codecs.open(os.path.join(local_path, 'run_calibre'), 'w', encoding="utf-8") as file:
+    cal_script  = '#!/bin/tcsh \n'
+    cal_script += 'source %s \n' % params['calibre']
+    cal_script += '%s \n' % params['remote_additional_commands']
+    cal_script += '$MGC_HOME/bin/calibre -drc -hier -turbo -nowait drc.cal \n'
+    file.write(cal_script)
+
+  with codecs.open(os.path.join(local_path, 'drc.cal'), 'w', encoding="utf-8") as file:
+    cal_deck  = 'LAYOUT PATH  "%s"\n' % os.path.basename(local_pathfile)
+    cal_deck += 'LAYOUT PRIMARY "%s"\n' % cell.name
+    cal_deck += 'LAYOUT SYSTEM GDSII\n'
+    cal_deck += 'DRC RESULTS DATABASE "drc.rve" ASCII\n'
+    cal_deck += 'DRC MAXIMUM RESULTS ALL\n'
+    cal_deck += 'DRC MAXIMUM VERTEX 4096\n'
+    cal_deck += 'DRC CELL NAME YES CELL SPACE XFORM\n'
+    cal_deck += 'VIRTUAL CONNECT COLON NO\n'
+    cal_deck += 'VIRTUAL CONNECT REPORT NO\n'
+    cal_deck += 'DRC ICSTATION YES\n'
+    cal_deck += 'INCLUDE "%s/%s"\n' % (params['pdk'], params['remote_calibre_rule_deck_main_file'])
+    file.write(cal_deck)
+
+  import platform
+  version = platform.python_version()
+  out = ''
+  if version.find("2.") > -1:
+    import commands
+    cmd = commands.getstatusoutput
+
+    progress.set(2, True)
+    progress.format = "Uploading Layout and Scripts"
     pya.Application.instance().main_window().repaint()
 
-    # Local temp folder:
-    local_path = _globals.TEMP_FOLDER
-    print("SiEPIC.scripts.calibreDRC; local tmp folder: %s" % local_path )
-    local_file = os.path.basename(lv.active_cellview().filename())
-    if not local_file:
-      local_file = 'layout'
-    local_pathfile = os.path.join(local_path, local_file)
+    out += cmd('ssh %s "mkdir -p %s"' % (server,remote_path))[1]
+    out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, local_file, server,remote_path))[1]
+    out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'run_calibre', server,remote_path))[1]
+    out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'drc.cal', server,remote_path))[1]
 
-    # Layout path and filename:
-    mw = pya.Application.instance().main_window()
-    layout_path = mw.current_view().active_cellview().filename()  # /path/file.gds
-    layout_filename = os.path.basename(layout_path)               # file.gds
-    layout_basefilename = layout_filename.split('.')[0]           # file   
-    import getpass
-    remote_path = "/tmp/%s_%s" % (getpass.getuser(), layout_basefilename)
-    
-    results_file = layout_basefilename + ".rve"
-    results_pathfile = os.path.join(os.path.dirname(local_pathfile), results_file)
-    tmp_ly = ly.dup()
-    [c.flatten(True) for c in tmp_ly.each_cell()]
-    opts = pya.SaveLayoutOptions()
-    opts.format = "GDS2"
-    tmp_ly.write(local_pathfile, opts)
-    
-    with codecs.open(os.path.join(local_path, 'run_calibre'), 'w', encoding="utf-8") as file:
-      cal_script  = '#!/bin/tcsh \n'
-      cal_script += 'source %s \n' % params['calibre']
-      cal_script += '%s \n' % params['remote_additional_commands']
-      cal_script += '$MGC_HOME/bin/calibre -drc -hier -turbo -nowait drc.cal \n'
-      file.write(cal_script)
+    progress.set(3, True)
+    progress.format = "Checking Layout for Errors"
+    pya.Application.instance().main_window().repaint()
 
-    with codecs.open(os.path.join(local_path, 'drc.cal'), 'w', encoding="utf-8") as file:
-      cal_deck  = 'LAYOUT PATH  "%s"\n' % os.path.basename(local_pathfile)
-      cal_deck += 'LAYOUT PRIMARY "%s"\n' % cell.name
-      cal_deck += 'LAYOUT SYSTEM GDSII\n'
-      cal_deck += 'DRC RESULTS DATABASE "drc.rve" ASCII\n'
-      cal_deck += 'DRC MAXIMUM RESULTS ALL\n'
-      cal_deck += 'DRC MAXIMUM VERTEX 4096\n'
-      cal_deck += 'DRC CELL NAME YES CELL SPACE XFORM\n'
-      cal_deck += 'VIRTUAL CONNECT COLON NO\n'
-      cal_deck += 'VIRTUAL CONNECT REPORT NO\n'
-      cal_deck += 'DRC ICSTATION YES\n'
-      cal_deck += 'INCLUDE "%s/%s"\n' % (params['pdk'], params['remote_calibre_rule_deck_main_file'])
-      file.write(cal_deck)
+    out += cmd('ssh %s "cd %s && source run_calibre"' % (server, remote_path))[1]
 
-    import platform
-    version = platform.python_version()
-    out = ''
-    if version.find("2.") > -1:
-      import commands
-      cmd = commands.getstatusoutput
+    progress.set(4, True)
+    progress.format = "Downloading Results"
+    pya.Application.instance().main_window().repaint()
 
-      progress.set(2, True)
-      progress.format = "Uploading Layout and Scripts"
-      pya.Application.instance().main_window().repaint()
-      
-      out += cmd('ssh %s "mkdir -p %s"' % (server,remote_path))[1]
-      out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, local_file, server,remote_path))[1]
-      out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'run_calibre', server,remote_path))[1]
-      out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'drc.cal', server,remote_path))[1]
+    out += cmd('cd "%s" && scp %s:%s "%s"' % (local_path, server, remote_path + "/drc.rve", results_file))[1]
 
-      progress.set(3, True)
+    progress.set(5, True)
+    progress.format = "Finishing"
+    pya.Application.instance().main_window().repaint()
+
+  elif version.find("3.") > -1:
+    import subprocess
+    cmd = subprocess.check_output
+
+    progress.format = "Uploading Layout and Scripts"      
+    progress.set(2, True)
+    pya.Application.instance().main_window().repaint()
+
+    try:
+      out += cmd('ssh %s "mkdir -p %s"' % (server,remote_path), shell=True).decode('utf-8')
+      out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, local_file, server,remote_path), shell=True).decode('utf-8')
+      out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'run_calibre', server,remote_path), shell=True).decode('utf-8')
+      out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'drc.cal', server,remote_path), shell=True).decode('utf-8')
+
       progress.format = "Checking Layout for Errors"
+      progress.set(3, True)
       pya.Application.instance().main_window().repaint()
-    
-      out += cmd('ssh %s "cd %s && source run_calibre"' % (server, remote_path))[1]
 
-      progress.set(4, True)
+      out += cmd('ssh %s "cd %s && source run_calibre"' % (server,remote_path), shell=True).decode('utf-8')
+
       progress.format = "Downloading Results"
+      progress.set(4, True)
       pya.Application.instance().main_window().repaint()
-      
-      out += cmd('cd "%s" && scp %s:%s "%s"' % (local_path, server, remote_path + "/drc.rve", results_file))[1]
 
-      progress.set(5, True)
-      progress.format = "Finishing"
-      pya.Application.instance().main_window().repaint()
-      
-    elif version.find("3.") > -1:
-      import subprocess
-      cmd = subprocess.check_output
-
-      progress.format = "Uploading Layout and Scripts"      
-      progress.set(2, True)
-      pya.Application.instance().main_window().repaint()
-      
-      try:
-        out += cmd('ssh %s "mkdir -p %s"' % (server,remote_path), shell=True).decode('utf-8')
-        out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, local_file, server,remote_path), shell=True).decode('utf-8')
-        out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'run_calibre', server,remote_path), shell=True).decode('utf-8')
-        out += cmd('cd "%s" && scp "%s" %s:%s' % (local_path, 'drc.cal', server,remote_path), shell=True).decode('utf-8')
-
-        progress.format = "Checking Layout for Errors"
-        progress.set(3, True)
-        pya.Application.instance().main_window().repaint()
-
-        out += cmd('ssh %s "cd %s && source run_calibre"' % (server,remote_path), shell=True).decode('utf-8')
-      
-        progress.format = "Downloading Results"
-        progress.set(4, True)
-        pya.Application.instance().main_window().repaint()
-      
-        out += cmd('cd "%s" && scp %s:%s "%s"' % (local_path, server,remote_path + "/drc.rve", results_file), shell=True).decode('utf-8')
-      except subprocess.CalledProcessError as e:
-        out += '\nError running ssh or scp commands. Please check that these programs are available.\n'
-        out += str(e.output)
+      out += cmd('cd "%s" && scp %s:%s "%s"' % (local_path, server,remote_path + "/drc.rve", results_file), shell=True).decode('utf-8')
+    except subprocess.CalledProcessError as e:
+      out += '\nError running ssh or scp commands. Please check that these programs are available.\n'
+      out += str(e.output)
 #        if e.output.startswith('error: {'):
 #          import json
 #          error = json.loads(e.output[7:])
 #          print (error['code'])
 #          print (error['message'])
-      progress.format = "Finishing"
-      progress.set(5, True)
+    progress.format = "Finishing"
+    progress.set(5, True)
 
     print(out)
     progress._destroy()
@@ -741,18 +688,8 @@ def auto_coord_extract():
   wtext.insertHtml (text_out)
 
 def calculate_area():
-  from .utils import get_technology
-  TECHNOLOGY = get_technology()
-
-  lv = pya.Application.instance().main_window().current_view()
-  if lv == None:
-    raise Exception("No view selected")
-  ly = lv.active_cellview().layout()
-  if ly == None:
-    raise Exception("No active layout")
-  cell = lv.active_cellview().cell
-  if cell == None:
-    raise Exception("No active cell")
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
     
   total = cell.each_shape(ly.layer(TECHNOLOGY['FloorPlan'])).__next__().polygon.area()
   area = 0
