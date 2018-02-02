@@ -321,7 +321,7 @@ class MonteCarloGUI():
     
     self.window.findChild('run').clicked(self.ok)
     self.window.findChild('cancel').clicked(self.close)
-    self.window.findChild("technology").currentTextChanged(self.tech_changed)
+    self.window.findChild("technology").currentIndexChanged(self.tech_changed)
     self.loaded_technology = ''
     self.clicked = True
   
