@@ -33,7 +33,9 @@ import pya
 def path_to_waveguide(params = None, cell = None, lv_commit = True, GUI = False):
   from . import _globals
   from .utils import select_paths, get_layout_variables
-  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
+  if not cell:
+    cell = top_cell
   
   if lv_commit:
     lv.transaction("Path to Waveguide")
