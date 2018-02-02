@@ -235,7 +235,7 @@ class WaveguideGUI():
     self.window.findChild('cancel').clicked(self.close)
     self.window.findChild('adiabatic').toggled(self.enable)
     self.window.findChild('bezier').setEnabled(False)
-    self.window.findChild("configuration").currentTextChanged(self.config_changed)
+    self.window.findChild("configuration").currentIndexChanged(self.config_changed)
     self.loaded_technology = ''
     self.clicked = True
     
