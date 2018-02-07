@@ -51,8 +51,13 @@ def path_to_waveguide(params = None, cell = None, lv_commit = True, GUI = False)
   for obj in selected_paths:
     path = obj.shape.path
     path.unique_points()
-    if not path.is_manhattan():
+    if not path.is_manhattan_endsegments():
       warning.setText("Warning: Waveguide segments (first, last) are not Manhattan (vertical, horizontal).")
+      warning.setInformativeText("Do you want to Proceed?")
+      if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+        return
+    if not path.is_manhattan():
+      warning.setText("Error: Waveguide segments are not Manhattan (vertical, horizontal). This is not supported in SiEPIC-Tools.")
       warning.setInformativeText("Do you want to Proceed?")
       if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
         return

@@ -83,7 +83,7 @@ def get_points(self):
 def get_dpoints(self):
   return [pya.DPoint(pt.x, pt.y) for pt in self.each_point()]
 
-def is_manhattan(self):
+def is_manhattan_endsegments(self):
   if self.__class__ == pya.Path:
     pts = self.get_points()
   else:
@@ -92,6 +92,16 @@ def is_manhattan(self):
   for i, pt in enumerate(pts):
     if (i==1 or pts[i] == pts[-1]):
       if(pts[i].x == pts[i-1].x or pts[i].y == pts[i-1].y): check += 1
+  return check==2
+
+def is_manhattan(self):
+  if self.__class__ == pya.Path:
+    pts = self.get_points()
+  else:
+    pts = self.get_dpoints()
+  check = 1 if len(pts) == 2 else 0
+  for i, pt in enumerate(pts):
+    if(pts[i].x == pts[i-1].x or pts[i].y == pts[i-1].y): check += 1
   return check==2
   
 def radius_check(self, radius):
@@ -249,6 +259,7 @@ pya.Path.to_dtype = to_dtype
 pya.Path.to_itype = to_itype
 pya.Path.get_points = get_points
 pya.Path.get_dpoints = get_dpoints
+pya.Path.is_manhattan_endsegments = is_manhattan_endsegments
 pya.Path.is_manhattan = is_manhattan
 pya.Path.radius_check = radius_check
 pya.Path.remove_colinear_points = remove_colinear_points
@@ -263,6 +274,7 @@ pya.DPath.to_itype = to_itype
 pya.DPath.to_dtype = to_dtype
 pya.DPath.get_points = get_points
 pya.DPath.get_dpoints = get_dpoints
+pya.DPath.is_manhattan_endsegments = is_manhattan_endsegments
 pya.DPath.is_manhattan = is_manhattan
 pya.DPath.radius_check = radius_check
 pya.DPath.remove_colinear_points = remove_colinear_points
