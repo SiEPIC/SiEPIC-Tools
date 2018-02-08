@@ -74,7 +74,7 @@ def show_component_info():
       text += c[0].display().replace(';','&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;')
       if c[0].cell.is_pcell_variant():
         params = c[0].cell.pcell_parameters_by_name()
-        text += ('PCell parameters:')
+        text += ('&lt;br&gt;&amp;nbsp;&amp;nbsp;PCell parameters:')
         for key in params.keys():
           text += ('&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;')
           text += ("Parameter: %s, Value: %s") % (key, params[key])

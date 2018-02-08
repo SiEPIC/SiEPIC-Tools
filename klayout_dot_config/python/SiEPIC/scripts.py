@@ -787,6 +787,7 @@ def layout_check(cell = None, verbose=False):
 
   from . import _globals
   from .utils import get_technology, find_paths, find_automated_measurement_labels, angle_vector
+  from .utils import advance_iterator 
   TECHNOLOGY = get_technology()
   dbu=TECHNOLOGY['dbu']
 
@@ -904,9 +905,9 @@ def layout_check(cell = None, verbose=False):
       # Check for waveguides with too few bend points
 
       # Check if waveguide end segments are Manhattan; this ensures they can connect to a pin
-      if not Dpath.is_manhattan():
+      if not Dpath.is_manhattan_endsegments():
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_wg_manhattan.rdb_id())
-        rdb_item.add_value(pya.RdbItemValue( DPath ) )
+        rdb_item.add_value(pya.RdbItemValue( Dpath ) )
 
     if c.basic_name == "Flattened":
       if verbose:
@@ -1029,7 +1030,6 @@ def layout_check(cell = None, verbose=False):
       
     # GC spacing between separate GC circuits (to avoid measuring the wrong one)
   
-
   for n in nets:
     # Verification: optical pin width mismatches
     if n.type == _globals.PIN_TYPES.OPTICAL and not n.idx == None:

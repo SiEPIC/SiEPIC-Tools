@@ -11,7 +11,8 @@ dbu float-int extension:
 pya.Path and pya.DPath Extensions:
   - get_points(), returns list of pya.Points
   - get_dpoints(), returns list of pya.DPoints
-  - is_manhattan(), tests to see if the path is manhattan (only the 1st and last segments)
+  - is_manhattan(), tests to see if the path is manhattan
+  - is_manhattan_endsegments(), tests to see if the path is manhattan (only the 1st and last segments)
   - radius_check(radius), tests to see of all path segments are long enough to be
     converted to a waveguide with bends of radius 'radius'
   - remove_colinear_points(), removes all colinear points in place
