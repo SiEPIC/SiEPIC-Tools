@@ -309,9 +309,8 @@ def component_simulation(verbose=False, simulate=True):
       text_main += 'library="%s" %s ' % (c.library, c.params)
     text_main += '\n.ends SUBCIRCUIT\n'
 
-
-    import tempfile
-    tmp_folder = tempfile.mkdtemp()
+    from .. import _globals
+    tmp_folder = _globals.TEMP_FOLDER
     import os    
     filename = os.path.join(tmp_folder, '%s_main.spi' % c.component)
     filename2 = os.path.join(tmp_folder, '%s.lsf' % c.component)
@@ -407,12 +406,13 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   text_Spice, text_Spice_main, num_detectors = \
     topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   if not text_Spice:
+    raise Exception("No netlist available. Cannot run simulation.")
     return
   if verbose:   
     print(text_Spice)
   
-  import tempfile
-  tmp_folder = tempfile.mkdtemp()
+  from .. import _globals
+  tmp_folder = _globals.TEMP_FOLDER
   import os    
   filename = os.path.join(tmp_folder, '%s_main.spi' % topcell.name)
   filename_subckt = os.path.join(tmp_folder,  '%s.spi' % topcell.name)
@@ -516,16 +516,149 @@ def circuit_simulation_update_netlist():
   print('update netlist')
   
   
-def circuit_simulation_monte_carlo(params = None, cell = None):
+def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, opt_in_selection_text=[], matlab_data_files=[], simulate=True):
+  print('*** circuit_simulation_monte_carlo()')
   from .. import _globals
   from ..utils import get_layout_variables
-  if cell is None:
-    _, lv, ly, cell = get_layout_variables()
+  if topcell is None:
+    TECHNOLOGY, lv, ly, topcell = get_layout_variables()
   else:
-    _, lv, _, _ = get_layout_variables()
-    ly = cell.layout()
+    TECHNOLOGY, lv, _, _ = get_layout_variables()
+    ly = topcell.layout()
   
   if params is None: params = _globals.MC_GUI.get_parameters()
   if params is None: return
   print(params)
   
+  
+  if verbose:
+    print('*** circuit_simulation_monte_carlo()')
+  
+  # check for supported operating system, tested on:
+  # Windows 7, 10
+  # OSX Sierra, High Sierra
+  # Linux
+  import sys
+  if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
+    raise Exception("Unsupported operating system: %s" % sys.platform)
+    
+  # Save the layout prior to running simulations, if there are changes.
+  mw = pya.Application.instance().main_window()
+  if mw.manager().has_undo():
+    mw.cm_save()
+  layout_filename = mw.current_view().active_cellview().filename()
+  if len(layout_filename) == 0:
+    raise Exception("Please save your layout before running the simulation")
+    
+  # *** todo    
+  #   Add the "disconnected" component to all disconnected pins
+  #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
+
+  # Output the Spice netlist:
+  text_Spice, text_Spice_main, num_detectors = \
+    topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
+  if not text_Spice:
+    raise Exception("No netlist available. Cannot run simulation.")
+    return
+  if verbose:   
+    print(text_Spice)
+  
+  tmp_folder = _globals.TEMP_FOLDER
+  import os    
+  filename = os.path.join(tmp_folder, '%s_main.spi' % topcell.name)
+  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % topcell.name)
+  filename2 = os.path.join(tmp_folder, '%s.lsf' % topcell.name)
+  filename_icp = os.path.join(tmp_folder, '%s.icp' % topcell.name)
+  
+  text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
+  
+  # Write the Spice netlist to file
+  file = open(filename, 'w')
+  file.write (text_Spice_main)
+  file.close()
+  file = open(filename_subckt, 'w')
+  file.write (text_Spice)
+  file.close()
+  
+  # Write the Lumerical INTERCONNECT start-up script.
+  file = open(filename2, 'w')
+  text_lsf = 'switchtolayout;\n'
+  text_lsf += 'deleteall;\n'
+  text_lsf += 'importnetlist("%s");\n' % filename
+  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % topcell.name 
+  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_x", "wafer", "Number");\n' % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_y", "wafer", "Number");\n' % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % topcell.name
+  text_lsf += 'select("::Root Element::%s");\n' % topcell.name
+  text_lsf += 'set("run setup script",2);\n'
+  text_lsf += 'save("%s");\n' % filename_icp
+  text_lsf += 'run;\n'
+  for i in range(1, num_detectors+1):
+    if matlab_data_files:
+      # convert simulation data into simple datasets:
+      wavelenth_scale = 1e9
+      text_lsf += 'temp = getresult("ONA_1", "input %s/mode 1/gain");\n' % i
+      text_lsf += 't%s = matrixdataset("Simulation");\n' % i
+      text_lsf += 't%s.addparameter("wavelength",temp.wavelength*%s);\n' % (i, wavelenth_scale)
+      text_lsf += 't%s.addattribute("Simulation, Detector %s",getresultdata("ONA_1", "input %s/mode 1/gain"));\n' % (i,i, i)
+    else:
+      text_lsf += 't%s = getresult("ONA_1", "input %s/mode 1/gain");\n' % (i, i)
+      
+  # load measurement data files
+  m_count=0
+  if matlab_data_files:
+    for m in matlab_data_files:
+      if '.mat' in m:
+        m_count += 1
+        # INTERCONNECT can't deal with our measurement files... load and save data.
+        from scipy.io import loadmat, savemat        # used to load MATLAB data files
+        # *** todo, use DFT rules to determine which measurements we should load.
+        PORT=2 # Which Fibre array port is the output connected to?
+        matData = loadmat(m, squeeze_me=True, struct_as_record=False)
+        wavelength = matData['scandata'].wavelength
+        power = matData['scandata'].power[:,PORT-1]
+        savemat(m, {'wavelength': wavelength, 'power': power})
+        
+        # INTERCONNECT load data
+        head, tail = os.path.split(m)
+        tail = tail.split('.mat')[0]
+        text_lsf += 'matlabload("%s");\n' % m
+        text_lsf += 'm%s = matrixdataset("Measurement");\n' % m_count
+        text_lsf += 'm%s.addparameter("wavelength",wavelength*%s);\n'  % (m_count, wavelenth_scale)
+        text_lsf += 'm%s.addattribute("Measured: %s",power);\n'  % (m_count, tail)
+  
+  text_lsf += 'visualize(t1'
+  for i in range(2, num_detectors+1):
+    text_lsf += ', t%s' % i
+  for i in range(1, m_count+1):
+    text_lsf += ', m%s' % i
+  text_lsf += ');\n'
+  
+  file.write (text_lsf)
+  file.close()
+  
+  if verbose:
+    print(text_lsf)
+
+  if simulate:
+    # Run using Python integration:
+    try: 
+      from .. import _globals
+      run_INTC()
+      # Run using Python integration:
+      lumapi = _globals.LUMAPI
+      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+      lumapi.evalScript(_globals.INTC, topcell.name + ";")
+    except:
+      from .. import scripts
+      scripts.open_folder(tmp_folder)
+      INTC_commandline(filename)
+  else:
+    from .. import scripts
+    scripts.open_folder(tmp_folder)
+    
+  if verbose:
+    print('Done Lumerical INTERCONNECT circuit simulation.')
+

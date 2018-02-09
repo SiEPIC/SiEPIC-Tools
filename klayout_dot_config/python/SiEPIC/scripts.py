@@ -1157,13 +1157,14 @@ Get data, one of:
  - Individual
 '''
 def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
-  import pya, tempfile
+  import pya
+  from .. import _globals
+  tmp_folder = _globals.TEMP_FOLDER  
   from .github import github_get_filenames, github_get_files, github_get_file
   
   if verbose:
     print('Fetch measurement data from GitHub')
 
-  tmp_folder = tempfile.mkdtemp()
   if opt_in_selection_text:
     folder_flatten_option = True
   else:
@@ -1292,7 +1293,9 @@ Plot data together
 '''
 
 def measurement_vs_simulation(verbose=None):
-  import pya, tempfile
+  import pya
+  from .. import _globals
+  tmp_folder = _globals.TEMP_FOLDER
   from .scripts import fetch_measurement_data_from_github
   from .scripts import user_select_opt_in
   from lumerical.interconnect import circuit_simulation
