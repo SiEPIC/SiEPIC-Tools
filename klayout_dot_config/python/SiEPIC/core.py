@@ -370,7 +370,7 @@ class MonteCarloGUI():
       'num_dies': self.window.findChild('num_dies').value,
       'technology': self.window.findChild('technology').currentText,
       'histograms': {
-        'fsp': self.window.findChild('fsp').isChecked(),
+        'fsr': self.window.findChild('fsr').isChecked(),
         'gain': self.window.findChild('gain').isChecked(),
         'wavelength': self.window.findChild('wavelength').isChecked()
       },

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>381</width>
-    <height>530</height>
+    <width>400</width>
+    <height>630</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -266,7 +266,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QCheckBox" name="fsp">
+          <widget class="QCheckBox" name="fsr">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>

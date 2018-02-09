@@ -582,19 +582,187 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   
   # Write the Lumerical INTERCONNECT start-up script.
   file = open(filename2, 'w')
-  text_lsf = 'switchtolayout;\n'
+
+  text_lsf = '###DEVELOPER:Zeqin Lu, zqlu@ece.ubc.ca, University of British Columbia \n' 
+  text_lsf += 'switchtolayout;\n'
   text_lsf += 'deleteall;\n'
   text_lsf += 'importnetlist("%s");\n' % filename
+  text_lsf += 'addproperty("::Root Element", "wafer_uniformity_thickness", "wafer", "Matrix");\n' 
+  text_lsf += 'addproperty("::Root Element", "wafer_uniformity_width", "wafer", "Matrix");\n' 
+  text_lsf += 'addproperty("::Root Element", "N", "wafer", "Number");\n'  
+  text_lsf += 'addproperty("::Root Element", "selected_die", "wafer", "Number");\n' 
+  text_lsf += 'addproperty("::Root Element", "wafer_length", "wafer", "Number");\n'   
   text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % topcell.name
   text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % topcell.name 
-  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_x", "wafer", "Number");\n' % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_x", "wafer", "Number");\n'  % topcell.name
   text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_y", "wafer", "Number");\n' % topcell.name
   text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % topcell.name
-  text_lsf += 'select("::Root Element::%s");\n' % topcell.name
-  text_lsf += 'set("run setup script",2);\n'
-  text_lsf += 'save("%s");\n' % filename_icp
-  text_lsf += 'run;\n'
+  text_lsf += 'select("::Root Element::%s");\n'  % topcell.name
+  text_lsf += 'set("MC_non_uniform",99);\n'  
+  text_lsf += 'n_wafer = %s;  \n'  % params['num_wafers']  #  GUI INPUT: Number of testing wafer
+  text_lsf += 'n_die = %s;  \n'  % params['num_dies']  #  GUI INPUT: Number of testing die per wafer
+  text_lsf += 'kk = 1;  \n'
+  text_lsf += 'select("ONA_1");\n'
+  text_lsf += 'num_points = get("number of points");\n'
+  
+  for i in range(0, num_detectors):
+    text_lsf += 'mc%s = matrixdataset("mc%s"); # initialize visualizer data, mc%s \n' % (i+1, i+1, i+1)
+    text_lsf += 'Gain_Data_input%s = matrix(num_points,n_wafer*n_die);  \n' % (i+1) 
+
+  ###Define histograms datasets
+  if(params['histograms']['fsr']==True):
+    text_lsf += 'fsr_dataset = matrix(1,n_wafer*n_die,1);\n'
+  if(params['histograms']['wavelength']==True):
+    text_lsf += 'freq_dataset = matrix(1,n_wafer*n_die,1);\n'
+  if(params['histograms']['gain']==True):
+    text_lsf += 'gain_dataset = matrix(1,n_wafer*n_die,1);\n'
+  
+  text_lsf += '#Run Monte Carlo simulations; \n'
+  text_lsf += 'for (jj=1; jj<=n_wafer; jj=jj+1) {   \n'
+  ############################## Wafer generation ###########################################
+  text_lsf += ' wafer_length = %s;  \n'  % 100e-3 # datadict["wafer_length_x"]  # [m], GUI INPUT: wafer length
+  text_lsf += ' wafer_cl_width = %s;  \n' % params['waf_var']['width']['corr_len']  # [m],  GUI INPUT: wafer correlation length
+  text_lsf += ' wafer_cl_thickness = %s;  \n' % params['waf_var']['height']['corr_len']  # [m],  GUI INPUT: wafer correlation length  
+  text_lsf += ' wafer_clx_width = wafer_cl_width;  \n'  
+  text_lsf += ' wafer_cly_width = wafer_cl_width; \n'   
+  text_lsf += ' wafer_clx_thickness = wafer_cl_thickness;  \n'  
+  text_lsf += ' wafer_cly_thickness = wafer_cl_thickness; \n'  
+  text_lsf += ' N = 500;  \n'        
+  text_lsf += ' wafer_grid=wafer_length/N; \n'   
+  text_lsf += ' wafer_RMS_w = %s;     \n' % params['waf_var']['width']['std_dev'] # [nm], GUI INPUT: Within wafer Sigma RMS for width
+  text_lsf += ' wafer_RMS_t = %s;   \n' % params['waf_var']['height']['std_dev']    # [nm], GUI INPUT: Within wafer Sigma RMS for thickness
+  text_lsf += ' x = linspace(-wafer_length/2,wafer_length/2,N); \n'
+  text_lsf += ' y = linspace(-wafer_length/2,wafer_length/2,N); \n'
+  text_lsf += ' xx = meshgridx(x,y) ;  \n'
+  text_lsf += ' yy = meshgridy(x,y) ;  \n'
+  text_lsf += ' wafer_Z_thickness = wafer_RMS_t*randnmatrix(N,N);  \n'
+  text_lsf += ' wafer_F_thickness = exp(-(xx^2/(wafer_clx_thickness^2/2)+yy^2/(wafer_cly_thickness^2/2))); \n'  # Gaussian filter
+  text_lsf += ' wafer_uniformity_thickness = real( 2/sqrt(pi)*wafer_length/N/sqrt(wafer_clx_thickness)/sqrt(wafer_cly_thickness)*invfft(fft(wafer_Z_thickness,1,0)*fft(wafer_F_thickness,1,0), 1, 0)  );    \n' # wafer created using Gaussian filter   
+  text_lsf += ' wafer_Z_width = wafer_RMS_w*randnmatrix(N,N);  \n'
+  text_lsf += ' wafer_F_width = exp(-(xx^2/(wafer_clx_width^2/2)+yy^2/(wafer_cly_width^2/2))); \n'  # Gaussian filter
+  text_lsf += ' wafer_uniformity_width = real( 2/sqrt(pi)*wafer_length/N/sqrt(wafer_clx_width)/sqrt(wafer_cly_width)*invfft(fft(wafer_Z_width,1,0)*fft(wafer_F_width,1,0), 1, 0)  );    \n' # wafer created using Gaussian filter 
+  
+  ######################## adjust Wafer mean ###################
+  text_lsf += ' mean_RMS_w = %s;     \n' % params['waf_to_waf_var']['width']['std_dev'] # [nm], GUI INPUT:  wafer Sigma RMS for width
+  text_lsf += ' mean_RMS_t = %s;   \n' % params['waf_to_waf_var']['thickness']['std_dev']    # [nm], GUI INPUT:  wafer Sigma RMS for thickness
+  text_lsf += ' wafer_uniformity_thickness = wafer_uniformity_thickness + randn(0,mean_RMS_t); \n'
+  text_lsf += ' wafer_uniformity_width = wafer_uniformity_width + randn(0,mean_RMS_w); \n'
+  
+  ##################################### pass wafer to Root ###################
+  text_lsf += ' #pass wafers to object \n'
+  text_lsf += ' select("::Root Element");  \n' 
+  text_lsf += ' set("wafer_uniformity_thickness", wafer_uniformity_thickness);  \n'
+  text_lsf += ' set("wafer_uniformity_width", wafer_uniformity_width);  \n'
+  text_lsf += ' set("N",N);  \n'
+  text_lsf += ' set("wafer_length",wafer_length);  \n'
+  
+  #################################### embed wafer selection script in Root ###################
+  text_lsf += ' select("::Root Element");\n'
+  text_lsf += ' set("setup script",'+ "'" +  ' \n'
+  text_lsf += '  ######################## high resolution interpolation for dies ################# \n'
+  text_lsf += '  MC_grid = 5e-6;  \n'   # [m], mesh grid
+  text_lsf += '  die_span_x = %s; \n'  % 5e-3 # datadict["die_length_x"]  # [m]    GUI INPUT: die length X
+  text_lsf += '  die_span_y = %s; \n'  % 5e-3 # datadict["die_length_y"]  # [m]    GUI INPUT: die length Y
+  text_lsf += '  MC_resolution_x = die_span_x/MC_grid;  \n'
+  text_lsf += '  MC_resolution_y = die_span_y/MC_grid;  \n'
+  text_lsf += '  die_num_x = floor(wafer_length/die_span_x); \n'
+  text_lsf += '  die_num_y = floor(wafer_length/die_span_y); \n'
+  text_lsf += '  die_num_total = die_num_x*die_num_y; \n'
+  text_lsf += '  x = linspace(-wafer_length/2,wafer_length/2,N); \n'
+  text_lsf += '  y = linspace(-wafer_length/2,wafer_length/2,N); \n'
+              # pick die for simulation, and do high resolution interpolation 
+  text_lsf += '  j=selected_die; \n'
+  text_lsf += '  die_min_x = -wafer_length/2+(j-1)*die_span_x -floor((j-1)/die_num_x)*wafer_length; \n'
+  text_lsf += '  die_max_x = -wafer_length/2+j*die_span_x -floor((j-1)/die_num_x)*wafer_length; \n'
+  text_lsf += '  die_min_y = wafer_length/2-ceil(j/die_num_y)*die_span_y; \n'
+  text_lsf += '  die_max_y = wafer_length/2-(ceil(j/die_num_y)-1)*die_span_y; \n'
+  text_lsf += '  x_die = linspace(die_min_x, die_max_x, MC_resolution_x); \n'
+  text_lsf += '  y_die = linspace(die_min_y, die_max_y, MC_resolution_y); \n'
+  text_lsf += '  die_xx = meshgridx(x_die,y_die) ;  \n'
+  text_lsf += '  die_yy = meshgridy(x_die,y_die) ;  \n'
+  text_lsf += '  MC_uniformity_thickness = interp(wafer_uniformity_thickness, x, y, x_die, y_die); # interpolation \n'
+  text_lsf += '  MC_uniformity_width = interp(wafer_uniformity_width, x, y, x_die, y_die); # interpolation \n'
+  ######################### pass die to object ####################################
+  text_lsf += '  select("::Root Element::%s");  \n' % topcell.name
+  text_lsf += '  set("MC_uniformity_thickness",MC_uniformity_thickness);  \n'
+  text_lsf += '  set("MC_uniformity_width",MC_uniformity_width);  \n'
+  text_lsf += '  set("MC_resolution_x",MC_resolution_x);  \n'
+  text_lsf += '  set("MC_resolution_y",MC_resolution_y);  \n'
+  text_lsf += '  set("MC_grid",MC_grid);  \n'
+  text_lsf += '  set("MC_non_uniform",1);  \n'
+  text_lsf += " '"+'); \n'
+  
+  text_lsf += ' for (ii=1;  ii<=n_die; ii=ii+1) {   \n'
+  text_lsf += '  switchtodesign; \n'
+  text_lsf += '  setnamed("ONA_1","peak analysis", "single");\n'
+  text_lsf += '  select("::Root Element");  \n'
+  text_lsf += '  set("selected_die",ii);  \n'
+  text_lsf += '  run;\n'
+  text_lsf += '  select("ONA_1");\n'
+#  text_lsf += '  f_start = get("start frequency");\n'
+#  text_lsf += '  f_stop = get("stop frequency");\n'
+#  text_lsf += '  num_points = get("number of points");\n'
+#  text_lsf += '  wavelength = c/f_start : (c/f_stop-c/f_start)/(num_points-1) : c/f_stop;\n'
+  text_lsf += '  T=getresult("ONA_1","input 1/mode 1/transmission");\n'
+  text_lsf += '  wavelength = T.wavelength;\n'   
+  
+  for i in range(0, num_detectors):
+    text_lsf += '  if (kk==1) { mc%s.addparameter("wavelength",wavelength);} \n' % (i+1) 
+    text_lsf += '  mc%s.addattribute("run", getattribute( getresult("ONA_1", "input %s/mode 1/gain"), getattribute(getresult("ONA_1", "input %s/mode 1/gain")) ) );\n' % (i+1, i+1, i+1)
+    text_lsf += '  Gain_Data_input%s(1:num_points, kk) = getattribute( getresult("ONA_1", "input %s/mode 1/gain"), getattribute(getresult("ONA_1", "input %s/mode 1/gain")) ); \n'  % (i+1, i+1, i+1)
+    
+#add simulation data to their corresponding datalists  
+  if(params['histograms']['fsr']==True):
+      text_lsf += '  fsr_select = getresult("ONA_1", "input 1/mode 1/peak/free spectral range");\n'
+      text_lsf += '  fsr_dataset(1,kk) = real(fsr_select.getattribute("TE free spectral range (m)"));\n'
+
+  if(params['histograms']['wavelength']==True):
+      text_lsf += '  freq_dataset(1,kk) = getresult("ONA_1", "input 1/mode 1/peak/frequency");\n'
+
+  if(params['histograms']['gain']==True):
+      text_lsf += '  gain_select = getresult("ONA_1", "input 1/mode 1/peak/gain");\n'
+      text_lsf += '  gain_dataset(1,kk) = real(gain_select.getattribute("TE gain (dB)"));\n'
+
+  text_lsf += '  switchtodesign; \n'
+  text_lsf += '  kk = kk + 1;  \n'
+  text_lsf += ' }\n'   # end for wafer iteration
+  text_lsf += '}\n'  # end for die iteration
+  text_lsf += '?"Spectrum data for each input can be found in the Script Workspace tab:";\n'    
+  for i in range(0, num_detectors): 
+      text_lsf += '?"Gain_Data_input%s"; \n' %(i+1)
+  text_lsf += '?"Plot spectrums using script: plot(wavelength, Gain_Data_input#)";\n'  
+  for i in range(0, num_detectors):
+    text_lsf += 'visualize(mc%s);\n' % (i+1)
+  
+#### Display Histograms for the selected components
+#FSR
+  if(params['histograms']['fsr']==True):
+      text_lsf += 'dataset = fsr_dataset*1e9;\n'  #select fsr dataset defined above
+      text_lsf += 'bin_hist = max( [ 10, (max(dataset)-min(dataset)) / std(dataset) * 10 ]);\n' #define number of bins according to the number of data
+      text_lsf += 'histc(dataset, bin_hist, "Free Spectral Range (nm)", "Count", "Histogram - FSR");\n' #generate histogram 
+      text_lsf += 'legend("Mean: " + num2str(mean(dataset)) + ", Std Dev: " + num2str(std(dataset)));\n' #define plot legends
+      
+#wavelength
+  if(params['histograms']['wavelength']==True):
+      text_lsf += 'dataset = freq_dataset*1e9;\n'
+      text_lsf += 'num_hist = max( [ 10, (max(dataset)-min(dataset)) / std(dataset) * 10 ]);\n'
+      text_lsf += 'histc(dataset, bin_hist, "Wavelength (nm)", "Count", "Histogram - Peak wavelength");\n'
+      text_lsf += 'legend("Mean: " + num2str(mean(dataset)) + ", Std Dev: " + num2str(std(dataset)));\n'
+
+#Gain
+  if(params['histograms']['gain']==True):
+      text_lsf += 'dataset = gain_dataset;\n'
+      text_lsf += 'num_hist = max( [ 10, (max(dataset)-min(dataset)) / std(dataset) * 10 ]);\n'
+      text_lsf += 'histc(dataset, bin_hist, "Gain (dB)", "Count", "Histogram - Peak gain");\n'
+      text_lsf += 'legend("Mean: " + num2str(mean(dataset)) + ", Std Dev: " + num2str(std(dataset)));\n'
+
+
+
+
+
+  '''
+
   for i in range(1, num_detectors+1):
     if matlab_data_files:
       # convert simulation data into simple datasets:
@@ -636,6 +804,8 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
     text_lsf += ', m%s' % i
   text_lsf += ');\n'
   
+  '''
+  
   file.write (text_lsf)
   file.close()
   
@@ -660,5 +830,5 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
     scripts.open_folder(tmp_folder)
     
   if verbose:
-    print('Done Lumerical INTERCONNECT circuit simulation.')
+    print('Done Lumerical INTERCONNECT Monte Carlo circuit simulation.')
 

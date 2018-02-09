@@ -15,6 +15,7 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text>import pya
+import SiEPIC
 
 SiEPIC.scripts.measurement_vs_simulation(verbose=False)
 

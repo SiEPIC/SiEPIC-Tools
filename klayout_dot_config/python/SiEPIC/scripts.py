@@ -1158,7 +1158,7 @@ Get data, one of:
 '''
 def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
   import pya
-  from .. import _globals
+  from . import _globals
   tmp_folder = _globals.TEMP_FOLDER  
   from .github import github_get_filenames, github_get_files, github_get_file
   
@@ -1294,7 +1294,7 @@ Plot data together
 
 def measurement_vs_simulation(verbose=None):
   import pya
-  from .. import _globals
+  from . import _globals
   tmp_folder = _globals.TEMP_FOLDER
   from .scripts import fetch_measurement_data_from_github
   from .scripts import user_select_opt_in
