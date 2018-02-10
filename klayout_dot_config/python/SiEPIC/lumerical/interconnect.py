@@ -527,8 +527,18 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
     ly = topcell.layout()
   
   if params is None: params = _globals.MC_GUI.get_parameters()
-  if params is None: return
+  if params is None: 
+    pya.MessageBox.warning("No MC parameters", "No Monte Carlo parameters. Cancelling.", pya.MessageBox.Cancel)
+    return
   print(params)
+  
+  if int(params['num_wafers'])<1:
+    pya.MessageBox.warning("Insufficient number of wafers", "The number of wafers for Monte Carlo simulations need to be 1 or more.", pya.MessageBox.Cancel)
+    return
+  if int(params['num_dies'])<1:
+    pya.MessageBox.warning("Insufficient number of dies", "The number of die per wafer for Monte Carlo simulations need to be 1 or more.", pya.MessageBox.Cancel)
+    return
+
   
   
   if verbose:
@@ -548,7 +558,8 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
     mw.cm_save()
   layout_filename = mw.current_view().active_cellview().filename()
   if len(layout_filename) == 0:
-    raise Exception("Please save your layout before running the simulation")
+    pya.MessageBox.warning("Please save your layout before running the simulation.", "Please save your layout before running the simulation.", pya.MessageBox.Cancel)
+    return
     
   # *** todo    
   #   Add the "disconnected" component to all disconnected pins
@@ -558,7 +569,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_Spice, text_Spice_main, num_detectors = \
     topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   if not text_Spice:
-    raise Exception("No netlist available. Cannot run simulation.")
+    pya.MessageBox.warning("No netlist available.", "No netlist available. Cannot run simulation.", pya.MessageBox.Cancel)
     return
   if verbose:   
     print(text_Spice)
@@ -700,10 +711,6 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += '  set("selected_die",ii);  \n'
   text_lsf += '  run;\n'
   text_lsf += '  select("ONA_1");\n'
-#  text_lsf += '  f_start = get("start frequency");\n'
-#  text_lsf += '  f_stop = get("stop frequency");\n'
-#  text_lsf += '  num_points = get("number of points");\n'
-#  text_lsf += '  wavelength = c/f_start : (c/f_stop-c/f_start)/(num_points-1) : c/f_stop;\n'
   text_lsf += '  T=getresult("ONA_1","input 1/mode 1/transmission");\n'
   text_lsf += '  wavelength = T.wavelength;\n'   
   
@@ -715,14 +722,14 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
 #add simulation data to their corresponding datalists  
   if(params['histograms']['fsr']==True):
       text_lsf += '  fsr_select = getresult("ONA_1", "input 1/mode 1/peak/free spectral range");\n'
-      text_lsf += '  fsr_dataset(1,kk) = real(fsr_select.getattribute("TE free spectral range (m)"));\n'
+      text_lsf += '  fsr_dataset(1,kk) = real(fsr_select.getattribute(getattribute(fsr_select)));\n'
 
   if(params['histograms']['wavelength']==True):
       text_lsf += '  freq_dataset(1,kk) = getresult("ONA_1", "input 1/mode 1/peak/frequency");\n'
 
   if(params['histograms']['gain']==True):
       text_lsf += '  gain_select = getresult("ONA_1", "input 1/mode 1/peak/gain");\n'
-      text_lsf += '  gain_dataset(1,kk) = real(gain_select.getattribute("TE gain (dB)"));\n'
+      text_lsf += '  gain_dataset(1,kk) = real(gain_select.getattribute(getattribute(gain_select)));\n'
 
   text_lsf += '  switchtodesign; \n'
   text_lsf += '  kk = kk + 1;  \n'
