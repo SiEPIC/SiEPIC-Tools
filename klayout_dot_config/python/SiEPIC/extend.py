@@ -100,10 +100,12 @@ def is_manhattan(self):
     pts = self.get_points()
   else:
     pts = self.get_dpoints()
-  check = 1 if len(pts) == 2 else 0
-  for i, pt in enumerate(pts):
-    if(pts[i].x == pts[i-1].x or pts[i].y == pts[i-1].y): check += 1
-  return check==2
+  if len(pts) == 2:
+    return True 
+  for i, pt in enumerate(pts[0:-1]):
+    if not (pts[i].x == pts[i+1].x or pts[i].y == pts[i+1].y): 
+      return False
+  return True
   
 def radius_check(self, radius):
   def all2(iterable):
