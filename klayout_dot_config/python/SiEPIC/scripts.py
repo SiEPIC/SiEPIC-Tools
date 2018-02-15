@@ -268,7 +268,7 @@ def waveguide_to_path(cell = None):
     selection.append(pya.ObjectInstPath())
     selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
     # DPath.transformed requires DTrans. waveguide.trans is a Trans object
-    selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path.transformed(waveguide.trans))
+    selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path.transformed(waveguide.trans.to_dtype(TECHNOLOGY['dbu'])))
     selection[-1].top = obj.top
     selection[-1].cv_index = obj.cv_index
     
