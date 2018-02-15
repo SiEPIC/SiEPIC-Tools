@@ -1354,7 +1354,7 @@ def resize_waveguide():
       from SiEPIC.scripts import path_to_waveguide
       
       net, comp = cell.identify_nets()
-      
+      global points, copy_pts, diff
       objlist = []#list of data objects
       clear = []#12 clears should be there
       topcell = None
@@ -1470,7 +1470,8 @@ def resize_waveguide():
             print(prop)
             seg_propagation.append(prop)
                 # y have same values along x axis
-              
+          
+          global wdg, hbox, lframe1,titlefont, lf1title, parameters, lf1label1, lf1label2, lf1label3, lf1title2, lf1text3, lf1form, lframe1, leftsplitter, splitter1, container, ok
           wdg = QWidget()
           #wdg = QDialog(pya.Application.instance().main_window())
           wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
@@ -1494,7 +1495,7 @@ def resize_waveguide():
           
           def selection(self):
             #make a list of these to show them
-            global segments, seg_orientation
+            global segments, seg_orientation, lf1label1, lf1label2
         #    lf1text1.setText(str(abs(segments[parameters.currentIndex][0][0] - segments[parameters.currentIndex][1][0])*dbu + abs(segments[parameters.currentIndex][0][1] - segments[parameters.currentIndex][1][1])*dbu))
             lf1label1.setText ('     Segment length: %s microns' % str((abs(segments[parameters.currentIndex][0][0] - segments[parameters.currentIndex][1][0]) + abs(segments[parameters.currentIndex][0][1] - segments[parameters.currentIndex][1][1]))*dbu))
         #    lf1text2.setText(str(seg_orientation[parameters.currentIndex]))
@@ -1558,11 +1559,11 @@ def resize_waveguide():
             c.delete()#delete the current pcell
             cell = topcell.layout().create_cell("resized_waveguide")
       # place "cell" in the top cell
-            t = Trans(Trans.R0, 0,0)
-            topcell.insert(CellInstArray(cell.cell_index(), t))
+            t = pya.Trans(pya.Trans.R0, 0,0)
+            topcell.insert(pya.CellInstArray(cell.cell_index(), t))
         
-            dpoints = [DPoint(each[0], each[1]) for each in copy_pts]
-            dpath = DPath(dpoints, wg_width)   
+            dpoints = [pya.DPoint(each[0], each[1]) for each in copy_pts]
+            dpath = pya.DPath(dpoints, wg_width)   
             cell.shapes(LayerSiN).insert(dpath.to_itype(dbu))
             path_to_waveguide(cell = topcell)   
             path_to_waveguide(cell = topcell) 
@@ -1609,3 +1610,4 @@ def resize_waveguide():
           objlist.append(lf1text3)
           selection(None)
           wdg.show()
+          
