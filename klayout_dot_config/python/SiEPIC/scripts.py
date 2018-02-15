@@ -1497,7 +1497,7 @@ def resize_waveguide():
             #make a list of these to show them
             global segments, seg_orientation, lf1label1, lf1label2
         #    lf1text1.setText(str(abs(segments[parameters.currentIndex][0][0] - segments[parameters.currentIndex][1][0])*dbu + abs(segments[parameters.currentIndex][0][1] - segments[parameters.currentIndex][1][1])*dbu))
-            lf1label1.setText ('     Segment length: %s microns' % str((abs(segments[parameters.currentIndex][0][0] - segments[parameters.currentIndex][1][0]) + abs(segments[parameters.currentIndex][0][1] - segments[parameters.currentIndex][1][1]))*dbu))
+            lf1label1.setText ('     Segment length: %s microns' % str((abs(segments[parameters.currentIndex][0][0] - segments[parameters.currentIndex][1][0]) + abs(segments[parameters.currentIndex][0][1] - segments[parameters.currentIndex][1][1]))))
         #    lf1text2.setText(str(seg_orientation[parameters.currentIndex]))
             lf1label2.setText ('     Segment orientation: %s' % str(seg_orientation[parameters.currentIndex]))
           
@@ -1530,6 +1530,9 @@ def resize_waveguide():
         
             global points, copy_pts, diff
         
+            if lf1text3.text == "":
+              return
+              
             # Record a transaction, to enable "undo"
             lv.transaction("Object resizing")
         
