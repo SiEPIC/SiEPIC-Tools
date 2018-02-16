@@ -936,19 +936,14 @@ def layout_check(cell = None, verbose=False):
     #  checks for touching but not overlapping DevRecs
     for i2 in range(i+1,len(components)):
       c2=components[i2]
-      r = pya.Region([c.polygon, c2.polygon])
-      r.merged_semantics=False
-      area_raw = r.area()
-      r.merged_semantics=True
-      area_merged = r.area()
-      if abs(area_merged - area_raw) > 3:  # I don't know why they are sometimes different by exactly 3... other times exacty the same.
-        from .utils import advance_iterator 
-        polygon_merged = advance_iterator(r.each_merged())
-#        polygon_merged = r.each_merged().next()
-        if verbose:
-          print( " - Found overlapping components: %s, %s. Area comparison: %s, %s"  % (c.component, c2.component, area_raw, area_merged) )
+      r1 = pya.Region(c.polygon)
+      r2 = pya.Region(c2.polygon)
+      polygon_and = [p for p in r1&r2]
+      if polygon_and:
+        print( " - Found overlapping components: %s, %s"  % (c.component, c2.component) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_comp_overlap.rdb_id())
-        rdb_item.add_value(pya.RdbItemValue( polygon_merged.to_dtype(dbu) ) )
+        for p in polygon_and:
+          rdb_item.add_value(pya.RdbItemValue( p.to_dtype(dbu) ) )
     
     if DFT:
     # DFT verification
