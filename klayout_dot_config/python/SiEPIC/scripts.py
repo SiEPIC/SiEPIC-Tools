@@ -1480,6 +1480,7 @@ def resize_waveguide():
           #wdg = QDialog(pya.Application.instance().main_window())
           wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
           wdg.setWindowTitle("Waveguide resizer")
+
           
           if sys.platform.startswith('linux'):
               # Linux-specific code here...
@@ -1527,6 +1528,7 @@ def resize_waveguide():
           lf1title2 = QLabel('Chose the segment you wish to be moved:')
           lf1text3 = QLineEdit()
           lf1text3.setAccessibleName('lf1text3')
+          lf1text3.setText(str(path_length))
         
           
           def button(self):
@@ -1563,30 +1565,16 @@ def resize_waveguide():
               copy_pts[copy_pts.index(segments[index][1])][1] = copy_pts[copy_pts.index(segments[index][1])][1] + diff/2   
             print("pushed", p1, p2)
         #    path_obj = cell.pcell_parameters_by_name()['path']
-            c.delete()#delete the current pcell
-            cell = topcell.layout().create_cell("resized_waveguide")
-      # place "cell" in the top cell
-            t = pya.Trans(pya.Trans.R0, 0,0)
-            topcell.insert(pya.CellInstArray(cell.cell_index(), t))
+
         
             dpoints = [pya.DPoint(each[0], each[1]) for each in copy_pts]
             dpath = pya.DPath(dpoints, wg_width)   
-            cell.shapes(LayerSiN).insert(dpath.to_itype(dbu))
-            path_to_waveguide(cell = topcell)   
-            path_to_waveguide(cell = topcell) 
-      
-        
-            #layout_waveguide_abs(topcell, LayerSi, points_mult(copy_pts,1), wg_width, radius)
-            
-            for t in to_delete:
-              t.delete()
-        
+            #replace new path with the old one
+            oinst.change_pcell_parameter("path",dpath) 
+            #refresh waveguide instance
+            path_to_waveguide(cell = c)
             # Clear the layout view selection, since we deleted some objects
-            lv.clear_object_selection()
-        
-            # Record a transaction, to enable "undo"
-            #lv.commit()
-           
+            lv.clear_object_selection()   
             wdg.destroy()  # destroy GUI when we are completely done.
             
           
