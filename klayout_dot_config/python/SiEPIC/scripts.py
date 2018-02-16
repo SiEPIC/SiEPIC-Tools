@@ -1394,7 +1394,7 @@ def resize_waveguide():
           
           #PCell_get_parameters ( c ) #This line causes syntax error Do not uncomment this line.
         
-        #  path_length
+          #  path_length
           wg_width = path_obj.width  # in microns
           # calculate the length of the waveguide using the area / width
           iter2 = c.begin_shapes_rec(LayerSiN)
@@ -1406,12 +1406,11 @@ def resize_waveguide():
             path_length =  0  # or path_obj.length()
         
           escape = 0
-      
-          wg_trans = path_obj.transformed(trans)
-        #  points = path_to_points(shape.path)
-          points_obj =  wg_trans.to_dtype(1/dbu).get_dpoints()
+
+          points_obj =  path_obj.to_dtype(1/dbu).get_dpoints()
           points = [[each.x*dbu, each.y*dbu] for each in points_obj]
-        # Separate the segments of the waveguide
+
+          # Separate the segments of the waveguide
           segments_all = []
           for i in range(len(points)):
             if(i>0):
@@ -1419,11 +1418,11 @@ def resize_waveguide():
               segments_all.append(pair)
       
       
-        #dont allow any modifications to first and last segment
+          # don't allow any modifications to first and last segment
           global segments
           segments = segments_all[1:-1]
         
-        # Check segment orientation
+          # Check segment orientation
           global seg_orientation
           seg_orientation = []
           for each in segments:
@@ -1432,7 +1431,7 @@ def resize_waveguide():
             elif(each[0][1] == each[1][1]):
               seg_orientation.append("horizontal")
           
-        # prop variable which determines the segment propagation 
+          # prop variable which determines the segment propagation 
           prop_points = points
           seg_propagation = []
           #+x, -x , +y , -y
@@ -1535,7 +1534,7 @@ def resize_waveguide():
               return
               
             # Record a transaction, to enable "undo"
-            lv.transaction("Object resizing")
+            lv.transaction("Waveguide resizing")
         
             #get current index and segment propagation
             index = parameters.currentIndex
@@ -1564,12 +1563,9 @@ def resize_waveguide():
         
             dpoints = [pya.DPoint(each[0], each[1]) for each in copy_pts]
             dpath = pya.DPath(dpoints, wg_width)   
-            #replace new path with the old one
+            #replace old path with the new one
             oinst.change_pcell_parameter("path",dpath) 
-            #refresh waveguide instance
-            path_to_waveguide(cell = c)
-            # Clear the layout view selection, since we deleted some objects
-            lv.clear_object_selection()   
+            lv.commit()
             wdg.destroy()  # destroy GUI when we are completely done.
             
           
