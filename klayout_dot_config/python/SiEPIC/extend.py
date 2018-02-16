@@ -432,11 +432,22 @@ def find_pins(self, verbose=False, polygon_devrec=None):
   while not(it.at_end()):
     # Assume a FbrTgt Path is an optical pin
     if it.shape().is_polygon():
+      pin_name = self.basic_name().replace(' ', '_') # default name from the cell
+      # or find the text label for the optical IO name
+      subcell = it.cell()  # cell (component) to which this shape belongs
+      iter2 = subcell.begin_shapes_rec_touching(LayerFbrTgtN, it.shape().bbox())
+      if verbose:
+        print ("Box: %s" % it.shape().bbox() )
+      while not(iter2.at_end()):
+        if verbose:
+          print ("shape touching: %s" % iter2.shape() )
+        if iter2.shape().is_text():
+          pin_name = iter2.shape().text.string
+        iter2.next()
       # Store the pin information in the pins array
       pins.append(Pin(path=it.shape().polygon.transformed(it.itrans()),
          _type=_globals.PIN_TYPES.OPTICALIO, 
-         pin_name=self.basic_name().replace(' ', '_')))
-#         pin_name=it.cell().basic_name())) # 'OpticalFibre 9micron'
+         pin_name=pin_name))
     it.next()
 
   if error_text:
@@ -539,7 +550,7 @@ def find_components(self, verbose=False, cell_selected=None):
         print("%s: DevRec in cell {%s}, polygon -- %s" % (idx, subcell.basic_name(), polygon))
       found_component = True
 
-    # A component was found. record the instance info as an Optical_component 
+    # A component was found. record the instance info as a Component 
     if found_component:
       # check if the component is flattened, or a hierarchical sub-cell
       if self == subcell: 
