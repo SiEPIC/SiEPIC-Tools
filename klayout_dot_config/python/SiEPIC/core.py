@@ -39,7 +39,7 @@ Net:
  - connection between pins
   - optical nets can only have two pins
   - electrical nets can have multiple pins
- - the pin variables point to Pin indexes
+ - the pin array points to Pins 
 '''
 class Net:
   def __init__(self, idx=None, _type=None, pins=None):
@@ -55,12 +55,12 @@ class Net:
 Pin:
 This is a class that describes pins on components and waveguides.
 A pin consists of:
- - optical pin: a Path with 2 points, with it's vector giving the direction 
+ - optical pin: a Path with 2 points, with its vector giving the direction 
     of how to leave the component
  - electrical pin: a Box
- - a Text label giving it's name
+ - a Text label giving its name
  - a type: OPTICAL, I/O, ELECTRICAL
-A pin can associated with:
+A pin can be associated with:
  - a component
  - a net
 
