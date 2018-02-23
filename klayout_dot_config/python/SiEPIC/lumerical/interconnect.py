@@ -144,14 +144,16 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
 
 def INTC_commandline(filename2):
   print ("Running Lumerical INTERCONNECT using the command interface.")
-  import sys, os
+  import sys, os, string
   
   if sys.platform.startswith('linux'):
+    import subprocess
     # Linux-specific code here...
-    if string.find(version,"2.") > -1:
-      import commands
-      print("Running INTERCONNECT")
-      commands.getstatusoutput('/opt/lumerical/interconnect/bin/interconnect -run %s' % filename2)
+    print("Running INTERCONNECT")
+    # Location of INTERCONNECT program (this found from RPM installation)
+    file_path = '/opt/lumerical/interconnect/bin/interconnect'
+    subprocess.Popen([file_path, '-run', filename2])
+      
   
   elif sys.platform.startswith('darwin'):
     # OSX specific
