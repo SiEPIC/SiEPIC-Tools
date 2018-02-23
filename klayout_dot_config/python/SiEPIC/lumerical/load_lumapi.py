@@ -29,6 +29,13 @@ def load_lumapi(verbose=False):
       path_intc = "/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python"
       if os.path.exists(path_intc):
         path = path_intc
+    elif platform.system() == 'Linux':
+      path_fdtd = "/opt/lumerical/fdtd/api/python"
+      if os.path.exists(path_fdtd):
+        path = path_fdtd
+      path_intc = "/opt/lumerical/interconnect/api/python"
+      if os.path.exists(path_intc):
+        path = path_intc
     elif platform.system() == 'Windows': 
       path_fdtd = "C:\\Program Files\\Lumerical\\FDTD Solutions\\api\\python"
       if os.path.exists(path_fdtd):
@@ -173,6 +180,12 @@ def load_lumapi(verbose=False):
       
   # Windows
   elif platform.system() == 'Windows': 
+    if os.path.exists(path):
+      if not path in sys.path:
+        sys.path.append(path) # windows
+      os.chdir(path) 
+  # Linux    
+  elif platform.system() == 'Linux': 
     if os.path.exists(path):
       if not path in sys.path:
         sys.path.append(path) # windows
