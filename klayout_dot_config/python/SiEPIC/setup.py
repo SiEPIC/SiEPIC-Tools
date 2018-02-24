@@ -138,7 +138,9 @@ def registerKeyBindings():
     pya.Application.instance().set_config('guiding-shape-line-width','0')
     pya.Application.instance().set_config('rdb-marker-color','#ff0000')
     pya.Application.instance().set_config('rdb-marker-line-width','8')
-    pya.Application.instance().set_config('default-layer-properties', os.path.join(os.path.realpath(__file__), os.pardir, os.pardir, os.pardir, 'libraries', 'klayout_Layers_EBeam.lyp'))
+#    pya.Application.instance().set_config('default-layer-properties', os.path.join(os.path.realpath(__file__), os.pardir, os.pardir, os.pardir, 'libraries', 'klayout_Layers_EBeam.lyp'))
+
+
     if pya.Application.instance().get_config('edit-mode') == 'false':
       pya.Application.instance().set_config('edit-mode','true')
       pya.MessageBox.warning("Restart", "Please restart KLayout. SiEPIC settings have been applied.", pya.MessageBox.Ok)
