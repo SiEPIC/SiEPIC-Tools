@@ -76,6 +76,11 @@ SiEPIC.utils.get_technology_by_name('EBeam')
 def get_technology_by_name(tech_name, verbose=False):
     if verbose:
       print("get_technology_by_name()")
+      
+    if not tech_name:
+      pya.MessageBox.warning("Problem with Technology", "Problem with active Technology: please activate a technology (not Default)", pya.MessageBox.Ok)
+      return
+      
     from ._globals import KLAYOUT_VERSION
     technology = {}
     technology['technology_name']=tech_name

@@ -366,6 +366,9 @@ def find_pins(self, verbose=False, polygon_devrec=None):
   pins = []
   
   # Pin Recognition layer
+  if not TECHNOLOGY.has_key('PinRec'):
+    pya.MessageBox.warning("Problem with Technology", "Problem with active Technology: missing layer PinRec", pya.MessageBox.Ok)
+    return
   LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
 
   error_text = ''
@@ -425,6 +428,10 @@ def find_pins(self, verbose=False, polygon_devrec=None):
     it.next()
 
   # Optical IO (Fibre) Recognition layer
+  if not TECHNOLOGY.has_key('FbrTgt'):
+    pya.MessageBox.warning("Problem with Technology", "Problem with active Technology: missing layer FbrTgt", pya.MessageBox.Ok)
+    return
+    
   LayerFbrTgtN = self.layout().layer(TECHNOLOGY['FbrTgt'])
 
   # iterate through all the FbrTgt shapes in the cell
