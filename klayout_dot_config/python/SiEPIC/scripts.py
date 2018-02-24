@@ -876,7 +876,7 @@ def layout_check(cell = None, verbose=False):
     rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
     rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
     rdb_cat_id_GCarrayconfig = rdb.create_category(rdb_cat_id, "Fibre array configuration")
-    rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Couplers above the opt_in label (laser injection port) and at most %s Grating Couplers below the opt_in label" % (int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']))
+    rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Couplers above the opt_in label (laser injection port) and at most %s Grating Couplers below the opt_in label. Grating couplers must be on a %s micron pitch, vertically arranged." % (int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
   else:
     if verbose:
       print('  No DFT rules found.')
