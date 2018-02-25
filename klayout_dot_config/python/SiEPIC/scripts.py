@@ -382,7 +382,11 @@ def snap_component():
   # we need two objects.  One is selected, and the other is a transient selection
   if lv.has_transient_object_selection() == False:
     print("No transient selection")
-    v = pya.MessageBox.warning("No transient selection", "Hover the mouse (transient selection) over the object to which you wish to snap to.\nEnsure transient selection is enabled in Settings - Applications - Selection.", pya.MessageBox.Ok)
+    import sys
+    if sys.platform.startswith('darwin'):
+      v = pya.MessageBox.warning("No transient selection", "Hover the mouse (transient selection) over the object to which you wish to snap to.\nIf it still doesn't work, please ensure that 'Transient mode' selection is enabled in the KLayout menu KLayout - Preferences - Applications - Selection.", pya.MessageBox.Ok)
+    else:
+      v = pya.MessageBox.warning("No transient selection", "Hover the mouse (transient selection) over the object to which you wish to snap to.\nIf it still doesn't work, please ensure that 'Transient mode' selection is enabled in the KLayout menu File - Settings - Applications - Selection.", pya.MessageBox.Ok)
   else:
     # find the transient selection:
     o_transient_iter = lv.each_object_selected_transient()
