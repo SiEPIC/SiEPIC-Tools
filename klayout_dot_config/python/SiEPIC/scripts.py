@@ -820,6 +820,10 @@ def layout_check(cell = None, verbose=False):
   if verbose:
     print ("* Display list of components:" )
     [c.display() for c in components]
+    
+  if not components:
+    v = pya.MessageBox.warning("Errors", "No components found (using SiEPIC-Tools DevRec and PinRec definitions).", pya.MessageBox.Ok)
+    return
 
   # Create a Results Database
   rdb_i = lv.create_rdb("SiEPIC-Tools Verification: %s technology" % TECHNOLOGY['technology_name'])
