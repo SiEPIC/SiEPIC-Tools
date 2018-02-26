@@ -876,15 +876,27 @@ def layout_check(cell = None, verbose=False):
     rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in label: same")
     rdb_cat_id_optin_unique.description = "Automated test opt_in labels should be unique."
     rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in label: missing")
-    rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements."
+    rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check"
     rdb_cat_id_optin_toofar = rdb.create_category(rdb_cat_id, "opt_in label: too far away")
     rdb_cat_id_optin_toofar.description = "Automated test opt_in labels must be placed at the tip of the grating coupler, namely near the (0,0) point of the cell."
+    rdb_cat_id_optin_wavelength = rdb.create_category(rdb_cat_id, "opt_in label: wavelength")
+    if type(DFT['design-for-test']['tunable-laser'])==list:
+      DFT_wavelengths = [w['wavelength'] for w in DFT['design-for-test']['tunable-laser'] ]
+    else:
+      DFT_wavelengths = DFT['design-for-test']['tunable-laser']['wavelength']
+    rdb_cat_id_optin_wavelength.description = "Automated test opt_in labels must have a wavelength for a laser specified in the DFT.xml file: %s.  \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check" % DFT_wavelengths
+    if type(DFT['design-for-test']['tunable-laser'])==list:
+      DFT_polarizations = [p['polarization'] for p in DFT['design-for-test']['tunable-laser'] ]
+    else:
+      DFT_polarizations = DFT['design-for-test']['tunable-laser']['polarization']
+    rdb_cat_id_optin_polarization = rdb.create_category(rdb_cat_id, "opt_in label: polarization")
+    rdb_cat_id_optin_polarization.description = "Automated test opt_in labels must have a polarization as specified in the DFT.xml file: %s. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check" % DFT_polarizations
     rdb_cat_id_GCpitch = rdb.create_category(rdb_cat_id, "Grating Coupler pitch")
-    rdb_cat_id_GCpitch.description = "Grating couplers must be on a %s micron pitch, vertically arranged." % (float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
+    rdb_cat_id_GCpitch.description = "Grating couplers must be on a %s micron pitch, vertically arranged, as specified in the DFT.xml." % (float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
     rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
     rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
     rdb_cat_id_GCarrayconfig = rdb.create_category(rdb_cat_id, "Fibre array configuration")
-    rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Couplers above the opt_in label (laser injection port) and at most %s Grating Couplers below the opt_in label. Grating couplers must be on a %s micron pitch, vertically arranged." % (int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
+    rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) above the opt_in label (laser injection port) and at most %s Grating Coupler(s) below the opt_in label. \n\nGrating couplers must be on a %s micron pitch, vertically arranged. \n\nThese parameters are specified in the DFT.xml file" % (int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
   else:
     if verbose:
       print('  No DFT rules found.')
@@ -997,6 +1009,21 @@ def layout_check(cell = None, verbose=False):
           rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_unique.rdb_id())
           rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
   
+  
+      # opt_in format check:
+      if not opt_in[ti1]['wavelength'] in DFT_wavelengths:
+        if verbose:
+          print( " - DFT error: wavelength" )
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_wavelength.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
+    
+      if not (opt_in[ti1]['pol'] in DFT_polarizations ):
+        if verbose:
+          print( " - DFT error: polarization" )
+        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_polarization.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
+
+
       # find the GC closest to the opt_in label. 
       
       from ._globals import KLAYOUT_VERSION
