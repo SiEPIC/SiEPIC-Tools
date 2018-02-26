@@ -815,11 +815,17 @@ def layout_check(cell = None, verbose=False):
   else:
     ly = cell.layout()
 
+  if not TECHNOLOGY['technology_name']:
+    v = pya.MessageBox.warning("Errors", "SiEPIC-Tools verification requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
+    return
+  
+
   # Get the components and nets for the layout
   nets, components = cell.identify_nets(verbose=False)
   if verbose:
     print ("* Display list of components:" )
     [c.display() for c in components]
+
     
   if not components:
     v = pya.MessageBox.warning("Errors", "No components found (using SiEPIC-Tools DevRec and PinRec definitions).", pya.MessageBox.Ok)

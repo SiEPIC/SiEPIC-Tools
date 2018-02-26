@@ -408,7 +408,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   text_Spice, text_Spice_main, num_detectors = \
     topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   if not text_Spice:
-    raise Exception("No netlist available. Cannot run simulation.")
+#    raise Exception("No netlist available. Cannot run simulation.")
     return
   if verbose:   
     print(text_Spice)

@@ -885,10 +885,17 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   from time import strftime 
   from .utils import eng_str
 
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  if not TECHNOLOGY['technology_name']:
+    v = pya.MessageBox.warning("Errors", "SiEPIC-Tools requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
+    return '', '', 0
+
   # get the netlist from the entire layout
   nets, components = self.identify_nets ()
 
   if not components:
+    v = pya.MessageBox.warning("Errors", "No components found.", pya.MessageBox.Ok)
     return '', '', 0
 
   # Get information about the laser and detectors:
