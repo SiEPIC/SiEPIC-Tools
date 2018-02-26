@@ -894,7 +894,10 @@ def layout_check(cell = None, verbose=False):
     if type(DFT['design-for-test']['tunable-laser'])==list:
       DFT_polarizations = [p['polarization'] for p in DFT['design-for-test']['tunable-laser'] ]
     else:
-      DFT_polarizations = DFT['design-for-test']['tunable-laser']['polarization']
+      if 'polarization' in DFT['design-for-test']['tunable-laser']:
+        DFT_polarizations = DFT['design-for-test']['tunable-laser']['polarization']
+      else:
+        DFT_polarizations = "TE or TM"
     rdb_cat_id_optin_polarization = rdb.create_category(rdb_cat_id, "opt_in label: polarization")
     rdb_cat_id_optin_polarization.description = "Automated test opt_in labels must have a polarization as specified in the DFT.xml file: %s. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check" % DFT_polarizations
     rdb_cat_id_GCpitch = rdb.create_category(rdb_cat_id, "Grating Coupler pitch")
