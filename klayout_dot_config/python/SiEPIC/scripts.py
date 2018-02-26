@@ -1129,7 +1129,7 @@ def user_select_opt_in(verbose=None, option_all=True, opt_in_selection_text=[]):
       opt_in_labels = [o['opt_in'] for o in opt_in]
       if option_all:
         opt_in_labels.insert(0,'All opt-in labels')
-      opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in labels, to fetch experimental data.",  opt_in_labels, 0)
+      opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in labels.",  opt_in_labels, 0)
       if not opt_in_selection_text: # user pressed cancel
         if verbose:
           print (' user cancel!')
