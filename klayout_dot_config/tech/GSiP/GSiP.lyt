@@ -3,7 +3,7 @@
  <name>GSiP</name>
  <description/>
  <original-base-path/>
- <layer-properties_file>libraries/klayout_Layers_GSiP.lyp</layer-properties_file>
+ <layer-properties_file>klayout_Layers_GSiP.lyp</layer-properties_file>
  <add-other-layers>true</add-other-layers>
  <layer-map/>
  <create-other-layers>true</create-other-layers>
