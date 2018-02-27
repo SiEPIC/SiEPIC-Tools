@@ -882,7 +882,7 @@ def layout_check(cell = None, verbose=False):
     rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in label: same")
     rdb_cat_id_optin_unique.description = "Automated test opt_in labels should be unique."
     rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in label: missing")
-    rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check"
+    rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements on the Text layer. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check"
     rdb_cat_id_optin_toofar = rdb.create_category(rdb_cat_id, "opt_in label: too far away")
     rdb_cat_id_optin_toofar.description = "Automated test opt_in labels must be placed at the tip of the grating coupler, namely near the (0,0) point of the cell."
     rdb_cat_id_optin_wavelength = rdb.create_category(rdb_cat_id, "opt_in label: wavelength")
