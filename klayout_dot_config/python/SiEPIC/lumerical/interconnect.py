@@ -336,10 +336,10 @@ def component_simulation(verbose=False, simulate=True):
 
     # Write the Lumerical INTERCONNECT start-up script.
     text_lsf =  'switchtolayout;\n'
-    text_lsf +=  'cd("%s");\n' % tmp_folder
+    text_lsf +=  "cd('%s');\n" % tmp_folder
     text_lsf += 'deleteall;\n'
-    text_lsf += 'importnetlist("%s");\n' % filename
-    text_lsf += 'save("%s");\n' % filename_icp
+    text_lsf += "importnetlist('%s');\n" % filename
+    text_lsf += "save('%s');\n" % filename_icp
     text_lsf += 'run;\n'
     if 0:
       for i in range(0, len(pin_names)):
@@ -435,7 +435,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   file = open(filename2, 'w')
   text_lsf = 'switchtolayout;\n'
   text_lsf += 'deleteall;\n'
-  text_lsf += 'importnetlist("%s");\n' % filename
+  text_lsf += "importnetlist('%s');\n" % filename
   text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % topcell.name
   text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % topcell.name
   text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % topcell.name 
@@ -444,7 +444,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % topcell.name
   text_lsf += 'select("::Root Element::%s");\n' % topcell.name
   text_lsf += 'set("run setup script",2);\n'
-  text_lsf += 'save("%s");\n' % filename_icp
+  text_lsf += "save('%s');\n" % filename_icp
   text_lsf += 'run;\n'
   for i in range(1, num_detectors+1):
     if matlab_data_files:
@@ -599,7 +599,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf = '###DEVELOPER:Zeqin Lu, zqlu@ece.ubc.ca, University of British Columbia \n' 
   text_lsf += 'switchtolayout;\n'
   text_lsf += 'deleteall;\n'
-  text_lsf += 'importnetlist("%s");\n' % filename
+  text_lsf += "importnetlist('%s');\n" % filename
   text_lsf += 'addproperty("::Root Element", "wafer_uniformity_thickness", "wafer", "Matrix");\n' 
   text_lsf += 'addproperty("::Root Element", "wafer_uniformity_width", "wafer", "Matrix");\n' 
   text_lsf += 'addproperty("::Root Element", "N", "wafer", "Number");\n'  
