@@ -1061,7 +1061,7 @@ def layout_check(cell = None, verbose=False):
           rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
             
       # find the GCs in the circuit that don't match the testing configuration
-      for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+1,0,-1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1)):
+      for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+0,0,-1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1)):
         if pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000) in vect_optin_GCs:
           del_index = vect_optin_GCs.index(pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000))
           del vect_optin_GCs[del_index]
