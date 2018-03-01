@@ -5,6 +5,14 @@ on OSX: > sudo easy_install requests
     or  > pip install requests
 '''
 
+
+# Loading requests during KLayout start-up prevents a ton of exception
+# messages if it was loaded on first usage.
+try:
+  import requests
+except ImportError:
+  pass
+
 # Search the GitHub repository for files containing the string "filesearch", with optional extension
 def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbose=None):
   
