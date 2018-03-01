@@ -905,7 +905,7 @@ def layout_check(cell = None, verbose=False):
     rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
     rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
     rdb_cat_id_GCarrayconfig = rdb.create_category(rdb_cat_id, "Fibre array configuration")
-    rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) above the opt_in label (laser injection port) and at most %s Grating Coupler(s) below the opt_in label. \n\nGrating couplers must be on a %s micron pitch, vertically arranged. \n\nThese parameters are specified in the DFT.xml file" % (int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
+    rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) above the opt_in label (laser injection port) and at most %s Grating Coupler(s) below the opt_in label. \n\nGrating couplers must be on a %s micron pitch, vertically arranged." % (int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
   else:
     if verbose:
       print('  No DFT rules found.')
@@ -1070,7 +1070,9 @@ def layout_check(cell = None, verbose=False):
         if verbose:
           print( " - DFT GC array config error: %s, %s"  % (components_sorted[0].instance, opt_in[ti1]['opt_in']) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCarrayconfig.rdb_id())
+        rdb_item.add_value(pya.RdbItemValue( "The label having the error is: \n" + opt_in[ti1]['opt_in'] + "\n" ) )
         rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+        rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
   
       
     # GC spacing between separate GC circuits (to avoid measuring the wrong one)
