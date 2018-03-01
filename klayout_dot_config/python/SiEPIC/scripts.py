@@ -454,7 +454,8 @@ def snap_component():
         else:
           v = pya.MessageBox.warning("Snapping failed", 
             "Snapping failed. \nNo matching pins found. \nNote that pins must have exactly matching orientations (180 degrees)", pya.MessageBox.Ok)
-
+          return
+          
         pya.Application.instance().main_window().message('SiEPIC snap_components: moved by %s.' %trans, 2000)
 
         return
