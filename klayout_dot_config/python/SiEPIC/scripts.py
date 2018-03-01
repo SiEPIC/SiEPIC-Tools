@@ -44,7 +44,7 @@ def path_to_waveguide(params = None, cell = None, lv_commit = True, GUI = False,
   if params is None: return
   if verbose:
     print("SiEPIC.scripts path_to_waveguide(): params = %s" % params)
-  selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell)
+  selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell, verbose=verbose)
   selection = []
 
   warning = pya.QMessageBox()
@@ -112,13 +112,14 @@ def path_to_waveguide(params = None, cell = None, lv_commit = True, GUI = False,
 
 '''
 convert a KLayout ROUND_PATH, which was used to make a waveguide 
-in SiEPIC_EBeam_PDK versions up to v0.1.41, back to a Path.
+in SiEPIC_EBeam_PDK versions up to v0.1.41, back to a Path, then waveguide.
 This allows the user to migrate designs to the new Waveguide PCell.
 '''
 def roundpath_to_waveguide(verbose=False):
 
   from . import _globals
   from .utils import get_layout_variables
+#  from .scripts import path_to_waveguide
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   dbu = TECHNOLOGY['dbu']
   
@@ -194,31 +195,28 @@ def roundpath_to_waveguide(verbose=False):
   
       from ._globals import KLAYOUT_VERSION
       if KLAYOUT_VERSION > 24:
-        new_wg = cell.shapes(ly.layer(LayerSiN)).insert(path_obj.transformed(trans))
+        new_wg = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(path_obj.transformed(trans.to_dtype(TECHNOLOGY['dbu'])))
       else:
         v = pya.MessageBox.warning("KLayout 0.25 or higher required.", "ROUND_PATH to Waveguide is implemented using KLayout 0.25 or higher functionality.", pya.MessageBox.Ok)
-  
-      # Leave the newly created path selected, to make it obvious to the user.
-      # http://klayout.de/forum/comments.php?DiscussionID=747
+        return
+
+      # Leave the newly created path selected, to convert after
       new_selection.append( pya.ObjectInstPath() )
-      new_selection[-1].layer = ly.layer(LayerSiN)
+      new_selection[-1].layer = ly.layer(TECHNOLOGY['Waveguide'])
       new_selection[-1].shape = new_wg
       new_selection[-1].top = o.top
       new_selection[-1].cv_index = o.cv_index
       
-      # Convert the path to a Waveguide:
-      from SiEPIC import scripts
-      scripts.path_to_waveguide(lv_commit=False)
-
       to_delete.append(oinst) # delete the instance; leaves behind the cell if it's not used
           
-  for t in to_delete:
-    t.delete()
-  
-  # Clear the layout view selection, since we deleted some objects (but others may still be selected):
+  # Clear the layout view selection:
   lv.clear_object_selection()
   # Select the newly added objects
   lv.object_selection = new_selection       
+
+  # Convert the selected paths to a Waveguide:
+  path_to_waveguide(lv_commit=False, verbose=verbose)
+  
   # Record a transaction, to enable "undo"
   lv.commit()
     
