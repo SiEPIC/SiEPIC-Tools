@@ -1036,42 +1036,43 @@ def layout_check(cell = None, verbose=False):
       from ._globals import KLAYOUT_VERSION
       components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
       # GC too far check:
-      dist_optin_c = components_sorted[0].trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1))
-      if verbose:
-        print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (opt_in[ti1]['Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c*dbu) )
-      if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler'])*1000:
+      if components_sorted:
+        dist_optin_c = components_sorted[0].trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1))
         if verbose:
-          print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, opt_in[ti1]['opt_in']) )
-        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_toofar.rdb_id())
-        rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
-        
-      # starting with each opt_in label, identify the sub-circuit, then GCs, and check for GC spacing
-      trimmed_nets, trimmed_components = trim_netlist (nets, components, components_sorted[0])
-      detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp).to_p()  != pya.DPoint(0,0)]
-      if verbose:
-        print("   N=%s, detector GCs: %s" %  (len(detector_GCs), [c.display() for c in detector_GCs]) )
-      vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p() for c in detector_GCs]
-      for vi in range(0,len(detector_GCs)):
-        if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
+          print( " - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s"  % (opt_in[ti1]['Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c*dbu) )
+        if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler'])*1000:
           if verbose:
-            print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
-          rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
-          rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
-            
-      # find the GCs in the circuit that don't match the testing configuration
-      for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+0,0,-1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1)):
-        if pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000) in vect_optin_GCs:
-          del_index = vect_optin_GCs.index(pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000))
-          del vect_optin_GCs[del_index]
-          del detector_GCs[del_index]
-      for vi in range(0, len(vect_optin_GCs)):
+            print( " - opt_in label too far from the nearest grating coupler: %s, %s"  % (components_sorted[0].instance, opt_in[ti1]['opt_in']) )
+          rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_toofar.rdb_id())
+          rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
+        
+        # starting with each opt_in label, identify the sub-circuit, then GCs, and check for GC spacing
+        trimmed_nets, trimmed_components = trim_netlist (nets, components, components_sorted[0])
+        detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp).to_p()  != pya.DPoint(0,0)]
         if verbose:
-          print( " - DFT GC array config error: %s, %s"  % (components_sorted[0].instance, opt_in[ti1]['opt_in']) )
-        rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCarrayconfig.rdb_id())
-        rdb_item.add_value(pya.RdbItemValue( "The label having the error is: \n" + opt_in[ti1]['opt_in'] + "\n" ) )
-        rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
-        rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
-  
+          print("   N=%s, detector GCs: %s" %  (len(detector_GCs), [c.display() for c in detector_GCs]) )
+        vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p() for c in detector_GCs]
+        for vi in range(0,len(detector_GCs)):
+          if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
+            if verbose:
+              print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
+            rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
+            rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+              
+        # find the GCs in the circuit that don't match the testing configuration
+        for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+0,0,-1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1)):
+          if pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000) in vect_optin_GCs:
+            del_index = vect_optin_GCs.index(pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000))
+            del vect_optin_GCs[del_index]
+            del detector_GCs[del_index]
+        for vi in range(0, len(vect_optin_GCs)):
+          if verbose:
+            print( " - DFT GC array config error: %s, %s"  % (components_sorted[0].instance, opt_in[ti1]['opt_in']) )
+          rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCarrayconfig.rdb_id())
+          rdb_item.add_value(pya.RdbItemValue( "The label having the error is: \n" + opt_in[ti1]['opt_in'] + "\n" ) )
+          rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+          rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
+    
       
     # GC spacing between separate GC circuits (to avoid measuring the wrong one)
   
