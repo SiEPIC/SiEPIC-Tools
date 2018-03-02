@@ -412,14 +412,17 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
     return
   if verbose:   
     print(text_Spice)
+
+  circuit_name = topcell.name.replace('.','') # remove "."
+  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
   from .. import _globals
   tmp_folder = _globals.TEMP_FOLDER
-  import os    
-  filename = os.path.join(tmp_folder, '%s_main.spi' % topcell.name)
-  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % topcell.name)
-  filename2 = os.path.join(tmp_folder, '%s.lsf' % topcell.name)
-  filename_icp = os.path.join(tmp_folder, '%s.icp' % topcell.name)
+  import os
+  filename = os.path.join(tmp_folder, '%s_main.spi' % circuit_name)
+  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % circuit_name)
+  filename2 = os.path.join(tmp_folder, '%s.lsf' % circuit_name)
+  filename_icp = os.path.join(tmp_folder, '%s.icp' % circuit_name)
   
   text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
   
@@ -436,13 +439,13 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   text_lsf = 'switchtolayout;\n'
   text_lsf += 'deleteall;\n'
   text_lsf += "importnetlist('%s');\n" % filename
-  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % topcell.name 
-  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_x", "wafer", "Number");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_y", "wafer", "Number");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % topcell.name
-  text_lsf += 'select("::Root Element::%s");\n' % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_x", "wafer", "Number");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_y", "wafer", "Number");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % circuit_name
+  text_lsf += 'select("::Root Element::%s");\n' % circuit_name
   text_lsf += 'set("run setup script",2);\n'
   text_lsf += "save('%s');\n" % filename_icp
   text_lsf += 'run;\n'
@@ -500,12 +503,16 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
       run_INTC()
       # Run using Python integration:
       lumapi = _globals.LUMAPI
-      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, topcell.name + ";")
+      lumapi.evalScript(_globals.INTC, "?'';")
     except:
       from .. import scripts
       scripts.open_folder(tmp_folder)
       INTC_commandline(filename)
+    try:
+      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
+      lumapi.evalScript(_globals.INTC, circuit_name + ";")
+    except:
+      pass
   else:
     from .. import scripts
     scripts.open_folder(tmp_folder)
@@ -541,6 +548,8 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
     pya.MessageBox.warning("Insufficient number of dies", "The number of die per wafer for Monte Carlo simulations need to be 1 or more.", pya.MessageBox.Cancel)
     return
 
+  circuit_name = topcell.name.replace('.','') # remove "."
+  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
   
   if verbose:
@@ -578,10 +587,10 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   
   tmp_folder = _globals.TEMP_FOLDER
   import os    
-  filename = os.path.join(tmp_folder, '%s_main.spi' % topcell.name)
-  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % topcell.name)
-  filename2 = os.path.join(tmp_folder, '%s.lsf' % topcell.name)
-  filename_icp = os.path.join(tmp_folder, '%s.icp' % topcell.name)
+  filename = os.path.join(tmp_folder, '%s_main.spi' % circuit_name)
+  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % circuit_name)
+  filename2 = os.path.join(tmp_folder, '%s.lsf' % circuit_name)
+  filename_icp = os.path.join(tmp_folder, '%s.icp' % circuit_name)
   
   text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
   
@@ -605,13 +614,13 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += 'addproperty("::Root Element", "N", "wafer", "Number");\n'  
   text_lsf += 'addproperty("::Root Element", "selected_die", "wafer", "Number");\n' 
   text_lsf += 'addproperty("::Root Element", "wafer_length", "wafer", "Number");\n'   
-  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_x", "wafer", "Number");\n'  % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_y", "wafer", "Number");\n' % topcell.name
-  text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % topcell.name
-  text_lsf += 'select("::Root Element::%s");\n'  % topcell.name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_x", "wafer", "Number");\n'  % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_y", "wafer", "Number");\n' % circuit_name
+  text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % circuit_name
+  text_lsf += 'select("::Root Element::%s");\n'  % circuit_name
   text_lsf += 'set("MC_non_uniform",99);\n'  
   text_lsf += 'n_wafer = %s;  \n'  % params['num_wafers']  #  GUI INPUT: Number of testing wafer
   text_lsf += 'n_die = %s;  \n'  % params['num_dies']  #  GUI INPUT: Number of testing die per wafer
@@ -697,7 +706,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += '  MC_uniformity_thickness = interp(wafer_uniformity_thickness, x, y, x_die, y_die); # interpolation \n'
   text_lsf += '  MC_uniformity_width = interp(wafer_uniformity_width, x, y, x_die, y_die); # interpolation \n'
   ######################### pass die to object ####################################
-  text_lsf += '  select("::Root Element::%s");  \n' % topcell.name
+  text_lsf += '  select("::Root Element::%s");  \n' % circuit_name
   text_lsf += '  set("MC_uniformity_thickness",MC_uniformity_thickness);  \n'
   text_lsf += '  set("MC_uniformity_width",MC_uniformity_width);  \n'
   text_lsf += '  set("MC_resolution_x",MC_resolution_x);  \n'
@@ -829,7 +838,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
       # Run using Python integration:
       lumapi = _globals.LUMAPI
       lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, topcell.name + ";")
+      lumapi.evalScript(_globals.INTC, circuit_name + ";")
     except:
       from .. import scripts
       scripts.open_folder(tmp_folder)

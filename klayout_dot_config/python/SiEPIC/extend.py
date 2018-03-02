@@ -1009,8 +1009,11 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
         print(p.pin_name)
         opticalIO_pins += NetName
 
+  circuit_name = self.name.replace('.','') # remove "."
+  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+
   # create the top subckt:
-  text_subckt += '.subckt %s%s%s\n' % (self.name, electricalIO_pins, opticalIO_pins)
+  text_subckt += '.subckt %s%s%s\n' % (circuit_name, electricalIO_pins, opticalIO_pins)
   text_subckt += '.param MC_uniformity_width=0 \n' # assign MC settings before importing netlist components
   text_subckt += '.param MC_uniformity_thickness=0 \n' 
   text_subckt += '.param MC_resolution_x=100 \n' 
@@ -1060,7 +1063,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
          eng_str(x * Lumerical_schematic_scaling), eng_str(y * Lumerical_schematic_scaling), \
          rotate, flip)
 
-  text_subckt += '.ends %s\n\n' % (self.name)
+  text_subckt += '.ends %s\n\n' % (circuit_name)
 
   if laser_net:
     text_main += '* Optical Network Analyzer:\n'
@@ -1070,11 +1073,11 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
     text_main += '  + stop=%4.3fe-9\n' % wavelength_stop
     text_main += '  + number_of_points=%s\n' % wavelength_points
     for i in range(0,len(detector_nets)):
-      text_main += '  + input(%s)=%s,%s\n' % (i+1, self.name, detector_nets[i].idx)
-    text_main += '  + output=%s,%s\n' % (self.name, laser_net.idx)
+      text_main += '  + input(%s)=%s,%s\n' % (i+1, circuit_name, detector_nets[i].idx)
+    text_main += '  + output=%s,%s\n' % (circuit_name, laser_net.idx)
 
   # main circuit
-  text_main += '%s %s %s %s sch_x=-1 sch_y=-1 ' % (self.name, electricalIO_pins_subckt, opticalIO_pins, self.name)
+  text_main += '%s %s %s %s sch_x=-1 sch_y=-1 ' % (circuit_name, electricalIO_pins_subckt, opticalIO_pins, circuit_name)
   if len(DCsources) > 0:
     text_main += 'sch_r=270\n\n'
   else:
