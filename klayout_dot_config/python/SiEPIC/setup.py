@@ -96,7 +96,7 @@ def registerKeyBindings():
     mapping['edit_menu.mode_menu.path'] = "'P'"
     mapping['edit_menu.mode_menu.polygon'] = "'G'"
     mapping['edit_menu.mode_menu.text'] = "'X'"
-    mapping['edit_menu.select_menu.select_all'] = "'Ctrl+A'"
+    mapping['edit_menu.select_menu.select_all'] = "'Shift+Ctrl+A'"
     mapping['edit_menu.show_properties'] = "'Q'"
     mapping['edit_menu.edit_options'] = "'E'"
     mapping['edit_menu.selection_menu.change_layer'] = "'Shift+L'"
