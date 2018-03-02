@@ -999,11 +999,19 @@ def layout_check(cell = None, verbose=False):
   if DFT:
   # DFT verification
 
-    # opt_in labels missing
     text_out, opt_in = find_automated_measurement_labels(cell)
+
+    '''
+    # opt_in labels missing: 0 labels found. draw box around the entire circuit.
+    # replaced with code below that finds each circuit separately
     if len(opt_in) == 0:
       rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
       rdb_item.add_value(pya.RdbItemValue( pya.Polygon(cell.bbox()).to_dtype(dbu) ) )
+    '''
+    
+    # dataset for all components found connected to opt_in labels; later subtract from all components to find circuits with missing opt_in
+    components_connected_opt_in = []
+
     # opt_in labels
     for ti1 in range(0,len(opt_in)):
       t = opt_in[ti1]['Text']
@@ -1033,7 +1041,6 @@ def layout_check(cell = None, verbose=False):
 
 
       # find the GC closest to the opt_in label. 
-      
       from ._globals import KLAYOUT_VERSION
       components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]], key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
       # GC too far check:
@@ -1049,6 +1056,7 @@ def layout_check(cell = None, verbose=False):
         
         # starting with each opt_in label, identify the sub-circuit, then GCs, and check for GC spacing
         trimmed_nets, trimmed_components = trim_netlist (nets, components, components_sorted[0])
+        components_connected_opt_in = components_connected_opt_in + trimmed_components
         detector_GCs = [ c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (c.trans.disp - components_sorted[0].trans.disp).to_p()  != pya.DPoint(0,0)]
         if verbose:
           print("   N=%s, detector GCs: %s" %  (len(detector_GCs), [c.display() for c in detector_GCs]) )
@@ -1073,6 +1081,29 @@ def layout_check(cell = None, verbose=False):
           rdb_item.add_value(pya.RdbItemValue( "The label having the error is: \n" + opt_in[ti1]['opt_in'] + "\n" ) )
           rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
           rdb_item.add_value(pya.RdbItemValue( pya.Polygon(box).to_dtype(dbu) ) )
+    
+    # subtract components connected to opt_in labels from all components to find circuits with missing opt_in
+    components_without_opt_in = [c for c in components if not (c in components_connected_opt_in)]
+    i=0 # to avoid getting stuck in the loop in case of an error
+    while components_without_opt_in and i < 50:
+      # find the first GC
+      components_GCs = [c for c in components_without_opt_in if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]]
+      if components_GCs:
+        trimmed_nets, trimmed_components = trim_netlist (nets, components, components_GCs[0])
+        # circuit without opt_in label, generate error
+        r=pya.Region()
+        for c in trimmed_components:
+          r.insert(c.polygon)
+        for p in r.each_merged():
+          rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
+          rdb_item.add_value(pya.RdbItemValue( p.to_dtype(dbu) ) )
+        # remove from the list of components without opt_in:
+        components_without_opt_in = [c for c in components_without_opt_in if not (c in trimmed_components)]
+        i+=1
+      else:
+        break
+
+          
     
       
     # GC spacing between separate GC circuits (to avoid measuring the wrong one)
