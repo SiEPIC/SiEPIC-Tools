@@ -547,7 +547,7 @@ def arc(r, theta_start, theta_stop):
     pts.append(pya.Point.from_dpoint(pya.DPoint((r*cos(i*da+th))/1, (r*sin(i*da+th))/1)))
   return pts
 
-def arc_xy(x, y, r, theta_start, theta_stop):
+def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
   # function to draw an arc of waveguide
   # radius: radius
   # w: waveguide width
@@ -560,6 +560,8 @@ def arc_xy(x, y, r, theta_start, theta_stop):
   
   circle_fraction = abs(theta_stop-theta_start) / 360.0
   npoints = int(points_per_circle(r) * circle_fraction)
+  if DevRec:
+    npoints=npoints/10
   if npoints==0:
     npoints = 1
   da = 2 * pi / npoints * circle_fraction # increment, in radians
@@ -569,7 +571,7 @@ def arc_xy(x, y, r, theta_start, theta_stop):
     pts.append(pya.Point.from_dpoint(pya.DPoint((x+r*cos(i*da+th))/1, (y+r*sin(i*da+th))/1)))
   return pts
 
-def arc_wg(radius, w, theta_start, theta_stop):
+def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
   # function to draw an arc of waveguide
   # radius: radius
   # w: waveguide width
@@ -583,6 +585,8 @@ def arc_wg(radius, w, theta_start, theta_stop):
   print("SiEPIC.utils arc_wg")
   circle_fraction = abs(theta_stop-theta_start) / 360.0
   npoints = int(points_per_circle(radius) * circle_fraction)
+  if DevRec:
+    npoints=npoints/10
   if npoints==0:
     npoints = 1
   da = 2 * pi / npoints * circle_fraction # increment, in radians
@@ -594,7 +598,7 @@ def arc_wg(radius, w, theta_start, theta_stop):
     pts.append(pya.Point.from_dpoint(pya.DPoint(((radius-w/2)*cos(i*da+th))/1, ((radius-w/2)*sin(i*da+th))/1)))
   return pya.Polygon(pts)
 
-def arc_wg_xy(x, y, r, w, theta_start, theta_stop):
+def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
   # function to draw an arc of waveguide
   # x, y: location of the origin
   # r: radius
@@ -608,6 +612,8 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop):
   
   circle_fraction = abs(theta_stop-theta_start) / 360.0
   npoints = int(points_per_circle(r) * circle_fraction)
+  if DevRec:
+    npoints=npoints/10
   if npoints==0:
     npoints = 1
   da = 2 * pi / npoints * circle_fraction # increment, in radians
@@ -621,9 +627,11 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop):
 
 
 #Create a bezier curve. While there are parameters for start and stop in degrees, this is currently only implemented for 90 degree bends
-def arc_bezier(radius, start, stop, bezier):
+def arc_bezier(radius, start, stop, bezier,DevRec=None):
   from math import sin, cos, pi
   N=100
+  if DevRec:
+    N=N/10
   L = radius  # effective bend radius / Length of the bend
   diff = 1./(N-1) # convert int to float
   xp=[0, (1-bezier)*L, L, L]
