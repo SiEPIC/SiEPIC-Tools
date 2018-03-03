@@ -1,0 +1,18 @@
+* Spice output from KLayout SiEPIC-Tools v0.3.37, 2018-03-03 00:25:17.
+
+.subckt MZI ebeam_gc_te1550_detector1 ebeam_gc_te1550_laser
+.param MC_uniformity_width=0 
+.param MC_uniformity_thickness=0 
+.param MC_resolution_x=100 
+.param MC_resolution_y=100 
+.param MC_grid=10e-6 
+.param MC_non_uniform=99 
+ ebeam_gc_te1550_0  ebeam_gc_te1550_detector1 N$0 ebeam_gc_te1550 library="Design kits/ebeam"  lay_x=21.5E-6 lay_y=53.0E-6 sch_x=1.118146331E0 sch_y=2.756360724E0 
+ ebeam_y_1550_1  N$0 N$1 N$2 ebeam_y_1550 library="Design kits/ebeam"  lay_x=45.4E-6 lay_y=53.0E-6 sch_x=2.361108998E0 sch_y=2.756360724E0 
+ ebeam_y_1550_2  N$4 N$5 N$3 ebeam_y_1550 library="Design kits/ebeam"  lay_x=60.75E-6 lay_y=37.85E-6 sch_x=3.159413471E0 sch_y=1.968457611E0  sch_r=270
+ ebeam_wg_integral_1550_3  N$1 N$3 ebeam_wg_integral_1550 library="Design kits/ebeam" wg_length=328.665u wg_width=0.500u points="[[52.8,105.75],[58.05,105.75],[58.05,126.5],[6.7,126.5],[6.7,213.5],[63.5,213.5],[63.5,95.25]]" radius=5.0 lay_x=35.1E-6 lay_y=105.0E-6 sch_x=1.825438895E0 sch_y=5.460714642E0 
+ ebeam_gc_te1550_4  ebeam_gc_te1550_laser N$6 ebeam_gc_te1550 library="Design kits/ebeam"  lay_x=21.5E-6 lay_y=180.0E-6 sch_x=1.118146331E0 sch_y=9.3612251E0 
+ ebeam_wg_integral_1550_5  N$4 N$6 ebeam_wg_integral_1550 library="Design kits/ebeam" wg_length=198.959u wg_width=0.500u points="[[60.75,80.45],[60.75,74.75],[71.6,74.75],[71.6,230.0],[38.0,230.0]]" radius=5.0 lay_x=55.425E-6 lay_y=102.375E-6 sch_x=2.882477229E0 sch_y=5.324196776E0 
+ ebeam_wg_integral_1550_6  N$2 N$5 ebeam_wg_integral_1550 library="Design kits/ebeam" wg_length=8.053u wg_width=0.500u points="[[52.8,100.25],[58.0,100.25],[58.0,95.25]]" radius=5.0 lay_x=56.025E-6 lay_y=48.375E-6 sch_x=2.913681313E0 sch_y=2.515829246E0 
+.ends MZI
+
