@@ -854,7 +854,7 @@ def layout_check(cell = None, verbose=False):
   rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
   rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
   rdb_cat_id_comp_overlap = rdb.create_category(rdb_cat_id_comp, "Overlapping component")
-  rdb_cat_id_comp_overlap.description = "Overlapping components (defined as overlapping DevRec layers; touch is ok)"
+  rdb_cat_id_comp_overlap.description = "Overlapping components (defined as overlapping DevRec layers; touching is ok)"
 
   # Connectivity checking
   rdb_cell = next(rdb.each_cell())
@@ -970,9 +970,11 @@ def layout_check(cell = None, verbose=False):
       if polygon_and:
         print( " - Found overlapping components: %s, %s"  % (c.component, c2.component) )
         rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_comp_overlap.rdb_id())
+        if c.component == c2.component:
+          rdb_item.add_value(pya.RdbItemValue( "There are two identical components overlapping: \n" + c.component + "\n" ) )
         for p in polygon_and:
           rdb_item.add_value(pya.RdbItemValue( p.to_dtype(dbu) ) )
-    
+        # check if these components have the same name; possibly a copy and paste error
     if DFT:
     # DFT verification
       # GC facing the right way
