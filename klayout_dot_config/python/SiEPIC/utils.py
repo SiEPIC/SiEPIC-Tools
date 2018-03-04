@@ -8,6 +8,9 @@ List of functions:
 advance_iterator
 get_technology_by_name
 get_technology
+load_Waveguides
+load_Calibre
+load_Monte_Carlo
 load_DFT
 load_FDTD_settings
 get_layout_variables

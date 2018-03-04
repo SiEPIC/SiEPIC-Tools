@@ -11,7 +11,6 @@
   + number_of_points=3000
   + input(1)=MZI,ebeam_gc_te1550_detector1
   + output=MZI,ebeam_gc_te1550_laser
-MZI   ebeam_gc_te1550_detector1 ebeam_gc_te1550_laser MZI sch_x=-1 sch_y=-1 
 
 .INCLUDE "MZI.spi"
 

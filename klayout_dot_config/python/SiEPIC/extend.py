@@ -1077,11 +1077,11 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
     text_main += '  + output=%s,%s\n' % (circuit_name, laser_net.idx)
 
   # main circuit
-  text_main += '%s %s %s %s sch_x=-1 sch_y=-1 ' % (circuit_name, electricalIO_pins_subckt, opticalIO_pins, circuit_name)
+  text_subckt += '%s %s %s %s sch_x=-1 sch_y=-1 ' % (circuit_name, electricalIO_pins_subckt, opticalIO_pins, circuit_name)
   if len(DCsources) > 0:
-    text_main += 'sch_r=270\n\n'
+    text_subckt += 'sch_r=270\n\n'
   else:
-    text_main += '\n\n'
+    text_subckt += '\n\n'
 
   text_main += DCsources
 
