@@ -20,6 +20,6 @@
 import pya
 from SiEPIC import scripts
 
-scripts.layout_check()
+scripts.layout_check(verbose=True)
 </text>
 </klayout-macro>
