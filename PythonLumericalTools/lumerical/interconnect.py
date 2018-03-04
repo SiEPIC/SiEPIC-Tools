@@ -8,11 +8,8 @@
 Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 
 - run_INTC: run INTERCONNECT using Python integration
-- circuit_simulation: netlist extract and run simulation
+- circuit_simulation:  run simulation using netlist as input
 - circuit_simulation_monte_carlo: perform many simulations
-
-usage:
- import SiEPIC.lumerical.interconnect
 
 
 ################################################################################
@@ -28,6 +25,7 @@ import sys
 if 'pya' in sys.modules: # check if in KLayout
   import pya
 
+# Run Lumerical Interconnect
 def run_INTC(verbose=False):
 
   if verbose:
@@ -79,21 +77,68 @@ def run_INTC(verbose=False):
   except:
     raise Exception ("Can't run Lumerical INTERCONNECT via Python integration.")
 
+# Generate a spice main file, which contains the simulation parameters
+def spice_main(circuit_name, folder, num_detectors):
 
-def circuit_simulation(circuit_name, folder, num_detectors, matlab_data_files=[], simulate=True, verbose=False, ):
+  import os
+  filename_main = os.path.join(folder, '%s_main.spi' % circuit_name)
+  filename_subckt = os.path.join(folder,  '%s.spi' % circuit_name)
+
+  file_subckt = open(filename_subckt, 'r')
+  for line in file_subckt:
+    # find instantiation of subckt
+    # check if circuit_name is in the line, and the line doesn't start with a space or a period
+    if circuit_name in line and not line[0] in " .":
+      fields = line.split(' ')
+      # make sure this line contains the subckt circuit name
+      if circuit_name in fields:
+        while '' in fields:
+          fields.remove('')
+        fields.pop(0)
+        ports = fields[0:fields.index(circuit_name)]
+        print("ports: %s" % ports)
+  if len(ports) != num_detectors+1:
+    print("error: incorrect number of ports than expected (num_detectors+1).")
+    return
+
+  # Write the spice file
+  file = open(filename_main, 'w')
+  text =  '* Spice output from SiEPIC-Tools \n'
+  text += '* Optical Network Analyzer:\n'
+  text += '.ona input_unit=wavelength input_parameter=start_and_stop\n'
+  text += '  + minimum_loss=80\n'
+  text += '  + analysis_type=scattering_data\n'
+  text += '  + multithreading=user_defined number_of_threads=1\n'
+  text += '  + orthogonal_identifier=1\n'
+  text += '  + start=1500.000e-9\n'
+  text += '  + stop=1600.000e-9\n'
+  text += '  + number_of_points=3000\n'
+  text += '  + output=%s,%s\n' % (circuit_name, ports[0])
+  for i in range(1,len(ports)):
+    text += '  + input(%s)=%s,%s\n' % (i, circuit_name, ports[i])
+  text += '.INCLUDE "%s"\n' % filename_subckt 
+
+  file.write (text)
+  file.close()
+
+
+def circuit_simulation(circuit_name, folder, num_detectors, matlab_data_files=[], simulate=True, verbose=False ):
   if verbose:
     print('*** circuit_simulation()')
 
-#  circuit_name = topcell.name.replace('.','') # remove "."
-#  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+  #  circuit_name = topcell.name.replace('.','') # remove "."
+  #  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
   import os
   filename_main = os.path.join(folder, '%s_main.spi' % circuit_name)
   print(filename_main)
   filename_subckt = os.path.join(folder,  '%s.spi' % circuit_name)
-  if not os.path.exists(filename_main) or not os.path.exists(filename_subckt):
-      print(" netlist files not found")
+  if not os.path.exists(filename_subckt):
+      print(" %s netlist file not found" %filename_subckt)
       return
+  if not os.path.exists(filename_main):
+      # generate the main spice file
+      spice_main(circuit_name, folder, num_detectors)
 
   # Output files
   filename_lsf = os.path.join(folder, '%s.lsf' % circuit_name)
@@ -233,16 +278,19 @@ def circuit_simulation_monte_carlo(circuit_name, folder, num_detectors, params =
     print("Insufficient number of dies: The number of die per wafer, and number of wafers, for Monte Carlo simulations need to be 1 or more.")
     return
 
-#  circuit_name = topcell.name.replace('.','') # remove "."
-#  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+  #  circuit_name = topcell.name.replace('.','') # remove "."
+  #  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
   import os
   filename_main = os.path.join(folder, '%s_main.spi' % circuit_name)
   print(filename_main)
   filename_subckt = os.path.join(folder,  '%s.spi' % circuit_name)
-  if not os.path.exists(filename_main) or not os.path.exists(filename_subckt):
-      print(" netlist files not found")
+  if not os.path.exists(filename_subckt):
+      print(" %s netlist file not found" %filename_subckt)
       return
+  if not os.path.exists(filename_main):
+      # generate the main spice file
+      spice_main(circuit_name, folder, num_detectors)
 
   # Output files
   filename_lsf = os.path.join(folder, '%s.lsf' % circuit_name)
@@ -475,7 +523,7 @@ def circuit_simulation_monte_carlo(circuit_name, folder, num_detectors, params =
   
   if verbose:
     print(text_lsf)
-#
+  #
 
   if simulate:
     # Run using Python integration:
