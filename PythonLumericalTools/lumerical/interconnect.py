@@ -8,14 +8,8 @@
 Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 
 - run_INTC: run INTERCONNECT using Python integration
-- INTC_commandline: invoke INTC via the command line, with an lsf file as input.
-- Setup_Lumerical_KLayoutPython_integration
-    Configure PATH env, import lumapi, run interconnect, 
-    Install technology CML, read CML elements
 - circuit_simulation: netlist extract and run simulation
-- circuit_simulation_update_netlist: update netlist and run simulation
 - circuit_simulation_monte_carlo: perform many simulations
-- component_simulation: single component simulation
 
 usage:
  import SiEPIC.lumerical.interconnect
@@ -89,6 +83,9 @@ def run_INTC(verbose=False):
 def circuit_simulation(circuit_name, folder, num_detectors, matlab_data_files=[], simulate=True, verbose=False, ):
   if verbose:
     print('*** circuit_simulation()')
+
+#  circuit_name = topcell.name.replace('.','') # remove "."
+#  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
   import os
   filename_main = os.path.join(folder, '%s_main.spi' % circuit_name)
@@ -196,91 +193,68 @@ def circuit_simulation(circuit_name, folder, num_detectors, matlab_data_files=[]
 
   
  
-  
-def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, opt_in_selection_text=[], matlab_data_files=[], simulate=True):
+'''
+'''
+def circuit_simulation_monte_carlo(circuit_name, folder, num_detectors, params = None, topcell = None, verbose=True, opt_in_selection_text=[], matlab_data_files=[], simulate=True):
   print('*** circuit_simulation_monte_carlo()')
-  from .. import _globals
-  from ..utils import get_layout_variables
-  if topcell is None:
-    TECHNOLOGY, lv, ly, topcell = get_layout_variables()
-  else:
-    TECHNOLOGY, lv, _, _ = get_layout_variables()
-    ly = topcell.layout()
-  
-  if params is None: params = _globals.MC_GUI.get_parameters()
-  if params is None: 
-    pya.MessageBox.warning("No MC parameters", "No Monte Carlo parameters. Cancelling.", pya.MessageBox.Cancel)
-    return
-  print(params)
-  
-  if int(params['num_wafers'])<1:
-    pya.MessageBox.warning("Insufficient number of wafers", "The number of wafers for Monte Carlo simulations need to be 1 or more.", pya.MessageBox.Cancel)
-    return
-  if int(params['num_dies'])<1:
-    pya.MessageBox.warning("Insufficient number of dies", "The number of die per wafer for Monte Carlo simulations need to be 1 or more.", pya.MessageBox.Cancel)
+
+  # Default simulation parameters
+  if not params:
+    params = { 
+      'num_wafers': 1, 
+      'num_dies': 3,
+      'histograms': {
+        'fsr': False,
+        'gain': False,
+        'wavelength': False
+      },
+      'waf_var': {
+        'width': {
+          'std_dev': 5.0,        # [nm], Within wafer Sigma RMS for width
+          'corr_len': 4.5e-3     # [m],  wafer correlation length
+        },
+        'height': {
+          'std_dev': 2.0,        # [nm], Within wafer Sigma RMS for thickness
+          'corr_len': 4.5e-3     # [m], wafer correlation length  
+        }
+      },
+      'waf_to_waf_var': {
+        'width': {
+          'std_dev': 5.0  # [nm], wafer Sigma RMS for width
+        },
+        'thickness': {
+          'std_dev': 3.0 # [nm], wafer Sigma RMS for thickness 
+        }
+      }
+    }
+
+
+  if int(params['num_wafers'])<1 or int(params['num_dies'])<1:
+    print("Insufficient number of dies: The number of die per wafer, and number of wafers, for Monte Carlo simulations need to be 1 or more.")
     return
 
-  circuit_name = topcell.name.replace('.','') # remove "."
-  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+#  circuit_name = topcell.name.replace('.','') # remove "."
+#  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
-  
-  if verbose:
-    print('*** circuit_simulation_monte_carlo()')
-  
-  # check for supported operating system, tested on:
-  # Windows 7, 10
-  # OSX Sierra, High Sierra
-  # Linux
-  import sys
-  if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
-    raise Exception("Unsupported operating system: %s" % sys.platform)
-    
-  # Save the layout prior to running simulations, if there are changes.
-  mw = pya.Application.instance().main_window()
-  if mw.manager().has_undo():
-    mw.cm_save()
-  layout_filename = mw.current_view().active_cellview().filename()
-  if len(layout_filename) == 0:
-    pya.MessageBox.warning("Please save your layout before running the simulation.", "Please save your layout before running the simulation.", pya.MessageBox.Cancel)
-    return
-    
-  # *** todo    
-  #   Add the "disconnected" component to all disconnected pins
-  #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
+  import os
+  filename_main = os.path.join(folder, '%s_main.spi' % circuit_name)
+  print(filename_main)
+  filename_subckt = os.path.join(folder,  '%s.spi' % circuit_name)
+  if not os.path.exists(filename_main) or not os.path.exists(filename_subckt):
+      print(" netlist files not found")
+      return
 
-  # Output the Spice netlist:
-  text_Spice, text_Spice_main, num_detectors = \
-    topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
-  if not text_Spice:
-    pya.MessageBox.warning("No netlist available.", "No netlist available. Cannot run simulation.", pya.MessageBox.Cancel)
-    return
-  if verbose:   
-    print(text_Spice)
-  
-  tmp_folder = _globals.TEMP_FOLDER
-  import os    
-  filename = os.path.join(tmp_folder, '%s_main.spi' % circuit_name)
-  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % circuit_name)
-  filename2 = os.path.join(tmp_folder, '%s.lsf' % circuit_name)
-  filename_icp = os.path.join(tmp_folder, '%s.icp' % circuit_name)
-  
-  text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
-  
-  # Write the Spice netlist to file
-  file = open(filename, 'w')
-  file.write (text_Spice_main)
-  file.close()
-  file = open(filename_subckt, 'w')
-  file.write (text_Spice)
-  file.close()
-  
+  # Output files
+  filename_lsf = os.path.join(folder, '%s.lsf' % circuit_name)
+  filename_icp = os.path.join(folder, '%s.icp' % circuit_name)
+
   # Write the Lumerical INTERCONNECT start-up script.
-  file = open(filename2, 'w')
+  file = open(filename_lsf, 'w')
 
   text_lsf = '###DEVELOPER:Zeqin Lu, zqlu@ece.ubc.ca, University of British Columbia \n' 
   text_lsf += 'switchtolayout;\n'
   text_lsf += 'deleteall;\n'
-  text_lsf += "importnetlist('%s');\n" % filename
+  text_lsf += "importnetlist('%s');\n" % filename_main
   text_lsf += 'addproperty("::Root Element", "wafer_uniformity_thickness", "wafer", "Matrix");\n' 
   text_lsf += 'addproperty("::Root Element", "wafer_uniformity_width", "wafer", "Matrix");\n' 
   text_lsf += 'addproperty("::Root Element", "N", "wafer", "Number");\n'  
@@ -501,24 +475,34 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   
   if verbose:
     print(text_lsf)
+#
 
   if simulate:
     # Run using Python integration:
     try: 
-      from .. import _globals
+      from . import load_lumapi
+      lumapi = load_lumapi.LUMAPI
+      global INTC
+      # Launch INTERCONNECT:
       run_INTC()
-      # Run using Python integration:
-      lumapi = _globals.LUMAPI
-      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, circuit_name + ";")
+      lumapi.evalScript(INTC, "?'Test';")
     except:
-      from .. import scripts
-      scripts.open_folder(tmp_folder)
-      INTC_commandline(filename)
+      import sys
+      if 'pya' in sys.modules: # check if in KLayout
+        from .. import scripts
+        scripts.open_folder(folder)
+        INTC_commandline(filename_main)
+    try:
+      lumapi.evalScript(INTC, "cd ('" + folder + "');")
+      lumapi.evalScript(INTC, circuit_name + ";")
+    except:
+      pass
   else:
-    from .. import scripts
-    scripts.open_folder(tmp_folder)
-    
+    import sys
+    if 'pya' in sys.modules: # check if in KLayout
+      from .. import scripts
+      scripts.open_folder(folder)
+
   if verbose:
     print('Done Lumerical INTERCONNECT Monte Carlo circuit simulation.')
 
