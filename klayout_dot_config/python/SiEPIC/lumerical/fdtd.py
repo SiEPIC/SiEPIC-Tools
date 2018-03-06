@@ -17,7 +17,9 @@ import SiEPIC.lumerical.fdtd
 ################################################################################
 '''
 
-import pya
+import sys
+if 'pya' in sys.modules: # check if in KLayout
+  import pya
 
 
 def run_FDTD(verbose=False):
@@ -113,6 +115,8 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   # get Component pins
   pins = component.find_pins()
   pins = sorted(pins, key=lambda  p: p.pin_name)
+  for p in pins:
+    p.pin_name = p.pin_name.replace(' ','')  # remove spaces in pin names
   
 
   if do_simulation:
