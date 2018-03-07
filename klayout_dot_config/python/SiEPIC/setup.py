@@ -10,9 +10,16 @@ def registerMenuItems():
     menu = pya.Application.instance().main_window().menu()
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "INTERCONNECT_icon.png")
     
+    
+    import sys
+    if int(sys.version[0]) > 2 and sys.platform == 'darwin':
+      extra = " Py3"
+    else:
+      extra = ''
+      
     s1 = "siepic_menu"
     if not(menu.is_menu(s1)):
-        menu.insert_menu("help_menu",s1,"SiEPIC %s" % SiEPIC.__init__.__version__) 
+        menu.insert_menu("help_menu",s1,"SiEPIC %s" % SiEPIC.__init__.__version__ + extra) 
 
     s2 = "waveguides"
     if not(menu.is_menu(s1 + "." + s2)):
