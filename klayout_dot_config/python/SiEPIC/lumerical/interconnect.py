@@ -414,7 +414,8 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
     print(text_Spice)
 
   circuit_name = topcell.name.replace('.','') # remove "."
-  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+  if '_' in circuit_name[0]:
+    circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
   from .. import _globals
   tmp_folder = _globals.TEMP_FOLDER

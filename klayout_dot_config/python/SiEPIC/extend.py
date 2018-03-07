@@ -1010,7 +1010,8 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
         opticalIO_pins += NetName
 
   circuit_name = self.name.replace('.','') # remove "."
-  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+  if '_' in circuit_name[0]:
+    circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
 
   # create the top subckt:
   text_subckt += '.subckt %s%s%s\n' % (circuit_name, electricalIO_pins, opticalIO_pins)
