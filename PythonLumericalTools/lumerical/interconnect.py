@@ -113,13 +113,14 @@ def spice_main(circuit_name, folder, num_detectors):
   text += '  + start=1500.000e-9\n'
   text += '  + stop=1600.000e-9\n'
   text += '  + number_of_points=3000\n'
-  text += '  + output=%s,%s\n' % (circuit_name, ports[0])
-  for i in range(1,len(ports)):
-    text += '  + input(%s)=%s,%s\n' % (i, circuit_name, ports[i])
+  text += '  + output=%s,%s\n' % (circuit_name, ports[-1])
+  for i in range(0,len(ports)-1):
+    text += '  + input(%s)=%s,%s\n' % (i+1, circuit_name, ports[i])
   text += '.INCLUDE "%s"\n' % filename_subckt 
 
   file.write (text)
   file.close()
+  print(' generated spice _main file')
 
 
 def circuit_simulation(circuit_name, folder, num_detectors, matlab_data_files=[], simulate=True, verbose=False ):
@@ -136,7 +137,7 @@ def circuit_simulation(circuit_name, folder, num_detectors, matlab_data_files=[]
   if not os.path.exists(filename_subckt):
       print(" %s netlist file not found" %filename_subckt)
       return
-  if not os.path.exists(filename_main):
+  if 1 or not os.path.exists(filename_main):
       # generate the main spice file
       spice_main(circuit_name, folder, num_detectors)
 
@@ -288,7 +289,7 @@ def circuit_simulation_monte_carlo(circuit_name, folder, num_detectors, params =
   if not os.path.exists(filename_subckt):
       print(" %s netlist file not found" %filename_subckt)
       return
-  if not os.path.exists(filename_main):
+  if 1 or not os.path.exists(filename_main):
       # generate the main spice file
       spice_main(circuit_name, folder, num_detectors)
 

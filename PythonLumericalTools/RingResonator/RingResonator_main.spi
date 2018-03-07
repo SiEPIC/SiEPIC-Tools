@@ -1,0 +1,15 @@
+* Spice output from SiEPIC-Tools 
+* Optical Network Analyzer:
+.ona input_unit=wavelength input_parameter=start_and_stop
+  + minimum_loss=80
+  + analysis_type=scattering_data
+  + multithreading=user_defined number_of_threads=1
+  + orthogonal_identifier=1
+  + start=1500.000e-9
+  + stop=1600.000e-9
+  + number_of_points=3000
+  + output=RingResonator,ebeam_gc_te1550_detector1
+  + input(1)=RingResonator,ebeam_gc_te1550_detector3
+  + input(2)=RingResonator,ebeam_gc_te1550_detector2
+  + input(3)=RingResonator,ebeam_gc_te1550_laser
+.INCLUDE "/Users/lukasc/Documents/GitHub/SiEPIC-Tools/PythonLumericalTools/lumerical/../RingResonator/RingResonator.spi"

@@ -1,0 +1,23 @@
+* Spice output from KLayout SiEPIC-Tools v0.3.38, 2018-03-06 22:31:02.
+
+.subckt RingResonator ebeam_gc_te1550_detector3 ebeam_gc_te1550_detector2 ebeam_gc_te1550_laser ebeam_gc_te1550_detector1
+.param MC_uniformity_width=0 
+.param MC_uniformity_thickness=0 
+.param MC_resolution_x=100 
+.param MC_resolution_y=100 
+.param MC_grid=10e-6 
+.param MC_non_uniform=99 
+ ebeam_gc_te1550_0  ebeam_gc_te1550_detector3 N$0 ebeam_gc_te1550 library="Design kits/ebeam"  lay_x=-16.5E-6 lay_y=0 sch_x=-2.165354331E0 sch_y=0 
+ ebeam_gc_te1550_1  ebeam_gc_te1550_detector2 N$1 ebeam_gc_te1550 library="Design kits/ebeam"  lay_x=-16.5E-6 lay_y=127.0E-6 sch_x=-2.165354331E0 sch_y=16.666666667E0 
+ ebeam_gc_te1550_2  ebeam_gc_te1550_laser N$2 ebeam_gc_te1550 library="Design kits/ebeam"  lay_x=-16.5E-6 lay_y=254.0E-6 sch_x=-2.165354331E0 sch_y=33.333333333E0 
+ ebeam_gc_te1550_3  ebeam_gc_te1550_detector1 N$3 ebeam_gc_te1550 library="Design kits/ebeam"  lay_x=-16.5E-6 lay_y=381.0E-6 sch_x=-2.165354331E0 sch_y=50.0E0 
+ ebeam_dc_halfring_straight_4  N$7 N$4 N$6 N$5 ebeam_dc_halfring_straight library="Design kits/ebeam" wg_width=0.500u gap=0.100u radius=3.000u Lc=0.000u orthogonal_identifier=1 lay_x=6.425E-6 lay_y=190.0E-6 sch_x=843.175853E-3 sch_y=24.934383202E0  sch_r=90
+ ebeam_dc_halfring_straight_5  N$9 N$5 N$8 N$4 ebeam_dc_halfring_straight library="Design kits/ebeam" wg_width=0.500u gap=0.100u radius=3.000u Lc=0.000u orthogonal_identifier=1 lay_x=10.775E-6 lay_y=190.0E-6 sch_x=1.414041995E0 sch_y=24.934383202E0  sch_r=270
+ ebeam_wg_integral_1550_6  N$1 N$6 ebeam_wg_integral_1550 library="Design kits/ebeam" wg_length=62.701u wg_width=0.500u points="[[0.0,127.0],[5.0,127.0],[5.0,186.25]]" radius=5.0 lay_x=3.125E-6 lay_y=156.0E-6 sch_x=410.104987E-3 sch_y=20.472440945E0 
+ ebeam_wg_integral_1550_7  N$7 N$2 ebeam_wg_integral_1550 library="Design kits/ebeam" wg_length=63.701u wg_width=0.500u points="[[5.0,193.75],[5.0,254.0],[0.0,254.0]]" radius=5.0 lay_x=3.105E-6 lay_y=224.5E-6 sch_x=407.480315E-3 sch_y=29.461942257E0 
+ ebeam_wg_integral_1550_8  N$3 N$8 ebeam_wg_integral_1550 library="Design kits/ebeam" wg_length=197.901u wg_width=0.500u points="[[0.0,381.0],[12.2,381.0],[12.2,193.75]]" radius=5.0 lay_x=6.725E-6 lay_y=288.0E-6 sch_x=882.545932E-3 sch_y=37.795275591E0 
+ ebeam_wg_integral_1550_9  N$0 N$9 ebeam_wg_integral_1550 library="Design kits/ebeam" wg_length=196.901u wg_width=0.500u points="[[0.0,0.0],[12.2,0.0],[12.2,186.25]]" radius=5.0 lay_x=6.725E-6 lay_y=92.5E-6 sch_x=882.545932E-3 sch_y=12.139107612E0 
+.ends RingResonator
+
+RingResonator   ebeam_gc_te1550_detector3 ebeam_gc_te1550_detector2 ebeam_gc_te1550_laser ebeam_gc_te1550_detector1 RingResonator sch_x=-1 sch_y=-1 
+

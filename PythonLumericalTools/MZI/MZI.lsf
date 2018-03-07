@@ -1,0 +1,15 @@
+switchtolayout;
+deleteall;
+importnetlist('/Users/lukasc/Documents/GitHub/SiEPIC-Tools/PythonLumericalTools/MZI/MZI_main.spi');
+addproperty("::Root Element::MZI", "MC_uniformity_thickness", "wafer", "Matrix");
+addproperty("::Root Element::MZI", "MC_uniformity_width", "wafer", "Matrix");
+addproperty("::Root Element::MZI", "MC_grid", "wafer", "Number");
+addproperty("::Root Element::MZI", "MC_resolution_x", "wafer", "Number");
+addproperty("::Root Element::MZI", "MC_resolution_y", "wafer", "Number");
+addproperty("::Root Element::MZI", "MC_non_uniform", "wafer", "Number");
+select("::Root Element::MZI");
+set("run setup script",2);
+save('/Users/lukasc/Documents/GitHub/SiEPIC-Tools/PythonLumericalTools/MZI/MZI.icp');
+run;
+t1 = getresult("ONA_1", "input 1/mode 1/gain");
+visualize(t1);
