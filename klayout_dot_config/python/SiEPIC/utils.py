@@ -564,7 +564,7 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
   circle_fraction = abs(theta_stop-theta_start) / 360.0
   npoints = int(points_per_circle(r) * circle_fraction)
   if DevRec:
-    npoints=npoints/10
+    npoints=int(npoints/10)
   if npoints==0:
     npoints = 1
   da = 2 * pi / npoints * circle_fraction # increment, in radians
@@ -589,7 +589,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
   circle_fraction = abs(theta_stop-theta_start) / 360.0
   npoints = int(points_per_circle(radius) * circle_fraction)
   if DevRec:
-    npoints=npoints/10
+    npoints=int(npoints/10)
   if npoints==0:
     npoints = 1
   da = 2 * pi / npoints * circle_fraction # increment, in radians
@@ -616,7 +616,7 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
   circle_fraction = abs(theta_stop-theta_start) / 360.0
   npoints = int(points_per_circle(r) * circle_fraction)
   if DevRec:
-    npoints=npoints/10
+    npoints=int(npoints/10)
   if npoints==0:
     npoints = 1
   da = 2 * pi / npoints * circle_fraction # increment, in radians
@@ -634,7 +634,7 @@ def arc_bezier(radius, start, stop, bezier,DevRec=None):
   from math import sin, cos, pi
   N=100
   if DevRec:
-    N=N/10
+    N=int(N/10)
   L = radius  # effective bend radius / Length of the bend
   diff = 1./(N-1) # convert int to float
   xp=[0, (1-bezier)*L, L, L]
