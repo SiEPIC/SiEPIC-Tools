@@ -18,6 +18,11 @@ if not os.path.exists(folder):
     folder = os.path.join(path,"..",circuit_name)
 print(folder)
 
+# make sure that the project folder is in the Python path
+import sys
+if not path in sys.path:
+  sys.path.append(path)
+
 # Setup Lumerical-Python integration, and load the SiEPIC-Tools Lumerical functions
 import lumerical
 import lumerical.load_lumapi
@@ -41,11 +46,11 @@ lumapi.evalScript(INTC, "?'Test';")
 # Perform Lumerical INTERCONNECT simulation
 
 # Regular simulation:
-if 0:
+if 1:
   lumerical.interconnect.circuit_simulation(circuit_name=circuit_name, folder=folder, num_detectors=num_detectors, matlab_data_files=[], simulate=True, verbose=False)
 
 # Monte Carlo simulation:
-if 1:
+if 0:
   lumerical.interconnect.circuit_simulation_monte_carlo(circuit_name=circuit_name, folder=folder, num_detectors=num_detectors, matlab_data_files=[], simulate=True, verbose=False)
 
 
