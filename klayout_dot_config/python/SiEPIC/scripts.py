@@ -1132,6 +1132,23 @@ def layout_check(cell = None, verbose=False):
     v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
 
 
+  # Save results of verification as a Text label on the cell. Include OS, SiEPIC-Tools and PDF version info.
+  LayerTextN = cell.layout().layer(TECHNOLOGY['Text'])
+  iter1 = cell.begin_shapes_rec(LayerTextN)
+  while not(iter1.at_end()):
+    if iter1.shape().is_text():
+      text = iter1.shape().text
+      if text.string.find("SiEPIC-Tools verification") > -1:
+        text_SiEPIC = text
+        print(" * Previous label: %s" % text_SiEPIC )
+        iter1.shape().delete()
+    iter1.next()
+
+  import SiEPIC.__init__, sys
+  from time import strftime 
+  text = pya.DText("SiEPIC-Tools verification: %s errors\n%s\nSiEPIC-Tools v%s\ntechnology: %s\n%s\nPython: %s, %s\n%s" % (rdb.num_items(), strftime("%Y-%m-%d %H:%M:%S"), SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.Application.instance().version()) , pya.DTrans(cell.dbbox().p1))
+  shape = cell.shapes(LayerTextN).insert(text)
+  shape.text_size = 0.1/dbu
   
 ''' 
 Open all PDF files using an appropriate viewer
