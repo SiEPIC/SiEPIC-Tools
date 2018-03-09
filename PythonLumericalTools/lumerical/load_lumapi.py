@@ -7,7 +7,7 @@ if 'pya' in sys.modules: # check if in KLayout
   import pya
 
 # Define global variables for Lumerical Python API
-if not 'LUMAPI' in globals()
+if not 'LUMAPI' in globals():
   LUMAPI = None  
   print('resetting Lumerical Python integration')
 

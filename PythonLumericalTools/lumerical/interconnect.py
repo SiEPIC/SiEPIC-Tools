@@ -15,7 +15,7 @@ Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 ################################################################################
 '''
 
-if not 'INTC' in globals()
+if not 'INTC' in globals():
   INTC = None  
   # print('resetting Lumerical INTERCONNECT Python integration')
 

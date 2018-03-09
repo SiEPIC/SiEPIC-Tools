@@ -26,6 +26,7 @@ if not path in sys.path:
 # Setup Lumerical-Python integration, and load the SiEPIC-Tools Lumerical functions
 import lumerical
 import lumerical.load_lumapi
+import lumerical.interconnect
 lumapi = lumerical.load_lumapi.LUMAPI
 
 # for debugging, to reload the lumerical module:
