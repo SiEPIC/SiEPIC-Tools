@@ -157,12 +157,17 @@ def INTC_commandline(filename2):
   
   elif sys.platform.startswith('darwin'):
     # OSX specific
-    import commands
-    print("Running INTERCONNECT")
-    runcmd = ('source ~/.bash_profile; /usr/bin/open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2)
-    print("Running in shell: %s" % runcmd)
-    a=commands.getstatusoutput(runcmd)
-    print(a)
+    import sys
+    if int(sys.version[0]) > 2:
+      import subprocess
+      subprocess.Popen(['/usr/bin/open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app', '-run', '--args -run %s' % filename2])          
+    else:
+      import commands
+      print("Running INTERCONNECT")
+      runcmd = ('source ~/.bash_profile; /usr/bin/open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app --args -run %s' % filename2)
+      print("Running in shell: %s" % runcmd)
+      a=commands.getstatusoutput(runcmd)
+      print(a)
 
   
   elif sys.platform.startswith('win'):

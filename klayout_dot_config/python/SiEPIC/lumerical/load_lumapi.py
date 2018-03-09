@@ -102,49 +102,13 @@ def load_lumapi(verbose=False):
             
       # Copy the launch control file into user's Library folder
       # execute launctl to register the new paths
-      import os, fnmatch, commands
+      import os, fnmatch
       siepic_tools_lumerical_folder = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-      if 0:
-    
-        filename = (siepic_tools_lumerical_folder + '/SiEPIC_Tools_Lumerical_KLayout_environment.plist')
-        if not os.path.exists(filename):
-          raise Exception ('Missing file: %s' % filename)
-    
-        # Check if Paths are correctly set, and KLayout Python sees them
-        a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
-        if b=='':
-          # Not yet installed... copy files, install
-          cmd1 = ('launchctl unload  %s' % filename)
-          a,b=commands.getstatusoutput(cmd1)
-          if a != 0:
-            raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-          cmd1=('launchctl load  %s' % filename)
-          a,b=commands.getstatusoutput(cmd1)
-          if a != 0 or b !='':
-            raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-          cmd1=('killall Dock')
-          a,b=commands.getstatusoutput(cmd1)
-          if a != 0 or b !='':
-            raise Exception ('Error calling: %s, %s' % (cmd1, b) )
-    
-          # Check if Paths are correctly set, and KLayout Python sees them
-          a,b=commands.getstatusoutput('echo $SiEPIC_Tools_Lumerical_KLayout_environment')
-          if b=='':
-            # Not loaded    
-            print("The System paths have been updated. Please restart KLayout to use Lumerical tools.")
-  #          raise Exception ('The System paths have been updated. Please restart KLayout to use Lumerical tools.')
-            warning = pya.QMessageBox()
-            warning.setStandardButtons(pya.QMessageBox.Ok)
-            warning.setText("The System paths have been updated. \nPlease restart KLayout to use Lumerical tools, and try this again.")
-  #          warning.setInformativeText("Do you want to Proceed?")
-            pya.QMessageBox_StandardButton(warning.exec_())
-            return
-      if 1:
-        os.environ['PATH'] += ':/Applications/Lumerical/FDTD Solutions/FDTD Solutions.app/Contents/MacOS' 
-        os.environ['PATH'] += ':/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS' 
-        os.environ['PATH'] += ':/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python'
-        os.environ['PATH'] += ':/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Matlab'
+      os.environ['PATH'] += ':/Applications/Lumerical/FDTD Solutions/FDTD Solutions.app/Contents/MacOS' 
+      os.environ['PATH'] += ':/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/MacOS' 
+      os.environ['PATH'] += ':/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python'
+      os.environ['PATH'] += ':/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Matlab'
 
 
       # Also add path for use in the Terminal
@@ -174,9 +138,14 @@ def load_lumapi(verbose=False):
           warning.setText("We need to do a fix in the Lumerical software folder for Python integration. \nPlease note that for this to work, we assume that Lumerical INTERCONNECT is installed in the default path: /Applications/Lumerical/INTERCONNECT/\nPlease enter the following in a Terminal.App window, and enter your root password when prompted. Ok to continue when done.")
           warning.setInformativeText("source %s"%lumapi_osx_fix)
           pya.QMessageBox_StandardButton(warning.exec_())
-  #        print (commands.getstatusoutput('chmod a+x %s' % lumapi_osx_fix ))
           if not os.path.exists(lumapi_osx_fix_lib):
-            print (commands.getstatusoutput('/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal %s' %lumapi_osx_fix ))
+            import sys
+            if int(sys.version[0]) > 2:
+              import subprocess
+              subprocess.Popen(['/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal', '-run', lumapi_osx_fix])          
+            else:
+              import commands
+              print (commands.getstatusoutput('/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal %s' %lumapi_osx_fix ))
       
   # Windows
   elif platform.system() == 'Windows': 
