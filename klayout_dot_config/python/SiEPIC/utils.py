@@ -112,16 +112,16 @@ def get_technology_by_name(tech_name, verbose=False):
 
     # Load CML file location
     head, tail = os.path.split(lyp_file)
-    technology['base_path'] = os.path.split(head)[0]
+    technology['base_path'] = head
     cml_files = [x for x in os.listdir(technology['base_path']) if x.lower().endswith(".cml")]
     if cml_files:
       technology['INTC_CML'] = cml_files[-1]
       technology['INTC_CML_path'] = os.path.join(technology['base_path'],cml_files[-1])
       technology['INTC_CML_version'] = cml_files[-1].replace(tech_name+'_','')
     else:
-      technology['INTC_CML'] = None
-      technology['INTC_CML_path'] = None
-      technology['INTC_CML_version'] = None
+      technology['INTC_CML'] = ''
+      technology['INTC_CML_path'] = ''
+      technology['INTC_CML_version'] = ''
 
     # Layers:
     file = open(lyp_file, 'r') 
