@@ -83,18 +83,26 @@ def spice_main(circuit_name, folder, num_detectors):
   filename_subckt = os.path.join(folder,  '%s.spi' % circuit_name)
 
   file_subckt = open(filename_subckt, 'r')
+  ports = None
   for line in file_subckt:
     # find instantiation of subckt
     # check if circuit_name is in the line, and the line doesn't start with a space or a period
     if circuit_name in line and not line[0] in " .":
       fields = line.split(' ')
+      fields=[c.replace('\n','') for c in fields]
+      print ("  - %s" % fields)
       # make sure this line contains the subckt circuit name
       if circuit_name in fields:
+        print (":   - %s" % fields)
         while '' in fields:
           fields.remove('')
-        fields.pop(0)
+        topcell = fields.pop(0)
+        print (":   - %s" % fields)
         ports = fields[0:fields.index(circuit_name)]
-        print("ports: %s" % ports)
+  if not ports:
+    print("no ports found; double check spice netlist file.")
+    return
+  print("ports: %s" % ports)
   if len(ports) != num_detectors+1:
     print("error: incorrect number of ports than expected (num_detectors+1).")
     return
@@ -111,9 +119,9 @@ def spice_main(circuit_name, folder, num_detectors):
   text += '  + start=1500.000e-9\n'
   text += '  + stop=1600.000e-9\n'
   text += '  + number_of_points=3000\n'
-  text += '  + output=%s,%s\n' % (circuit_name, ports[-1])
+  text += '  + output=%s,%s\n' % (topcell, ports[-1])
   for i in range(0,len(ports)-1):
-    text += '  + input(%s)=%s,%s\n' % (i+1, circuit_name, ports[i])
+    text += '  + input(%s)=%s,%s\n' % (i+1, topcell, ports[i])
   text += '.INCLUDE "%s"\n' % filename_subckt 
 
   file.write (text)

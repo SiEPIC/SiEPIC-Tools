@@ -157,7 +157,7 @@ def load_lumapi(verbose=False):
         pya.QMessageBox_StandardButton(warning.exec_())
 
         import subprocess
-        subprocess.Popen(['/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal %s' %lumapi_osx_fix])
+        subprocess.Popen(['/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal', lumapi_osx_fix])
       
   # Windows
   elif platform.system() == 'Windows': 
