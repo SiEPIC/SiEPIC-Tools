@@ -125,11 +125,10 @@ def load_lumapi(verbose=False):
         file.write (text_bash)
         file.close()
 
-      if 1:
-        # Fix for Lumerical Python OSX API:
-        if not path in sys.path:
-          sys.path.append(path)
-    #    os.chdir(path) 
+      if not path in sys.path:
+        sys.path.append(path)
+      # Fix for Lumerical Python OSX API, for < March 5 2018 versions:
+      if not os.path.exists(os.path.join(path, 'libinterop-api.1.dylib')):
         lumapi_osx_fix = siepic_tools_lumerical_folder + '/lumapi_osx_fix.bash'
         lumapi_osx_fix_lib = path + '/libinterop-api.so.1'
         if not os.path.exists(lumapi_osx_fix_lib):
