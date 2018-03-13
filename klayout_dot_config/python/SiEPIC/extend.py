@@ -143,10 +143,10 @@ def unique_points(self):
     pts = self.get_dpoints()
 
   # only keep unique path points:
-  output = []
-  for pt in pts:
-    if pt not in output:
-        output.append(pt)
+  output = [pts[0]]
+  for i in range(1,len(pts)):
+    if not (pts[i].x == pts[i-1].x and pts[i].y == pts[i-1].y):
+        output.append(pts[i])
   self.points = output
   return self
 
