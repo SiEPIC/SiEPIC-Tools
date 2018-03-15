@@ -15,6 +15,7 @@ from sys import version_info, platform
 from platform import python_implementation
 # local library
 from gr._version import __version__, __revision__
+from gr.runtime_helper import load_runtime, register_gksterm
 
 # Detect whether this is a site-package installation
 if os.path.isdir(os.path.join(os.path.dirname(__file__), "fonts")):
@@ -1716,7 +1717,8 @@ def inqcolor(color):
 def inqcolorfromrgb(red, green, blue):
     return __gr.gr_inqcolorfromrgb(c_double(red),
                                    c_double(green),
-                                   c_double(green))
+                                   c_double(blue))
+
 
 def hsvtorgb(h, s, v):
     r = c_double()
@@ -2403,24 +2405,36 @@ def tricontour(px, py, pz, levels):
     __gr.gr_tricontour(c_int(n), _px.data, _py.data, _pz.data, c_int(nlevels), _levels.data)
 
 
+def wrapper_version():
+    """
+    Returns the version string of the Python package gr.
+    """
+    return __version__
+
+
+def runtime_version():
+    """
+    Returns the version string of the GR runtime.
+    """
+    return str(__gr.gr_version().decode('ascii'))
+
+
+def version():
+    """
+    Returns the combined version strings of the GR runtime and Python package.
+    """
+    return 'Runtime: {} / Python: {}'.format(runtime_version(), wrapper_version())
+
+
 _grPkgDir = os.path.realpath(os.path.dirname(__file__))
-_grLibDir = os.getenv("GRLIB", _grPkgDir)
 _gksFontPath = os.path.join(_grPkgDir, "fonts")
 if os.access(_gksFontPath, os.R_OK):
     os.environ["GKS_FONTPATH"] = os.getenv("GKS_FONTPATH", _grPkgDir)
 
-if platform == "win32":
-    libext = ".dll"
-else:
-    libext = ".so"
-
-_grLib = os.path.join(_grLibDir, "libGR" + libext)
-if not os.getenv("GRLIB") and not os.access(_grLib, os.R_OK):
-    _grLibDir = os.path.join(_grPkgDir, "..", "..")
-    _grLib = os.path.join(_grLibDir, "libGR" + libext)
-if platform == "win32":
-    os.environ["PATH"] = os.getenv("PATH", "") + ";" + _grLibDir
-__gr = CDLL(_grLib)
+__gr = load_runtime()
+if __gr is None:
+    raise ImportError('Failed to load GR runtime!')
+register_gksterm()
 
 __gr.gr_opengks.argtypes = []
 __gr.gr_closegks.argtypes = []
@@ -2581,7 +2595,8 @@ __gr.gr_trisurface.argtypes = [
 __gr.gr_tricontour.argtypes = [
     c_int, POINTER(c_double), POINTER(c_double), POINTER(c_double),
     c_int, POINTER(c_double)]
-
+__gr.gr_version.argtypes = []
+__gr.gr_version.restype = c_char_p
 
 precision = __gr.gr_precision()
 
