@@ -237,17 +237,18 @@ def snap(self, pins):
       else:
         pts[1].x += dpt.x
         
-  # do the same thing on the other end:  
+  # do the same thing on the other end (check that it isn't the same pin as above):  
   ang = angle_vector(pts[-1]-pts[-2])
   pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation)%360) == 180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
   if len(pins_sorted):
-    dpt = pins_sorted[0].center - pts[-1]
-    if dpt.abs() <= d_min:
-      pts[-1] += dpt
-      if(round(ang % 180) == 0):
-        pts[-2].y += dpt.y
-      else:
-        pts[-2].x += dpt.x
+    if pins_sorted[0].center != pts[0]:
+      dpt = pins_sorted[0].center - pts[-1]
+      if dpt.abs() <= d_min:
+        pts[-1] += dpt
+        if(round(ang % 180) == 0):
+          pts[-2].y += dpt.y
+        else:
+          pts[-2].x += dpt.x
 
   # check that the path has non-zero length after the snapping operation
   test_path = pya.Path()
