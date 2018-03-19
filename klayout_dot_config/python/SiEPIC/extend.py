@@ -1055,12 +1055,12 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
       component1 =  c.component 
       params1 = c.params
       
-    text_subckt += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_"+str(c.idx), nets_str, c.component.replace(' ', '_') ) 
+    text_subckt += ' %s %s %s ' % ( component1.replace(' ', '_') +"_"+str(c.idx), nets_str, component1.replace(' ', '_') ) 
     if c.library != None:
       text_subckt += 'library="%s" ' % c.library
     x, y = c.Dcenter.x, c.Dcenter.y
     text_subckt += '%s lay_x=%s lay_y=%s sch_x=%s sch_y=%s %s%s\n' % \
-       ( c.params,
+       ( params1,
          eng_str(x * 1e-6), eng_str(y * 1e-6), \
          eng_str(x * Lumerical_schematic_scaling), eng_str(y * Lumerical_schematic_scaling), \
          rotate, flip)
