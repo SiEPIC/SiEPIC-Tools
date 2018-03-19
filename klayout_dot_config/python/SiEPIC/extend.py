@@ -1135,9 +1135,11 @@ pya.Cell.spice_netlist_export = spice_netlist_export
 # Function Definitions
 #################################################################################
 
-def find_pins(self):
-
-  return [pin.transform(self.trans) for pin in self.cell.find_pins()]
+def find_pins(self, verbose=False):
+  if verbose:
+    print("Instance.find_pins, self: %s" % self)
+    print("Instance.find_pins, cplx_trans: %s" % self.cplx_trans)
+  return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)]
   
 #################################################################################
 
