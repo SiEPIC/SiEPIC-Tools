@@ -15,12 +15,6 @@ import gr
 import gr3
 
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
-
 def plot(*args, **kwargs):
     global _plt
     _plt.kwargs.update(kwargs)
@@ -180,20 +174,12 @@ def ylabel(s):
     _plot_data(ylabel=s)
 
 
-def zlabel(s):
-    _plot_data(zlabel=s)
-
-
 def xlim(a):
     _plot_data(xlim=a)
 
 
 def ylim(a):
     _plot_data(ylim=a)
-
-
-def zlim(a):
-    _plot_data(zlim=a)
 
 
 def savefig(filename):
@@ -232,7 +218,7 @@ def subplot(nr, nc, p):
         x_max = max(x_max, c/nc)
         y_min = min(y_min, (r-1)/nr)
         y_max = max(y_max, r/nr)
-    _plt.kwargs['subplot'] = [x_min, x_max, y_min, y_max]
+    _plt.kwargs['subplot'] = [xmin, xmax, ymin, ymax]
     _plt.kwargs['clear'] = (p[0] == 1)
     _plt.kwargs['update'] = (p[-1] == nr * nc)
 
@@ -685,11 +671,9 @@ def _plot_data(**kwargs):
             for i in range(256):
                 r, g, b, a = cmap[i]
                 icmap[i] = (int(r*255) << 0) + (int(g*255) << 8) + (int(b*255) << 16) + (int(a*255) << 24)
-            z_min, z_max = _plt.kwargs.get('zlim', (np.min(z), np.max(z)))
-            if z_max < z_min:
-                z_max, z_min = z_min, z_max
-            if z_max > z_min:
-                data = (z - z_min) / (z_max - z_min) * 255
+            z_range = np.ptp(z)
+            if z_range > 0:
+                data = (z - np.min(z)) / z_range * 255
             else:
                 data = np.zeros((width, height))
             rgba = np.zeros((width, height), np.uint32)

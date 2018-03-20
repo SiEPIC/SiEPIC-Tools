@@ -79,59 +79,26 @@ _impl = python_implementation()
 if _impl != 'PyPy':
     from ctypes import pythonapi
 
+_gr3PkgDir = os.path.realpath(os.path.dirname(__file__))
+_gr3LibDir = os.getenv("GR3LIB", _gr3PkgDir)
+if sys.platform == "win32":
+    libext = ".dll"
+else:
+    libext = ".so"
 
-def load_runtime(silent=False):
-    search_directories = [
-        os.environ.get('GR3LIB'),
-        os.environ.get('GRLIB'),
-        os.path.realpath(os.path.dirname(gr.__file__)),
-        os.path.join(os.path.expanduser('~'), 'gr', 'lib'),
-        '/usr/local/gr/lib' if sys.platform != "win32" else None,
-        '/usr/gr/lib' if sys.platform != "win32" else None
-    ]
-    if sys.platform == "win32":
-        library_extension = ".dll"
-    else:
-        library_extension = ".so"
+# Detect whether this is a site-package installation
+if os.access(os.path.join(_gr3PkgDir, "libGR3" + libext), os.R_OK):
+    # Set GRDIR environment accordingly to site-package installation.
+    # (needed for finding GKSTerm on OSX)
+    os.environ["GRDIR"] = os.getenv("GRDIR",
+        os.path.join(os.path.realpath(os.path.dirname(__file__)), "..", "gr"))
 
-    # Detect whether this is a site-package installation
-    if os.access(os.path.join(os.path.dirname(__file__), "libGR3" + library_extension), os.R_OK):
-        # Set GRDIR environment accordingly to site-package installation.
-        # (needed for finding GKSTerm on OSX)
-        os.environ["GRDIR"] = os.getenv("GRDIR", os.path.join(os.path.realpath(os.path.dirname(__file__)), "..", "gr"))
+_gr3Lib = os.path.join(_gr3LibDir, "libGR3" + libext)
+if not os.getenv("GR3LIB") and not os.access(_gr3Lib, os.R_OK):
+    _gr3LibDir = os.path.join(_gr3PkgDir, "..", "..")
+    _gr3Lib = os.path.join(_gr3LibDir, "libGR3" + libext)
+_gr3 = CDLL(_gr3Lib)
 
-    for directory in search_directories:
-        if directory is None:
-            continue
-        if not os.path.isdir(directory):
-            continue
-        directory = os.path.abspath(directory)
-        library_filename = os.path.join(directory, 'libGR3' + library_extension)
-        if not os.path.isfile(library_filename):
-            continue
-        try:
-            return CDLL(library_filename)
-        except OSError:
-            if silent:
-                break
-            else:
-                raise
-
-    if not silent:
-        # TODO: OS-specific dependencies
-        sys.stderr.write("""GR3 runtime not found.
-Please visit https://gr-framework.org and install the GR3 runtime.
-
-Also, please ensure that you have all required dependencies:
-Debian/Ubuntu: apt install libxt6 libxrender1 libgl1-mesa-glx
-CentOS 7: yum install libXt libXrender libXext mesa-libGL
-Fedora 26: dnf install -y libXt libXrender libXext mesa-libGL
-openSUSE 42.3: zypper install -y libXt6 libXrender1 libXext6 Mesa-libGL1
-""")
-    return None
-
-
-_gr3 = load_runtime()
 
 class intarray:
     def __init__(self, a):
