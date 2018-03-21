@@ -775,6 +775,7 @@ def trim_netlist (nets, components, selected_component, verbose=None):
 
   return trimmed_nets, trimmed_components
   
+    
 
 
 '''
@@ -1156,13 +1157,18 @@ Open all PDF files using an appropriate viewer
 def open_PDF_files(files,files_list):
   import sys
   if sys.platform.startswith('darwin'):
-    import commands
     # open all the files in a single Preview application. 
     # open in one window with tabs: https://support.apple.com/en-ca/guide/mac-help/mchlp2469
     # System Preferences - Dock - Prefer tabs when opening documents - Always
     runcmd = '/usr/bin/open -n -a /Applications/Preview.app %s' % files
-    print("Running in shell: %s" % runcmd)
-    print(commands.getstatusoutput(runcmd))
+    if int(sys.version[0]) > 2:
+      import subprocess
+      print("Running in shell: %s" % runcmd)
+      subprocess.Popen(['/usr/bin/open', '-n', '-a', '/Applications/Preview.app',files]) 
+    else:
+      import commands
+      print("Running in shell: %s" % runcmd)
+      print(commands.getstatusoutput(runcmd))
   if sys.platform.startswith('win'):
     import os
     for f in files_list:
@@ -1173,10 +1179,14 @@ Open the folder using an appropriate file finder / explorer
 def open_folder(folder):
   import sys
   if sys.platform.startswith('darwin'):
-    import commands
     runcmd = '/usr/bin/open %s' % folder
     print("Running in shell: %s" % runcmd)
-    print(commands.getstatusoutput(runcmd))
+    if int(sys.version[0]) > 2:
+      import subprocess
+      subprocess.Popen(['/usr/bin/open',folder]) 
+    else:
+      import commands
+      print(commands.getstatusoutput(runcmd))
 
   if sys.platform.startswith('win'):
     import subprocess
@@ -1259,6 +1269,10 @@ def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
   tmp_folder = _globals.TEMP_FOLDER  
   from .github import github_get_filenames, github_get_files, github_get_file
   
+  user='lukasc-ubc'
+  repo='edX-Phot1x'
+  extension='pdf'
+  
   if verbose:
     print('Fetch measurement data from GitHub')
 
@@ -1281,27 +1295,47 @@ def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
   savefilepath = []
   
   # Loop through the opt_in text labels
+  if not opt_in_selection_text:
+    pya.MessageBox.warning("opt_in labels not found", "Error: opt_in labels not found", pya.MessageBox.Ok)
+    return
+  
   for ot in opt_in_selection_text:
 
     fields = ot.split("_")
     search_for = ''
-    for i in range(4,min(7,len(fields))):
+    # Search for device_xxx_xxx_...
+#    for i in range(4,min(7,len(fields))):
+    for i in range(4,len(fields)):
       search_for += fields[i]+'_'
     if verbose:
       print("  searching for: %s" % search_for)
 
-    files = github_get_filenames(extension='pdf', user='lukasc-ubc', repo='edX-Phot1x', filesearch=search_for, verbose=verbose)
+    filenames = github_get_filenames(extension=extension, user=user, repo=repo, filesearch=search_for, verbose=verbose)
 
-    if len(files) == 0:
+    if len(filenames) == 0:
       print (' measurement not found!')
-      return
+
+      # Search for xxx_xxx_... (don't include the "device" part)
+      search_for = ''
+#      for i in range(5,min(7,len(fields))):
+      for i in range(5,len(fields)):
+        search_for += fields[i]+'_'
+      if verbose:
+        print("  searching for: %s" % search_for)
+  
+      filenames = github_get_filenames(extension=extension, user=user, repo=repo, filesearch=search_for, verbose=verbose)
+  
+      if len(filenames) == 0:
+        pya.MessageBox.warning("Measurement data not found", "Measurement data not found; searched for: %s on GitHub %s/%s" % (search_for, user, repo), pya.MessageBox.Ok)
+        print (' measurement not found!')
+        return
       
-    elif len(files) == 1:
-      measurements_text = files[0][1].replace('%20',' ')
-    elif len(files) > 1:
+    if len(filenames) == 1:
+      measurements_text = filenames[0][1].replace('%20',' ')
+    elif len(filenames) > 1:
       if all_measurements == 0:
         # GUI to ask which opt_in measurement to fetch
-        measurements = [f[1].replace('%20',' ') for f in files]
+        measurements = [f[1].replace('%20',' ') for f in filenames]
         measurements.insert(0,'All measurements')
         measurements_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the data files for opt_in = %s, to fetch experimental data.\n" % search_for,  measurements, 0)
         if not measurements_text: # user pressed cancel
@@ -1324,43 +1358,28 @@ def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
 
     # Download file(s)
     if all_measurements == 1:
-      savefilepath1  = github_get_files(user='lukasc-ubc', repo='edX-Phot1x',filename_search=search_for, save_folder=tmp_folder,  include_path=include_path, verbose=verbose)
-      savefilepath += savefilepath1
-    else: # find the single file to download
-      for f in files:
+      savefilepath  = github_get_files(user=user, repo=repo, filename_search=search_for, save_folder=tmp_folder,  include_path=include_path, verbose=verbose)
+    else: # find the single data set to download (both pdf and mat files)
+      for f in filenames:
         if f[1] == measurements_text.replace(' ','%20'):
           file_selection = f
       if verbose:
         print('   File selection: %s' % file_selection)
-      savefilepath1 = github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filename_search=file_selection[0], filepath_search=file_selection[1], include_path=include_path, save_folder=tmp_folder, verbose=verbose) 
-      savefilepath += [savefilepath1]
+      import os
+      savefilepath  = github_get_files(user=user, repo=repo, filename_search=file_selection[0].replace('.'+extension,'.'), save_folder=tmp_folder,  include_path=include_path, verbose=verbose)
 
-    # this launches open_PDF once for each opt_in label:
-    if 0 and savefilepath:  
-      if verbose:
-        print('All files for opt_in %s: %s' % (savefilepath1) )
-      
-      files = ''
-      depth = lambda L: isinstance(L, list) and max(map(depth, L))+1
-      if depth(savefilepath1):
-        for s in savefilepath1:
-          files += s + ' '        
-      else:
-        files = savefilepath1
-        
-      open_PDF_files(files)
 
   # this launches open_PDF once for all files at the end:
-  if 1 and savefilepath:
+  if savefilepath:
     if verbose:
-      print('All files: %s' % (savefilepath1) )
+      print('All files: %s' % (savefilepath) )
 
-    files = ''
+    filenames = ''
     for s in savefilepath:
-      files += s + ' '        
+      filenames += s + ' '        
     
     if verbose or not opt_in_selection_text:
-      open_PDF_files(files, savefilepath)
+      open_PDF_files(filenames, savefilepath)
       open_folder(tmp_folder)
 
   if not opt_in_selection_text:
@@ -1372,7 +1391,7 @@ def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
       warning.setText("Measurement Data: 0 files downloaded.")
     pya.QMessageBox_StandardButton(warning.exec_())
             
-  return files, savefilepath
+  return filenames, savefilepath
 
 
 '''
@@ -1395,7 +1414,7 @@ def measurement_vs_simulation(verbose=None):
   tmp_folder = _globals.TEMP_FOLDER
   from .scripts import fetch_measurement_data_from_github
   from .scripts import user_select_opt_in
-  from lumerical.interconnect import circuit_simulation
+  from .lumerical.interconnect import circuit_simulation
   
   
   if verbose:

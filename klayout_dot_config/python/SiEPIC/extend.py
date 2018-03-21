@@ -784,7 +784,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
   returns: parameters, nets in order
   
   usage:
-  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, ignoreOpticalIOs = get_LumericalINTERCONNECT_analyzers_from_opt_in(topcell, components)
+  laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, ignoreOpticalIOs, detector_list = get_LumericalINTERCONNECT_analyzers_from_opt_in(topcell, components)
   """
   from . import _globals
   from .core import Net
@@ -852,11 +852,14 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
   # find the GCs in the circuit and connect detectors based on DFT rules
   detectors_info = []  
   detector_number = 0
+  detector_lookuptable = { 1:1, -1:2, -2:3 }
+  detector_list = []
   for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+0,0,-1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1)):
     if pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000) in vect_optin_GCs:
       detector_number += 1
+      detector_list += [detector_lookuptable[d]]
       index = vect_optin_GCs.index(pya.DPoint(0,d*float(DFT['design-for-test']['grating-couplers']['gc-pitch'])*1000))
-      detector_GCs[index] # component
+      # detector_GCs[index] # component
 
       p = [p for p in detector_GCs[index].pins if p.type == _globals.PIN_TYPES.OPTICALIO]
       p[0].pin_name += '_detector' + str(detector_number)
@@ -874,7 +877,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     detector_nets.append (d.detector_net)
     
 
-  return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs
+  return laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs, detector_list
   
 
 # generate spice netlist file
@@ -890,14 +893,14 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   TECHNOLOGY = get_technology()
   if not TECHNOLOGY['technology_name']:
     v = pya.MessageBox.warning("Errors", "SiEPIC-Tools requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
-    return '', '', 0
+    return '', '', 0, []
 
   # get the netlist from the entire layout
   nets, components = self.identify_nets ()
 
   if not components:
     v = pya.MessageBox.warning("Errors", "No components found.", pya.MessageBox.Ok)
-    return '', '', 0
+    return '', '', 0, []
 
   # Get information about the laser and detectors:
   # this updates the Optical IO Net
@@ -907,7 +910,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   # if Laser and Detectors are not defined
   if not laser_net or not detector_nets:  
     # Use opt_in labels    
-    laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
+    laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs, detector_list = \
         get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=verbose, opt_in_selection_text=opt_in_selection_text)
         
     if not laser_net or not detector_nets:
@@ -915,7 +918,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
       warning.setStandardButtons(pya.QMessageBox.Ok)
       warning.setText("To run a simulation, you need to define a laser and detector(s), or have an opt_in label.")
       pya.QMessageBox_StandardButton(warning.exec_())
-      return '', '', 0
+      return '', '', 0, []
 
   # trim the netlist, based on where the laser is connected
   laser_component = [c for c in components if any([p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO and 'laser' in p.pin_name]) ]
@@ -924,7 +927,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   nets, components = trim_netlist (nets, components, laser_component[0])
   
   if not components:
-    return '', '', 0
+    return '', '', 0, []
   
 
   if verbose:
@@ -1087,7 +1090,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
 
   text_main += DCsources
 
-  return text_subckt, text_main, len(detector_nets)
+  return text_subckt, text_main, len(detector_nets), detector_list
 
 def check_components_models():
   

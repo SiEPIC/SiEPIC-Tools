@@ -410,7 +410,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
 
   # Output the Spice netlist:
-  text_Spice, text_Spice_main, num_detectors = \
+  text_Spice, text_Spice_main, num_detectors, detector_list = \
     topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   if not text_Spice:
 #    raise Exception("No netlist available. Cannot run simulation.")
@@ -472,22 +472,17 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
     for m in matlab_data_files:
       if '.mat' in m:
         m_count += 1
-        # INTERCONNECT can't deal with our measurement files... load and save data.
-        from scipy.io import loadmat, savemat        # used to load MATLAB data files
+
         # *** todo, use DFT rules to determine which measurements we should load.
-        PORT=2 # Which Fibre array port is the output connected to?
-        matData = loadmat(m, squeeze_me=True, struct_as_record=False)
-        wavelength = matData['scandata'].wavelength
-        power = matData['scandata'].power[:,PORT-1]
-        savemat(m, {'wavelength': wavelength, 'power': power})
         
         # INTERCONNECT load data
         head, tail = os.path.split(m)
         tail = tail.split('.mat')[0]
-        text_lsf += 'matlabload("%s");\n' % m
+        text_lsf += 'matlabload("%s", scandata);\n' % m
         text_lsf += 'm%s = matrixdataset("Measurement");\n' % m_count
-        text_lsf += 'm%s.addparameter("wavelength",wavelength*%s);\n'  % (m_count, wavelenth_scale)
-        text_lsf += 'm%s.addattribute("Measured: %s",power);\n'  % (m_count, tail)
+        text_lsf += 'm%s.addparameter("wavelength",scandata.wavelength*%s);\n'  % (m_count, wavelenth_scale)
+        for d in detector_list:
+          text_lsf += 'm%s.addattribute("Measured: %s",scandata.power(:,%s));\n'  % (m_count, tail, d)
   
   text_lsf += 'visualize(t1'
   for i in range(2, num_detectors+1):
@@ -583,7 +578,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
 
   # Output the Spice netlist:
-  text_Spice, text_Spice_main, num_detectors = \
+  text_Spice, text_Spice_main, num_detectors, detector_list = \
     topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
   if not text_Spice:
     pya.MessageBox.warning("No netlist available.", "No netlist available. Cannot run simulation.", pya.MessageBox.Cancel)
