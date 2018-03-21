@@ -423,8 +423,8 @@ def snap_component():
         # we have two instances, we can snap them together:
 
         # Find the pins within the two cell instances:     
-        pins_transient = o_transient.inst().find_pins()
-        pins_selection = o_selection.inst().find_pins()
+        pins_transient = o_transient.inst().find_pins(verbose=True)
+        pins_selection = o_selection.inst().find_pins(verbose=True)
         print("all pins_transient (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_transient]] )
         print("all pins_selection (x,y): %s" % [[point.x, point.y] for point in [pin.center for pin in pins_selection]] )
 
@@ -899,8 +899,8 @@ def layout_check(cell = None, verbose=False):
         DFT_polarizations = "TE or TM"
     rdb_cat_id_optin_polarization = rdb.create_category(rdb_cat_id, "opt_in label: polarization")
     rdb_cat_id_optin_polarization.description = "Automated test opt_in labels must have a polarization as specified in the DFT.xml file: %s. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check" % DFT_polarizations
-    rdb_cat_id_GCpitch = rdb.create_category(rdb_cat_id, "Grating Coupler pitch")
-    rdb_cat_id_GCpitch.description = "Grating couplers must be on a %s micron pitch, vertically arranged, as specified in the DFT.xml." % (float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
+#    rdb_cat_id_GCpitch = rdb.create_category(rdb_cat_id, "Grating Coupler pitch")
+#    rdb_cat_id_GCpitch.description = "Grating couplers must be on a %s micron pitch, vertically arranged, as specified in the DFT.xml." % (float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
     rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
     rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
     rdb_cat_id_GCarrayconfig = rdb.create_category(rdb_cat_id, "Fibre array configuration")
@@ -1063,12 +1063,12 @@ def layout_check(cell = None, verbose=False):
         if verbose:
           print("   N=%s, detector GCs: %s" %  (len(detector_GCs), [c.display() for c in detector_GCs]) )
         vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p() for c in detector_GCs]
-        for vi in range(0,len(detector_GCs)):
-          if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
-            if verbose:
-              print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
-            rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
-            rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+        #for vi in range(0,len(detector_GCs)):
+        #  if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
+        #    if verbose:
+        #      print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
+        #    rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
+        #    rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
               
         # find the GCs in the circuit that don't match the testing configuration
         for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser'])+0,0,-1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser'])-1,-1)):
