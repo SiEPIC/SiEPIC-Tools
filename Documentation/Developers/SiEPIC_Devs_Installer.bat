@@ -19,7 +19,7 @@ mklink /d C:\Users\%username%\KLayout\python\idna C:\Users\%username%\Documents\
 
 mklink /d C:\Users\%username%\KLayout\python\numpy C:\Users\%username%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\numpy
 
-mklink /d C:\Users\%username%\KLayout\python\urllib3 C:\Users\%username%\Documents\GitHub\SiEPIC-Tools\Python_packages_for_KLayout\python\urllib3c
+mklink /d C:\Users\%username%\KLayout\python\urllib3 C:\Users\%username%\Documents\GitHub\SiEPIC-Tools\Python_packages_for_KLayout\python\urllib3
 
 mklink /d C:\Users\%username%\KLayout\python\qtgr C:\Users\%username%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\qtgr
 
