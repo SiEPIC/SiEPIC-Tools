@@ -22,6 +22,7 @@ if 'requests' not in sys.modules:
   except ImportError:
     pass
   if 'pip' in sys.modules:
+    import pya
     install = pya.MessageBox.warning("Install package?", "Install package 'requests' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
     if install == pya.MessageBox.Yes:
       # try installing using pip
@@ -33,6 +34,7 @@ if 'json' not in sys.modules:
   except ImportError:
     pass
   if 'pip' in sys.modules:
+    import pya
     install = pya.MessageBox.warning("Install package?", "Install package 'json' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
     if install == pya.MessageBox.Yes:
       # try installing using pip
