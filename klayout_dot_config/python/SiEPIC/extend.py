@@ -927,6 +927,7 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   nets, components = trim_netlist (nets, components, laser_component[0])
   
   if not components:
+    pya.MessageBox.warning("Error: netlist extraction", "Error: netlist extraction. No components found connected to opt_in label." , pya.MessageBox.Ok)
     return '', '', 0, []
   
 
