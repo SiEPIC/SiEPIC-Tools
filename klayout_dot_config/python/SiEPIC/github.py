@@ -5,19 +5,47 @@ on OSX: > sudo easy_install requests
     or  > pip install requests
 '''
 
+print(' loading SiEPIC.github')
 
 # Loading requests during KLayout start-up prevents a ton of exception
 # messages if it was loaded on first usage.
+
 try:
   import requests
 except ImportError:
   pass
 
+import sys
+if 'requests' not in sys.modules:
+  try:
+    import pip
+  except ImportError:
+    pass
+  if 'pip' in sys.modules:
+    import pya
+    install = pya.MessageBox.warning("Install package?", "Install package 'requests' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+    if install == pya.MessageBox.Yes:
+      # try installing using pip
+      pip.main(['install', 'requests'])
+
+if 'json' not in sys.modules:
+  try:
+    import pip
+  except ImportError:
+    pass
+  if 'pip' in sys.modules:
+    import pya
+    install = pya.MessageBox.warning("Install package?", "Install package 'json' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+    if install == pya.MessageBox.Yes:
+      # try installing using pip
+      pip.main(['install', 'json'])
+
 # Search the GitHub repository for files containing the string "filesearch", with optional extension
 def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbose=None):
   
   import sys, pya
-
+  
+    
   try:
     import requests
   except ImportError:
@@ -31,18 +59,25 @@ def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbos
   import os
   filenames=[]
   folders=[]
-  files=[]
   filesearch = filesearch.replace('%20',' ')
   r = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filesearch, user, repo),auth=auth)
+  if 'items' not in json.loads(r.text):
+    if 'message' in json.loads(r.text):
+      message = json.loads(r.text)['message']
+    else:
+      message = json.loads(r.text)
+    pya.MessageBox.warning("GitHub error", "GitHub error: %s" % (message), pya.MessageBox.Ok)
+    return ''
+    
   for r in json.loads(r.text)['items']:
     dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' + str(r['url']).split('/contents/')[1]).split('?')[0]
     filename = dl.split('/')[-1]
     path = dl.split('/raw/master/')[-1]
     if extension in filename[-len(extension):]:
-      files.append ([filename, path])
+      filenames.append ([filename, path])
     if verbose:
       print ('     %s: %s' % (filename, path) )
-  return files
+  return filenames
 
 # Get all files from the respository with filename = filename_search
 # write to a single folder: save_folder
@@ -67,7 +102,7 @@ def github_get_files(user, repo, filename_search, save_folder=None, auth=None, i
         os.makedirs(base_path)
       savefilepath.append (os.path.join(base_path,filename))
     else:
-      savefilepath.append (os.path.join(save_folder, path[:-1].replace('/','-'))+filename)
+      savefilepath.append (os.path.join(save_folder, path[:-1].replace('/','-'))+'-'+filename)
     open(savefilepath[-1],'wb').write(req.content)
   return savefilepath
 

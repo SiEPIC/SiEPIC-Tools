@@ -17,7 +17,7 @@
  <text>import pya
 import SiEPIC
 
-SiEPIC.scripts.measurement_vs_simulation(verbose=False)
+SiEPIC.scripts.measurement_vs_simulation(verbose=True)
 
 </text>
 </klayout-macro>
