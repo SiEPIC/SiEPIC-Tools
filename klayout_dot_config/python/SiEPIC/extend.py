@@ -906,7 +906,8 @@ def spice_netlist_export(self, verbose = False, opt_in_selection_text=[]):
   # this updates the Optical IO Net
   laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs = \
         get_LumericalINTERCONNECT_analyzers(self, components, verbose=verbose)
-
+  detector_list = []
+  
   # if Laser and Detectors are not defined
   if not laser_net or not detector_nets:  
     # Use opt_in labels    
