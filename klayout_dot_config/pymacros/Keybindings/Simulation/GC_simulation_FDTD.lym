@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Key binding for SiEPIC-Tools function
+# SiEPIC simulations using Lumerical FDTD
+
+import pya
+
+class GUI_FDTD_settings(pya.QDialog):
+  
+  def __init__(self, parent = None, verbose=None):
+    super(GUI_FDTD_settings, self).__init__()
+    self.verbose = verbose
+
+    self.setWindowTitle("FDTD Grating Coupler Simulation configuration")
+
+    mainLayout = pya.QVBoxLayout(self)
+    self.setLayout(mainLayout)
+
+    from SiEPIC.utils import load_FDTD_settings
+    FDTD_settings=load_FDTD_settings()
+    if self.verbose:
+      print(FDTD_settings)
+
+    if not FDTD_settings:
+      warning = pya.QMessageBox()
+      warning.setStandardButtons(pya.QMessageBox.Ok)
+      warning.setText("No FDTD simulation configuration file (FDTD.xml) was found for present technology.")
+      pya.QMessageBox_StandardButton(warning.exec_())
+      self.close()
+      return
+
+    paramsLayout = QVBoxLayout(self);
+    self.qtext=[]
+    self.qlabel=[]
+    for t in FDTD_settings:
+      paramLayout = QHBoxLayout(self);
+      self.qlabel.append ( pya.QLabel(t,self) )
+      self.qtext.append ( pya.QLineEdit(self) )
+      self.qtext[-1].fieldtype = type(FDTD_settings[t])
+      self.qtext[-1].text = str(FDTD_settings[t])
+      paramLayout.addWidget(self.qlabel[-1])
+      paramLayout.addWidget(self.qtext[-1])
+      paramsLayout.addLayout(paramLayout)
+
+    buttonsLayout = QHBoxLayout(self);
+    ok = pya.QPushButton("OK",self)
+    ok.clicked(self.ok)
+    cancel = pya.QPushButton("Cancel",self)
+    cancel.clicked(self.cancel)
+    buttonsLayout.addWidget(cancel)
+    buttonsLayout.addWidget(ok)
+
+    mainLayout.addLayout(paramsLayout)
+    mainLayout.addLayout(buttonsLayout)
+
+    self.show()
+
+  def cancel(self, val):
+    self.close()
+    if self.verbose:
+      print('closing GUI')
+
+  def ok(self, val):
+    self.close()
+    FDTD_settings = {}
+    for i in range(0,len(self.qlabel)):
+      if self.verbose:
+        print("%s: %s (%s)" %(self.qlabel[i].text, self.qtext[i].text, self.qtext[i].fieldtype))
+      if self.qtext[i].fieldtype == float:
+        FDTD_settings[self.qlabel[i].text]=float(self.qtext[i].text)
+      else:
+        FDTD_settings[self.qlabel[i].text]=self.qtext[i].text
+    if self.verbose:
+      print(FDTD_settings)
+      
+    if self.verbose:
+      print('closing GUI')
+      
+    
+    return FDTD_settings
+
+
+    
+class GUI_GC_settings(pya.QDialog):
+  def __init__(self, parent = None, verbose=None):
+    
+    super(GUI_GC_settings, self).__init__()
+    self.verbose = verbose
+
+    self.setWindowTitle("Grating Coupler parameters configuration")
+
+    mainLayout = pya.QVBoxLayout(self)
+    self.setLayout(mainLayout)
+
+    from SiEPIC.utils import load_GC_settings
+    GC_settings=load_GC_settings()
+    if self.verbose:
+      print(GC_settings)
+
+    if not GC_settings:
+      warning = pya.QMessageBox()
+      warning.setStandardButtons(pya.QMessageBox.Ok)
+      warning.setText("No Grating coupler parameters configuration file (GC.xml) was found for present technology.")
+      pya.QMessageBox_StandardButton(warning.exec_())
+      self.close()
+      return
+
+    paramsLayout = QVBoxLayout(self);
+    self.qtext=[]
+    self.qlabel=[]
+    for t in GC_settings:
+      paramLayout = QHBoxLayout(self);
+      self.qlabel.append ( pya.QLabel(t,self) )
+      self.qtext.append ( pya.QLineEdit(self) )
+      self.qtext[-1].fieldtype = type(GC_settings[t])
+      self.qtext[-1].text = str(GC_settings[t])
+      paramLayout.addWidget(self.qlabel[-1])
+      paramLayout.addWidget(self.qtext[-1])
+      paramsLayout.addLayout(paramLayout)
+
+    buttonsLayout = QHBoxLayout(self);
+    ok = pya.QPushButton("OK",self)
+    ok.clicked(self.ok)
+    cancel = pya.QPushButton("Cancel",self)
+    cancel.clicked(self.cancel)
+    buttonsLayout.addWidget(cancel)
+    buttonsLayout.addWidget(ok)
+
+    mainLayout.addLayout(paramsLayout)
+    mainLayout.addLayout(buttonsLayout)
+    
+    self.show()
+    
+  
+  def cancel(self, val):
+    self.close()
+    if self.verbose:
+      print('closing GUI')
+
+  def ok(self, val):
+    self.close()
+    GC_settings = {}
+    for i in range(0,len(self.qlabel)):
+      if self.verbose:
+        print("%s: %s (%s)" %(self.qlabel[i].text, self.qtext[i].text, self.qtext[i].fieldtype))
+      if self.qtext[i].fieldtype == float:
+        GC_settings[self.qlabel[i].text]=float(self.qtext[i].text)
+      else:
+        GC_settings[self.qlabel[i].text]=self.qtext[i].text
+    if self.verbose:
+      print(GC_settings)
+      
+    if self.verbose:
+      print('closing GUI')
+      
+    
+    lumerical.fdtd.generate_GC_sparam(verbose=True, do_simulation=True, FDTD_settings=None, GC_settings=GC_settings)
+
+    return GC_settings
+
+from SiEPIC import lumerical
+GC_settings = GUI_GC_settings(pya.Application.instance().main_window(), verbose=True)
+
+
+
+</text>
+</klayout-macro>

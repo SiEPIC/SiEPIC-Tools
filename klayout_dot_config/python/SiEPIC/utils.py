@@ -13,6 +13,7 @@ load_Calibre
 load_Monte_Carlo
 load_DFT
 load_FDTD_settings
+load_GC_settings
 get_layout_variables
 enum
 find_paths
@@ -332,6 +333,40 @@ def load_FDTD_settings():
     for k in FDTD['strings'].keys():
       FDTD1[k]=FDTD['strings'][k]
     return FDTD1
+  else:
+    return None
+    
+
+'''
+Load GC settings
+These are technology specific, and located in the tech folder, named GC.xml
+'''
+def load_GC_settings():
+  from .utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'GC.xml'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+  if matches:
+    f = matches[0]
+    file = open(f, 'r') 
+    GC = xml_to_dict(file.read())
+    file.close()
+    
+    GC = GC['GC']
+    GC1 = {}
+    for k in GC['floats'].keys():
+      GC1[k]=float(GC['floats'][k])
+    for k in GC['strings'].keys():
+      GC1[k]=GC['strings'][k]
+    return GC1
   else:
     return None
 

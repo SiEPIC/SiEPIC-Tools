@@ -608,5 +608,161 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   return component.instance, file_sparam, [], xml_filename, svg_filename
 
 
+def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, FDTD_settings = None, GC_settings = None):
+  if verbose:
+    print('SiEPIC.lumerical.fdtd: generate_GC_sparam()')
+
+  # Get technology and layout details
+  from ..utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()  
+  dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
+  
+  if do_simulation:
+    import numpy as np
+    # run Lumerical FDTD Solutions  
+    from .. import _globals
+    run_FDTD()
+    lumapi = _globals.LUMAPI
+    if not lumapi:
+      print('SiEPIC.lumerical.fdtd.generate_component_sparam: lumapi not loaded')
+      return
+      
+    if verbose:
+      print(lumapi)  # Python Lumerical INTERCONNECT integration handle
+  
+    # get FDTD settings from XML file
+    if not FDTD_settings:
+      from SiEPIC.utils import load_FDTD_settings
+      FDTD_settings=load_FDTD_settings()
+      if FDTD_settings:
+        if verbose:
+          print(FDTD_settings)
+          
+    # get GC settings from XML file
+    if not GC_settings:
+      from SiEPIC.utils import load_GC_settings
+      GC_settings=load_GC_settings()
+      if GC_settings:
+        if verbose:
+          print(GC_settings)
+          
+    # Configure wavelength and polarization
+    # polarization = {'quasi-TE', 'quasi-TM', 'quasi-TE and -TM'}
+    mode_selection = FDTD_settings['mode_selection']
+    mode_selection_index = []
+    if 'fundamental TE mode' in mode_selection or '1' in mode_selection:
+      mode_selection_index.append(1)
+    if 'fundamental TM mode' in mode_selection or '2' in mode_selection:
+      mode_selection_index.append(2)
+    if not mode_selection_index:
+      error = pya.QMessageBox()
+      error.setStandardButtons(pya.QMessageBox.Ok )
+      error.setText("Error: Invalid modes requested.")
+      response = error.exec_()
+
+    # wavelength
+    wavelength_start = FDTD_settings['wavelength_start']
+    wavelength_stop =  FDTD_settings['wavelength_stop']  
+    
+    # create FDTD simulation region (extra large)
+    FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
+    if mode_selection_index==1:
+      Z_symmetry = 'Symmetric'
+    elif mode_selection_index==2:
+      Z_symmetry ='Anti-Symmetric'
+    else:
+      Z_symmetry = FDTD_settings['Initial_Z-Boundary-Conditions']
 
 
+    # search for 2D GC tempelate project file in technology
+    from ..utils import get_technology
+    TECHNOLOGY = get_technology()
+    tech_name = TECHNOLOGY['technology_name']
+  
+    import os, fnmatch
+    dir_path = pya.Application.instance().application_data_path()
+    search_str = 'grating_coupler_2D.fsp'
+    matches = []
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter(filenames, search_str):
+          if tech_name in root:
+            matches.append(os.path.join(root, filename))
+
+    filename = matches[0]
+    
+    '''
+    # set 2D GC geometry parameters
+    lumapi.evalScript(_globals.FDTD, 
+    "load('%s'); select('grating_coupler_2D');\
+    set('duty cycle',%s); set('target length',%s);\
+    set('etch depth',%s); set('pitch',%s);\
+    set('target length',%s); set('input length',%s);'" 
+    % (filename, GC_settings['duty_cycle'], GC_settings['target_length'], GC_settings['etch_depth'],
+    GC_settings['pitch'],GC_settings['target_length'],GC_settings['L_extra']))
+    '''      
+    # set 2D GC geometry parameters
+    lumapi.evalScript(_globals.FDTD, 
+    "load('%s'); select('grating_coupler_2D');\
+    set('duty cycle',%s); set('target length',%s);\
+    set('etch depth',%s); set('pitch',%s);\
+    set('input length',%s);" 
+    % (filename, GC_settings['duty_cycle'], GC_settings['target_length'], GC_settings['etch_depth'],
+    GC_settings['pitch'], GC_settings['length_extra']))
+    
+    
+    # set fiber angle
+    lumapi.evalScript(_globals.FDTD, "select('fiber'); set('theta0',%s);"
+    % (GC_settings['angle']))
+    
+    # set polarization
+    if GC_settings['polarization']=='TE':
+      polarization = '2'
+    elif GC_settings['polarization']=='TM':
+      polarization ='3'
+    lumapi.evalScript(_globals.FDTD,"select('FDTD::ports::port 1');\
+    set('mode selection',%s);" % polarization)
+    lumapi.evalScript(_globals.FDTD,"select('FDTD::ports::port 2');\
+    set('mode selection',%s);" % polarization)
+    
+    # run s-parameters sweep
+    lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
+    
+
+    if GC_settings['particle_swarm_optimization'] == 'yes':
+      # run optimization (PSO) to find optimal  duty cycle and length
+      lumapi.evalScript(_globals.FDTD,"runsweep('optimization');")
+      # return optimized results from PSO sweep
+      lumapi.evalScript(_globals.FDTD, "bestParams = getsweepdata('optimization','bestParams');\
+      pitch = bestParams(1); duty_cycle = bestParams(2);")
+      GC_settings['duty_cycle']=lumapi.getVar(_globals.FDTD, "duty_cycle")
+      GC_settings['pitch']=lumapi.getVar(_globals.FDTD, "pitch")
+      
+      
+  
+    # run 3D FDTD simulation
+    dir_path = pya.Application.instance().application_data_path()
+    search_str = 'grating_coupler_3D.fsp'
+    matches = []
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter(filenames, search_str):
+          if tech_name in root:
+            matches.append(os.path.join(root, filename))
+
+    filename = matches[0]
+    
+    # set 2D GC geometry parameters
+    lumapi.evalScript(_globals.FDTD, 
+    "load('%s'); select('grating_coupler_3D'); set('duty cycle',%s);\
+    set('etch depth',%s); set('pitch',%s);\
+    set('target length',%s); set('L extra',%s);\
+    set('radius',%s); set('y span',%s);\
+    set('waveguide width',%s); set('waveguide length,%s);'" 
+    % (filename, GC_settings['duty_cycle'], GC_settings['etch_depth'],
+    GC_settings['pitch'],GC_settings['target_length'],GC_settings['length_extra'],
+    GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))x
+  
+    # run s-parameters sweep
+    lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
+    
+    
+    
