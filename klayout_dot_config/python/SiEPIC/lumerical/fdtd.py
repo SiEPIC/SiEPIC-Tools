@@ -766,5 +766,45 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     "select('FDTD::ports::port 1'); set('mode selection',%s);\
     updateportmodes; select('FDTD::ports::port 2');\
     set('mode selection',%s); updateportmodes;" % (polarization,polarization))
-    # run s-parameters sweep
-    lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
+
+    file_sparam  = os.path.join(_globals.TEMP_FOLDER, '%s.dat' % "GC_sparams")
+    # run s-parameter sweep, collect results, visualize results
+    # export S-parameter data to file named xxx.dat to be loaded in INTERCONNECT
+    lumapi.evalScript(_globals.FDTD, " \
+      runsweep('s-parameter sweep'); \
+      S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
+      S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
+      S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
+      visualize(S_parameters); \
+      exportsweep('s-parameter sweep','%s'); \
+      " % (file_sparam) )
+    if verbose:
+      print(" S-Parameter file: %s" % file_sparam)
+  
+  
+  
+    # Run INTC using Python integration:
+    from . import interconnect
+    interconnect.run_INTC()
+    from .. import _globals
+    lumapi = _globals.LUMAPI
+
+    # Copy files to the INTC Custom library folder
+    lumapi.evalScript(_globals.INTC, "out=customlibrary;")
+    INTC_custom=lumapi.getVar(_globals.INTC, "out")
+
+      
+    # Create a component
+    port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
+    t = 'switchtodesign; deleteall; \n'
+    t+= 'addelement("Optical N Port S-Parameter"); createcompound; select("COMPOUND_1");\n'
+    t+= 'component = "%s"; set("name",component); \n' % "GC_sparams"
+    t+= 'select(component+"::SPAR_1"); set("load from file", true);\n'
+    t+= 'set("s parameters filename", "%s");\n' % (file_sparam)
+    t+= 'set("load from file", false);\n'
+    t+= 'set("passivity", "enforce");\n'
+    t+= 'set("prefix", component);\n'
+    t+= 'setposition(component+"::SPAR_1",100,-100);\n'
+
+    lumapi.evalScript(_globals.INTC, t)  
+
