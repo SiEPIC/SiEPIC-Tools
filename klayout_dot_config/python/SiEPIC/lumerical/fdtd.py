@@ -759,10 +759,12 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     set('waveguide width',%s); set('waveguide length,%s);'" 
     % (filename, GC_settings['duty_cycle'], GC_settings['etch_depth'],
     GC_settings['pitch'],GC_settings['target_length'],GC_settings['length_extra'],
-    GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))x
+    GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))
   
+    # set polarization, update port monitors
+    lumapi.evalScript(_globals.FDTD,
+    "select('FDTD::ports::port 1'); set('mode selection',%s);\
+    updateportmodes; select('FDTD::ports::port 2');\
+    set('mode selection',%s); updateportmodes;" % (polarization,polarization))
     # run s-parameters sweep
     lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
-    
-    
-    
