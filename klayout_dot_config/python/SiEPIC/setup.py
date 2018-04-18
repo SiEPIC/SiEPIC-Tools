@@ -1,29 +1,30 @@
 import pya
 
+
 def registerMenuItems():
     import os
     from . import scripts, examples, lumerical, install
     import SiEPIC.__init__
-    
+
     global ACTIONS
     count = 0
     menu = pya.Application.instance().main_window().menu()
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "files", "INTERCONNECT_icon.png")
-    
-    
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                        "files", "INTERCONNECT_icon.png")
+
     import sys
     if int(sys.version[0]) > 2 and sys.platform == 'darwin':
-      extra = " Py3"
+        extra = " Py3"
     else:
-      extra = ''
-      
+        extra = ''
+
     s1 = "siepic_menu"
     if not(menu.is_menu(s1)):
-        menu.insert_menu("help_menu",s1,"SiEPIC %s" % SiEPIC.__init__.__version__ + extra) 
+        menu.insert_menu("help_menu", s1, "SiEPIC %s" % SiEPIC.__init__.__version__ + extra)
 
     s2 = "waveguides"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end" , s2, "Waveguides")
+        menu.insert_menu(s1 + ".end", s2, "Waveguides")
 
     s2 = "layout"
     if not(menu.is_menu(s1 + "." + s2)):
@@ -31,7 +32,7 @@ def registerMenuItems():
 
     s2 = "exlayout"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 +".end", s2,"Example Layouts")
+        menu.insert_menu(s1 + ".end", s2, "Example Layouts")
 
     s2 = "verification"
     if not(menu.is_menu(s1 + "." + s2)):
@@ -40,7 +41,7 @@ def registerMenuItems():
     s2 = "simulation"
     if not(menu.is_menu(s1 + "." + s2)):
         menu.insert_menu(s1 + ".end", s2, "Simulation")
-    
+
     s2 = "measurements"
     if not(menu.is_menu(s1 + "." + s2)):
         menu.insert_menu(s1 + ".end", s2, "Measurement Data")
@@ -75,6 +76,7 @@ def registerMenuItems():
     ACTIONS[count].title = "INTERCONNECT Update Netlist"
     ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_update_netlist)
     ACTIONS[count].icon = path
+
 
 def registerKeyBindings():
     import os
@@ -125,7 +127,7 @@ def registerKeyBindings():
     mapping['macros_menu.macro_development'] = "'F5'"
 
     mapping['zoom_menu.max_hier'] = "'Shift+F'"
-    mapping['zoom_menu.select_current_cell'] = "'Shift+S'" # Display > Show as new top
+    mapping['zoom_menu.select_current_cell'] = "'Shift+S'"  # Display > Show as new top
     mapping['zoom_menu.zoom_fit'] = "'F'"
     mapping['zoom_menu.zoom_fit_sel'] = "'Shift+F2'"
     mapping['zoom_menu.zoom_in'] = "'Return'"
@@ -134,21 +136,20 @@ def registerKeyBindings():
     # turn the hash back into a config string
     config = ''.join('{}:{};'.format(key, val) for key, val in sorted(mapping.items()))[:-1]
     pya.Application.instance().set_config('key-bindings', config)
-    pya.Application.instance().set_config('edit-connect-angle-mode','ortho')
-    pya.Application.instance().set_config('edit-inst-angle','0')
-    pya.Application.instance().set_config('edit-move-angle-mode','diagonal')
-    pya.Application.instance().set_config('edit-snap-to-objects','true')
-    pya.Application.instance().set_config('grid-micron','0.01')
-    pya.Application.instance().set_config('edit-top-level-selection','true')
-    pya.Application.instance().set_config('inst-color','#ffcdcd')
-    pya.Application.instance().set_config('text-font','3')
-    pya.Application.instance().set_config('guiding-shape-line-width','0')
-    pya.Application.instance().set_config('rdb-marker-color','#ff0000')
-    pya.Application.instance().set_config('rdb-marker-line-width','8')
+    pya.Application.instance().set_config('edit-connect-angle-mode', 'ortho')
+    pya.Application.instance().set_config('edit-inst-angle', '0')
+    pya.Application.instance().set_config('edit-move-angle-mode', 'diagonal')
+    pya.Application.instance().set_config('edit-snap-to-objects', 'true')
+    pya.Application.instance().set_config('grid-micron', '0.01')
+    pya.Application.instance().set_config('edit-top-level-selection', 'true')
+    pya.Application.instance().set_config('inst-color', '#ffcdcd')
+    pya.Application.instance().set_config('text-font', '3')
+    pya.Application.instance().set_config('guiding-shape-line-width', '0')
+    pya.Application.instance().set_config('rdb-marker-color', '#ff0000')
+    pya.Application.instance().set_config('rdb-marker-line-width', '8')
 #    pya.Application.instance().set_config('default-layer-properties', os.path.join(os.path.realpath(__file__), os.pardir, os.pardir, os.pardir, 'libraries', 'klayout_Layers_EBeam.lyp'))
 
-
     if pya.Application.instance().get_config('edit-mode') == 'false':
-      pya.Application.instance().set_config('edit-mode','true')
-      pya.MessageBox.warning("Restart", "Please restart KLayout. SiEPIC settings have been applied.", pya.MessageBox.Ok)
-      
+        pya.Application.instance().set_config('edit-mode', 'true')
+        pya.MessageBox.warning(
+            "Restart", "Please restart KLayout. SiEPIC settings have been applied.", pya.MessageBox.Ok)

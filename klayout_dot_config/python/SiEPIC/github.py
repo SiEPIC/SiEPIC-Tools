@@ -11,127 +11,146 @@ print(' loading SiEPIC.github')
 # messages if it was loaded on first usage.
 
 try:
-  import requests
+    import requests
 except ImportError:
-  pass
+    pass
 
 import sys
 if 'requests' not in sys.modules:
-  try:
-    import pip
-  except ImportError:
-    pass
-  if 'pip' in sys.modules:
-    import pya
-    install = pya.MessageBox.warning("Install package?", "Install package 'requests' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
-    if install == pya.MessageBox.Yes:
-      # try installing using pip
-      pip.main(['install', 'requests'])
+    try:
+        import pip
+    except ImportError:
+        pass
+    if 'pip' in sys.modules:
+        import pya
+        install = pya.MessageBox.warning(
+            "Install package?", "Install package 'requests' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+        if install == pya.MessageBox.Yes:
+            # try installing using pip
+            pip.main(['install', 'requests'])
 
 if 'json' not in sys.modules:
-  try:
-    import pip
-  except ImportError:
-    pass
-  if 'pip' in sys.modules:
-    import pya
-    install = pya.MessageBox.warning("Install package?", "Install package 'json' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
-    if install == pya.MessageBox.Yes:
-      # try installing using pip
-      pip.main(['install', 'json'])
+    try:
+        import pip
+    except ImportError:
+        pass
+    if 'pip' in sys.modules:
+        import pya
+        install = pya.MessageBox.warning(
+            "Install package?", "Install package 'json' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+        if install == pya.MessageBox.Yes:
+            # try installing using pip
+            pip.main(['install', 'json'])
 
-# Search the GitHub repository for files containing the string "filesearch", with optional extension
+# Search the GitHub repository for files containing the string
+# "filesearch", with optional extension
+
+
 def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbose=None):
-  
-  import sys, pya
-  
-    
-  try:
-    import requests
-  except ImportError:
-    warning = pya.QMessageBox()
-    warning.setStandardButtons(pya.QMessageBox.Ok)
-    warning.setText("Missing Python module: 'requests'.  Please install, restart KLayout, and try again.")
-    pya.QMessageBox_StandardButton(warning.exec_())
-    return []
 
-  import json
-  import os
-  filenames=[]
-  folders=[]
-  filesearch = filesearch.replace('%20',' ')
-  r = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filesearch, user, repo),auth=auth)
-  if 'items' not in json.loads(r.text):
-    if 'message' in json.loads(r.text):
-      message = json.loads(r.text)['message']
-    else:
-      message = json.loads(r.text)
-    pya.MessageBox.warning("GitHub error", "GitHub error: %s" % (message), pya.MessageBox.Ok)
-    return ''
-    
-  for r in json.loads(r.text)['items']:
-    dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' + str(r['url']).split('/contents/')[1]).split('?')[0]
-    filename = dl.split('/')[-1]
-    path = dl.split('/raw/master/')[-1]
-    if extension in filename[-len(extension):]:
-      filenames.append ([filename, path])
-    if verbose:
-      print ('     %s: %s' % (filename, path) )
-  return filenames
+    import sys
+    import pya
+
+    try:
+        import requests
+    except ImportError:
+        warning = pya.QMessageBox()
+        warning.setStandardButtons(pya.QMessageBox.Ok)
+        warning.setText(
+            "Missing Python module: 'requests'.  Please install, restart KLayout, and try again.")
+        pya.QMessageBox_StandardButton(warning.exec_())
+        return []
+
+    import json
+    import os
+    filenames = []
+    folders = []
+    filesearch = filesearch.replace('%20', ' ')
+    r = requests.get("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" %
+                     (filesearch, user, repo), auth=auth)
+    if 'items' not in json.loads(r.text):
+        if 'message' in json.loads(r.text):
+            message = json.loads(r.text)['message']
+        else:
+            message = json.loads(r.text)
+        pya.MessageBox.warning("GitHub error", "GitHub error: %s" % (message), pya.MessageBox.Ok)
+        return ''
+
+    for r in json.loads(r.text)['items']:
+        dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' +
+              str(r['url']).split('/contents/')[1]).split('?')[0]
+        filename = dl.split('/')[-1]
+        path = dl.split('/raw/master/')[-1]
+        if extension in filename[-len(extension):]:
+            filenames.append([filename, path])
+        if verbose:
+            print('     %s: %s' % (filename, path))
+    return filenames
 
 # Get all files from the respository with filename = filename_search
 # write to a single folder: save_folder
 # or recreate the folder tree, if include_path = True
+
+
 def github_get_files(user, repo, filename_search, save_folder=None, auth=None, include_path=None, verbose=None):
-  import requests
-  import json
-  import os
-  savefilepath=[]
-  filename_search = filename_search.replace('%20',' ')
-  req = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filename_search, user, repo),auth=auth)
-  for r in json.loads(req.text)['items']:
-    dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' + str(r['url']).split('/contents/')[1]).split('?')[0]
-    filename = dl.split('/')[-1]
-    path = str(r['url']).split('/contents/')[1].split('?')[0][0:-len(filename)].replace('%20','_')
-    if verbose:
-      print([filename,path, dl])
-    req = requests.get (dl, auth=auth)
-    if include_path:
-      base_path = os.path.join(save_folder, path)
-      if not os.path.exists(base_path):
-        os.makedirs(base_path)
-      savefilepath.append (os.path.join(base_path,filename))
-    else:
-      savefilepath.append (os.path.join(save_folder, path[:-1].replace('/','-'))+'-'+filename)
-    open(savefilepath[-1],'wb').write(req.content)
-  return savefilepath
+    import requests
+    import json
+    import os
+    savefilepath = []
+    filename_search = filename_search.replace('%20', ' ')
+    req = requests.get("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" %
+                       (filename_search, user, repo), auth=auth)
+    for r in json.loads(req.text)['items']:
+        dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' +
+              str(r['url']).split('/contents/')[1]).split('?')[0]
+        filename = dl.split('/')[-1]
+        path = str(r['url']).split('/contents/')[1].split('?')[0][0:-
+                                                                  len(filename)].replace('%20', '_')
+        if verbose:
+            print([filename, path, dl])
+        req = requests.get(dl, auth=auth)
+        if include_path:
+            base_path = os.path.join(save_folder, path)
+            if not os.path.exists(base_path):
+                os.makedirs(base_path)
+            savefilepath.append(os.path.join(base_path, filename))
+        else:
+            savefilepath.append(os.path.join(
+                save_folder, path[:-1].replace('/', '-')) + '-' + filename)
+        open(savefilepath[-1], 'wb').write(req.content)
+    return savefilepath
 
 # Get specific file from the respository with filename = filename_search
 # which is located in the path: filepath_search
 # write to a folder: save_folder
+
+
 def github_get_file(user, repo, filename_search, filepath_search, save_folder=None, auth=None, include_path=None, verbose=None):
-  import requests
-  import json
-  import os
-  savefilepath=None
-  req = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" % (filename_search, user, repo),auth=auth)
-  for r in json.loads(req.text)['items']:
-    dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' + str(r['url']).split('/contents/')[1]).split('?')[0]
-    filename = dl.split('/')[-1]
-    path = str(r['url']).split('/contents/')[1].split('?')[0][0:-len(filename)].replace('%20','_')
-    if verbose:
-      print([filename,path, dl])
-    if filename == filename_search:
-      req = requests.get (dl, auth=auth)
-      if include_path:
-        base_path = os.path.join(save_folder, path)
-        if not os.path.exists(base_path):
-          os.makedirs(base_path)
-        savefilepath = os.path.join(base_path,filename)
-      else:
-        savefilepath = os.path.join(save_folder,filename)
-      open(savefilepath,'wb').write(req.content)
-  return savefilepath
+    import requests
+    import json
+    import os
+    savefilepath = None
+    req = requests.get("https://api.github.com/search/code?q='%s'+in:path+repo:%s/%s" %
+                       (filename_search, user, repo), auth=auth)
+    for r in json.loads(req.text)['items']:
+        dl = ('https://github.com/' + user + '/' + repo + '/raw/master/' +
+              str(r['url']).split('/contents/')[1]).split('?')[0]
+        filename = dl.split('/')[-1]
+        path = str(r['url']).split('/contents/')[1].split('?')[0][0:-
+                                                                  len(filename)].replace('%20', '_')
+        if verbose:
+            print([filename, path, dl])
+        if filename == filename_search:
+            req = requests.get(dl, auth=auth)
+            if include_path:
+                base_path = os.path.join(save_folder, path)
+                if not os.path.exists(base_path):
+                    os.makedirs(base_path)
+                savefilepath = os.path.join(base_path, filename)
+            else:
+                savefilepath = os.path.join(save_folder, filename)
+            open(savefilepath, 'wb').write(req.content)
+    return savefilepath
 
 
 '''
@@ -202,7 +221,7 @@ if 0:  # working exploratory code
   print('********************************************************************************')
 #  r = requests.get (ri['download_url'])
 #  open('/tmp/%s' % filename,'w').write(r.content)
-  
+
 if 0: # shorter version
   r = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s" % (filename, repo))
   r = requests.get (json.loads(r.text)['items'][0]['url'])
@@ -223,7 +242,7 @@ if 0:
   open('/tmp/t/SiEPIC_EBeam_UW_PDK.pdf','w').write(r.content)
 
 
-if 0:  # 
+if 0:  #
   r = requests.get ("https://api.github.com/search/code?q='%s'+in:path+repo:%s" % (filename, repo))
   r.text
   ri = json.loads(r.text)
@@ -237,8 +256,8 @@ if 0:  #
   dl = ri['url'].replace('https://api.github.com/repositories/46163444/contents','https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/raw/master')
   r = requests.get (dl)
   open('/tmp/t/%s' % filename,'w').write(r.content)
-  
-  
+
+
 
   repo = 'lukasc-ubc/SiEPIC_EBeam_PDK'
   filename = 'SiEPIC_EBeam_UW_PDK.pdf'
