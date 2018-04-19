@@ -39,7 +39,7 @@ etree_to_dict: XML parser
 xml_to_dict
 eng_str
 svg_from_component
-
+sample_function
 
 
 '''
@@ -87,7 +87,7 @@ def get_technology_by_name(tech_name, verbose=False):
             "Problem with Technology", "Problem with active Technology: please activate a technology (not Default)", pya.MessageBox.Ok)
         return
 
-    from ._globals import KLAYOUT_VERSION
+    from .._globals import KLAYOUT_VERSION
     technology = {}
     technology['technology_name'] = tech_name
     if KLAYOUT_VERSION > 24:
@@ -164,7 +164,7 @@ def get_technology_by_name(tech_name, verbose=False):
 def get_technology(verbose=False, query_activecellview_technology=False):
     if verbose:
         print("get_technology()")
-    from ._globals import KLAYOUT_VERSION
+    from .._globals import KLAYOUT_VERSION
     technology = {}
 
     # defaults:
@@ -422,11 +422,6 @@ def get_layout_variables():
 
     return TECHNOLOGY, lv, ly, cell
 
-
-# Define an Enumeration type for Python
-def enum(*sequential, **named):
-    enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
 
 # Find all paths, full hierarachy scan, return polygons on top cell.
 # for Verfication
@@ -990,3 +985,8 @@ def svg_from_component(component, filename, verbose=False):
         p = dwg.add(dwg.polyline(polygons_vertices[i], fill=color, debug=False))  # stroke=color
 
     dwg.save()
+
+
+from .._globals import MODULE_NUMPY
+if MODULE_NUMPY:
+    from .sampling import sample_function
