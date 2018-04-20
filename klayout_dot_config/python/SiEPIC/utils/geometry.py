@@ -370,3 +370,7 @@ class Port(object):
         self.position = position
         self.direction = direction
         self.width = width
+
+    def rename(self, new_name):
+        self.name = new_name
+        return self
