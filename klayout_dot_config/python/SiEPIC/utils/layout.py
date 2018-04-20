@@ -325,30 +325,6 @@ def append_relative(points, *relative_vectors):
     return points
 
 
-def place_cell(parent_cell, cell, placement_origin, params=None, relative_to=None):
-    """ Places a cell and return ports
-    Args:
-        parent_cell: cell to place into
-        cell: cell to be placed
-        placement_origin: pya.Point object to be used as origin
-        relative_to: port name
-
-    Returns:
-        ports(dict): key:port.name, value: geometry.Port with positions relative to parent_cell's origin
-    """
-    layout = parent_cell.layout()
-    pcell, ports = cell.pcell(layout, params=params)
-    if relative_to is not None:
-        offset = next((port.position for port in ports if port.name == relative_to), None)
-        placement_origin = placement_origin - offset
-    parent_cell.insert(pya.CellInstArray(pcell.cell_index(),
-                                         pya.Trans(pya.Trans.R0, placement_origin.to_itype(layout.dbu))))
-    for port in ports:
-        port.position += placement_origin
-
-    return {port.name: port for port in ports}
-
-
 def layout_connect_ports(cell, layer, port_from, port_to):
 
     P0 = port_from.position
