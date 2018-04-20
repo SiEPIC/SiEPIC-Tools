@@ -21,8 +21,15 @@ NET_DISCONNECTED = Net()
 # Define global Component object
 #COMPONENT = Component()
 
+
+# Define an Enumeration type for Python
+# TODO: maybe move to standard enum for python3
+# https://docs.python.org/3/library/enum.html
+def enum(*sequential, **named):
+    enums = dict(zip(sequential, range(len(sequential))), **named)
+    return type('Enum', (), enums)
+
 # Define enumeration for pins
-from .utils import enum
 PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 100  # 0.1 micron
 

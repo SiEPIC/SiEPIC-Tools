@@ -39,7 +39,7 @@ etree_to_dict: XML parser
 xml_to_dict
 eng_str
 svg_from_component
-
+sample_function
 
 
 '''
@@ -87,7 +87,7 @@ def get_technology_by_name(tech_name, verbose=False):
             "Problem with Technology", "Problem with active Technology: please activate a technology (not Default)", pya.MessageBox.Ok)
         return
 
-    from ._globals import KLAYOUT_VERSION
+    from .._globals import KLAYOUT_VERSION
     technology = {}
     technology['technology_name'] = tech_name
     if KLAYOUT_VERSION > 24:
@@ -164,7 +164,7 @@ def get_technology_by_name(tech_name, verbose=False):
 def get_technology(verbose=False, query_activecellview_technology=False):
     if verbose:
         print("get_technology()")
-    from ._globals import KLAYOUT_VERSION
+    from .._globals import KLAYOUT_VERSION
     technology = {}
 
     # defaults:
@@ -227,7 +227,7 @@ These are technology specific, and located in the tech folder, named WAVEGUIDES.
 def load_Waveguides():
     import os
     import fnmatch
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
     paths = []
@@ -252,7 +252,7 @@ These are technology specific, and located in the tech folder, named CALIBRE.xml
 
 
 def load_Calibre():
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
@@ -283,7 +283,7 @@ These are technology specific, and located in the tech folder, named MONTECARLO.
 def load_Monte_Carlo():
     import os
     import fnmatch
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
     paths = []
@@ -305,7 +305,7 @@ These are technology specific, and located in the tech folder, named DFT.xml
 
 
 def load_DFT():
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
@@ -334,7 +334,7 @@ These are technology specific, and located in the tech folder, named FDTD.xml
 
 
 def load_FDTD_settings():
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
@@ -371,7 +371,7 @@ These are technology specific, and located in the tech folder, named GC.xml
 
 
 def load_GC_settings():
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
@@ -402,7 +402,7 @@ def load_GC_settings():
 
 
 def get_layout_variables():
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
 
     # Configure variables to find in the presently selected cell:
@@ -422,11 +422,6 @@ def get_layout_variables():
 
     return TECHNOLOGY, lv, ly, cell
 
-
-# Define an Enumeration type for Python
-def enum(*sequential, **named):
-    enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
 
 # Find all paths, full hierarachy scan, return polygons on top cell.
 # for Verfication
@@ -460,7 +455,7 @@ def find_paths(layer, cell=None):
 
 
 def selected_opt_in_text():
-    from .utils import get_layout_variables
+    from . import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
     selection = lv.object_selection
@@ -605,7 +600,7 @@ def angle_trunc(a, trunc):
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
 def points_per_circle(radius):
     from math import acos, pi, ceil
-    from .utils import get_technology
+    from . import get_technology
     TECHNOLOGY = get_technology()
     err = 1e3 * TECHNOLOGY['dbu'] / 2
     return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 0.1 else 100
@@ -620,7 +615,7 @@ def arc(r, theta_start, theta_stop):
     # angles in degrees
 
     from math import pi, cos, sin
-    from .utils import points_per_circle
+    from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
     npoints = int(points_per_circle(r) * circle_fraction)
@@ -644,7 +639,7 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     # angles in degrees
 
     from math import pi, cos, sin
-    from .utils import points_per_circle
+    from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
     npoints = int(points_per_circle(r) * circle_fraction)
@@ -670,7 +665,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     # angles in degrees
 
     from math import pi, cos, sin
-    from .utils import points_per_circle
+    from . import points_per_circle
 
     print("SiEPIC.utils arc_wg")
     circle_fraction = abs(theta_stop - theta_start) / 360.0
@@ -701,7 +696,7 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     # angles in degrees
 
     from math import pi, cos, sin
-    from .utils import points_per_circle
+    from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
     npoints = int(points_per_circle(r) * circle_fraction)
@@ -830,7 +825,7 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
     # find_automated_measurement_labels(topcell, LayerTextN)
     import string
     if not LayerTextN:
-        from .utils import get_technology, find_paths
+        from . import get_technology, find_paths
         TECHNOLOGY = get_technology()
         dbu = TECHNOLOGY['dbu']
         LayerTextN = TECHNOLOGY['Text']
@@ -990,3 +985,8 @@ def svg_from_component(component, filename, verbose=False):
         p = dwg.add(dwg.polyline(polygons_vertices[i], fill=color, debug=False))  # stroke=color
 
     dwg.save()
+
+
+from .._globals import MODULE_NUMPY
+if MODULE_NUMPY:
+    from .sampling import sample_function
