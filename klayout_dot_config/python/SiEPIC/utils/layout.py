@@ -19,7 +19,7 @@ from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 
 def layout_waveguide(cell, layer, points_list, width):
-    """ Lays out a waveguide (or trace) with a certain width with along given points.
+    """ Lays out a waveguide (or trace) with a certain width along given points.
 
     This is very useful for laying out Bezier curves with or without adiabatic tapers.
 
@@ -150,12 +150,12 @@ def layout_waveguide(cell, layer, points_list, width):
             return point_list
         elif len(point_list) < 2:
             curr_edge = point - point_list[-1]
-            if norm(curr_edge) > dbu:
+            if norm(curr_edge) >= dbu:
                 point_list.append(point)
                 return point_list
 
         curr_edge = point - point_list[-1]
-        if norm(curr_edge) > dbu:
+        if norm(curr_edge) >= dbu:
             prev_edge = point_list[-1] - point_list[-2]
             if cos_angle(curr_edge, prev_edge) > cos(120 / 180 * pi):
                 point_list.append(point)
@@ -163,6 +163,56 @@ def layout_waveguide(cell, layer, points_list, width):
 
     polygon_points = points_low + list(reversed(points_high))
     polygon_points = list(reduce(smooth_append, polygon_points, list()))
+
+    poly = pya.DPolygon(polygon_points)
+    cell.shapes(layer).insert(poly)
+
+
+def layout_waveguide_angle(cell, layer, points_list, width, angle):
+    """ Lays out a waveguide (or trace) with a certain width along
+    given points and with fixed orientation at all points.
+
+    This is very useful for laying out Bezier curves with or without adiabatic tapers.
+
+    Args:
+        cell: cell to place into
+        layer: layer to place into. It is done with cell.shapes(layer).insert(pya.Polygon)
+        points_list: list of pya.DPoint (at least 2 points)
+        width (microns): constant or list. If list, then it has to have the same length as points
+        angle (degrees)
+    """
+    if len(points_list) < 2:
+        raise NotImplemented("ERROR: points_list too short")
+        return
+
+    try:
+        if len(width) == len(points_list):
+            width_iterator = iter(width)
+        else:
+            width_iterator = repeat(width[0])
+    except TypeError:
+        width_iterator = repeat(width)
+    finally:
+        points_iterator = iter(points_list)
+
+    theta = angle * pi / 180
+
+    points_low = list()
+    points_high = list()
+
+    point_width_list = list(zip(points_iterator, width_iterator))
+    N = len(point_width_list)
+
+    for i in range(0, N):
+        point, width = point_width_list[i]
+        point_high = (point + 0.5 * width *
+                      pya.DPoint(cos(theta + pi / 2), sin(theta + pi / 2)))
+        points_high.append(point_high)
+        point_low = (point + 0.5 * width *
+                     pya.DPoint(cos(theta - pi / 2), sin(theta - pi / 2)))
+        points_low.append(point_low)
+
+    polygon_points = points_low + list(reversed(points_high))
 
     poly = pya.DPolygon(polygon_points)
     cell.shapes(layer).insert(poly)
