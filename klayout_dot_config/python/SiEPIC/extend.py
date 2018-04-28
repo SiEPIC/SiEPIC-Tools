@@ -1319,8 +1319,10 @@ for klass in PointLike:
     klass.__truediv__ = pyaPoint__truediv__
     klass.norm = pyaPoint_norm
 
-assert pya.DPoint(1, 2) / 1.0 == pya.DPoint(1, 2)
-assert 0.5 * pya.DPoint(1, 2) == pya.DPoint(0.5, 1)
+import sys
+if sys.version_info[0] > 2:
+    assert pya.DPoint(1, 2) / 1.0 == pya.DPoint(1, 2)
+    assert 0.5 * pya.DPoint(1, 2) == pya.DPoint(0.5, 1)
 
 
 '''
