@@ -442,7 +442,7 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     self.cell.shapes(LayerppN).insert(pya.Path(arc(r_pp, angle_min_doping, angle_max_doping), w_1).transformed(t).simple_polygon())
     
     #Create the N++ Layer
-    self.cell.shapes(LayernppN).insert(pya.Path(arc(r_npp, angle_min_doping, angle_max_doping), w_1).transformed(t).simple_polygon())
+    self.cell.shapes(LayernppN).insert(pya.Path(arc(r_npp, angle_min_doping, angle_max_doping), w_2).transformed(t).simple_polygon())
 
     #Create the P+ +Layer
     poly = pya.Path(arc(r_ppp, angle_min_doping, angle_max_doping), w_2).transformed(t).simple_polygon()
