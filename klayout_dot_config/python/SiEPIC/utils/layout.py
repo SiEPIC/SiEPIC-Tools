@@ -18,16 +18,15 @@ from . import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 
-def layout_waveguide(cell, layer, points_list, width):
-    """ Lays out a waveguide (or trace) with a certain width along given points.
-
-    This is very useful for laying out Bezier curves with or without adiabatic tapers.
+def _layout_waveguide(points_list, width, dbu):
+    """ Helper for layout_waveguide.
 
     Args:
         cell: cell to place into
-        layer: layer to place into. It is done with cell.shapes(layer).insert(pya.Polygon)
         points_list: list of pya.DPoint (at least 2 points)
         width (microns): constant or list. If list, then it has to have the same length as points
+    Returns:
+        polygon DPoints
 
     """
     if len(points_list) < 2:
@@ -43,8 +42,6 @@ def layout_waveguide(cell, layer, points_list, width):
         width_iterator = repeat(width)
     finally:
         points_iterator = iter(points_list)
-
-    dbu = cell.layout().dbu
 
     points_low = list()
     points_high = list()
@@ -161,10 +158,29 @@ def layout_waveguide(cell, layer, points_list, width):
                 point_list.append(point)
         return point_list
 
-    polygon_points = points_low + list(reversed(points_high))
-    polygon_points = list(reduce(smooth_append, polygon_points, list()))
+    polygon_dpoints = points_low + list(reversed(points_high))
+    polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
+    return polygon_dpoints
 
-    poly = pya.DPolygon(polygon_points)
+
+def layout_waveguide(cell, layer, points_list, width):
+    """ Lays out a waveguide (or trace) with a certain width along given points.
+
+    This is very useful for laying out Bezier curves with or without adiabatic tapers.
+
+    Args:
+        cell: cell to place into
+        layer: layer to place into. It is done with cell.shapes(layer).insert(pya.Polygon)
+        points_list: list of pya.DPoint (at least 2 points)
+        width (microns): constant or list. If list, then it has to have the same length as points
+
+    """
+
+    dbu = cell.layout().dbu
+
+    polygon_dpoints = _layout_waveguide(points_list, width, dbu)
+
+    poly = pya.DPolygon(polygon_dpoints)
     cell.shapes(layer).insert(poly)
 
 
@@ -234,14 +250,78 @@ def layout_ring(cell, layer, center, r, w):
     layout_arc(cell, layer, center, r, w, 0, 2 * np.pi)
 
 
-def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None):
+def clip_polygon(polygon_dpoints, x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
+    # Add points exactly at the boundary, so that the filter below works.
+    x_bounds = (np.min(x_bounds), np.max(x_bounds))
+    y_bounds = (np.min(y_bounds), np.max(y_bounds))
+
+    check_within_bounds = lambda p: x_bounds[0] <= p.x and x_bounds[1] >= p.x and \
+        y_bounds[0] <= p.y and y_bounds[1] >= p.y
+
+    def intersect(p1, p2, x_bounds, y_bounds):
+        left_most, right_most = (p1, p2) if p1.x < p2.x else (p2, p1)
+        bottom_most, top_most = (p1, p2) if p1.y < p2.y else (p2, p1)
+
+        intersect_list = []
+        if left_most.x < x_bounds[0]:
+            # intersection only if right_most crosses x_bound[0]
+            if right_most.x > x_bounds[0]:
+                # outside the box, on the left
+                y_intersect = np.interp(x_bounds[0], [left_most.x, right_most.x], [left_most.y, right_most.y])
+                if y_bounds[0] < y_intersect and y_bounds[1] > y_intersect:
+                    intersect_list.append(pya.DPoint(x_bounds[0], y_intersect))
+                # TODO ignoring double crossing.
+        elif left_most.x < x_bounds[1]:
+            if bottom_most.y < y_bounds[0]:
+                # outside of box, below bottom boundary
+                if top_most.y > y_bounds[0]:
+                    x_intersect = np.interp(y_bounds[0], [bottom_most.y, top_most.y], [bottom_most.x, top_most.x])
+                    if x_bounds[0] < x_intersect and x_bounds[1] > x_intersect:
+                        intersect_list.append(pya.DPoint(x_intersect, y_bounds[0]))
+                # TODO ignoring double crossing
+            elif bottom_most.y < y_bounds[1]:
+                # inside the box
+                if top_most.y > y_bounds[1]:
+                    x_intersect = np.interp(y_bounds[1], [bottom_most.y, top_most.y], [bottom_most.x, top_most.x])
+                    if x_bounds[0] < x_intersect and x_bounds[1] > x_intersect:
+                        intersect_list.append(pya.DPoint(x_intersect, y_bounds[1]))
+                if right_most.x > x_bounds[1]:
+                    # intersection only if right_most crosses x_bound[1]
+                    y_intersect = np.interp(x_bounds[1], [left_most.x, right_most.x], [left_most.y, right_most.y])
+                    if y_bounds[0] < y_intersect and y_bounds[1] > y_intersect:
+                        intersect_list.append(pya.DPoint(x_bounds[1], y_intersect))
+        return intersect_list
+
+    new_polygon_dpoints = list()
+    previous_point = polygon_dpoints[-1]
+    was_within_bounds = True
+    for point in polygon_dpoints:
+        is_within_bounds = check_within_bounds(point)
+        if (is_within_bounds ^ was_within_bounds):
+            # compute new intersecting point and add to list
+            new_polygon_dpoints.extend(intersect(previous_point, point, x_bounds, y_bounds))
+        new_polygon_dpoints.append(point)
+        was_within_bounds = is_within_bounds
+        previous_point = point
+
+    # Filter points out
+    coords = np.array([(p.x, p.y) for p in new_polygon_dpoints]).T
+    coords = coords[:, (coords[0, :] >= x_bounds[0]) * (coords[0, :] <= x_bounds[1])]
+    coords = coords[:, (coords[1, :] >= y_bounds[0]) * (coords[1, :] <= y_bounds[1])]
+    polygon_dpoints_clipped = [pya.DPoint(x, y) for x, y in zip(*coords)]
+    return polygon_dpoints_clipped
+
+
+def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
+               x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
     # function to produce the layout of an arc
     # cell: layout cell to place the layout
     # layer: which layer to use
-    # center: origin DPoint
+    # center: origin DPoint (not affected by ex)
     # r: radius
     # w: waveguide width
     # theta_start, theta_end: angle in radians
+    # x_bounds and y_bounds relative to the center, before rotation by ex.
     # units in microns
 
     # example usage.  Places the ring layout in the presently selected cell.
@@ -252,13 +332,10 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None):
 
     if ex is None:
         ex = pya.DPoint(1, 0)
-
-    delta_theta = np.arctan2(ex.y, ex.x)
-    theta_start += delta_theta
-    theta_end += delta_theta
+    ey = rotate90(ex)
 
     # optimal sampling
-    arc_function = lambda t: np.array([center.x + r * np.cos(t), center.y + r * np.sin(t)])
+    arc_function = lambda t: np.array([r * np.cos(t), r * np.sin(t)])
     t, coords = sample_function(arc_function,
                                 [theta_start, theta_end], tol=0.002 / r)
 
@@ -268,7 +345,17 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None):
     coords = np.append(coords, np.atleast_2d(arc_function(theta_end + 0.001)).T,
                        axis=1)  # finish the waveguide a little bit after
 
-    layout_waveguide(cell, layer, [pya.DPoint(x, y) for x, y in zip(*coords)], w)
+    dpoints_list = [pya.DPoint(x, y) for x, y in zip(*coords)]
+    polygon_dpoints = _layout_waveguide(dpoints_list, w, cell.layout().dbu)
+
+    polygon_dpoints_clipped = clip_polygon(polygon_dpoints, x_bounds=x_bounds, y_bounds=y_bounds)
+
+    # Transform points (translation + rotation)
+    polygon_dpoints_transformed = [center + p.x * ex + p.y * ey for p in polygon_dpoints_clipped]
+
+    poly = pya.DPolygon(polygon_dpoints_transformed)
+    poly.compress(True)
+    cell.shapes(layer).insert(poly)
 
 
 def layout_arc_drc_exclude(cell, drc_layer, center, r, w, theta_start, theta_end, ex=None):
