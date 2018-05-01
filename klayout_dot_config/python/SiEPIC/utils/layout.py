@@ -258,57 +258,39 @@ def clip_polygon(polygon_dpoints, x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf,
     check_within_bounds = lambda p: x_bounds[0] <= p.x and x_bounds[1] >= p.x and \
         y_bounds[0] <= p.y and y_bounds[1] >= p.y
 
-    def intersect(p1, p2, x_bounds, y_bounds):
+    def intersect_left_boundary(p1, p2, x_bounds, y_bounds):
         left_most, right_most = (p1, p2) if p1.x < p2.x else (p2, p1)
         bottom_most, top_most = (p1, p2) if p1.y < p2.y else (p2, p1)
-
-        intersect_list = []
         if left_most.x < x_bounds[0]:
             # intersection only if right_most crosses x_bound[0]
             if right_most.x > x_bounds[0]:
                 # outside the box, on the left
                 y_intersect = np.interp(x_bounds[0], [left_most.x, right_most.x], [left_most.y, right_most.y])
                 if y_bounds[0] < y_intersect and y_bounds[1] > y_intersect:
-                    intersect_list.append(pya.DPoint(x_bounds[0], y_intersect))
-                # TODO ignoring double crossing.
-        elif left_most.x < x_bounds[1]:
-            if bottom_most.y < y_bounds[0]:
-                # outside of box, below bottom boundary
-                if top_most.y > y_bounds[0]:
-                    x_intersect = np.interp(y_bounds[0], [bottom_most.y, top_most.y], [bottom_most.x, top_most.x])
-                    if x_bounds[0] < x_intersect and x_bounds[1] > x_intersect:
-                        intersect_list.append(pya.DPoint(x_intersect, y_bounds[0]))
-                # TODO ignoring double crossing
-            elif bottom_most.y < y_bounds[1]:
-                # inside the box
-                if top_most.y > y_bounds[1]:
-                    x_intersect = np.interp(y_bounds[1], [bottom_most.y, top_most.y], [bottom_most.x, top_most.x])
-                    if x_bounds[0] < x_intersect and x_bounds[1] > x_intersect:
-                        intersect_list.append(pya.DPoint(x_intersect, y_bounds[1]))
-                if right_most.x > x_bounds[1]:
-                    # intersection only if right_most crosses x_bound[1]
-                    y_intersect = np.interp(x_bounds[1], [left_most.x, right_most.x], [left_most.y, right_most.y])
-                    if y_bounds[0] < y_intersect and y_bounds[1] > y_intersect:
-                        intersect_list.append(pya.DPoint(x_bounds[1], y_intersect))
+                    return pya.DPoint(float(x_bounds[0]), float(y_intersect))
+        return None
+
+    def intersect(p1, p2, x_bounds, y_bounds):
+        intersect_list = list()
+        p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
+        if p:
+            intersect_list.append(p)
+        for i in range(1, 4):
+            p1, p2 = rotate90(p1), rotate90(p2)
+            x_bounds, y_bounds = (-y_bounds[1], -y_bounds[0]), (x_bounds[0], x_bounds[1])
+            p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
+            if p:
+                intersect_list.append(rotate(p, -i * pi / 2))
         return intersect_list
 
-    new_polygon_dpoints = list()
+    polygon_dpoints_clipped = list()
     previous_point = polygon_dpoints[-1]
-    was_within_bounds = True
     for point in polygon_dpoints:
-        is_within_bounds = check_within_bounds(point)
-        if (is_within_bounds ^ was_within_bounds):
-            # compute new intersecting point and add to list
-            new_polygon_dpoints.extend(intersect(previous_point, point, x_bounds, y_bounds))
-        new_polygon_dpoints.append(point)
-        was_within_bounds = is_within_bounds
+        # compute new intersecting point and add to list
+        polygon_dpoints_clipped.extend(intersect(previous_point, point, x_bounds, y_bounds))
+        if check_within_bounds(point):
+            polygon_dpoints_clipped.append(point)
         previous_point = point
-
-    # Filter points out
-    coords = np.array([(p.x, p.y) for p in new_polygon_dpoints]).T
-    coords = coords[:, (coords[0, :] >= x_bounds[0]) * (coords[0, :] <= x_bounds[1])]
-    coords = coords[:, (coords[1, :] >= y_bounds[0]) * (coords[1, :] <= y_bounds[1])]
-    polygon_dpoints_clipped = [pya.DPoint(x, y) for x, y in zip(*coords)]
     return polygon_dpoints_clipped
 
 
