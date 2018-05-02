@@ -19,10 +19,11 @@ from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 
 def insert_shape(cell, layer, shape):
-    cell.shapes(layer).insert(shape)
+    if layer:
+        cell.shapes(layer).insert(shape)
 
 
-class DPolygon(pya.DPolygon):
+class DSimplePolygon(pya.DSimplePolygon):
 
     def transform_and_rotate(self, center, ex=None):
         if ex is None:
@@ -30,8 +31,8 @@ class DPolygon(pya.DPolygon):
         ey = rotate90(ex)
 
         polygon_dpoints_transformed = [center + p.x *
-                                       ex + p.y * ey for p in self.each_point_hull()]
-        self.assign(pya.DPolygon(polygon_dpoints_transformed))
+                                       ex + p.y * ey for p in self.each_point()]
+        self.assign(pya.DSimplePolygon(polygon_dpoints_transformed))
         return self
 
     def clip(self, x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
@@ -69,7 +70,7 @@ class DPolygon(pya.DPolygon):
             return intersect_list
 
         polygon_dpoints_clipped = list()
-        polygon_dpoints = list(self.each_point_hull())
+        polygon_dpoints = list(self.each_point())
         previous_point = polygon_dpoints[-1]
         for point in polygon_dpoints:
             # compute new intersecting point and add to list
@@ -77,15 +78,17 @@ class DPolygon(pya.DPolygon):
             if check_within_bounds(point):
                 polygon_dpoints_clipped.append(point)
             previous_point = point
-        self.assign(pya.DPolygon(polygon_dpoints_clipped))
+        self.assign(pya.DSimplePolygon(polygon_dpoints_clipped))
         return self
 
     def layout(self, cell, layer):
         return insert_shape(cell, layer, self)
 
     def layout_drc_exclude(self, cell, drclayer, ex):
-        """ Places a drc exclude square at every corner. """
-        points = list(self.each_point_hull())
+        """ Places a drc exclude square at every corner.
+        A corner is defined by an angle smaller than 170 degrees (conservative)
+        """
+        points = list(self.each_point())
         prev_delta = points[-1] - points[-2]
         prev_angle = np.arctan2(prev_delta.y, prev_delta.x)
         for i in range(len(points)):
@@ -96,6 +99,19 @@ class DPolygon(pya.DPolygon):
             if delta_angle >= pi * 10 / 180:
                 layout_square(cell, drclayer, points[i - 1], 0.1, ex)
             prev_delta, prev_angle = delta, angle
+
+    def resize(self, dx, dbu):
+        dpoly = pya.DPolygon(self)
+        dpoly.size(dx, 5)
+        dpoly = pya.EdgeProcessor().simple_merge_p2p([dpoly.to_itype(dbu)], False, False, 1)
+        dpoly = dpoly[0].to_dtype(dbu)
+        self.points = list(dpoly.each_point_hull())
+        return self
+
+    def round_corners(self, radius, N):
+        dpoly = super().round_corners(radius, radius, N)
+        self.assign(dpoly)
+        return self
 
 
 def waveguide_dpolygon(points_list, width, dbu):
@@ -131,6 +147,9 @@ def waveguide_dpolygon(points_list, width, dbu):
 
     def cos_angle(point1, point2):
         return point1 * point2 / norm(point1) / norm(point2)
+
+    def sin_angle(point1, point2):
+        return sin(np.arccos(cos_angle(point1, point2)))
 
     point_width_list = list(zip(points_iterator, width_iterator))
     N = len(point_width_list)
@@ -234,13 +253,16 @@ def waveguide_dpolygon(points_list, width, dbu):
         curr_edge = point - point_list[-1]
         if norm(curr_edge) >= dbu:
             prev_edge = point_list[-1] - point_list[-2]
-            if cos_angle(curr_edge, prev_edge) > cos(120 / 180 * pi):
-                point_list.append(point)
+            if norm(prev_edge) * sin_angle(curr_edge + prev_edge, prev_edge) > dbu:
+                if cos_angle(curr_edge, prev_edge) > cos(120 / 180 * pi):
+                    point_list.append(point)
+            else:
+                point_list[-1] = (point_list[-1] + point) / 2
         return point_list
 
     polygon_dpoints = points_low + list(reversed(points_high))
     polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
-    return DPolygon(polygon_dpoints)
+    return DSimplePolygon(polygon_dpoints)
 
 
 def layout_waveguide(cell, layer, points_list, width):
@@ -308,7 +330,7 @@ def layout_waveguide_angle(cell, layer, points_list, width, angle):
 
     polygon_points = points_low + list(reversed(points_high))
 
-    poly = pya.DPolygon(polygon_points)
+    poly = pya.DSimplePolygon(polygon_points)
     cell.shapes(layer).insert(poly)
 
 
@@ -411,7 +433,7 @@ def layout_circle(cell, layer, center, r):
                                 [0, 2 * np.pi - 0.001], tol=0.002 / r)
 
     dbu = cell.layout().dbu
-    dpoly = pya.DPolygon([pya.DPoint(x, y) for x, y in zip(*coords)])
+    dpoly = pya.DSimplePolygon([pya.DPoint(x, y) for x, y in zip(*coords)])
     cell.shapes(layer).insert(dpoly.to_itype(dbu))
 
 
@@ -433,7 +455,7 @@ def box_dpolygon(point1, point3, ex=None):
     point2 = point1 * ex * ex + point3 * ey * ey
     point4 = point3 * ex * ex + point1 * ey * ey
 
-    return pya.DPolygon([point1, point2, point3, point4])
+    return pya.DSimplePolygon([point1, point2, point3, point4])
 
 
 def square_dpolygon(center, width, ex=None):
@@ -451,7 +473,7 @@ def square_dpolygon(center, width, ex=None):
     quadrant = rotate90(quadrant)
     point4 = center + quadrant
 
-    return pya.DPolygon([point1, point2, point3, point4])
+    return pya.DSimplePolygon([point1, point2, point3, point4])
 
 
 def layout_square(cell, layer, center, width, ex=None):
