@@ -18,8 +18,88 @@ from . import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 
-def _layout_waveguide(points_list, width, dbu):
-    """ Helper for layout_waveguide.
+def insert_shape(cell, layer, shape):
+    cell.shapes(layer).insert(shape)
+
+
+class DPolygon(pya.DPolygon):
+
+    def transform_and_rotate(self, center, ex=None):
+        if ex is None:
+            ex = pya.DPoint(1, 0)
+        ey = rotate90(ex)
+
+        polygon_dpoints_transformed = [center + p.x *
+                                       ex + p.y * ey for p in self.each_point_hull()]
+        self.assign(pya.DPolygon(polygon_dpoints_transformed))
+        return self
+
+    def clip(self, x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
+        # Add points exactly at the boundary, so that the filter below works.
+        x_bounds = (np.min(x_bounds), np.max(x_bounds))
+        y_bounds = (np.min(y_bounds), np.max(y_bounds))
+
+        check_within_bounds = lambda p: x_bounds[0] <= p.x and x_bounds[1] >= p.x and \
+            y_bounds[0] <= p.y and y_bounds[1] >= p.y
+
+        def intersect_left_boundary(p1, p2, x_bounds, y_bounds):
+            left_most, right_most = (p1, p2) if p1.x < p2.x else (p2, p1)
+            bottom_most, top_most = (p1, p2) if p1.y < p2.y else (p2, p1)
+            if left_most.x < x_bounds[0]:
+                # intersection only if right_most crosses x_bound[0]
+                if right_most.x > x_bounds[0]:
+                    # outside the box, on the left
+                    y_intersect = np.interp(x_bounds[0], [left_most.x, right_most.x], [
+                                            left_most.y, right_most.y])
+                    if y_bounds[0] < y_intersect and y_bounds[1] > y_intersect:
+                        return pya.DPoint(float(x_bounds[0]), float(y_intersect))
+            return None
+
+        def intersect(p1, p2, x_bounds, y_bounds):
+            intersect_list = list()
+            p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
+            if p:
+                intersect_list.append(p)
+            for i in range(1, 4):
+                p1, p2 = rotate90(p1), rotate90(p2)
+                x_bounds, y_bounds = (-y_bounds[1], -y_bounds[0]), (x_bounds[0], x_bounds[1])
+                p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
+                if p:
+                    intersect_list.append(rotate(p, -i * pi / 2))
+            return intersect_list
+
+        polygon_dpoints_clipped = list()
+        polygon_dpoints = list(self.each_point_hull())
+        previous_point = polygon_dpoints[-1]
+        for point in polygon_dpoints:
+            # compute new intersecting point and add to list
+            polygon_dpoints_clipped.extend(intersect(previous_point, point, x_bounds, y_bounds))
+            if check_within_bounds(point):
+                polygon_dpoints_clipped.append(point)
+            previous_point = point
+        self.assign(pya.DPolygon(polygon_dpoints_clipped))
+        return self
+
+    def layout(self, cell, layer):
+        return insert_shape(cell, layer, self)
+
+    def layout_drc_exclude(self, cell, drclayer, ex):
+        """ Places a drc exclude square at every corner. """
+        points = list(self.each_point_hull())
+        prev_delta = points[-1] - points[-2]
+        prev_angle = np.arctan2(prev_delta.y, prev_delta.x)
+        for i in range(len(points)):
+            delta = points[i] - points[i - 1]
+            angle = np.arctan2(delta.y, delta.x)
+            delta_angle = angle - prev_angle
+            delta_angle = abs(((delta_angle + pi) % (2 * pi)) - pi)
+            if delta_angle >= pi * 10 / 180:
+                layout_square(cell, drclayer, points[i - 1], 0.1, ex)
+            prev_delta, prev_angle = delta, angle
+
+
+def waveguide_dpolygon(points_list, width, dbu):
+    """ Returns a polygon outlining a waveguide.
 
     Args:
         cell: cell to place into
@@ -160,7 +240,7 @@ def _layout_waveguide(points_list, width, dbu):
 
     polygon_dpoints = points_low + list(reversed(points_high))
     polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
-    return polygon_dpoints
+    return DPolygon(polygon_dpoints)
 
 
 def layout_waveguide(cell, layer, points_list, width):
@@ -178,10 +258,8 @@ def layout_waveguide(cell, layer, points_list, width):
 
     dbu = cell.layout().dbu
 
-    polygon_dpoints = _layout_waveguide(points_list, width, dbu)
-
-    poly = pya.DPolygon(polygon_dpoints)
-    cell.shapes(layer).insert(poly)
+    dpolygon = waveguide_dpolygon(points_list, width, dbu)
+    dpolygon.layout(cell, layer)
 
 
 def layout_waveguide_angle(cell, layer, points_list, width, angle):
@@ -250,53 +328,9 @@ def layout_ring(cell, layer, center, r, w):
     layout_arc(cell, layer, center, r, w, 0, 2 * np.pi)
 
 
-def clip_polygon(polygon_dpoints, x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
-    # Add points exactly at the boundary, so that the filter below works.
-    x_bounds = (np.min(x_bounds), np.max(x_bounds))
-    y_bounds = (np.min(y_bounds), np.max(y_bounds))
-
-    check_within_bounds = lambda p: x_bounds[0] <= p.x and x_bounds[1] >= p.x and \
-        y_bounds[0] <= p.y and y_bounds[1] >= p.y
-
-    def intersect_left_boundary(p1, p2, x_bounds, y_bounds):
-        left_most, right_most = (p1, p2) if p1.x < p2.x else (p2, p1)
-        bottom_most, top_most = (p1, p2) if p1.y < p2.y else (p2, p1)
-        if left_most.x < x_bounds[0]:
-            # intersection only if right_most crosses x_bound[0]
-            if right_most.x > x_bounds[0]:
-                # outside the box, on the left
-                y_intersect = np.interp(x_bounds[0], [left_most.x, right_most.x], [left_most.y, right_most.y])
-                if y_bounds[0] < y_intersect and y_bounds[1] > y_intersect:
-                    return pya.DPoint(float(x_bounds[0]), float(y_intersect))
-        return None
-
-    def intersect(p1, p2, x_bounds, y_bounds):
-        intersect_list = list()
-        p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
-        if p:
-            intersect_list.append(p)
-        for i in range(1, 4):
-            p1, p2 = rotate90(p1), rotate90(p2)
-            x_bounds, y_bounds = (-y_bounds[1], -y_bounds[0]), (x_bounds[0], x_bounds[1])
-            p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
-            if p:
-                intersect_list.append(rotate(p, -i * pi / 2))
-        return intersect_list
-
-    polygon_dpoints_clipped = list()
-    previous_point = polygon_dpoints[-1]
-    for point in polygon_dpoints:
-        # compute new intersecting point and add to list
-        polygon_dpoints_clipped.extend(intersect(previous_point, point, x_bounds, y_bounds))
-        if check_within_bounds(point):
-            polygon_dpoints_clipped.append(point)
-        previous_point = point
-    return polygon_dpoints_clipped
-
-
 def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
                x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
-    # function to produce the layout of an arc
+    """ function to produce the layout of an arc"""
     # cell: layout cell to place the layout
     # layer: which layer to use
     # center: origin DPoint (not affected by ex)
@@ -305,16 +339,13 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
     # theta_start, theta_end: angle in radians
     # x_bounds and y_bounds relative to the center, before rotation by ex.
     # units in microns
+    # returns a dpolygon
 
     # example usage.  Places the ring layout in the presently selected cell.
     # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
     # layout_arc(cell, layer, pya.DPoint(0,0), 10, 0.5, 0, np.pi/2)
 
     # fetch the database parameters
-
-    if ex is None:
-        ex = pya.DPoint(1, 0)
-    ey = rotate90(ex)
 
     # optimal sampling
     arc_function = lambda t: np.array([r * np.cos(t), r * np.sin(t)])
@@ -327,17 +358,27 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
     coords = np.append(coords, np.atleast_2d(arc_function(theta_end + 0.001)).T,
                        axis=1)  # finish the waveguide a little bit after
 
+    # create original waveguide poligon prior to clipping and rotation
     dpoints_list = [pya.DPoint(x, y) for x, y in zip(*coords)]
-    polygon_dpoints = _layout_waveguide(dpoints_list, w, cell.layout().dbu)
+    dpolygon = waveguide_dpolygon(dpoints_list, w, cell.layout().dbu)
 
-    polygon_dpoints_clipped = clip_polygon(polygon_dpoints, x_bounds=x_bounds, y_bounds=y_bounds)
-
+    # clip dpolygon to bounds
+    dpolygon.clip(x_bounds=x_bounds, y_bounds=y_bounds)
     # Transform points (translation + rotation)
-    polygon_dpoints_transformed = [center + p.x * ex + p.y * ey for p in polygon_dpoints_clipped]
+    dpolygon.transform_and_rotate(center, ex)
+    dpolygon.compress(True)
+    insert_shape(cell, layer, dpolygon)
+    return dpolygon
 
-    poly = pya.DPolygon(polygon_dpoints_transformed)
-    poly.compress(True)
-    cell.shapes(layer).insert(poly)
+
+def layout_arc2(cell, layer, center, r1, r2, theta_start, theta_end, ex=None,
+                x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
+    r1, r2 = min(r1, r2), max(r1, r2)
+
+    r = (r1 + r2) / 2
+    w = (r2 - r1)
+    return layout_arc(cell, layer, center, r, w, theta_start, theta_end,
+                      ex=ex, x_bounds=x_bounds, y_bounds=y_bounds)
 
 
 def layout_arc_drc_exclude(cell, drc_layer, center, r, w, theta_start, theta_end, ex=None):
