@@ -59,26 +59,80 @@ class DSimplePolygon(pya.DSimplePolygon):
 
         def intersect(p1, p2, x_bounds, y_bounds):
             intersect_list = list()
-            p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
-            if p:
-                intersect_list.append(p)
-            for i in range(1, 4):
-                p1, p2 = rotate90(p1), rotate90(p2)
-                x_bounds, y_bounds = (-y_bounds[1], -y_bounds[0]), (x_bounds[0], x_bounds[1])
-                p = intersect_left_boundary(p1, p2, x_bounds, y_bounds)
-                if p:
+            last_intersect = None
+
+            def rotate_bounds90(x_bounds, y_bounds, i_times):
+                for i in range(i_times):
+                    x_bounds, y_bounds = (-y_bounds[1], -y_bounds[0]), (x_bounds[0], x_bounds[1])
+                return x_bounds, y_bounds
+
+            for i in range(4):
+                p1i, p2i = rotate(p1, i * pi / 2), rotate(p2, i * pi / 2)
+                x_boundsi, y_boundsi = rotate_bounds90(x_bounds, y_bounds, i)
+                p = intersect_left_boundary(p1i, p2i, x_boundsi, y_boundsi)
+                if p is not None:
+                    last_intersect = i
                     intersect_list.append(rotate(p, -i * pi / 2))
-            return intersect_list
+            return intersect_list, last_intersect
 
         polygon_dpoints_clipped = list()
         polygon_dpoints = list(self.each_point())
+
+        def boundary_vertex(edge_from, edge_to):
+            # left edge:0, top edge:1 etc.
+            # returns the vertex between two edges
+            assert abs(edge_from - edge_to) == 1
+            if edge_from % 2 == 0:
+                vertical_edge = edge_from
+                horizontal_edge = edge_to
+            else:
+                vertical_edge = edge_to
+                horizontal_edge = edge_from
+            x = x_bounds[(vertical_edge // 2) % 2]
+            y = y_bounds[((horizontal_edge - 1) // 2) % 2]
+            return pya.DPoint(x, y)
+
+        # Rotate point list so we can start from a point inside
+        # (helps the boundary_vertex algorithm)
+        for idx, point in enumerate(polygon_dpoints):
+            if check_within_bounds(point):
+                break
+        else:
+            # polygon was never within bounds
+            # this can only happen if boundaries are finite
+            # return boundary vertices
+            boundary_vertices = [boundary_vertex(i, i - 1) for i in range(4, 0, -1)]
+            self.assign(pya.DSimplePolygon(boundary_vertices))
+            return self
+
+        idx += 1  # make previous_point below already be inside
+        polygon_dpoints = polygon_dpoints[idx:] + polygon_dpoints[:idx]
+
         previous_point = polygon_dpoints[-1]
+        previous_intersect = None
         for point in polygon_dpoints:
             # compute new intersecting point and add to list
-            polygon_dpoints_clipped.extend(intersect(previous_point, point, x_bounds, y_bounds))
+            intersected_points, last_intersect = intersect(
+                previous_point, point, x_bounds, y_bounds)
+            if previous_intersect is not None and last_intersect is not None and \
+                    last_intersect != previous_intersect:
+                if check_within_bounds(point):
+                    # this means that we are entering the box at a different edge
+                    # need to add the edge points
+
+                    # this assumes a certain polygon orientation
+                    # assume points go counterlockwise, which means that
+                    # from edge 0 to 2, it goes through 3
+                    i = previous_intersect
+                    while i % 4 != last_intersect:
+                        polygon_dpoints_clipped.append(boundary_vertex(i, i - 1))
+                        i = i - 1
+            polygon_dpoints_clipped.extend(intersected_points)
             if check_within_bounds(point):
                 polygon_dpoints_clipped.append(point)
             previous_point = point
+            if last_intersect is not None:
+                previous_intersect = last_intersect
         self.assign(pya.DSimplePolygon(polygon_dpoints_clipped))
         return self
 
@@ -278,7 +332,7 @@ def waveguide_dpolygon(points_list, width, dbu):
                 point_list[-1] = (point_list[-1] + point) / 2
         return point_list
 
-    polygon_dpoints = points_low + list(reversed(points_high))
+    polygon_dpoints = points_high + list(reversed(points_low))
     polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
     return DSimplePolygon(polygon_dpoints)
 
@@ -346,7 +400,7 @@ def layout_waveguide_angle(cell, layer, points_list, width, angle):
                      pya.DPoint(cos(theta - pi / 2), sin(theta - pi / 2)))
         points_low.append(point_low)
 
-    polygon_points = points_low + list(reversed(points_high))
+    polygon_points = points_high + list(reversed(points_low))
 
     poly = pya.DSimplePolygon(polygon_points)
     cell.shapes(layer).insert(poly)
@@ -411,7 +465,7 @@ def layout_ring(cell, layer, center, r, w):
     points_hole = [center + pya.DPoint(x, y) for x, y in zip(*coords)]
     del points_hole[-1]
 
-    dpoly = pya.DPolygon(points_hull)
+    dpoly = pya.DPolygon(list(reversed(points_hull)))
     dpoly.insert_hole(points_hole)
     dpoly.compress(True)
     insert_shape(cell, layer, dpoly)
