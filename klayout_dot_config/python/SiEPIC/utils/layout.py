@@ -10,6 +10,7 @@ TODO: make some of the functions in util use these.
 """
 
 from itertools import repeat
+from functools import partial
 import pya
 import numpy as np
 from numpy import cos, sin, pi, sqrt
@@ -19,7 +20,7 @@ from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 
 def insert_shape(cell, layer, shape):
-    if layer:
+    if layer is not None:
         cell.shapes(layer).insert(shape)
 
 
@@ -88,27 +89,44 @@ class DSimplePolygon(pya.DSimplePolygon):
         """ Places a drc exclude square at every corner.
         A corner is defined by an angle smaller than 170 degrees (conservative)
         """
-        points = list(self.each_point())
-        prev_delta = points[-1] - points[-2]
-        prev_angle = np.arctan2(prev_delta.y, prev_delta.x)
-        for i in range(len(points)):
-            delta = points[i] - points[i - 1]
-            angle = np.arctan2(delta.y, delta.x)
-            delta_angle = angle - prev_angle
-            delta_angle = abs(((delta_angle + pi) % (2 * pi)) - pi)
-            if delta_angle >= pi * 10 / 180:
-                layout_square(cell, drclayer, points[i - 1], 0.1, ex)
-            prev_delta, prev_angle = delta, angle
+        if drclayer is not None:
+            points = list(self.each_point())
+            assert len(points) > 3
+            prev_delta = points[-1] - points[-2]
+            prev_angle = np.arctan2(prev_delta.y, prev_delta.x)
+            for i in range(len(points)):
+                delta = points[i] - points[i - 1]
+                angle = np.arctan2(delta.y, delta.x)
+                delta_angle = angle - prev_angle
+                delta_angle = abs(((delta_angle + pi) % (2 * pi)) - pi)
+                if delta_angle >= pi * 10 / 180:
+                    layout_square(cell, drclayer, points[i - 1], 0.1, ex)
+                prev_delta, prev_angle = delta, angle
 
-    def resize(self, dx, dbu):
+    def resize(self, dx, dbu, magic_flag=False):
         dpoly = pya.DPolygon(self)
         dpoly.size(dx, 5)
         dpoly = pya.EdgeProcessor().simple_merge_p2p([dpoly.to_itype(dbu)], False, False, 1)
-        dpoly = dpoly[0].to_dtype(dbu)
-        self.points = list(dpoly.each_point_hull())
+        dpoly = dpoly[0].to_dtype(dbu)  # pya.DPolygon
+
+        def norm(p):
+            return sqrt(p.x**2 + p.y**2)
+
+        # Filter edges if they are too small
+        points = list(dpoly.each_point_hull())
+        new_points = list([points[0]])
+        for i in range(0, len(points)):
+            delta = points[i] - new_points[-1]
+            if norm(delta) > min(10 * dbu, abs(dx)):
+                new_points.append(points[i])
+
+        sdpoly = DSimplePolygon(new_points)  # convert to SimplePolygon
+        self.assign(sdpoly)
         return self
 
     def round_corners(self, radius, N):
+        """ This only works if the polygon points are sparse."""
+
         dpoly = super().round_corners(radius, radius, N)
         self.assign(dpoly)
         return self
@@ -334,20 +352,69 @@ def layout_waveguide_angle(cell, layer, points_list, width, angle):
     cell.shapes(layer).insert(poly)
 
 
+def layout_disk(cell, layer, center, r):
+    # function to produce the layout of a disk
+    # cell: layout cell to place the layout
+    # layer: which layer to use
+    # center: origin DPoint
+    # r: radius
+    # units in microns
+
+    # outer arc
+    # optimal sampling
+    radius = r
+    assert radius > 0
+    arc_function = lambda t: np.array([radius * np.cos(t), radius * np.sin(t)])
+    t, coords = sample_function(arc_function,
+                                [0, 2 * pi], tol=0.002 / radius)
+
+    # create original waveguide poligon prior to clipping and rotation
+    points_hull = [center + pya.DPoint(x, y) for x, y in zip(*coords)]
+    del points_hull[-1]
+
+    dpoly = pya.DPolygon(points_hull)
+    insert_shape(cell, layer, dpoly)
+    return dpoly
+
+
 def layout_ring(cell, layer, center, r, w):
-        # function to produce the layout of a ring
-        # cell: layout cell to place the layout
-        # layer: which layer to use
-        # center: origin DPoint
-        # r: radius
-        # w: waveguide width
-        # units in microns
+    # function to produce the layout of a ring
+    # cell: layout cell to place the layout
+    # layer: which layer to use
+    # center: origin DPoint
+    # r: radius
+    # w: waveguide width
+    # units in microns
 
-        # example usage.  Places the ring layout in the presently selected cell.
-        # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-        # layout_ring(cell, cell.layout().layer(LayerInfo(1, 0)), pya.DPoint(0,0), 10, 0.5)
+    # example usage.  Places the ring layout in the presently selected cell.
+    # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    # layout_ring(cell, cell.layout().layer(LayerInfo(1, 0)), pya.DPoint(0,0), 10, 0.5)
 
-    layout_arc(cell, layer, center, r, w, 0, 2 * np.pi)
+    # outer arc
+    # optimal sampling
+    assert r - w / 2 > 0
+    radius = r + w / 2
+    arc_function = lambda t: np.array([radius * np.cos(t), radius * np.sin(t)])
+    t, coords = sample_function(arc_function,
+                                [0, 2 * pi], tol=0.002 / radius)
+
+    # create original waveguide poligon prior to clipping and rotation
+    points_hull = [center + pya.DPoint(x, y) for x, y in zip(*coords)]
+    del points_hull[-1]
+
+    radius = r - w / 2
+    arc_function = lambda t: np.array([radius * np.cos(t), radius * np.sin(t)])
+    t, coords = sample_function(arc_function,
+                                [0, 2 * pi], tol=0.002 / radius)
+
+    # create original waveguide poligon prior to clipping and rotation
+    points_hole = [center + pya.DPoint(x, y) for x, y in zip(*coords)]
+    del points_hole[-1]
+
+    dpoly = pya.DPolygon(points_hull)
+    dpoly.insert_hole(points_hole)
+    dpoly.compress(True)
+    insert_shape(cell, layer, dpoly)
 
 
 def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
@@ -389,7 +456,7 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
     # Transform points (translation + rotation)
     dpolygon.transform_and_rotate(center, ex)
     dpolygon.compress(True)
-    insert_shape(cell, layer, dpolygon)
+    dpolygon.layout(cell, layer)
     return dpolygon
 
 
@@ -401,6 +468,35 @@ def layout_arc2(cell, layer, center, r1, r2, theta_start, theta_end, ex=None,
     w = (r2 - r1)
     return layout_arc(cell, layer, center, r, w, theta_start, theta_end,
                       ex=ex, x_bounds=x_bounds, y_bounds=y_bounds)
+
+
+def layout_section(cell, layer, center, r2, theta_start, theta_end, ex=None,
+                   x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
+
+    assert r2 > 0
+
+    # optimal sampling
+    arc_function = lambda t: np.array([r2 * np.cos(t), r2 * np.sin(t)])
+    t, coords = sample_function(arc_function,
+                                [theta_start, theta_end], tol=0.002 / r2)
+
+    # # This yields a better polygon
+    coords = np.insert(coords, 0, arc_function(theta_start - 0.001),
+                       axis=1)  # start the waveguide a little bit before
+    coords = np.append(coords, np.atleast_2d(arc_function(theta_end + 0.001)).T,
+                       axis=1)  # finish the waveguide a little bit after
+
+    # create original waveguide poligon prior to clipping and rotation
+    dpoints_list = [pya.DPoint(x, y) for x, y in zip(*coords)]
+    dpolygon = DSimplePolygon(dpoints_list + [pya.DPoint(0, 0)])
+
+    # clip dpolygon to bounds
+    dpolygon.clip(x_bounds=x_bounds, y_bounds=y_bounds)
+    # Transform points (translation + rotation)
+    dpolygon.transform_and_rotate(center, ex)
+    dpolygon.compress(True)
+    dpolygon.layout(cell, layer)
+    return dpolygon
 
 
 def layout_arc_drc_exclude(cell, drc_layer, center, r, w, theta_start, theta_end, ex=None):
