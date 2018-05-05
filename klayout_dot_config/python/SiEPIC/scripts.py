@@ -697,24 +697,24 @@ def calibreDRC(params=None, cell=None):
 #          error = json.loads(e.output[7:])
 #          print (error['code'])
 #          print (error['message'])
-        progress.format = "Finishing"
-        progress.set(5, True)
+    progress.format = "Finishing"
+    progress.set(5, True)
 
-        print(out)
-        progress._destroy()
-        if os.path.exists(results_pathfile):
-            rdb_i = lv.create_rdb("Calibre Verification")
-            rdb = lv.rdb(rdb_i)
-            rdb.load(results_pathfile)
-            rdb.top_cell_name = cell.name
-            rdb_cell = rdb.create_cell(cell.name)
-            lv.show_rdb(rdb_i, lv.active_cellview().cell_index)
-        else:
-            pya.MessageBox.warning(
-                "Errors", "Something failed during the server Calibre DRC check: %s" % out,  pya.MessageBox.Ok)
+    print(out)
+    progress._destroy()
+    if os.path.exists(results_pathfile):
+        rdb_i = lv.create_rdb("Calibre Verification")
+        rdb = lv.rdb(rdb_i)
+        rdb.load(results_pathfile)
+        rdb.top_cell_name = cell.name
+        rdb_cell = rdb.create_cell(cell.name)
+        lv.show_rdb(rdb_i, lv.active_cellview().cell_index)
+    else:
+        pya.MessageBox.warning(
+            "Errors", "Something failed during the server Calibre DRC check: %s" % out,  pya.MessageBox.Ok)
 
-        pya.Application.instance().main_window().update()
-        lv.commit()
+    pya.Application.instance().main_window().update()
+    lv.commit()
 
 
 def auto_coord_extract():
