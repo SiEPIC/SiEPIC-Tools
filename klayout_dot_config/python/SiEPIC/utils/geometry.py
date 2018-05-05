@@ -140,6 +140,12 @@ def curvature_bezier(P0, P1, P2, P3):
 
 
 # #### Computing best Bezier curves based on P0, P3, angle0, angle3
+try:
+    import scipy
+except ModuleNotFoundError:
+    from SiEPIC.install import install_scipy
+    install_scipy()
+
 from scipy.optimize import minimize
 
 
