@@ -10,7 +10,6 @@ TODO: make some of the functions in util use these.
 """
 
 from itertools import repeat
-from functools import partial
 import pya
 import numpy as np
 from numpy import cos, sin, pi, sqrt
@@ -201,9 +200,26 @@ def waveguide_dpolygon(points_list, width, dbu):
         raise NotImplemented("ERROR: points_list too short")
         return
 
+    def norm(self):
+        return sqrt(self.x**2 + self.y**2)
+
     try:
         if len(width) == len(points_list):
             width_iterator = iter(width)
+        elif len(width) == 2:
+            # assume width[0] is initial width and
+            # width[1] is final width
+            # interpolate with points_list
+            L = curve_length(points_list)
+            distance = 0
+            widths_list = [width[0]]
+            widths_func = lambda t: (1 - t) * width[0] + t * width[1]
+            old_point = points_list[0]
+            for point in points_list[1:]:
+                distance += norm(point - old_point)
+                old_point = point
+                widths_list.append(widths_func(distance / L))
+            width_iterator = iter(widths_list)
         else:
             width_iterator = repeat(width[0])
     except TypeError:
@@ -214,11 +230,14 @@ def waveguide_dpolygon(points_list, width, dbu):
     points_low = list()
     points_high = list()
 
-    def norm(self):
-        return sqrt(self.x**2 + self.y**2)
-
     def cos_angle(point1, point2):
-        return point1 * point2 / norm(point1) / norm(point2)
+        cos_angle = point1 * point2 / norm(point1) / norm(point2)
+
+        # ensure it's between -1 and 1 (nontrivial numerically)
+        if abs(cos_angle) > 1:
+            return cos_angle / abs(cos_angle)
+        else:
+            return cos_angle
 
     def sin_angle(point1, point2):
         return sin(np.arccos(cos_angle(point1, point2)))
@@ -329,7 +348,7 @@ def waveguide_dpolygon(points_list, width, dbu):
                 if cos_angle(curr_edge, prev_edge) > cos(120 / 180 * pi):
                     point_list.append(point)
             else:
-                point_list[-1] = (point_list[-1] + point) / 2
+                point_list[-1] = point
         return point_list
 
     polygon_dpoints = points_high + list(reversed(points_low))
@@ -373,9 +392,27 @@ def layout_waveguide_angle(cell, layer, points_list, width, angle):
         raise NotImplemented("ERROR: points_list too short")
         return
 
+    def norm(self):
+        return sqrt(self.x**2 + self.y**2)
+
     try:
         if len(width) == len(points_list):
             width_iterator = iter(width)
+        elif len(width) == 2:
+            # assume width[0] is initial width and
+            # width[1] is final width
+            # interpolate with points_list
+            L = curve_length(points_list)
+            distance = 0
+            widths_list = [width[0]]
+            widths_func = lambda t: (1 - t) * width[0] + t * width[1]
+            old_point = points_list[0]
+            for point in points_list[1:]:
+                distance += norm(point - old_point)
+                old_point = point
+                print(distance, L, widths_func(distance / L))
+                widths_list.append(widths_func(distance / L))
+            width_iterator = iter(widths_list)
         else:
             width_iterator = repeat(width[0])
     except TypeError:
@@ -605,25 +642,28 @@ def box_dpolygon(point1, point3, ex=None):
     point2 = point1 * ex * ex + point3 * ey * ey
     point4 = point3 * ex * ex + point1 * ey * ey
 
-    return pya.DSimplePolygon([point1, point2, point3, point4])
+    return DSimplePolygon([point1, point2, point3, point4])
+
+
+def rectangle_dpolygon(center, width, height, ex=None):
+    # returns the polygon of a rectangle centered at center,
+    # aligned with ex, with width and height in microns
+
+    if ex is None:
+        ex = pya.DPoint(1, 0)
+    ey = rotate90(ex)
+
+    point1 = center - width / 2 * ex - height / 2 * ey
+    point3 = center + width / 2 * ex + height / 2 * ey
+
+    return box_dpolygon(point1, point3, ex=ex)
 
 
 def square_dpolygon(center, width, ex=None):
     # returns the polygon of a square centered at center,
     # aligned with ex, with width in microns
-    if ex is None:
-        ex = pya.DPoint(1, 0)
-    ey = rotate90(ex)
-    quadrant = (width / 2) * (ex + ey)
-    point1 = center + quadrant
-    quadrant = rotate90(quadrant)
-    point2 = center + quadrant
-    quadrant = rotate90(quadrant)
-    point3 = center + quadrant
-    quadrant = rotate90(quadrant)
-    point4 = center + quadrant
 
-    return pya.DSimplePolygon([point1, point2, point3, point4])
+    return rectangle_dpolygon(center, width, width, ex=ex)
 
 
 def layout_square(cell, layer, center, width, ex=None):
@@ -640,7 +680,27 @@ def layout_square(cell, layer, center, width, ex=None):
         ex = pya.DPoint(1, 0)
 
     square = square_dpolygon(center, width, ex)
-    cell.shapes(layer).insert(square)
+    insert_shape(cell, layer, square)
+    return square
+
+
+def layout_rectangle(cell, layer, center, width, height, ex=None):
+    """ Lays out a rectangle in the DRC layer
+
+    Args:
+        center: pya.DPoint (um units)
+        width: float (um units)
+        height: float (um unit)
+        ex: orientation
+
+    """
+
+    if ex is None:
+        ex = pya.DPoint(1, 0)
+
+    rectangle = rectangle_dpolygon(center, width, height, ex=ex)
+    insert_shape(cell, layer, rectangle)
+    return rectangle
 
 
 def append_relative(points, *relative_vectors):
@@ -659,8 +719,13 @@ def append_relative(points, *relative_vectors):
 
 def layout_connect_ports(cell, layer, port_from, port_to):
 
-    P0 = port_from.position
-    P3 = port_to.position
+    if port_from.name.startswith("el"):
+        assert port_to.name.startswith("el")
+        P0 = port_from.position + port_from.direction * port_from.width / 2
+        P3 = port_to.position + port_to.direction * port_to.width / 2
+    else:
+        P0 = port_from.position
+        P3 = port_to.position
     angle_from = np.arctan2(port_from.direction.y, port_from.direction.x) * 180 / pi
     angle_to = np.arctan2(-port_to.direction.y, -port_to.direction.x) * 180 / pi
 
