@@ -185,7 +185,7 @@ class DSimplePolygon(pya.DSimplePolygon):
         return self
 
 
-def waveguide_dpolygon(points_list, width, dbu):
+def waveguide_dpolygon(points_list, width, dbu, smooth=True):
     """ Returns a polygon outlining a waveguide.
 
     Args:
@@ -345,18 +345,19 @@ def waveguide_dpolygon(points_list, width, dbu):
         if norm(curr_edge) >= dbu:
             prev_edge = point_list[-1] - point_list[-2]
             if norm(prev_edge) * sin_angle(curr_edge + prev_edge, prev_edge) > dbu:
-                if cos_angle(curr_edge, prev_edge) > cos(120 / 180 * pi):
+                if cos_angle(curr_edge, prev_edge) > cos(160 / 180 * pi):
                     point_list.append(point)
             else:
                 point_list[-1] = point
         return point_list
 
     polygon_dpoints = points_high + list(reversed(points_low))
-    polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
+    if smooth:
+        polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
     return DSimplePolygon(polygon_dpoints)
 
 
-def layout_waveguide(cell, layer, points_list, width):
+def layout_waveguide(cell, layer, points_list, width, smooth=False):
     """ Lays out a waveguide (or trace) with a certain width along given points.
 
     This is very useful for laying out Bezier curves with or without adiabatic tapers.
@@ -371,7 +372,8 @@ def layout_waveguide(cell, layer, points_list, width):
 
     dbu = cell.layout().dbu
 
-    dpolygon = waveguide_dpolygon(points_list, width, dbu)
+    dpolygon = waveguide_dpolygon(points_list, width, dbu, smooth=smooth)
+    dpolygon.compress(True)
     dpolygon.layout(cell, layer)
 
 
@@ -723,12 +725,15 @@ def layout_connect_ports(cell, layer, port_from, port_to):
         assert port_to.name.startswith("el")
         P0 = port_from.position + port_from.direction * port_from.width / 2
         P3 = port_to.position + port_to.direction * port_to.width / 2
+        smooth = False
     else:
         P0 = port_from.position
         P3 = port_to.position
+        smooth = True
     angle_from = np.arctan2(port_from.direction.y, port_from.direction.x) * 180 / pi
     angle_to = np.arctan2(-port_to.direction.y, -port_to.direction.x) * 180 / pi
 
     curve = bezier_optimal(P0, P3, angle_from, angle_to)
-    layout_waveguide(cell, layer, curve, [port_from.width, port_to.width])
+    # print(f"bezier_optimal({P0}, {P3}, {angle_from}, {angle_to})")
+    layout_waveguide(cell, layer, curve, [port_from.width, port_to.width], smooth=smooth)
     return curve_length(curve)
