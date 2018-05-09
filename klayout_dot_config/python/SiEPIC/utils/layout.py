@@ -17,6 +17,8 @@ from functools import reduce
 from . import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
+debug = False
+
 
 def insert_shape(cell, layer, shape):
     if layer is not None:
@@ -353,6 +355,11 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
             else:
                 point_list[-1] = point
         return point_list
+
+    if debug and False:
+        print("Points to be smoothed:")
+        for point, width in point_width_list:
+            print(point, width)
 
     polygon_dpoints = points_high + list(reversed(points_low))
     polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
@@ -736,6 +743,9 @@ def layout_connect_ports(cell, layer, port_from, port_to, smooth=False):
     angle_to = np.arctan2(-port_to.direction.y, -port_to.direction.x) * 180 / pi
 
     curve = bezier_optimal(P0, P3, angle_from, angle_to)
+    if debug:
+        for point in curve:
+            print(point)
     # print(f"bezier_optimal({P0}, {P3}, {angle_from}, {angle_to})")
     return layout_waveguide(cell, layer, curve, [port_from.width, port_to.width], smooth=smooth)
 

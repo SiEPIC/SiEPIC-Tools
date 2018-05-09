@@ -349,15 +349,19 @@ try:
         new_bezier_line = _bezier_optimal_pure(P0, P3, *args, **kwargs)
         bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
 
-        _, bezier_point_coordinates_sampled = \
+        t_sampled, bezier_point_coordinates_sampled = \
             sample_function(bezier_point_coordinates, [0, 1], tol=0.005 / scale)  # tol about 5 nm
 
         # # This yields a better polygon
+        insert_at = np.argmax(0.001 / scale < t_sampled)
+        t_sampled = np.insert(t_sampled, insert_at, 0.001 / scale)
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(.001 / scale),
+            np.insert(bezier_point_coordinates_sampled, insert_at, bezier_point_coordinates(.001 / scale),
                       axis=1)  # add a point right after the first one
+        insert_at = np.argmax(1 - 0.001 / scale < t_sampled)
+        # t_sampled = np.insert(t_sampled, insert_at, 1 - 0.001 / scale)
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - .001 / scale),
+            np.insert(bezier_point_coordinates_sampled, insert_at, bezier_point_coordinates(1 - .001 / scale),
                       axis=1)  # add a point right before the last one
         # bezier_point_coordinates_sampled = \
         #     np.append(bezier_point_coordinates_sampled, np.atleast_2d(bezier_point_coordinates(1 + .001 / scale)).T,
