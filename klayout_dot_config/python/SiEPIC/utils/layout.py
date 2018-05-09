@@ -345,15 +345,17 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
         if norm(curr_edge) >= dbu:
             prev_edge = point_list[-1] - point_list[-2]
             if norm(prev_edge) * sin_angle(curr_edge + prev_edge, prev_edge) > dbu:
-                if cos_angle(curr_edge, prev_edge) > cos(160 / 180 * pi):
+                if smooth:
+                    if cos_angle(curr_edge, prev_edge) > cos(130 / 180 * pi):
+                        point_list.append(point)
+                else:
                     point_list.append(point)
             else:
                 point_list[-1] = point
         return point_list
 
     polygon_dpoints = points_high + list(reversed(points_low))
-    if smooth:
-        polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
+    polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
     return DSimplePolygon(polygon_dpoints)
 
 
@@ -375,6 +377,7 @@ def layout_waveguide(cell, layer, points_list, width, smooth=False):
     dpolygon = waveguide_dpolygon(points_list, width, dbu, smooth=smooth)
     dpolygon.compress(True)
     dpolygon.layout(cell, layer)
+    return dpolygon
 
 
 def layout_waveguide_angle(cell, layer, points_list, width, angle):
@@ -412,7 +415,6 @@ def layout_waveguide_angle(cell, layer, points_list, width, angle):
             for point in points_list[1:]:
                 distance += norm(point - old_point)
                 old_point = point
-                print(distance, L, widths_func(distance / L))
                 widths_list.append(widths_func(distance / L))
             width_iterator = iter(widths_list)
         else:
@@ -719,21 +721,37 @@ def append_relative(points, *relative_vectors):
     return points
 
 
-def layout_connect_ports(cell, layer, port_from, port_to):
+def layout_connect_ports(cell, layer, port_from, port_to, smooth=False):
 
     if port_from.name.startswith("el"):
         assert port_to.name.startswith("el")
         P0 = port_from.position + port_from.direction * port_from.width / 2
         P3 = port_to.position + port_to.direction * port_to.width / 2
-        smooth = False
+        smooth = smooth or False
     else:
         P0 = port_from.position
         P3 = port_to.position
-        smooth = True
+        smooth = smooth or True
     angle_from = np.arctan2(port_from.direction.y, port_from.direction.x) * 180 / pi
     angle_to = np.arctan2(-port_to.direction.y, -port_to.direction.x) * 180 / pi
 
     curve = bezier_optimal(P0, P3, angle_from, angle_to)
     # print(f"bezier_optimal({P0}, {P3}, {angle_from}, {angle_to})")
-    layout_waveguide(cell, layer, curve, [port_from.width, port_to.width], smooth=smooth)
-    return curve_length(curve)
+    return layout_waveguide(cell, layer, curve, [port_from.width, port_to.width], smooth=smooth)
+
+
+def layout_connect_ports_angle(cell, layer, port_from, port_to, angle):
+
+    if port_from.name.startswith("el"):
+        assert port_to.name.startswith("el")
+        P0 = port_from.position + port_from.direction * port_from.width / 2
+        P3 = port_to.position + port_to.direction * port_to.width / 2
+
+        # straight lines for electrical connectors
+        curve = [P0, P3]
+    else:
+        P0 = port_from.position
+        P3 = port_to.position
+        curve = bezier_optimal(P0, P3, angle, angle)
+
+    return layout_waveguide_angle(cell, layer, curve, [port_from.width, port_to.width], angle)

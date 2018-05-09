@@ -312,8 +312,11 @@ def bezier_optimal(P0, P3, angle0, angle3):
         P2 = P3 - b * scaling * Point(np.cos(angle3), np.sin(angle3))
         curve_func = bezier_line(P0, P1, P2, P3)
         with np.errstate(divide='ignore'):
-            print("Min radius: {:.2f} um".format(np.true_divide(1, max_curvature(P0, P1, P2, P3))))
-            print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
+            # warn if minimum radius is smaller than 3um
+            min_radius = np.true_divide(1, max_curvature(P0, P1, P2, P3))
+            if min_radius < 3:
+                print("Warning! Min radius: {:.2f} um".format(np.true_divide(1, max_curvature(P0, P1, P2, P3))))
+            # print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
         return curve_func
     else:
         raise GeometryError(f"Error: calling bezier between two identical points: {P0}, {P3}")
