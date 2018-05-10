@@ -728,13 +728,13 @@ def append_relative(points, *relative_vectors):
     return points
 
 
-def layout_connect_ports(cell, layer, port_from, port_to, smooth=False):
+def layout_connect_ports(cell, layer, port_from, port_to, smooth=True):
 
     if port_from.name.startswith("el"):
         assert port_to.name.startswith("el")
         P0 = port_from.position + port_from.direction * port_from.width / 2
         P3 = port_to.position + port_to.direction * port_to.width / 2
-        smooth = smooth or False
+        smooth = smooth and False
     else:
         P0 = port_from.position
         P3 = port_to.position
