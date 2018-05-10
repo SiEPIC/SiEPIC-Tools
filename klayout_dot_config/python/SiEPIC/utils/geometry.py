@@ -372,6 +372,14 @@ try:
 except ImportError:
     pass
 
+
+def manhattan_intersection(vertical_point, horizontal_point, ex):
+    """ returns the point that intersects vertical_point's x coordinate
+    and horizontal_point's y coordinate.
+    """
+    ey = rotate90(ex)
+    return vertical_point * ex * ex + horizontal_point * ey * ey
+
 # ####################### SIEPIC EXTENSION ##########################
 
 
