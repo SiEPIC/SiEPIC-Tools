@@ -199,7 +199,7 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
 
     """
     if len(points_list) < 2:
-        raise NotImplemented("ERROR: points_list too short")
+        raise NotImplementedError("ERROR: points_list too short")
         return
 
     def norm(self):
