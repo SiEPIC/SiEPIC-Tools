@@ -539,6 +539,9 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
     # fetch the database parameters
 
     # optimal sampling
+    if theta_end < theta_start:
+        theta_start, theta_end = theta_end, theta_start
+
     arc_function = lambda t: np.array([r * np.cos(t), r * np.sin(t)])
     t, coords = sample_function(arc_function,
                                 [theta_start, theta_end], tol=0.002 / r)
@@ -583,6 +586,9 @@ def layout_section(cell, layer, center, r2, theta_start, theta_end, ex=None,
                                 [theta_start, theta_end], tol=0.002 / r2)
 
     # # This yields a better polygon
+    if theta_end < theta_start:
+        theta_start, theta_end = theta_end, theta_start
+
     coords = np.insert(coords, 0, arc_function(theta_start - 0.001),
                        axis=1)  # start the waveguide a little bit before
     coords = np.append(coords, np.atleast_2d(arc_function(theta_end + 0.001)).T,
