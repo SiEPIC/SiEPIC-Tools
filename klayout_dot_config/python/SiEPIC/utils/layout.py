@@ -645,10 +645,8 @@ def layout_path_with_ends(cell, layer, point_iterator, w):
     cell.shapes(layer).insert(dpath)
 
 
-def box_dpolygon(point1, point3, ex=None):
+def box_dpolygon(point1, point3, ex):
     # position point2 to the right of point1
-    if ex is None:
-        ex = pya.DPoint(1, 0)
     ey = rotate90(ex)
     point2 = point1 * ex * ex + point3 * ey * ey
     point4 = point3 * ex * ex + point1 * ey * ey
@@ -656,12 +654,24 @@ def box_dpolygon(point1, point3, ex=None):
     return DSimplePolygon([point1, point2, point3, point4])
 
 
-def rectangle_dpolygon(center, width, height, ex=None):
+def layout_box(cell, layer, point1, point3, ex):
+    """ Lays out a box
+
+    Args:
+        point1: bottom-left point
+        point3: top-right point
+
+    """
+
+    box = box_dpolygon(point1, point3, ex)
+    insert_shape(cell, layer, box)
+    return box
+
+
+def rectangle_dpolygon(center, width, height, ex):
     # returns the polygon of a rectangle centered at center,
     # aligned with ex, with width and height in microns
 
-    if ex is None:
-        ex = pya.DPoint(1, 0)
     ey = rotate90(ex)
 
     point1 = center - width / 2 * ex - height / 2 * ey
@@ -695,8 +705,8 @@ def layout_square(cell, layer, center, width, ex=None):
     return square
 
 
-def layout_rectangle(cell, layer, center, width, height, ex=None):
-    """ Lays out a rectangle in the DRC layer
+def layout_rectangle(cell, layer, center, width, height, ex):
+    """ Lays out a rectangle
 
     Args:
         center: pya.DPoint (um units)
@@ -705,9 +715,6 @@ def layout_rectangle(cell, layer, center, width, height, ex=None):
         ex: orientation
 
     """
-
-    if ex is None:
-        ex = pya.DPoint(1, 0)
 
     rectangle = rectangle_dpolygon(center, width, height, ex=ex)
     insert_shape(cell, layer, rectangle)
