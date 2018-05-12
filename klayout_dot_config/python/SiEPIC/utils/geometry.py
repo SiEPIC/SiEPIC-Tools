@@ -380,6 +380,48 @@ def manhattan_intersection(vertical_point, horizontal_point, ex):
     ey = rotate90(ex)
     return vertical_point * ex * ex + horizontal_point * ey * ey
 
+# ####################### CLUSTERING METHODS    ##########################
+
+
+def orientation(P0, P1, ex):
+    """compute the orientation of Point P0 against Point P1
+
+    Returns:
+        0 for left and 1 for right
+
+    """
+    if P0 * ex > P1 * ex:
+        orient = 1
+    else:
+        orient = 0
+    return orient
+
+
+def clustering(ports0, ports1, ex):
+    """Given two (equal length) port arrays, divide them into clusters
+
+    Returns:
+        an array of k 3-tuples, k is the number of clusters,
+        a tuple with (p0, p1, orientation)
+    """
+    orient_old = None
+    port_cluster = []
+    port_clusters = []
+    for port0, port1 in zip(ports0, ports1):
+        orient_new = orientation(port0.position, port1.position, ex)
+        # first pair
+        if orient_old is None:
+            port_cluster.append((port0, port1, orient_new))
+        # the rest pairs
+        elif orient_new == orient_old:
+            port_cluster.append((port0, port1, orient_new))
+        else:
+            port_clusters.append(port_cluster)
+            port_cluster = []
+            port_cluster.append((port0, port1, orient_new))
+        orient_old = orient_new
+    port_clusters.append(port_cluster)
+    return port_clusters
 # ####################### SIEPIC EXTENSION ##########################
 
 
