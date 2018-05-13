@@ -538,6 +538,9 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
 
     # fetch the database parameters
 
+    if r <= 0:
+        raise RuntimeError(f"Please give me a positive radius. Bad r={r}")
+
     # optimal sampling
     if theta_end < theta_start:
         theta_start, theta_end = theta_end, theta_start
