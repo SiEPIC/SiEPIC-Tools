@@ -383,44 +383,47 @@ def manhattan_intersection(vertical_point, horizontal_point, ex):
 # ####################### CLUSTERING METHODS    ##########################
 
 
-def orientation(P0, P1, ex):
+def find_Z_orientation(P0, P1, ex):
     """compute the orientation of Point P0 against Point P1
 
     Returns:
-        0 for left and 1 for right
+        0 for Z-oriented and 1 for S-oriented
 
     """
-    if P0 * ex > P1 * ex:
-        orient = 1
+    if P1 * ex > P0 * ex:
+        orient = 0  # Z-oriented
     else:
-        orient = 0
+        orient = 1  # S-oriented
     return orient
 
 
-def clustering(ports0, ports1, ex):
+def cluster_ports(ports_from, ports_to, ex):
     """Given two (equal length) port arrays, divide them into clusters
+    based on the connection orientation. TODO document more.
 
     Returns:
-        an array of k 3-tuples, k is the number of clusters,
-        a tuple with (p0, p1, orientation)
+        an array of k 2-tuples (port_pair_list, orientation),
+            where k is the number of clusters,
+            port_pair list an array of (p0, p1),
+            and orientation is 0 for Z and 1 for S
     """
     orient_old = None
     port_cluster = []
     port_clusters = []
-    for port0, port1 in zip(ports0, ports1):
-        orient_new = orientation(port0.position, port1.position, ex)
+    for port_from, port_to in zip(ports_from, ports_to):
+        orient_new = find_Z_orientation(port_from.position, port_to.position, ex)
         # first pair
         if orient_old is None:
-            port_cluster.append((port0, port1, orient_new))
+            port_cluster.append((port_from, port_to))
         # the rest pairs
         elif orient_new == orient_old:
-            port_cluster.append((port0, port1, orient_new))
+            port_cluster.append((port_from, port_to))
         else:
-            port_clusters.append(port_cluster)
+            port_clusters.append((port_cluster, orient_old))
             port_cluster = []
-            port_cluster.append((port0, port1, orient_new))
+            port_cluster.append((port_from, port_to))
         orient_old = orient_new
-    port_clusters.append(port_cluster)
+    port_clusters.append((port_cluster, orient_old))
     return port_clusters
 # ####################### SIEPIC EXTENSION ##########################
 
