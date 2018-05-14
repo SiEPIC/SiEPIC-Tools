@@ -6,7 +6,7 @@ Author: Thomas Ferreira de Lima @thomaslima
 
 """
 import numpy as np
-from numpy import sqrt
+from numpy import sqrt, pi, cos, sin
 from . import sample_function
 
 MAGIC_NUMBER = 15.0
@@ -100,6 +100,10 @@ def rotate(point, angle_rad):
 rotate90 = lambda point: rotate(point, np.pi / 2)
 
 
+def projection(length, angle):
+    x = length * cos(angle * pi / 180)
+    y = length * sin(angle * pi / 180)
+    return x, y
 # ####################### ARC METHODS    ##########################
 
 
