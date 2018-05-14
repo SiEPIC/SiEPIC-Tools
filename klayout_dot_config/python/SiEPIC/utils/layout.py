@@ -762,7 +762,7 @@ def layout_connect_ports(cell, layer, port_from, port_to, smooth=True):
     if debug:
         for point in curve:
             print(point)
-    # print(f"bezier_optimal({P0}, {P3}, {angle_from}, {angle_to})")
+        print(f"bezier_optimal({P0}, {P3}, {angle_from}, {angle_to})")
     return layout_waveguide(cell, layer, curve, [port_from.width, port_to.width], smooth=smooth)
 
 
