@@ -538,6 +538,9 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
 
     # fetch the database parameters
 
+    if r <= 0:
+        raise RuntimeError(f"Please give me a positive radius. Bad r={r}")
+
     # optimal sampling
     if theta_end < theta_start:
         theta_start, theta_end = theta_end, theta_start
@@ -759,7 +762,7 @@ def layout_connect_ports(cell, layer, port_from, port_to, smooth=True):
     if debug:
         for point in curve:
             print(point)
-    # print(f"bezier_optimal({P0}, {P3}, {angle_from}, {angle_to})")
+        print(f"bezier_optimal({P0}, {P3}, {angle_from}, {angle_to})")
     return layout_waveguide(cell, layer, curve, [port_from.width, port_to.width], smooth=smooth)
 
 
