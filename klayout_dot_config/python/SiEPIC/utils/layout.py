@@ -752,8 +752,9 @@ def layout_connect_ports(cell, layer, port_from, port_to, smooth=True):
         P3 = port_to.position + port_to.direction * port_to.width / 2
         smooth = smooth and False
     else:
-        P0 = port_from.position
-        P3 = port_to.position
+        dbu = cell.layout().dbu
+        P0 = port_from.position - dbu * port_from.direction
+        P3 = port_to.position + dbu * port_to.direction
         smooth = smooth or True
     angle_from = np.arctan2(port_from.direction.y, port_from.direction.x) * 180 / pi
     angle_to = np.arctan2(-port_to.direction.y, -port_to.direction.x) * 180 / pi
