@@ -444,3 +444,28 @@ class Port(object):
     def rename(self, new_name):
         self.name = new_name
         return self
+
+
+try:
+    import pya
+
+    # Defining following methods to allow for serialization
+    def getstate(self):
+        state = {"name": self.name,
+                 "position": (self.position.x, self.position.y),
+                 "direction": (self.direction.x, self.direction.y),
+                 "width": self.width}
+        return state
+    Port.__getstate__ = getstate
+
+    def setstate(self, state):
+        self.name = state['name']
+        x, y = state['position']
+        self.position = pya.DPoint(x, y)
+        x, y = state['direction']
+        self.direction = pya.DVector(x, y)
+        self.width = state['width']
+    Port.__setstate__ = setstate
+
+except ImportError:
+    pass
