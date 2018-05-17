@@ -414,6 +414,10 @@ def cluster_ports(ports_from, ports_to, ex):
     orient_old = None
     port_cluster = []
     port_clusters = []
+    # sort the arrays first
+    proj_ex = lambda p: p.position * ex
+    ports_from = sorted(ports_from, key=proj_ex)
+    ports_to = sorted(ports_to, key=proj_ex)
     for port_from, port_to in zip(ports_from, ports_to):
         orient_new = find_Z_orientation(port_from.position, port_to.position, ex)
         # first pair
