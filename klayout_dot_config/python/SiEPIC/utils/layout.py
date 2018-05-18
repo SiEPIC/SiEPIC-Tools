@@ -619,9 +619,10 @@ def layout_arc_drc_exclude(cell, drc_layer, center, r, w, theta_start, theta_end
         layout_square(cell, drc_layer, corner_point, 0.1, ex)
 
 
-def layout_arc_with_drc_exclude(cell, layer, drc_layer, center, r, w, theta_start, theta_end, ex=None):
-    layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex)
-    layout_arc_drc_exclude(cell, drc_layer, center, r, w, theta_start, theta_end, ex)
+def layout_arc_with_drc_exclude(cell, layer, drc_layer, center, r, w, theta_start, theta_end, ex=None, **kwargs):
+    dpoly = layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex, **kwargs)
+    dpoly.layout_drc_exclude(cell, drc_layer, ex)
+    return dpoly
 
 
 def layout_circle(cell, layer, center, r):
