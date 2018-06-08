@@ -419,14 +419,24 @@ def cluster_ports(ports_from, ports_to, ex):
     ports_from = sorted(ports_from, key=proj_ex)
     ports_to = sorted(ports_to, key=proj_ex)
     for port_from, port_to in zip(ports_from, ports_to):
+        new_cluster = False
         orient_new = find_Z_orientation(port_from.position, port_to.position, ex)
         # first pair
         if orient_old is None:
             port_cluster.append((port_from, port_to))
         # the rest pairs
         elif orient_new == orient_old:
-            port_cluster.append((port_from, port_to))
+            # if the ports are too spaced apart, initiate new cluster
+            right_port = min(port_from, port_to, key=proj_ex)
+            left_port = max(port_cluster[-1], key=proj_ex)
+            if proj_ex(right_port) - right_port.width > proj_ex(left_port) + left_port.width:
+                new_cluster = True
+            else:
+                port_cluster.append((port_from, port_to))
         else:
+            new_cluster = True
+
+        if new_cluster:
             port_clusters.append((port_cluster, orient_old))
             port_cluster = []
             port_cluster.append((port_from, port_to))
