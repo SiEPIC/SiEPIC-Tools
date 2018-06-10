@@ -211,25 +211,29 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   
     # get polygons from component
     polygons = component.get_polygons()
-    if verbose:
-      print(" polygons: %s" % [p for p in polygons] )
-    polygons_vertices = [[[vertex.x*dbum, vertex.y*dbum] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
-    if verbose:
-      print(" polygons' vertices: %s" % len(polygons_vertices) )
-    if len(polygons_vertices) < 1:
-      error = pya.QMessageBox()
-      error.setStandardButtons(pya.QMessageBox.Ok )
-      error.setText("Error: Component needs to have polygons.")
-      response = error.exec_()        
-      return
   
-    # send polygons to FDTD
-    for i in range(0,len(polygons_vertices)):
-      lumapi.putMatrix(_globals.FDTD, "polygon_vertices", np.array(polygons_vertices[i]) )
-      lumapi.evalScript(_globals.FDTD, " \
-        addpoly; set('vertices',polygon_vertices); \
-        set('material', '%s'); set('z span', %s);     \
-        ?'Polygons added'; " % (FDTD_settings['material_Si'], FDTD_settings['thickness_Si']) )
+    def send_polygons_to_FDTD(polygons):
+        if verbose:
+          print(" polygons: %s" % [p for p in polygons] )
+        polygons_vertices = [[[vertex.x*dbum, vertex.y*dbum] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
+        if verbose:
+          print(" polygons' vertices: %s" % len(polygons_vertices) )
+        if len(polygons_vertices) < 1:
+          error = pya.QMessageBox()
+          error.setStandardButtons(pya.QMessageBox.Ok )
+          error.setText("Error: Component needs to have polygons.")
+          response = error.exec_()        
+          return
+        # send polygons to FDTD
+        lumapi.evalScript(_globals.FDTD, "addgroup; set('name','polygons');")
+        for i in range(0,len(polygons_vertices)):
+          lumapi.putMatrix(_globals.FDTD, "polygon_vertices", np.array(polygons_vertices[i]) )
+          lumapi.evalScript(_globals.FDTD, " \
+            addpoly; set('vertices',polygon_vertices); \
+            set('material', '%s'); set('z span', %s);     \
+            addtogroup('polygons'); \
+            ?'Polygons added'; " % (FDTD_settings['material_Si'], FDTD_settings['thickness_Si']) )
+    send_polygons_to_FDTD(polygons)
       
     # create FDTD ports
     # configure boundary conditions to be PML where we have ports
@@ -424,6 +428,14 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   
     # Perform quick corner analysis
     if FDTD_settings['Perform-quick-corner-analysis']:
+      for w in [-FDTD_settings['width_Si_corners'],FDTD_settings['width_Si_corners']]:
+          polygons_w = polygons.sized(w)
+          send_polygons_to_FDTD(polygons_w)
+          for h in [-FDTD_settings['thickness_Si_corners'],FDTD_settings['thickness_Si_corners']]:
+              lumapi.evalScript(_globals.FDTD, " \
+                  switchtolayout; selectpartial('polygons::'); set('z span',%s);\
+                  " % (FDTD_settings['thickness_Si']+h) )
+              Sparams, Sparams_modes = FDTD_run_Sparam_simple(pins, in_pin=in_pin, modes = mode_selection_index, plots = True)
       pass
   
     # Configure FDTD region, higher mesh accuracy, update FDTD ports mode source frequency points
@@ -468,6 +480,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   
     # Perform final corner analysis, for Monte Carlo simulations
     if FDTD_settings['Perform-final-corner-analysis']:
+      
       pass
   
   

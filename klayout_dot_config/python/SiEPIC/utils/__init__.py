@@ -975,7 +975,7 @@ def svg_from_component(component, filename, verbose=False):
         return
 
     if TECHNOLOGY['Waveguide_color'] > 0:
-        c = bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+        c = bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:10])
     else:
         c = [150, 50, 50]
     color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')
