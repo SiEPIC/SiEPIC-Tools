@@ -180,7 +180,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = (devrec_box.left)*dbum-200e-9, (devrec_box.right)*dbum+200e-9, (devrec_box.bottom)*dbum-200e-9, (devrec_box.top)*dbum+200e-9
     sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5; 
     lumapi.evalScript(_globals.FDTD, " \
-      newproject; \
+      newproject; closeall; \
       addfdtd; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z span',%s);\
       set('force symmetric z mesh', 1); set('mesh accuracy',1); \
       set('x min bc','Metal'); set('x max bc','Metal'); \
@@ -372,6 +372,8 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       Sparam_pin_max_modes.append( np.amax(np.absolute(np.array(Sparams)[:,:,mode_selection_index.index(m)]), axis=1).argmax() + 1 ) 
       Mean_IL_best_port.append( -10*np.log10(np.mean(np.absolute(Sparams)[Sparam_pin_max_modes[-1]-1,:,mode_selection_index.index(m)])**2) ) 
   
+    print("Sparam_pin_max_modes = %s" % Sparam_pin_max_modes)
+    
     # user verify ok?
     warning = pya.QMessageBox()
     warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
@@ -474,14 +476,15 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     pin_h0, pin_w0 = str(round(FDTD_settings['thickness_Si'],9)), str(round(pins[0].path.width*dbum,9))
     file_sparam = os.path.join(_globals.TEMP_FOLDER, '%s_t=%s_w=%s.dat' % (component.instance,pin_h0,pin_w0))
     files_sparam.append(file_sparam)
-    lumapi.evalScript(_globals.FDTD, " #\
+    lumapi.evalScript(_globals.FDTD, " \
       runsweep('s-parameter sweep'); \
       S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
       S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
       S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
-      # visualize(S_parameters); \
+      # visualize(S_parameters); \n\
       exportsweep('s-parameter sweep','%s'); \
       " % (file_sparam) )
+
     if verbose:
       print(" S-Parameter file: %s" % file_sparam)
 
@@ -504,6 +507,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   
     # Perform final corner analysis, for Monte Carlo simulations
     if FDTD_settings['Perform-final-corner-analysis']:
+        lumapi.evalScript(_globals.FDTD, "leg=cell(4); li=0; \n") # legend for corner plots
         for w in [-FDTD_settings['width_Si_corners'],FDTD_settings['width_Si_corners']]:
             polygons_w = [p for p in pya.Region(polygons).sized(w/2*1e9).each_merged()]
             send_polygons_to_FDTD(polygons_w)
@@ -516,16 +520,28 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
                 pin_h, pin_w = str(round(FDTD_settings['thickness_Si']+h,9)), str(round(pins[0].path.width*dbum+w,9))
                 file_sparam = os.path.join(_globals.TEMP_FOLDER, '%s_t=%s_w=%s.dat' % (component.instance,pin_h,pin_w))
                 files_sparam.append(file_sparam)
-                lumapi.evalScript(_globals.FDTD, " # \
+                lumapi.evalScript(_globals.FDTD, "  \
                   runsweep('s-parameter sweep'); \
                   S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
                   S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
                   S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
-                  # visualize(S_parameters); \
                   exportsweep('s-parameter sweep','%s'); \
+                  # visualize(S_parameters); \n\
                   " % (file_sparam) )
                 if verbose:
                   print(" S-Parameter file: %s" % file_sparam)
+
+                #if verbose:
+                #  print(' Plot S_%s_%s Sparam' % (p.pin_name,in_pin.pin_name) )
+                
+                # plot results of the corner analysis:
+                for m in mode_selection_index:
+                    lumapi.evalScript(_globals.FDTD, " \
+                      plot(wavelengths, 20*log10(abs(S_parameters.S%s1)), 'Wavelength (um)', 'Transmission (dB)'); holdon; \
+                      li = li + 1; \
+                      leg{li} = 'S_%s_%s:%s - %s, %s'; \
+                       " % ( Sparam_pin_max_modes[mode_selection_index.index(m)]+1, p.pin_name, in_pin.pin_name, mode_selection_index.index(m)+1, pin_h,pin_w) )
+
                   
                 # Write XML file for INTC scripted compact model
                 # height and width are set to the first pin width/height
@@ -550,6 +566,9 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     if verbose:
       print(" XML file: %s" % xml_filename)
 
+    # Add legend to the Corner plots
+    lumapi.evalScript(_globals.FDTD, "legend(leg);\n")
+
 
   if addto_CML:
     # INTC custom library name
@@ -562,7 +581,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
      
     # Create a component
     port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
-    t = 'switchtodesign; deleteall; \n'
+    t = 'switchtodesign; new; deleteall; \n'
     t+= 'addelement("Optical N Port S-Parameter"); createcompound; select("COMPOUND_1");\n'
     t+= 'component = "%s"; set("name",component); \n' % component.instance
     import os
