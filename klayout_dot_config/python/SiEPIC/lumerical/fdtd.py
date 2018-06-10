@@ -217,7 +217,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
           print(" polygons: %s" % [p for p in polygons] )
         polygons_vertices = [[[vertex.x*dbum, vertex.y*dbum] for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons] ]
         if verbose:
-          print(" polygons' vertices: %s" % len(polygons_vertices) )
+          print(" number of polygons: %s" % len(polygons_vertices) )
         if len(polygons_vertices) < 1:
           error = pya.QMessageBox()
           error.setStandardButtons(pya.QMessageBox.Ok )
@@ -225,15 +225,18 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
           response = error.exec_()        
           return
         # send polygons to FDTD
-        lumapi.evalScript(_globals.FDTD, "addgroup; set('name','polygons');")
+        lumapi.evalScript(_globals.FDTD, "switchtolayout; select('polygons'); delete; addgroup; set('name','polygons'); set('x',0); set('y',0);")
         for i in range(0,len(polygons_vertices)):
+          print("  polygons' vertices (%s): %s" % (len(polygons_vertices[i]), polygons_vertices[i]) )
           lumapi.putMatrix(_globals.FDTD, "polygon_vertices", np.array(polygons_vertices[i]) )
           lumapi.evalScript(_globals.FDTD, " \
             addpoly; set('vertices',polygon_vertices); \
-            set('material', '%s'); set('z span', %s);     \
+            set('material', '%s'); set('z span', %s); set('x',0); set('y',0);    \
             addtogroup('polygons'); \
             ?'Polygons added'; " % (FDTD_settings['material_Si'], FDTD_settings['thickness_Si']) )
+            
     send_polygons_to_FDTD(polygons)
+
       
     # create FDTD ports
     # configure boundary conditions to be PML where we have ports
@@ -429,14 +432,14 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     # Perform quick corner analysis
     if FDTD_settings['Perform-quick-corner-analysis']:
       for w in [-FDTD_settings['width_Si_corners'],FDTD_settings['width_Si_corners']]:
-          polygons_w = polygons.sized(w)
+          polygons_w = [p for p in pya.Region(polygons).sized(w/2*1e9).each_merged()]
           send_polygons_to_FDTD(polygons_w)
           for h in [-FDTD_settings['thickness_Si_corners'],FDTD_settings['thickness_Si_corners']]:
               lumapi.evalScript(_globals.FDTD, " \
                   switchtolayout; selectpartial('polygons::'); set('z span',%s);\
                   " % (FDTD_settings['thickness_Si']+h) )
               Sparams, Sparams_modes = FDTD_run_Sparam_simple(pins, in_pin=in_pin, modes = mode_selection_index, plots = True)
-      pass
+
   
     # Configure FDTD region, higher mesh accuracy, update FDTD ports mode source frequency points
     lumapi.evalScript(_globals.FDTD, " \
@@ -452,54 +455,96 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     # add s-parameter sweep task
     lumapi.evalScript(_globals.FDTD, " \
       deletesweep('s-parameter sweep'); \
-      addsweep(3); \
-      NPorts=%s; \
+      addsweep(3); NPorts=%s; \
       " % (len(pins))  )
     for p in pins:
       for m in mode_selection_index:
         # add index entries to s-matrix mapping table
         lumapi.evalScript(_globals.FDTD, " \
           index1 = struct; \
-          index1.Port = '%s'; \
-          index1.Mode = 'mode %s'; \
+          index1.Port = '%s'; index1.Mode = 'mode %s'; \
           addsweepparameter('s-parameter sweep',index1); \
         " % (p.pin_name, m))
     
+    # filenames for the s-parameter files
+    files_sparam = []
+    
     # run s-parameter sweep, collect results, visualize results
     # export S-parameter data to file named xxx.dat to be loaded in INTERCONNECT
-    lumapi.evalScript(_globals.FDTD, " \
+    pin_h0, pin_w0 = str(round(FDTD_settings['thickness_Si'],9)), str(round(pins[0].path.width*dbum,9))
+    file_sparam = os.path.join(_globals.TEMP_FOLDER, '%s_t=%s_w=%s.dat' % (component.instance,pin_h0,pin_w0))
+    files_sparam.append(file_sparam)
+    lumapi.evalScript(_globals.FDTD, " #\
       runsweep('s-parameter sweep'); \
       S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
       S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
       S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
-      visualize(S_parameters); \
+      # visualize(S_parameters); \
       exportsweep('s-parameter sweep','%s'); \
       " % (file_sparam) )
     if verbose:
       print(" S-Parameter file: %s" % file_sparam)
-  
-    # Perform final corner analysis, for Monte Carlo simulations
-    if FDTD_settings['Perform-final-corner-analysis']:
-      
-      pass
-  
-  
+
     # Write XML file for INTC scripted compact model
     # height and width are set to the first pin width/height
     xml_out = '\
-      <?xml version="1.0" encoding="UTF-8"?> \n\
-      <lumerical_lookup_table version="1.0" name = "index_table"> \n\
-      <association> \n\
-          <design> \n\
-              <value name="height" type="double">%s</value> \n\
-              <value name="width" type="double">%s</value> \n\
-          </design> \n\
-          <extracted> \n\
-              <value name="sparam" type="string">%s</value> \n\
-          </extracted> \n\
-      </association>\n' % (FDTD_settings['thickness_Si'], pins[0].path.width*dbum, component.instance)
+<?xml version="1.0" encoding="UTF-8"?> \n\
+<lumerical_lookup_table version="1.0" name = "index_table"> \n\
+<association> \n\
+  <design> \n\
+      <value name="height" type="double">%s</value> \n\
+      <value name="width" type="double">%s</value> \n\
+  </design> \n\
+  <extracted> \n\
+      <value name="sparam" type="string">%s</value> \n\
+  </extracted> \n\
+</association>\n' % (pin_h0, pin_w0, os.path.basename(file_sparam))
     fh = open(xml_filename, "w")
     fh.writelines(xml_out)
+  
+    # Perform final corner analysis, for Monte Carlo simulations
+    if FDTD_settings['Perform-final-corner-analysis']:
+        for w in [-FDTD_settings['width_Si_corners'],FDTD_settings['width_Si_corners']]:
+            polygons_w = [p for p in pya.Region(polygons).sized(w/2*1e9).each_merged()]
+            send_polygons_to_FDTD(polygons_w)
+            for h in [-FDTD_settings['thickness_Si_corners'],FDTD_settings['thickness_Si_corners']]:
+                lumapi.evalScript(_globals.FDTD, " \
+                      switchtolayout; selectpartial('polygons::'); set('z span',%s);\
+                      " % (FDTD_settings['thickness_Si']+h) )
+                # run s-parameter sweep, collect results, visualize results
+                # export S-parameter data to file named xxx.dat to be loaded in INTERCONNECT
+                pin_h, pin_w = str(round(FDTD_settings['thickness_Si']+h,9)), str(round(pins[0].path.width*dbum+w,9))
+                file_sparam = os.path.join(_globals.TEMP_FOLDER, '%s_t=%s_w=%s.dat' % (component.instance,pin_h,pin_w))
+                files_sparam.append(file_sparam)
+                lumapi.evalScript(_globals.FDTD, " # \
+                  runsweep('s-parameter sweep'); \
+                  S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
+                  S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
+                  S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
+                  # visualize(S_parameters); \
+                  exportsweep('s-parameter sweep','%s'); \
+                  " % (file_sparam) )
+                if verbose:
+                  print(" S-Parameter file: %s" % file_sparam)
+                  
+                # Write XML file for INTC scripted compact model
+                # height and width are set to the first pin width/height
+                xml_out = '\
+<association> \n\
+  <design> \n\
+      <value name="height" type="double">%s</value> \n\
+      <value name="width" type="double">%s</value> \n\
+  </design> \n\
+  <extracted> \n\
+      <value name="sparam" type="string">%s</value> \n\
+  </extracted> \n\
+</association>\n' % (pin_h, pin_w, os.path.basename(file_sparam))
+                fh.writelines(xml_out)
+
+    xml_out = '\
+</lumerical_lookup_table>'
+    fh.writelines(xml_out)
+    files_sparam.append(xml_filename)
     fh.close()
 
     if verbose:
@@ -507,17 +552,14 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
 
 
   if addto_CML:
+    # INTC custom library name
+    INTC_Lib = 'SiEPIC_user'
     # Run using Python integration:
     from . import interconnect
     interconnect.run_INTC()
     from .. import _globals
     lumapi = _globals.LUMAPI
-  
-    # Copy files to the INTC Custom library folder
-    lumapi.evalScript(_globals.INTC, "out=customlibrary;")
-    INTC_custom=lumapi.getVar(_globals.INTC, "out")
-    
-      
+     
     # Create a component
     port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
     t = 'switchtodesign; deleteall; \n'
@@ -529,10 +571,20 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     else:
       print(" SiEPIC.lumerical.fdtd.component... missing SVG icon: %s" % svg_filename)
     t+= 'select(component+"::SPAR_1"); set("load from file", true);\n'
-    t+= 'set("s parameters filename", "%s");\n' % (file_sparam)
+    t+= 'set("s parameters filename", "%s");\n' % (files_sparam[0])
     t+= 'set("load from file", false);\n'
     t+= 'set("passivity", "enforce");\n'
     t+= 'set("prefix", component);\n'
+    t+= 'set("description", component);\n'
+
+    # Add variables for Monte Carlo simulations:
+    t+= 'addproperty(component, "MC_uniformity_thickness", "wafer", "Matrix");\n' 
+    t+= 'addproperty(component, "MC_uniformity_width", "wafer", "Matrix");\n' 
+    t+= 'addproperty(component, "MC_grid", "wafer", "Number");\n' 
+    t+= 'addproperty(component, "MC_resolution_x", "wafer", "Number");\n' 
+    t+= 'addproperty(component, "MC_resolution_y", "wafer", "Number");\n' 
+    t+= 'addproperty(component, "MC_non_uniform", "wafer", "Number");\n' 
+    
     t+= 'setposition(component+"::SPAR_1",100,-100);\n'
     count=0
     for p in pins:
@@ -545,84 +597,84 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
         print(location)
       t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "%s",%s);\n' %(p.pin_name,port_dict2[p.rotation],location)
       t+= 'connect(component+"::RELAY_%s", "port", component+"::SPAR_1", "port %s");\n' % (count, count)
-    t+= 'select(component); addtolibrary("SiEPIC_user",true);\n'
-    t+= '?"created and added " + component + " to library SiEPIC_user";\n'
     lumapi.evalScript(_globals.INTC, t)  
-  
-  
-    # Script for the component, to load S-Param data:
-    t= '###############################################\n'
-    t+='# SiEPIC ebeam compact model library (CML)\n'
-    t+='# custom generated component created by SiEPIC-Tools; script by Zeqin Lu, Xu Wang, Lukas Chrostowski\n'
-    t+='?filename = %local path%+"/source_data/' + '%s/%s.xml";\n' % (component.instance,component.instance)
+
+
+    # for Monte Carlo simulations, copy model files, create the component script
+    if FDTD_settings['Perform-final-corner-analysis']:
+        # Copy files to the INTC Custom library folder
+        lumapi.evalScript(_globals.INTC, "out=customlibrary;")
+        INTC_custom=lumapi.getVar(_globals.INTC, "out")
+        INTC_files = os.path.join(INTC_custom, INTC_Lib, "source_data", component.instance)
+        if not(os.path.exists(INTC_files)):
+            try:
+                os.makedirs(INTC_files)
+            except:
+                pass
+        from shutil import copy2
+        for f in files_sparam:
+            copy2(f, INTC_files)
+
+        # Variables for the Monte Carlo component, linked to the top schematic
+        t+='setexpression(component,"MC_uniformity_thickness","%MC_uniformity_thickness%");\n'
+        t+='setexpression(component,"MC_uniformity_width","%MC_uniformity_width%");\n'
+        t+='setexpression(component,"MC_grid","%MC_grid%");\n'
+        t+='setexpression(component,"MC_resolution_x","%MC_resolution_x%");\n'
+        t+='setexpression(component,"MC_resolution_y","%MC_resolution_y%");\n'
+        t+='setexpression(component,"MC_non_uniform","%MC_non_uniform%");\n'
+        lumapi.evalScript(_globals.INTC, t)  
+     
+        script = ' \
+############################################### \n\
+# SiEPIC compact model library (CML) \n\
+# custom generated component created by SiEPIC-Tools; script by Zeqin Lu, Xu Wang, Lukas Chrostowski  \n\
+############################################### \n\
+\n\
+# nominal geometry:  \n\
+waveguide_width = %s; \n\
+waveguide_thickness = %s; \n\
+# S-parameter data file table \n\
+component = "%s"; table = "index_table"; \n\
+filename = %%local path%%+"/source_data/"+component+"/"+component+".xml";   \n\
+if (fileexists(filename)) { \n\
+    \n\
+    if (MC_non_uniform==1) { \n\
+            # location of component on the wafer map \n\
+        x=%%x coordinate%%; y=%%y coordinate%%; \n\
+        x1_wafer = floor(x/MC_grid); y1_wafer = floor(y/MC_grid);  \n\
+    \n\
+            # geometry variation: \n\
+        devi_width = MC_uniformity_width(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9; \n\
+        devi_thickness = MC_uniformity_thickness(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9; \n\
+    \n\
+            # geometry for this MC run \n\
+        waveguide_width = waveguide_width + devi_width;  # [m] \n\
+        waveguide_thickness = waveguide_thickness + devi_thickness; # [m] \n\
+    \n\
+    } \n\
+    \n\
+    # design (input parameters) \n\
+    design = cell(2); \n\
+    design{1} = struct; design{1}.name = "width"; design{1}.value = waveguide_width; \n\
+    design{2} = struct; design{2}.name = "height"; design{2}.value = waveguide_thickness;  \n\
+    \n\
+    # Load (interpolate for MC simulation) the S-Parameters \n\
+    M = lookupreadnportsparameter(filename, table, design, "sparam"); \n\
+    setvalue("SPAR_1","s parameters",M);   \n\
+} \n\
+' % (pin_w0, pin_h0, component.instance)
+
+        # Script for the Monte Carlo component, to load S-Param data:
+        lumapi.putString(_globals.INTC, "script", script)
+        t+='select(component); set("setup script", script);'
+        lumapi.evalScript(_globals.INTC, t)  
+
     
+    # Add to library
+    t = 'select(component); addtolibrary("%s",true);\n' % INTC_Lib
+    t+= '?"created and added " + component + " to library %s";\n' % INTC_Lib
+    lumapi.evalScript(_globals.INTC, t)  
     
-    
-    # Monte Carlo part:
-    '''
-    if (MC_non_uniform==1) {
-    
-        x=%x coordinate%;
-        y=%y coordinate%;
-    
-        x1_wafer = floor(x/MC_grid); # location of component on the wafer map
-        y1_wafer = floor(y/MC_grid);
-    
-        devi_width = MC_uniformity_width(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;
-        devi_thickness = MC_uniformity_thickness(MC_resolution_x/2 + x1_wafer, MC_resolution_y/2 + y1_wafer)*1e-9;                     
-    
-        initial_width = 500e-9;
-        initial_thickness = 220e-9;
-    
-        waveguide_width = initial_width + devi_width;  # [m]
-        waveguide_thickness = initial_thickness + devi_thickness; # [m]
-    
-    
-        # effective index and group index interpolations
-        # The following built-in script interpolates effective index (neff), group index (ng), and dispersion, 
-        # and applies the interpolated results to the waveguide. 
-    
-        filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
-        table = "index_table";
-    
-        design = cell(2);
-        extracted = cell(1);
-    
-        #design (input parameters)
-        design{1} = struct;
-        design{1}.name = "width";
-        design{1}.value = waveguide_width;
-        design{2} = struct;
-        design{2}.name = "height";  
-        design{2}.value = waveguide_thickness; 
-    
-       M = lookupreadnportsparameter(filename, table, design, "y_sparam");
-    
-       setvalue('SPAR_1','s parameters',M);
-    
-    }
-    else {
-        filename = %local path%+"/source_data/y_branch_source/y_lookup_table.xml";
-        table = "index_table";
-    
-        design = cell(2);
-        extracted = cell(1);
-    
-        #design (input parameters)
-        design{1} = struct;
-        design{1}.name = "width";
-        design{1}.value = 500e-9;
-        design{2} = struct;
-        design{2}.name = "height";  
-        design{2}.value = 220e-9; 
-    
-       M = lookupreadnportsparameter(filename, table, design, "y_sparam");
-    
-       setvalue('SPAR_1','s parameters',M);
-        
-    }
-    
-    '''
 
   return component.instance, file_sparam, [], xml_filename, svg_filename
 
