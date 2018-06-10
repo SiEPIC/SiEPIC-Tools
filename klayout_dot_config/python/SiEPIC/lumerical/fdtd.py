@@ -507,7 +507,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   
     # Perform final corner analysis, for Monte Carlo simulations
     if FDTD_settings['Perform-final-corner-analysis']:
-        lumapi.evalScript(_globals.FDTD, "leg=cell(4); li=0; \n") # legend for corner plots
+        lumapi.evalScript(_globals.FDTD, "leg=cell(4*%s); li=0; \n" % (len(mode_selection_index))) # legend for corner plots
         for w in [-FDTD_settings['width_Si_corners'],FDTD_settings['width_Si_corners']]:
             polygons_w = [p for p in pya.Region(polygons).sized(w/2*1e9).each_merged()]
             send_polygons_to_FDTD(polygons_w)
@@ -540,7 +540,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
                       plot(wavelengths, 20*log10(abs(S_parameters.S%s1)), 'Wavelength (um)', 'Transmission (dB)'); holdon; \
                       li = li + 1; \
                       leg{li} = 'S_%s_%s:%s - %s, %s'; \
-                       " % ( Sparam_pin_max_modes[mode_selection_index.index(m)]+1, p.pin_name, in_pin.pin_name, mode_selection_index.index(m)+1, pin_h,pin_w) )
+                       " % ( Sparam_pin_max_modes[mode_selection_index.index(m)]+1, pins[Sparam_pin_max_modes[mode_selection_index.index(m)]].pin_name, in_pin.pin_name, mode_selection_index.index(m)+1, pin_h,pin_w) )
 
                   
                 # Write XML file for INTC scripted compact model
