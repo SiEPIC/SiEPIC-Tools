@@ -20,6 +20,12 @@ import SiEPIC.lumerical.fdtd
 import sys
 if 'pya' in sys.modules: # check if in KLayout
   import pya
+  
+try:
+  import pyparsing
+except:
+  import pip
+  pip.main(['install','pyparsing'])  
 
 
 def run_FDTD(verbose=False):
