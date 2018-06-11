@@ -297,7 +297,8 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
             intersect_point = next_high_edge.crossing_point(prev_high_edge)
             points_high.append(intersect_point)
         else:
-            if width * (1 - cos_angle(delta_next, delta_prev)) > dbu:
+            cos_dd = cos_angle(delta_next, delta_prev)
+            if width * (1 - cos_dd) > dbu and theta_next < theta_prev:
                 points_high.append(backward_point_high)
                 points_high.append(forward_point_high)
             else:
@@ -311,7 +312,8 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
             intersect_point = next_low_edge.crossing_point(prev_low_edge)
             points_low.append(intersect_point)
         else:
-            if width * (1 - cos_angle(delta_next, delta_prev)) > dbu:
+            cos_dd = cos_angle(delta_next, delta_prev)
+            if width * (1 - cos_dd) > dbu and theta_next > theta_prev:
                 points_low.append(backward_point_low)
                 points_low.append(forward_point_low)
             else:
@@ -330,10 +332,8 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
     if (final_low_point - points_low[-1]) * delta > 0:
         points_low.append(final_low_point)
 
-    # Append point only if change in direction is less than 120 degrees.
+    # Append point only if change in direction is less than 130 degrees.
     def smooth_append(point_list, point):
-        if point_list is None:
-            print(point)
         if len(point_list) < 1:
             point_list.append(point)
             return point_list
@@ -346,12 +346,20 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
         curr_edge = point - point_list[-1]
         if norm(curr_edge) >= dbu:
             prev_edge = point_list[-1] - point_list[-2]
-            if norm(prev_edge) * sin_angle(curr_edge + prev_edge, prev_edge) > dbu:
+
+            if norm(prev_edge) * abs(sin_angle(curr_edge + prev_edge, prev_edge)) > dbu:
                 if smooth:
+                    # avoid corners when smoothing
                     if cos_angle(curr_edge, prev_edge) > cos(130 / 180 * pi):
                         point_list.append(point)
+                    else:
+                        # edge case when there is prev_edge is small and
+                        # needs to be deleted to get rid of the corner
+                        if norm(curr_edge) > norm(prev_edge):
+                            point_list[-1] = point
                 else:
                     point_list.append(point)
+            # avoid unnecessary points
             else:
                 point_list[-1] = point
         return point_list
@@ -363,6 +371,7 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
 
     smooth_points_high = list(reduce(smooth_append, points_high, list()))
     smooth_points_low = list(reduce(smooth_append, points_low, list()))
+    # smooth_points_low = points_low
     # polygon_dpoints = points_high + list(reversed(points_low))
     # polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
     polygon_dpoints = smooth_points_high + list(reversed(smooth_points_low))
