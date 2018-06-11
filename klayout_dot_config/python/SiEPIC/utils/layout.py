@@ -142,7 +142,7 @@ class DSimplePolygon(pya.DSimplePolygon):
 
     def layout_drc_exclude(self, cell, drclayer, ex):
         """ Places a drc exclude square at every corner.
-        A corner is defined by an angle smaller than 170 degrees (conservative)
+        A corner is defined by an angle greater than 30 degrees (conservative)
         """
         if drclayer is not None:
             points = list(self.each_point())
@@ -154,7 +154,7 @@ class DSimplePolygon(pya.DSimplePolygon):
                 angle = np.arctan2(delta.y, delta.x)
                 delta_angle = angle - prev_angle
                 delta_angle = abs(((delta_angle + pi) % (2 * pi)) - pi)
-                if delta_angle >= pi * 10 / 180:
+                if delta_angle >= pi * 30 / 180:
                     layout_square(cell, drclayer, points[i - 1], 0.1, ex)
                 prev_delta, prev_angle = delta, angle
 
@@ -361,8 +361,11 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
         for point, width in point_width_list:
             print(point, width)
 
-    polygon_dpoints = points_high + list(reversed(points_low))
-    polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
+    smooth_points_high = list(reduce(smooth_append, points_high, list()))
+    smooth_points_low = list(reduce(smooth_append, points_low, list()))
+    # polygon_dpoints = points_high + list(reversed(points_low))
+    # polygon_dpoints = list(reduce(smooth_append, polygon_dpoints, list()))
+    polygon_dpoints = smooth_points_high + list(reversed(smooth_points_low))
     return DSimplePolygon(polygon_dpoints)
 
 
@@ -751,7 +754,7 @@ def layout_connect_ports(cell, layer, port_from, port_to, smooth=True):
         assert port_to.name.startswith("el")
         P0 = port_from.position + port_from.direction * port_from.width / 2
         P3 = port_to.position + port_to.direction * port_to.width / 2
-        smooth = smooth and False
+        smooth = smooth and True
     else:
         dbu = cell.layout().dbu
         P0 = port_from.position - dbu * port_from.direction
