@@ -289,6 +289,8 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
         backward_point_low = (point + 0.5 * width *
                               pya.DPoint(cos(theta_prev - pi / 2), sin(theta_prev - pi / 2)))
 
+        fix_angle = lambda theta: ((theta + pi) % (2 * pi)) - pi
+
         # High point decision
         next_high_edge = pya.DEdge(forward_point_high, next_point_high)
         prev_high_edge = pya.DEdge(backward_point_high, prev_point_high)
@@ -298,7 +300,7 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
             points_high.append(intersect_point)
         else:
             cos_dd = cos_angle(delta_next, delta_prev)
-            if width * (1 - cos_dd) > dbu and theta_next < theta_prev:
+            if width * (1 - cos_dd) > dbu and fix_angle(theta_next - theta_prev) < 0:
                 points_high.append(backward_point_high)
                 points_high.append(forward_point_high)
             else:
@@ -313,7 +315,7 @@ def waveguide_dpolygon(points_list, width, dbu, smooth=True):
             points_low.append(intersect_point)
         else:
             cos_dd = cos_angle(delta_next, delta_prev)
-            if width * (1 - cos_dd) > dbu and theta_next > theta_prev:
+            if width * (1 - cos_dd) > dbu and fix_angle(theta_next - theta_prev) > 0:
                 points_low.append(backward_point_low)
                 points_low.append(forward_point_low)
             else:
