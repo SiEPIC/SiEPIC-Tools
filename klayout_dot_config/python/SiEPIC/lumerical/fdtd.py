@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  SiEPIC-Tools
-#  
+#
 ################################################################################
 
 Component simulations using Lumerical FDTD, to generate Compact Models
@@ -20,12 +20,14 @@ import SiEPIC.lumerical.fdtd
 import sys
 if 'pya' in sys.modules: # check if in KLayout
   import pya
-  
+
 try:
   import pyparsing
 except:
   import pip
-  pip.main(['install','pyparsing'])  
+  from SiEPIC.install import get_pip_main
+  main = get_pip_main()
+  main(['install', 'pyparsing'])
 
 
 def run_FDTD(verbose=False):
@@ -41,17 +43,17 @@ def run_FDTD(verbose=False):
         else:
             from importlib import reload
     elif sys.version_info[0] == 2:
-        from imp import reload    
+        from imp import reload
     reload(load_lumapi)
 
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_FDTD: lumapi not loaded")
     pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Some SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
     return
-    
+
   if verbose:
     print(_globals.FDTD)  # Python Lumerical FDTD integration handle
-  
+
   if not _globals.FDTD: # Not running, start a new session
     _globals.FDTD = lumapi.open('fdtd')
     if verbose:
@@ -86,7 +88,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
 
   # Get technology and layout details
   from ..utils import get_layout_variables
-  TECHNOLOGY, lv, ly, cell = get_layout_variables()  
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
   dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
 
   # get selected instances; only one
@@ -96,9 +98,9 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   error.setStandardButtons(pya.QMessageBox.Ok )
   if len(selected_instances) != 1:
     error.setText("Error: Need to have one component selected.")
-    response = error.exec_()        
+    response = error.exec_()
     return
-  
+
   # get selected component
   if verbose:
     print(" selected component: %s" % selected_instances[0].inst().cell )
@@ -123,21 +125,21 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   pins = sorted(pins, key=lambda  p: p.pin_name)
   for p in pins:
     p.pin_name = p.pin_name.replace(' ','')  # remove spaces in pin names
-  
+
 
   if do_simulation:
     import numpy as np
-    # run Lumerical FDTD Solutions  
+    # run Lumerical FDTD Solutions
     from .. import _globals
     run_FDTD()
     lumapi = _globals.LUMAPI
     if not lumapi:
       print('SiEPIC.lumerical.fdtd.generate_component_sparam: lumapi not loaded')
       return
-      
+
     if verbose:
       print(lumapi)  # Python Lumerical INTERCONNECT integration handle
-  
+
     # get FDTD settings from XML file
     if not FDTD_settings:
       from SiEPIC.utils import load_FDTD_settings
@@ -145,7 +147,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       if FDTD_settings:
         if verbose:
           print(FDTD_settings)
-  
+
     # Configure wavelength and polarization
     # polarization = {'quasi-TE', 'quasi-TM', 'quasi-TE and -TM'}
     mode_selection = FDTD_settings['mode_selection']
@@ -158,17 +160,17 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       error = pya.QMessageBox()
       error.setStandardButtons(pya.QMessageBox.Ok )
       error.setText("Error: Invalid modes requested.")
-      response = error.exec_()        
+      response = error.exec_()
       return
 
     # wavelength
     wavelength_start = FDTD_settings['wavelength_start']
-    wavelength_stop =  FDTD_settings['wavelength_stop']     
-  
+    wavelength_stop =  FDTD_settings['wavelength_stop']
+
     # get DevRec layer
     devrec_box = component.DevRec_polygon.bbox()
     print("%s, %s, %s, %s"  % (devrec_box.left*dbum, devrec_box.right*dbum, devrec_box.bottom*dbum, devrec_box.top*dbum) )
-  
+
     # create FDTD simulation region (extra large)
     FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
     if mode_selection_index==1:
@@ -178,7 +180,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     else:
       Z_symmetry = FDTD_settings['Initial_Z-Boundary-Conditions']
     FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = (devrec_box.left)*dbum-200e-9, (devrec_box.right)*dbum+200e-9, (devrec_box.bottom)*dbum-200e-9, (devrec_box.top)*dbum+200e-9
-    sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5; 
+    sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5;
     lumapi.evalScript(_globals.FDTD, " \
       newproject; closeall; \
       addfdtd; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z span',%s);\
@@ -194,7 +196,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
          wavelength_start,wavelength_stop, \
          FDTD_settings['frequency_points_monitor'], sim_time, \
          FDTD_settings['thickness_Si']/4, FDTD_settings['thickness_Si']/2) )
-  
+
     # add substrate and cladding:
     lumapi.evalScript(_globals.FDTD, " \
       addrect; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z min', %s); set('z max',%s);\
@@ -208,10 +210,10 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       ?'oxide added';    " % (FDTDxmin-1e-6, FDTDxmax+1e-6, FDTDymin-1e-6, FDTDymax+1e-6, \
         -FDTD_settings['thickness_Si']/2, FDTD_settings['thickness_Clad']-FDTD_settings['thickness_Si']/2, \
         FDTD_settings['material_Clad'] ) )
-  
+
     # get polygons from component
     polygons = component.get_polygons()
-  
+
     def send_polygons_to_FDTD(polygons):
         if verbose:
           print(" polygons: %s" % [p for p in polygons] )
@@ -222,7 +224,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
           error = pya.QMessageBox()
           error.setStandardButtons(pya.QMessageBox.Ok )
           error.setText("Error: Component needs to have polygons.")
-          response = error.exec_()        
+          response = error.exec_()
           return
         # send polygons to FDTD
         lumapi.evalScript(_globals.FDTD, "switchtolayout; select('polygons'); delete; addgroup; set('name','polygons'); set('x',0); set('y',0);")
@@ -234,10 +236,10 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
             set('material', '%s'); set('z span', %s); set('x',0); set('y',0);    \
             addtogroup('polygons'); \
             ?'Polygons added'; " % (FDTD_settings['material_Si'], FDTD_settings['thickness_Si']) )
-            
+
     send_polygons_to_FDTD(polygons)
 
-      
+
     # create FDTD ports
     # configure boundary conditions to be PML where we have ports
   #  FDTD_bc = {'y max bc': 'Metal', 'y min bc': 'Metal', 'x max bc': 'Metal', 'x min bc': 'Metal'}
@@ -260,7 +262,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
         select('FDTD'); set('%s','PML'); \
         ?'Added pin: %s, set %s to PML'; " % (p.pin_name, p.direction, 1, mode_selection_index, \
             port_dict[p.rotation], p.pin_name, port_dict[p.rotation] )  )
-      
+
     # Calculate mode sources
     # Get field profiles, to find |E| = 1e-6 points to find spans
     import sys
@@ -275,8 +277,8 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
           x=lumapi.getVar(_globals.FDTD, "x")
           y=lumapi.getVar(_globals.FDTD, "y")
           z=lumapi.getVar(_globals.FDTD, "z")
-    
-          # remove the wavelength from the array, 
+
+          # remove the wavelength from the array,
           # leaving two dimensions, and 3 field components
           if p.rotation in [180.0, 0.0]:
             Efield_xyz = np.array(E[0,:,:,0,:])
@@ -301,19 +303,19 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
             max_z = z[max_index]
           if verbose:
             print(' Port %s, mode %s field decays at: %s, %s microns' % (p.pin_name, m, z[max_index], z[min_index]) )
-    
+
         if FDTDzspan > max_z-min_z:
           FDTDzspan = float(max_z-min_z)
           if verbose:
             print(' Updating FDTD Z-span to: %s microns' % (FDTDzspan) )
-     
+
     # Configure FDTD region, mesh accuracy 1
     # run single simulation
     lumapi.evalScript(_globals.FDTD, " \
       select('FDTD'); set('z span',%s);\
       save('%s');\
       ?'FDTD Z-span updated to %s'; " % (FDTDzspan, fsp_filename, FDTDzspan) )
-  
+
     # Calculate, plot, and get the S-Parameters, S21, S31, S41 ...
     # optionally simulate a subset of the S-Parameters
     # assume input on port 1
@@ -339,7 +341,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
             P=Port_%s=getresult('FDTD::ports::%s','expansion for port monitor'); \
              " % (p.pin_name,p.pin_name) )
         lumapi.evalScript(_globals.FDTD, "wavelengths=c/P.f*1e6;")
-        wavelengths = lumapi.getVar(_globals.FDTD, "wavelengths") 
+        wavelengths = lumapi.getVar(_globals.FDTD, "wavelengths")
         Sparams = []
         for p in port_pins[1::]:
           if verbose:
@@ -358,22 +360,22 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
                " % (modes.index(m)+1, p.pin_name, in_pin.pin_name, modes.index(m)+1) )
         Sparams_modes.append(Sparams)
       return Sparams, Sparams_modes
-    
+
     # Run the first FDTD simulation
     in_pin = pins[0]
     Sparams, Sparams_modes = FDTD_run_Sparam_simple(pins, in_pin=in_pin, modes = mode_selection_index, plots = True)
-  
+
     # find the pin that has the highest Sparam (max over 1-wavelength and 2-modes)
     # use this Sparam for convergence testing
     # use the highest order mode for the convergence testing and reporting IL values.
     Sparam_pin_max_modes = []
     Mean_IL_best_port = [] # one for each mode
     for m in mode_selection_index:
-      Sparam_pin_max_modes.append( np.amax(np.absolute(np.array(Sparams)[:,:,mode_selection_index.index(m)]), axis=1).argmax() + 1 ) 
-      Mean_IL_best_port.append( -10*np.log10(np.mean(np.absolute(Sparams)[Sparam_pin_max_modes[-1]-1,:,mode_selection_index.index(m)])**2) ) 
-  
+      Sparam_pin_max_modes.append( np.amax(np.absolute(np.array(Sparams)[:,:,mode_selection_index.index(m)]), axis=1).argmax() + 1 )
+      Mean_IL_best_port.append( -10*np.log10(np.mean(np.absolute(Sparams)[Sparam_pin_max_modes[-1]-1,:,mode_selection_index.index(m)])**2) )
+
     print("Sparam_pin_max_modes = %s" % Sparam_pin_max_modes)
-    
+
     # user verify ok?
     warning = pya.QMessageBox()
     warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
@@ -388,7 +390,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     else:
       if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
         return
-  
+
     # Convergence testing on S-Parameters:
     # convergence test on simulation z-span (assume symmetric increases)
     # loop in Python so we can check if it is good enough
@@ -410,7 +412,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
         convergence.append ( [FDTDzspan, rms_error] )
         Sparams_abs_prev = Sparams_abs
         if verbose:
-          print (' convergence: span and rms error %s' % convergence[-1] ) 
+          print (' convergence: span and rms error %s' % convergence[-1] )
         lumapi.evalScript(_globals.FDTD, " \
           ?'FDTD Z-span: %s, rms error from previous: %s (convergence testing until < %s)'; " % (FDTDzspan, rms_error, FDTD_settings['convergence_test_rms_error_limit']) )
         if rms_error < FDTD_settings['convergence_test_rms_error_limit']:
@@ -423,14 +425,14 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
             print ('  convergence rms trend: %s; fit data: %s' %  (test_rms, np.array(convergence)[:,-3:]) )
           if test_rms[0] > 0:
             if verbose:
-              print (' convergence problem, not improving rms. terminating convergence test.'  ) 
+              print (' convergence problem, not improving rms. terminating convergence test.'  )
             lumapi.evalScript(_globals.FDTD, "?'convergence problem, not improving rms. terminating convergence test.'; "  )
             test_converged=True
             FDTDzspan += -2*FDTD_settings['convergence_test_span_incremement']
-    
+
       lumapi.putMatrix(_globals.FDTD, 'convergence', convergence)
       lumapi.evalScript(_globals.FDTD, "plot(convergence(:,1), convergence(:,2), 'Simulation span','RMS error between simulation','Convergence testing');")
-  
+
     # Perform quick corner analysis
     if FDTD_settings['Perform-quick-corner-analysis']:
       for w in [-FDTD_settings['width_Si_corners'],FDTD_settings['width_Si_corners']]:
@@ -442,7 +444,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
                   " % (FDTD_settings['thickness_Si']+h) )
               Sparams, Sparams_modes = FDTD_run_Sparam_simple(pins, in_pin=in_pin, modes = mode_selection_index, plots = True)
 
-  
+
     # Configure FDTD region, higher mesh accuracy, update FDTD ports mode source frequency points
     lumapi.evalScript(_globals.FDTD, " \
       switchtolayout; select('FDTD'); set('mesh accuracy',%s);\
@@ -452,7 +454,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       lumapi.evalScript(_globals.FDTD, " \
         select('FDTD::ports::%s'); set('frequency points', %s); \
         ?'updated pin: %s'; " % (p.pin_name, FDTD_settings['frequency_points_expansion'], p.pin_name)  )
-    
+
     # Run full S-parameters
     # add s-parameter sweep task
     lumapi.evalScript(_globals.FDTD, " \
@@ -467,10 +469,10 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
           index1.Port = '%s'; index1.Mode = 'mode %s'; \
           addsweepparameter('s-parameter sweep',index1); \
         " % (p.pin_name, m))
-    
+
     # filenames for the s-parameter files
     files_sparam = []
-    
+
     # run s-parameter sweep, collect results, visualize results
     # export S-parameter data to file named xxx.dat to be loaded in INTERCONNECT
     pin_h0, pin_w0 = str(round(FDTD_settings['thickness_Si'],9)), str(round(pins[0].path.width*dbum,9))
@@ -504,7 +506,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
 </association>\n' % (pin_h0, pin_w0, os.path.basename(file_sparam))
     fh = open(xml_filename, "w")
     fh.writelines(xml_out)
-  
+
     # Perform final corner analysis, for Monte Carlo simulations
     if FDTD_settings['Perform-final-corner-analysis']:
         lumapi.evalScript(_globals.FDTD, "leg=cell(4*%s); li=0; \n" % (len(mode_selection_index))) # legend for corner plots
@@ -533,7 +535,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
 
                 #if verbose:
                 #  print(' Plot S_%s_%s Sparam' % (p.pin_name,in_pin.pin_name) )
-                
+
                 # plot results of the corner analysis:
                 for m in mode_selection_index:
                     lumapi.evalScript(_globals.FDTD, " \
@@ -542,7 +544,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
                       leg{li} = 'S_%s_%s:%s - %s, %s'; \
                        " % ( Sparam_pin_max_modes[mode_selection_index.index(m)]+1, pins[Sparam_pin_max_modes[mode_selection_index.index(m)]].pin_name, in_pin.pin_name, mode_selection_index.index(m)+1, pin_h,pin_w) )
 
-                  
+
                 # Write XML file for INTC scripted compact model
                 # height and width are set to the first pin width/height
                 xml_out = '\
@@ -578,7 +580,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     interconnect.run_INTC()
     from .. import _globals
     lumapi = _globals.LUMAPI
-     
+
     # Create a component
     port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
     t = 'switchtodesign; new; deleteall; \n'
@@ -597,13 +599,13 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     t+= 'set("description", component);\n'
 
     # Add variables for Monte Carlo simulations:
-    t+= 'addproperty(component, "MC_uniformity_thickness", "wafer", "Matrix");\n' 
-    t+= 'addproperty(component, "MC_uniformity_width", "wafer", "Matrix");\n' 
-    t+= 'addproperty(component, "MC_grid", "wafer", "Number");\n' 
-    t+= 'addproperty(component, "MC_resolution_x", "wafer", "Number");\n' 
-    t+= 'addproperty(component, "MC_resolution_y", "wafer", "Number");\n' 
-    t+= 'addproperty(component, "MC_non_uniform", "wafer", "Number");\n' 
-    
+    t+= 'addproperty(component, "MC_uniformity_thickness", "wafer", "Matrix");\n'
+    t+= 'addproperty(component, "MC_uniformity_width", "wafer", "Matrix");\n'
+    t+= 'addproperty(component, "MC_grid", "wafer", "Number");\n'
+    t+= 'addproperty(component, "MC_resolution_x", "wafer", "Number");\n'
+    t+= 'addproperty(component, "MC_resolution_y", "wafer", "Number");\n'
+    t+= 'addproperty(component, "MC_non_uniform", "wafer", "Number");\n'
+
     t+= 'setposition(component+"::SPAR_1",100,-100);\n'
     count=0
     for p in pins:
@@ -616,7 +618,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
         print(location)
       t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "%s",%s);\n' %(p.pin_name,port_dict2[p.rotation],location)
       t+= 'connect(component+"::RELAY_%s", "port", component+"::SPAR_1", "port %s");\n' % (count, count)
-    lumapi.evalScript(_globals.INTC, t)  
+    lumapi.evalScript(_globals.INTC, t)
 
 
     # for Monte Carlo simulations, copy model files, create the component script
@@ -641,8 +643,8 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
         t+='setexpression(component,"MC_resolution_x","%MC_resolution_x%");\n'
         t+='setexpression(component,"MC_resolution_y","%MC_resolution_y%");\n'
         t+='setexpression(component,"MC_non_uniform","%MC_non_uniform%");\n'
-        lumapi.evalScript(_globals.INTC, t)  
-     
+        lumapi.evalScript(_globals.INTC, t)
+
         script = ' \
 ############################################### \n\
 # SiEPIC compact model library (CML) \n\
@@ -686,14 +688,14 @@ if (fileexists(filename)) { \n\
         # Script for the Monte Carlo component, to load S-Param data:
         lumapi.putString(_globals.INTC, "script", script)
         t+='select(component); set("setup script", script);'
-        lumapi.evalScript(_globals.INTC, t)  
+        lumapi.evalScript(_globals.INTC, t)
 
-    
+
     # Add to library
     t = 'select(component); addtolibrary("%s",true);\n' % INTC_Lib
     t+= '?"created and added " + component + " to library %s";\n' % INTC_Lib
-    lumapi.evalScript(_globals.INTC, t)  
-    
+    lumapi.evalScript(_globals.INTC, t)
+
 
   return component.instance, file_sparam, [], xml_filename, svg_filename
 
@@ -704,22 +706,22 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
 
   # Get technology and layout details
   from ..utils import get_layout_variables
-  TECHNOLOGY, lv, ly, cell = get_layout_variables()  
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
   dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
-  
+
   if do_simulation:
     import numpy as np
-    # run Lumerical FDTD Solutions  
+    # run Lumerical FDTD Solutions
     from .. import _globals
     run_FDTD()
     lumapi = _globals.LUMAPI
     if not lumapi:
       print('SiEPIC.lumerical.fdtd.generate_component_sparam: lumapi not loaded')
       return
-      
+
     if verbose:
       print(lumapi)  # Python Lumerical INTERCONNECT integration handle
-  
+
     # get FDTD settings from XML file
     if not FDTD_settings:
       from SiEPIC.utils import load_FDTD_settings
@@ -727,7 +729,7 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
       if FDTD_settings:
         if verbose:
           print(FDTD_settings)
-          
+
     # get GC settings from XML file
     if not GC_settings:
       from SiEPIC.utils import load_GC_settings
@@ -735,7 +737,7 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
       if GC_settings:
         if verbose:
           print(GC_settings)
-          
+
     # Configure wavelength and polarization
     # polarization = {'quasi-TE', 'quasi-TM', 'quasi-TE and -TM'}
     mode_selection = FDTD_settings['mode_selection']
@@ -752,8 +754,8 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
 
     # wavelength
     wavelength_start = FDTD_settings['wavelength_start']
-    wavelength_stop =  FDTD_settings['wavelength_stop']  
-    
+    wavelength_stop =  FDTD_settings['wavelength_stop']
+
     # create FDTD simulation region (extra large)
     FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
     if mode_selection_index==1:
@@ -768,7 +770,7 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     from ..utils import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
-  
+
     import os, fnmatch
     dir_path = pya.Application.instance().application_data_path()
     search_str = 'grating_coupler_2D.fsp'
@@ -779,31 +781,31 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
             matches.append(os.path.join(root, filename))
 
     filename = matches[0]
-    
+
     '''
     # set 2D GC geometry parameters
-    lumapi.evalScript(_globals.FDTD, 
+    lumapi.evalScript(_globals.FDTD,
     "load('%s'); select('grating_coupler_2D');\
     set('duty cycle',%s); set('target length',%s);\
     set('etch depth',%s); set('pitch',%s);\
-    set('target length',%s); set('input length',%s);'" 
+    set('target length',%s); set('input length',%s);'"
     % (filename, GC_settings['duty_cycle'], GC_settings['target_length'], GC_settings['etch_depth'],
     GC_settings['pitch'],GC_settings['target_length'],GC_settings['L_extra']))
-    '''      
+    '''
     # set 2D GC geometry parameters
-    lumapi.evalScript(_globals.FDTD, 
+    lumapi.evalScript(_globals.FDTD,
     "load('%s'); select('grating_coupler_2D');\
     set('duty cycle',%s); set('target length',%s);\
     set('etch depth',%s); set('pitch',%s);\
-    set('input length',%s);" 
+    set('input length',%s);"
     % (filename, GC_settings['duty_cycle'], GC_settings['target_length'], GC_settings['etch_depth'],
     GC_settings['pitch'], GC_settings['length_extra']))
-    
-    
+
+
     # set fiber angle
     lumapi.evalScript(_globals.FDTD, "select('fiber'); set('theta0',%s);"
     % (GC_settings['angle']))
-    
+
     # set polarization
     if GC_settings['polarization']=='TE':
       polarization = '2'
@@ -813,10 +815,10 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     set('mode selection',%s);" % polarization)
     lumapi.evalScript(_globals.FDTD,"select('FDTD::ports::port 2');\
     set('mode selection',%s);" % polarization)
-    
+
     # run s-parameters sweep
     lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
-    
+
 
     if GC_settings['particle_swarm_optimization'] == 'yes':
       # run optimization (PSO) to find optimal  duty cycle and length
@@ -826,9 +828,9 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
       pitch = bestParams(1); duty_cycle = bestParams(2);")
       GC_settings['duty_cycle']=lumapi.getVar(_globals.FDTD, "duty_cycle")
       GC_settings['pitch']=lumapi.getVar(_globals.FDTD, "pitch")
-      
-      
-  
+
+
+
     # run 3D FDTD simulation
     dir_path = pya.Application.instance().application_data_path()
     search_str = 'grating_coupler_3D.fsp'
@@ -839,18 +841,18 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
             matches.append(os.path.join(root, filename))
 
     filename = matches[0]
-    
+
     # set 2D GC geometry parameters
-    lumapi.evalScript(_globals.FDTD, 
+    lumapi.evalScript(_globals.FDTD,
     "load('%s'); select('grating_coupler_3D'); set('duty cycle',%s);\
     set('etch depth',%s); set('pitch',%s);\
     set('target length',%s); set('L extra',%s);\
     set('radius',%s); set('y span',%s);\
-    set('waveguide width',%s); set('waveguide length,%s);'" 
+    set('waveguide width',%s); set('waveguide length,%s);'"
     % (filename, GC_settings['duty_cycle'], GC_settings['etch_depth'],
     GC_settings['pitch'],GC_settings['target_length'],GC_settings['length_extra'],
     GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))
-  
+
     # set polarization, update port monitors
     lumapi.evalScript(_globals.FDTD,
     "select('FDTD::ports::port 1'); set('mode selection',%s);\
@@ -870,9 +872,9 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
       " % (file_sparam) )
     if verbose:
       print(" S-Parameter file: %s" % file_sparam)
-  
-  
-  
+
+
+
     # Run INTC using Python integration:
     from . import interconnect
     interconnect.run_INTC()
@@ -883,7 +885,7 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     lumapi.evalScript(_globals.INTC, "out=customlibrary;")
     INTC_custom=lumapi.getVar(_globals.INTC, "out")
 
-      
+
     # Create a component
     port_dict2 = {0.0: 'Right', 90.0: 'Top', 180.0: 'Left', -90.0: 'Bottom'}
     t = 'switchtodesign; deleteall; \n'
@@ -896,5 +898,5 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     t+= 'set("prefix", component);\n'
     t+= 'setposition(component+"::SPAR_1",100,-100);\n'
 
-    lumapi.evalScript(_globals.INTC, t)  
+    lumapi.evalScript(_globals.INTC, t)
 
