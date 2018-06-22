@@ -776,28 +776,30 @@ def auto_coord_extract():
 def calculate_area():
     from .utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    dbu = TECHNOLOGY['dbu']
 
     total = cell.each_shape(ly.layer(TECHNOLOGY['FloorPlan'])).__next__().polygon.area()
     area = 0
-    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['LayerSi']))
+    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['Waveguide']))
     while not itr.at_end():
         area += itr.shape().area()
         itr.next()
-    print(area / total)
+    print("Waveguide area: %s mm^2, chip area: %s mm^2, percentage: %s %%" % (area/1e6*dbu*dbu,total/1e6*dbu*dbu, area/total*100))
 
-    area = 0
-    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch1']))
-    while not itr.at_end():
-        area += itr.shape().area()
-        itr.next()
-    print(area / total)
-
-    area = 0
-    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch2']))
-    while not itr.at_end():
-        area += itr.shape().area()
-        itr.next()
-    print(area / total)
+    if 0:
+        area = 0
+        itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch1']))
+        while not itr.at_end():
+            area += itr.shape().area()
+            itr.next()
+        print(area / total)
+    
+        area = 0
+        itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch2']))
+        while not itr.at_end():
+            area += itr.shape().area()
+            itr.next()
+        print(area / total)
 
 
 """
