@@ -21,13 +21,20 @@ import sys
 if 'pya' in sys.modules: # check if in KLayout
   import pya
 
-try:
-  import pyparsing
-except:
-  import pip
-  from SiEPIC.install import get_pip_main
-  main = get_pip_main()
-  main(['install', 'pyparsing'])
+if 'pyparsing' not in sys.modules:
+    try:
+        import pip
+    except ImportError:
+        pass
+    if 'pyparsing' in sys.modules:
+        import pya
+        install = pya.MessageBox.warning(
+            "Install package?", "Install package 'pyparsing' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+        if install == pya.MessageBox.Yes:
+            # try installing using pip
+            from SiEPIC.install import get_pip_main
+            main = get_pip_main()
+            main(['install', 'pyparsing'])
 
 
 def run_FDTD(verbose=False):

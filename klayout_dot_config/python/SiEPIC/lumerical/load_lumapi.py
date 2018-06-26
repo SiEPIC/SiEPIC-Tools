@@ -7,17 +7,23 @@ def load_lumapi(verbose=False):
 
 
   import sys
+
+
   if 'numpy' not in sys.modules:
-    try:
-      import pip
-    except ImportError:
-      pass
-    if 'pip' in sys.modules:
-      import pya
-      install = pya.MessageBox.warning("Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
-      if install == pya.MessageBox.Yes:
-        # try installing using pip
-        pip.main(['install', 'numpy'])
+      try:
+          import pip
+      except ImportError:
+          pass
+      if 'numpy' in sys.modules:
+          import pya
+          install = pya.MessageBox.warning(
+              "Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+          if install == pya.MessageBox.Yes:
+              # try installing using pip
+              from SiEPIC.install import get_pip_main
+              main = get_pip_main()
+              main(['install', 'numpy'])
+  
 
   try:
     import numpy

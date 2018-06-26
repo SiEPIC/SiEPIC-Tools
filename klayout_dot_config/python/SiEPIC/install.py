@@ -34,12 +34,38 @@ def get_pip_main():
 
 
 def install_numpy():
-    main = get_pip_main()
-    main(['install', 'numpy'])
+    import sys
+    if 'numpy' not in sys.modules:
+        try:
+            import pip
+        except ImportError:
+            pass
+        if 'numpy' in sys.modules:
+            import pya
+            install = pya.MessageBox.warning(
+                "Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+            if install == pya.MessageBox.Yes:
+                # try installing using pip
+                from SiEPIC.install import get_pip_main
+                main = get_pip_main()
+                main(['install', 'numpy'])
     return True
 
 
 def install_scipy():
-    main = get_pip_main()
-    main(['install', 'scipy'])
+    import sys
+    if 'scipy' not in sys.modules:
+        try:
+            import pip
+        except ImportError:
+            pass
+        if 'scipy' in sys.modules:
+            import pya
+            install = pya.MessageBox.warning(
+                "Install package?", "Install package 'scipy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+            if install == pya.MessageBox.Yes:
+                # try installing using pip
+                from SiEPIC.install import get_pip_main
+                main = get_pip_main()
+                main(['install', 'scipy'])
     return True
