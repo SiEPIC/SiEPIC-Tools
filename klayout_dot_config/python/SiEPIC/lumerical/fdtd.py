@@ -27,7 +27,7 @@ except:
   import pip
   from SiEPIC.install import get_pip_main
   main = get_pip_main()
-  # main(['install', 'pyparsing']) # TODO REMOVE before merging WIP
+  main(['install', 'pyparsing'])
 
 
 def run_FDTD(verbose=False):

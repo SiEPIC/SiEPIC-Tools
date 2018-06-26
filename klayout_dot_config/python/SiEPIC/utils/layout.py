@@ -531,6 +531,7 @@ def layout_ring(cell, layer, center, r, w):
     dpoly.insert_hole(points_hole)
     dpoly.compress(True)
     insert_shape(cell, layer, dpoly)
+    return dpoly
 
 
 def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
