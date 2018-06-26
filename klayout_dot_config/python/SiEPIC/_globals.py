@@ -33,6 +33,7 @@ def enum(*sequential, **named):
 PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 100  # 0.1 micron
 
+
 try:
     MODULE_NUMPY = True
     import numpy
