@@ -603,7 +603,7 @@ def points_per_circle(radius):
     from . import get_technology
     TECHNOLOGY = get_technology()
     err = 1e3 * TECHNOLOGY['dbu'] / 2
-    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 0.1 else 100
+    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
 
 def arc(r, theta_start, theta_stop):
