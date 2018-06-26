@@ -39,6 +39,14 @@ try:
 except ImportError:
     MODULE_NUMPY = False
 
+if not MODULE_NUMPY:
+    from .install import install_numpy
+    try:
+        install_numpy()
+        MODULE_NUMPY = True
+    except Exception as e:
+        print("Could not install numpy with pip. ERROR:", e)
+
 #ACTIONS = []
 
 KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
