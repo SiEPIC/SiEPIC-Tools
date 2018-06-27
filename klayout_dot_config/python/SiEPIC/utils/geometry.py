@@ -459,6 +459,9 @@ class Port(object):
         self.name = new_name
         return self
 
+    def __repr__(self):
+        return f"{self.name}, {self.position}"
+
 
 try:
     import pya

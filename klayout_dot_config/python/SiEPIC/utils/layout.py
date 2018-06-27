@@ -152,9 +152,13 @@ class DSimplePolygon(pya.DSimplePolygon):
             for i in range(len(points)):
                 delta = points[i] - points[i - 1]
                 angle = np.arctan2(delta.y, delta.x)
+                if delta.y == 0 or delta.x == 0:
+                    thresh_angle = pi / 2
+                else:
+                    thresh_angle = pi * 85 / 180
                 delta_angle = angle - prev_angle
                 delta_angle = abs(((delta_angle + pi) % (2 * pi)) - pi)
-                if delta_angle >= pi * 30 / 180:
+                if delta_angle > thresh_angle:
                     layout_square(cell, drclayer, points[i - 1], 0.1, ex)
                 prev_delta, prev_angle = delta, angle
 
