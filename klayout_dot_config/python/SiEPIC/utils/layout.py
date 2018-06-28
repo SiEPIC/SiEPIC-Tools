@@ -751,7 +751,10 @@ def layout_rectangle(cell, layer, center, width, height, ex):
 
 
 def append_relative(points, *relative_vectors):
-    """ Appends to list of points in relative steps """
+    """ Appends to list of points in relative steps:
+        It takes a list of points, and adds new points to it in relative coordinates.
+        For example, if you call append_relative([A, B], C, D), the result will be [A, B, B+C, B+C+D].
+    """
     try:
         if len(points) > 0:
             origin = points[-1]
