@@ -11,25 +11,40 @@ class objectview(object):
         self.__dict__ = d
 
 
-def place_cell(parent_cell, pcell, ports_dict, placement_origin, relative_to=None):
+def place_cell(parent_cell, pcell, ports_dict, placement_origin, relative_to=None, transform_into=False):
     """ Places an pya cell and return ports with updated positions
     Args:
         parent_cell: cell to place into
         pcell, ports_dict: result of IMECell.pcell call
         placement_origin: pya.Point object to be used as origin
         relative_to: port name
+            the cell is placed so that the port is located at placement_origin
+        transform_into:
+            if used with relative_into, transform the cell's coordinate system
+            so that its origin is in the given port.
 
     Returns:
         ports(dict): key:port.name, value: geometry.Port with positions relative to parent_cell's origin
     """
-
+    offset = pya.DVector(0, 0)
+    port_offset = placement_origin
     if relative_to is not None:
         offset = ports_dict[relative_to].position
-        placement_origin = placement_origin - offset
-    parent_cell.insert(pya.DCellInstArray(pcell.cell_index(),
-                                          pya.DTrans(pya.Trans.R0, placement_origin)))
+        port_offset = placement_origin - offset
+        if transform_into:
+            # print(type(pcell))
+            offset_transform = pya.DTrans(pya.DTrans.R0, -offset)
+            for instance in pcell.each_inst():
+                instance.transform(offset_transform)
+            pcell.transform_into(offset_transform)
+        else:
+            placement_origin = placement_origin - offset
+
+    transformation = pya.DTrans(pya.Trans.R0, placement_origin)
+    instance = pya.DCellInstArray(pcell.cell_index(), transformation)
+    parent_cell.insert(instance)
     for port in ports_dict.values():
-        port.position += placement_origin
+        port.position += port_offset
 
     return ports_dict
 
@@ -167,20 +182,24 @@ class KLayoutPCell(object):
         """
         raise NotImplementedError()
 
-    def place_cell(self, parent_cell, origin, params=None, relative_to=None):
+    def place_cell(self, parent_cell, origin, params=None, relative_to=None, transform_into=False):
         """ Places this cell and return ports
         Args:
             parent_cell: cell to place into
             ime_cell: IMECell to be placed
             placement_origin: pya.Point object to be used as origin
             relative_to: port name
+                the cell is placed so that the port is located at placement_origin
+            transform_into:
+                if used with relative_into, transform the cell's coordinate system
+                so that its origin is in the given port.
 
         Returns:
             ports(dict): key:port.name, value: geometry.Port with positions relative to parent_cell's origin
         """
         layout = parent_cell.layout()
         pcell, ports = self.pcell(layout, params=params)
-        return place_cell(parent_cell, pcell, ports, origin, relative_to=relative_to)
+        return place_cell(parent_cell, pcell, ports, origin, relative_to=relative_to, transform_into=transform_into)
 
 
 # CACHE TOOLS
