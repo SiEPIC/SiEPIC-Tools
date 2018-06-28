@@ -802,3 +802,10 @@ def layout_connect_ports_angle(cell, layer, port_from, port_to, angle):
         curve = bezier_optimal(P0, P3, angle, angle)
 
     return layout_waveguide_angle(cell, layer, curve, [port_from.width, port_to.width], angle)
+
+
+def layout_text(cell, layer_text, position, text_string, size):
+    dtext = pya.DText(str(text_string), pya.DTrans(
+        pya.DTrans.R0, position.x, position.y))
+    dtext.size = size
+    cell.shapes(layer_text).insert(dtext)
