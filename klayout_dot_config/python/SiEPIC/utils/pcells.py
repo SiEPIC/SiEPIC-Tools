@@ -256,9 +256,10 @@ def cache_cell(cls, cache_dir=cache_dir):
                             diff_params[name] = default_params[name]
 
                     long_hash_pcell = sha256((source_code +
-                                              str(diff_params)).encode()).hexdigest()
+                                              str(diff_params) +
+                                              self.name).encode()).hexdigest()
                     short_hash_pcell = long_hash_pcell[0:7]
-                    cache_fname = f'cache_{self.__class__.__name__}_{short_hash_pcell}'
+                    cache_fname = f'cache_{self.__class__.__qualname__}_{short_hash_pcell}'
                     # if short_hash_pcell in cell_cache.keys():  # already loaded
                     #     print(f"Preloaded {self.__class__.__name__}: {diff_params}")
                     #     cached_cell, ports_bytecode, cellname = cell_cache[short_hash_pcell]

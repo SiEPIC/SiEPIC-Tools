@@ -468,9 +468,14 @@ try:
 
     # Defining following methods to allow for serialization
     def getstate(self):
+        try:
+            direction = self.direction.x, self.direction.y
+        except AttributeError:
+            direction = self.direction
+
         state = {"name": self.name,
                  "position": (self.position.x, self.position.y),
-                 "direction": (self.direction.x, self.direction.y),
+                 "direction": direction,
                  "width": self.width}
         return state
     Port.__getstate__ = getstate
@@ -479,8 +484,12 @@ try:
         self.name = state['name']
         x, y = state['position']
         self.position = pya.DPoint(x, y)
-        x, y = state['direction']
-        self.direction = pya.DVector(x, y)
+        direction = state['direction']
+        if isinstance(direction, tuple):
+            x, y = direction
+            self.direction = pya.DVector(x, y)
+        else:
+            self.direction = direction
         self.width = state['width']
     Port.__setstate__ = setstate
 
