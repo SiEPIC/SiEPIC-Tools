@@ -285,14 +285,12 @@ def cache_cell(cls, cache_dir=cache_dir):
                         cell_indices = {cell.name: cell.cell_index() for cell in cell_list}
                         for i in cell_indices.values():
                             layout.rename_cell(i, "")
-                        # pdb.set_trace()
-                        # if 'cache_Ndoped_Ring_Filter' in gds_filename:
-                        #     pdb.set_trace()
+
                         lmap = layout.read(gds_filename, load_options)
                         # in the new layout, get all cells with starting names cache_
                         cell_names2 = [(cell.cell_index(), cell.name)
                                        for cell in layout.each_cell()]
-                        # pdb.set_trace()
+
                         # make those cells point to older cells
                         prune_cells_indices = []
                         for i_duplicate, name_cached_cell in cell_names2:
