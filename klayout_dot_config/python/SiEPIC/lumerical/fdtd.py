@@ -1,3 +1,4 @@
+# $autorun
 '''
 ################################################################################
 #
@@ -8,6 +9,11 @@
 Component simulations using Lumerical FDTD, to generate Compact Models
 
 - component_simulation: single component simulation
+
+# Mustafa Hammood     January 2018
+- GC_simulation: 2D and 3D sub-wavelength grating coupler simulation with parameters optimization
+# Mustafa Hammood     August 2018
+- CDC_bandstructure: Bloch boundary condition Contra_DC simulator
 
 usage:
 
@@ -908,3 +914,117 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
 
     lumapi.evalScript(_globals.INTC, t)
 
+
+# Mustafa Hammood   Mustafa@ece.ubc.ca 
+# Run bandstructure sweep on selected contra_DC PCell
+# Returns maximum bandwidth and central wavelength (lambda_0) of the contra-DC unit cell
+def generate_CDC_bandstructure(do_simulation = True, verbose = False):
+  if verbose:
+    print('SiEPIC.lumerical.fdtd: generate_CDC_sparam()')
+
+  # Get technology and layout details
+  from ..utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
+
+  # get selected instances; only one
+  from ..utils import select_instances
+  from .. import _globals
+  
+  # print error message if no or more than one component selected
+  selected_instances = select_instances()
+  error = pya.QMessageBox()
+  error.setStandardButtons(pya.QMessageBox.Ok )
+  if len(selected_instances) != 1:
+    error.setText("Error: Need to have one component selected.")
+    response = error.exec_()
+    return
+    
+  #  text = 'Information on selected components:<br><br>'
+  text = ''
+  
+  # parse PCell parameters into text string and params array
+  for obj in selected_instances:
+    #print("  selected component: %s" % obj.inst().cell )
+    c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
+    if c:
+      text += c[0].display().replace(';','<br>&nbsp;&nbsp;&nbsp;')
+      if c[0].cell.is_pcell_variant():
+        params = c[0].cell.pcell_parameters_by_name()
+        for key in params.keys():
+          text += ("Parameter: %s, Value: %s") % (key, params[key])
+          #params.append([key,params[key]])
+      text += '<br><br>'
+  print(params)
+  
+  # check if selected PCell is a contra DC
+  if "component: ebeam_contra_dc" not in text:
+    error.setText("Error: selected component must be a contra-DC PCell.")
+    response = error.exec_()
+    return
+    
+  # parse into individual variables in meters
+  N = params["number_of_periods"]
+  period = params["grating_period"]*1e-6
+  dW_1 = params["corrugation_width1"]*1e-6
+  dW_2 = params["corrugation_width2"]*1e-6
+  W_1 = params["wg1_width"]*1e-6
+  W_2 = params["wg2_width"]*1e-6
+  gap = params["gap"]*1e-6
+  
+  if params["sinusoidal"] == False:
+    sinusoidal = 0;
+  else:
+    sinusoidal = 1;
+    
+
+
+  import numpy as np
+  # run Lumerical FDTD Solutions
+  from .. import _globals
+  
+  run_FDTD()
+  lumapi = _globals.LUMAPI
+  if not lumapi:
+    print('SiEPIC.lumerical.fdtd.generate_component_sparam: lumapi not loaded')
+    return
+      
+ # search for contra-DC bandstructure fsp project file in technology
+  from ..utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'FDTD_CDC_unit_cell.fsp'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+
+  filename = matches[0]
+
+  # set Contra-DC geometry parameters
+  lumapi.evalScript(_globals.FDTD,
+  "load('%s'); setnamed('::model','bus1_width',%s); setnamed('::model','bus2_width',%s); setnamed('::model','bus1_delta',%s);\
+  setnamed('::model','bus2_delta',%s); setnamed('::model','ax',%s); setnamed('::model','gap',%s); setnamed('::model','sinusoidal',%s);" % (filename, W_2, W_1, dW_2, dW_1, period, gap, sinusoidal))
+  
+  # search for bandstructure sweep script
+  search_str = 'CDC_bandstructure_sweep.lsf'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+
+  filename = matches[0]
+  print(filename)
+  lumapi.evalScript(_globals.FDTD,"CDC_bandstructure_sweep;")
+  
+  # extract simulation results from sweep
+  
+  bandwidth = lumapi.getVar(_globals.FDTD, "bandwidth")
+  lambda_0 = lumapi.getVar(_globals.FDTD, "lambda_0")
+
+  return [bandwidth, lambda_0];
