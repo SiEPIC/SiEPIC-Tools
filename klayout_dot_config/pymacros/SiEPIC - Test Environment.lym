@@ -71,8 +71,13 @@ if 0:
   from SiEPIC import _globals
   print("lumapi: %s" % _globals.LUMAPI)
 
+if 0:
+  import SiEPIC.lumerical as lumerical
+#  lumerical.fdtd.generate_CDC_bandstructure(do_simulation = True, verbose = False)
+  lumerical.mode.find_neff_supermode(w_1 = 500e-9, w_2 = 500e-9, gap = 200e-9, pol = 'TE', verbose = False)
 
-if 1:
+
+if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.circuit_simulation(verbose=True, opt_in_selection_text=[])
   #lumerical.interconnect.circuit_simulation_monte_carlo(verbose=True)

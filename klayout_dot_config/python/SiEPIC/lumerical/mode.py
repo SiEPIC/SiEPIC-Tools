@@ -111,5 +111,5 @@ def find_neff_supermode(w_1 = 500e-9, w_2 = 500e-9, gap = 200e-9, pol = 'TE', ve
   lumapi.evalScript(_globals.MODE,"switchtolayout;")  
   n_eff1_fit = lumapi.getVar(_globals.MODE, "n_eff1_fit")
   n_eff2_fit = lumapi.getVar(_globals.MODE, "n_eff2_fit")
-  print(n_eff1_fit+' and '+n_eff2_fit)
+  print(str(n_eff1_fit)+' and '+str(n_eff2_fit))
   return [n_eff1_fit, n_eff2_fit]
