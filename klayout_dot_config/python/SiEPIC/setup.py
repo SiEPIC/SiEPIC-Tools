@@ -53,29 +53,30 @@ def registerMenuItems():
     ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
     ACTIONS[count].icon = path
     count += 1
-
-    if not(menu.is_menu("@toolbar.cir_sim.mc_sim")):
-        ACTIONS.append(pya.Action())
-        menu.insert_item("@toolbar.cir_sim.end", "mc_sim", ACTIONS[count])
-    ACTIONS[count].title = "INTERCONNECT Monte Carlo Simulations"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_monte_carlo)
-    ACTIONS[count].icon = path
-    count += 1
-
-    if not(menu.is_menu("@toolbar.cir_sim.launch_lumerical")):
-        ACTIONS.append(pya.Action())
-        menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", ACTIONS[count])
-    ACTIONS[count].title = "INTERCONNECT Circuit Simulation"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
-    ACTIONS[count].icon = path
-    count += 1
-
-    if not(menu.is_menu("@toolbar.cir_sim.update_netlist")):
-        ACTIONS.append(pya.Action())
-        menu.insert_item("@toolbar.cir_sim.end", "update_netlist", ACTIONS[count])
-    ACTIONS[count].title = "INTERCONNECT Update Netlist"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_update_netlist)
-    ACTIONS[count].icon = path
+    
+    if 0:
+        if not(menu.is_menu("@toolbar.cir_sim.mc_sim")):
+            ACTIONS.append(pya.Action())
+            menu.insert_item("@toolbar.cir_sim.end", "mc_sim", ACTIONS[count])
+        ACTIONS[count].title = "INTERCONNECT Monte Carlo Simulations"
+        ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_monte_carlo)
+        ACTIONS[count].icon = path
+        count += 1
+    
+        if not(menu.is_menu("@toolbar.cir_sim.launch_lumerical")):
+            ACTIONS.append(pya.Action())
+            menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", ACTIONS[count])
+        ACTIONS[count].title = "INTERCONNECT Circuit Simulation"
+        ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
+        ACTIONS[count].icon = path
+        count += 1
+    
+        if not(menu.is_menu("@toolbar.cir_sim.update_netlist")):
+            ACTIONS.append(pya.Action())
+            menu.insert_item("@toolbar.cir_sim.end", "update_netlist", ACTIONS[count])
+        ACTIONS[count].title = "INTERCONNECT Update Netlist"
+        ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_update_netlist)
+        ACTIONS[count].icon = path
 
 
 def registerKeyBindings():
