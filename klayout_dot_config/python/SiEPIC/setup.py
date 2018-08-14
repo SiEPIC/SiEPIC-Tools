@@ -38,9 +38,13 @@ def registerMenuItems():
     if not(menu.is_menu(s1 + "." + s2)):
         menu.insert_menu(s1 + ".end", s2, "Verification")
 
-    s2 = "simulation"
+    s2 = "simulation_circuits"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Simulation")
+        menu.insert_menu(s1 + ".end", s2, "Simulation, Circuits")
+
+    s2 = "simulation_components"
+    if not(menu.is_menu(s1 + "." + s2)):
+        menu.insert_menu(s1 + ".end", s2, "Simulation, Components")
 
     s2 = "measurements"
     if not(menu.is_menu(s1 + "." + s2)):
