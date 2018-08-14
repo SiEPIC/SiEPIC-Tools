@@ -108,7 +108,7 @@ def find_neff_supermode(w_1 = 500e-9, w_2 = 500e-9, gap = 200e-9, pol = 'TE', ve
   run_MODE()
   lumapi.evalScript(_globals.MODE,"load('%s'); gap = %s; width_1 = %s; width_2 = %s;" % (filename, gap, w_1, w_2))  
   lumapi.evalScript(_globals.MODE,"WG_supermode;") 
-<<<<<<< HEAD
+
   #lumapi.evalScript(_globals.MODE,"switchtolayout;")  
   
   # Below commands DO NOT WORK, see issue at kx
@@ -166,10 +166,3 @@ def find_neff_supermode(w_1 = 500e-9, w_2 = 500e-9, gap = 200e-9, pol = 'TE', ve
   print('n_eff1='+str(n_eff1_fit)+' and n_eff2='+str(n_eff2_fit)+' and n_g1='+str(n_g1_fit)+' and n_g2='+str(n_g2_fit))
   
   return [n_eff1_fit, n_eff2_fit, n_g1_fit, n_g2_fit]
-=======
-  lumapi.evalScript(_globals.MODE,"switchtolayout;")  
-  n_eff1_fit = lumapi.getVar(_globals.MODE, "n_eff1_fit")
-  n_eff2_fit = lumapi.getVar(_globals.MODE, "n_eff2_fit")
-  print(str(n_eff1_fit)+' and '+str(n_eff2_fit))
-  return [n_eff1_fit, n_eff2_fit]
->>>>>>> 8c761921903b72089629d7191ea69533063596bf
