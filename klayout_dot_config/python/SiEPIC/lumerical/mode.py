@@ -108,8 +108,60 @@ def find_neff_supermode(w_1 = 500e-9, w_2 = 500e-9, gap = 200e-9, pol = 'TE', ve
   run_MODE()
   lumapi.evalScript(_globals.MODE,"load('%s'); gap = %s; width_1 = %s; width_2 = %s;" % (filename, gap, w_1, w_2))  
   lumapi.evalScript(_globals.MODE,"WG_supermode;") 
-  lumapi.evalScript(_globals.MODE,"switchtolayout;")  
-  n_eff1_fit = lumapi.getVar(_globals.MODE, "n_eff1_fit")
-  n_eff2_fit = lumapi.getVar(_globals.MODE, "n_eff2_fit")
-  print(n_eff1_fit+' and '+n_eff2_fit)
-  return [n_eff1_fit, n_eff2_fit]
+  #lumapi.evalScript(_globals.MODE,"switchtolayout;")  
+  
+  # Below commands DO NOT WORK, see issue at kx
+  
+  #n_eff1_fit = lumapi.getVar(_globals.MODE, "n_eff1_fit")
+  #n_eff2_fit = lumapi.getVar(_globals.MODE, "n_eff2_fit")
+  
+  # Temporary cave-man parsing solution
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'n_eff1_fit'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+          
+  os.chdir(dir_path+'/tech/EBeam/mode')
+
+  n_eff1_fit = open("n_eff1_fit","r")
+  theStr = n_eff1_fit.read()
+  theStr = (theStr.replace("\n",",")).split(",")
+  n_eff1_fit_0 = float(theStr[0])
+  n_eff1_fit_1 = float(theStr[1])
+  #n_eff1_fit_2 = float(theStr[2])
+  
+  n_eff2_fit = open("n_eff2_fit","r")
+  theStr = n_eff2_fit.read()
+  theStr = (theStr.replace("\n",",")).split(",")
+  n_eff2_fit_0 = float(theStr[0])
+  n_eff2_fit_1 = float(theStr[1])
+  #n_eff2_fit_2 = float(theStr[2])
+  
+  
+  n_g1_fit = open("n_g1_fit","r")
+  theStr = n_g1_fit.read()
+  theStr = (theStr.replace("\n",",")).split(",")
+  n_g1_fit_0 = float(theStr[0])
+  n_g1_fit_1 = float(theStr[1])
+  #n_g1_fit_2 = float(theStr[2])
+  
+  n_g2_fit = open("n_g2_fit","r")
+  theStr = n_g2_fit.read()
+  theStr = (theStr.replace("\n",",")).split(",")
+  n_g2_fit_0 = float(theStr[0])
+  n_g2_fit_1 = float(theStr[1])
+  #n_g2_fit_2 = float(theStr[2])
+  
+  n_eff1_fit = [n_eff1_fit_0, n_eff1_fit_1]
+  n_eff2_fit = [n_eff2_fit_0, n_eff2_fit_1]
+  n_g1_fit = [n_g1_fit_0, n_g1_fit_1]
+  n_g2_fit = [n_g2_fit_0, n_g2_fit_1]
+  
+  
+  print('n_eff1='+str(n_eff1_fit)+' and n_eff2='+str(n_eff2_fit)+' and n_g1='+str(n_g1_fit)+' and n_g2='+str(n_g2_fit))
+  
+  return [n_eff1_fit, n_eff2_fit, n_g1_fit, n_g2_fit]

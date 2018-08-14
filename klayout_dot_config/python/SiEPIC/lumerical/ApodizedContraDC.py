@@ -6,7 +6,7 @@
 # Based on MATLAB script from J.St.Yves and W.Shi of uLaval, 2016
 
 import cmath
-import sys
+import sys, os
 if 'pya' in sys.modules: # check if in KLayout
   import pya
 
@@ -28,6 +28,89 @@ except:
         
 import numpy as np
 
+
+def TOP():
+  # Get technology and layout details
+  from ..utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
+  
+  # get selected instances; only one
+  from ..utils import select_instances
+  from .. import _globals
+  
+  # print error message if no or more than one component selected
+  selected_instances = select_instances()
+  error = pya.QMessageBox()
+  error.setStandardButtons(pya.QMessageBox.Ok )
+  if len(selected_instances) != 1:
+    error.setText("Error: Need to have one component selected.")
+    response = error.exec_()
+    return
+    
+  #  text = 'Information on selected components:<br><br>'
+  text = ''
+  
+  # parse PCell parameters into text string and params array
+  for obj in selected_instances:
+    #print("  selected component: %s" % obj.inst().cell )
+    c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
+    if c:
+      text += c[0].display().replace(';','<br>&nbsp;&nbsp;&nbsp;')
+      if c[0].cell.is_pcell_variant():
+        params = c[0].cell.pcell_parameters_by_name()
+        for key in params.keys():
+          text += ("Parameter: %s, Value: %s") % (key, params[key])
+          #params.append([key,params[key]])
+      text += '<br><br>'
+  print(params)
+  
+  # check if selected PCell is a contra DC
+  if "component: ebeam_contra_dc" not in text:
+    error.setText("Error: selected component must be a contra-DC PCell.")
+    response = error.exec_()
+    return
+    
+  # parse into individual variables in meters
+  N = params["number_of_periods"]
+  period = params["grating_period"]*1e-6
+  dW_1 = params["corrugation_width1"]*1e-6
+  dW_2 = params["corrugation_width2"]*1e-6
+  W_1 = params["wg1_width"]*1e-6
+  W_2 = params["wg2_width"]*1e-6
+  gap = params["gap"]*1e-6
+  a = params["index"]
+  
+  if params["sinusoidal"] == False:
+    sinusoidal = 0;
+  else:
+    sinusoidal = 1;
+    
+  from SiEPIC.lumerical.fdtd import generate_CDC_bandstructure
+  from SiEPIC.lumerical.mode import find_neff_supermode
+  
+  [n_eff1_fit, n_eff2_fit, n_g1_fit, n_g2_fit] = find_neff_supermode(W_1, W_2, gap)
+  [bandwidth, lambda_0] = generate_CDC_bandstructure(W_1, W_2, dW_1, dW_2, period, gap, sinusoidal)
+  #[bandwidth, lambda_0] = [7e-9, 1550e-9]
+  
+  os.chdir('C:\\Users\\Mustafa\\Desktop')
+
+  # create data files
+  dataFile = open("contraDC_params","w")
+  dataFile.write(str(gap)+','+str(W_1)+','+str(W_2)+','+str(dW_1)+','+str(dW_2)+','+str(period)+','+str(a)+','+str(N))
+  
+  dataFile = open("contraDC_mode","w")
+  dataFile.write(str(n_eff1_fit)+','+str(n_eff2_fit)+','+str(n_g1_fit)+','+str(n_g2_fit))
+  
+  dataFile = open("contraDC_fdtd","w")
+  dataFile.write(str(bandwidth)+','+str(lambda_0))
+  
+  #os.
+  #os.system('python matlabenginestart.py')
+  import subprocess
+  p = subprocess.Popen(["start", "cmd", "/k", "python matlabenginestart.py"], shell = True)
+  
+  
 def ApodizedContraDC(starting_wavelength = 1520, ending_wavelength = 1580, resolution = 500, neffwg1 = 2.5220, neffwg2 = 2.3282, Dneffwg1 = -9.6552e5, Dneffwg2 = -1.2195e6, period = 320):
   # Constants
   c = 299792458           #[m/s]
