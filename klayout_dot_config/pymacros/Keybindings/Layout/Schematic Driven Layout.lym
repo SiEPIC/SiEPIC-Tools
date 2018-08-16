@@ -85,12 +85,25 @@ def schematic_driven_layout():
           t = Trans(point.to_itype(dbu))
      
           # Import cells from the SiEPIC GDS Library, and instantiate them
-          element_imported = ly.create_cell(model, library).cell_index()
-          cell.insert(CellInstArray(element_imported, t))
-          
-          #lv.clear_object_selection()
-          #lv.zoom_fit()
-          lv.max_hier()
+          newcell = ly.create_cell(model, library)
+          if newcell:
+
+              # Record actions for Undo functionality
+              lv.transaction("Schematic Driven Layout: place %s" % model)
+                
+              element_imported = newcell.cell_index()
+              cell.insert(CellInstArray(element_imported, t))
+    
+              # Stop recording actions for Undo functionality
+              lv.commit()
+              
+              #lv.clear_object_selection()
+              #lv.zoom_fit()
+              lv.max_hier()
+          else:
+              pya.MessageBox.warning(
+                "Missing componenet", "Missing component (%s) in the library (%s). Cannot perform Schematic Driven Layout" % (model,library), pya.MessageBox.Ok)
+              return
     
     except Exception as e:
         print(e)
