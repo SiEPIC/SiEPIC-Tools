@@ -856,6 +856,13 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     t = opt_in_dict[0]['Text']
     components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
                                key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
+    if not(components_sorted):
+        warning = pya.QMessageBox()
+        warning.setStandardButtons(pya.QMessageBox.Ok)
+        warning.setText("To run a simulation, you need to have optical IO in the layout." )
+        pya.QMessageBox_StandardButton(warning.exec_())
+        return False, False, False, False, False, False, False, False
+        
     dist_optin_c = components_sorted[0].trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1))
     if verbose:
         print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in_dict[0][
