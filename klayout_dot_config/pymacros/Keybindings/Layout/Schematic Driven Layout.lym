@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Schematic Driven Layout</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut>Shift+Q</shortcut>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.layout.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>'''
+Author: Jaspreet Jhoja
+
+User steps:
+- Run INTERCONNECT via KLayout, Shift+Q
+- Design your schematic in INTERCONNECT
+- Select one component in INTERCONNECT
+- press Shift+Q in Klayout to place the current component on the layout
+
+'''
+
+def schematic_driven_layout():
+    import pya
+    
+    # Enter your Python code here ..
+    
+    from SiEPIC import _globals
+    from SiEPIC.lumerical.interconnect import run_INTC
+    
+    # Run using Python integration:
+    try: 
+        run_INTC()
+        # Run using Python integration:
+        lumapi = _globals.LUMAPI
+    except:
+        pya.MessageBox.warning(
+            "Problem with INTERCONNECT", "Problem with running Lumerical INTERCONNECT. Cannot perform Schematic Driven Layout", pya.MessageBox.Ok)
+        return
+             
+    try:
+    
+        lumapi.evalScript(_globals.INTC, "cname = get('name');")
+        name = lumapi.getVar(_globals.INTC, "cname")
+        
+        if name != 'Root Element':
+        
+          lumapi.evalScript(_globals.INTC, "cmodel = get('model');")
+          model = lumapi.getVar(_globals.INTC, "cmodel")
+            
+          lumapi.evalScript(_globals.INTC, "clibrary = get('library');")
+          library = lumapi.getVar(_globals.INTC, "clibrary")
+          library = library.split("::")[-1]
+            
+          #lumapi.close(_globals.INTC)
+        
+          # Import functions from SiEPIC-Tools, and get technology details
+          from SiEPIC.utils import select_paths, get_layout_variables
+          TECHNOLOGY, lv, ly, cell = get_layout_variables()
+          dbu = ly.dbu
+          from SiEPIC.extend import to_itype
+          from SiEPIC.scripts import path_to_waveguide
+          
+          
+          # Layer mapping:
+          LayerSiN = ly.layer(TECHNOLOGY['Si'])
+    
+          
+          #fetch mouse coordinates
+          #I'm currently trying to figure out but the current cursor event gives you the mouse coordinates relative to your screen size rather than relative to gds coordinates.
+          cursor = pya.Application.instance().main_window().cursor
+          cursorpos=Point(cursor.pos.x, cursor.pos.y)
+    
+          # Get the transformation from GDS coordinates to screen pixels
+          # https://www.klayout.de/doc-qt4/code/class_LayoutView.html#method182
+          # not working: Does seem like the point/screen coordinates are consistent. 
+          t = lv.viewport_trans().inverted()
+          point = DVector(t.trans(cursorpos))
+          print("Cursor pixel: %s, transformation: %s, GDS point: %s" % (cursorpos,t,point))
+          t = Trans(point.to_itype(dbu))
+     
+          # Import cells from the SiEPIC GDS Library, and instantiate them
+          element_imported = ly.create_cell(model, library).cell_index()
+          cell.insert(CellInstArray(element_imported, t))
+          
+          #lv.clear_object_selection()
+          #lv.zoom_fit()
+          lv.max_hier()
+    
+    except Exception as e:
+        print(e)
+        
+schematic_driven_layout()</text>
+</klayout-macro>
