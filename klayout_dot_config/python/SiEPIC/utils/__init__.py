@@ -396,6 +396,7 @@ def load_GC_settings():
             GC1[k] = float(GC['floats'][k])
         for k in GC['strings'].keys():
             GC1[k] = GC['strings'][k]
+            #print(GC)
         return GC1
     else:
         return None

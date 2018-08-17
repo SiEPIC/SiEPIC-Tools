@@ -770,6 +770,8 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     wavelength_start = FDTD_settings['wavelength_start']
     wavelength_stop =  FDTD_settings['wavelength_stop']
 
+
+    
     # create FDTD simulation region (extra large)
     FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
     if mode_selection_index==1:
@@ -806,6 +808,12 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     % (filename, GC_settings['duty_cycle'], GC_settings['target_length'], GC_settings['etch_depth'],
     GC_settings['pitch'],GC_settings['target_length'],GC_settings['L_extra']))
     '''
+    
+    # simulate 3D option
+    
+    simulate_3d = GC_settings['sim3d']
+    print(simulate_3d)
+    
     # set 2D GC geometry parameters
     lumapi.evalScript(_globals.FDTD,
     "load('%s'); select('grating_coupler_2D');\
@@ -844,34 +852,35 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
       GC_settings['pitch']=lumapi.getVar(_globals.FDTD, "pitch")
 
 
-
+  
     # run 3D FDTD simulation
-    dir_path = pya.Application.instance().application_data_path()
-    search_str = 'grating_coupler_3D.fsp'
-    matches = []
-    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
-        for filename in fnmatch.filter(filenames, search_str):
-          if tech_name in root:
-            matches.append(os.path.join(root, filename))
-
-    filename = matches[0]
-
-    # set 2D GC geometry parameters
-    lumapi.evalScript(_globals.FDTD,
-    "load('%s'); select('grating_coupler_3D'); set('duty cycle',%s);\
-    set('etch depth',%s); set('pitch',%s);\
-    set('target length',%s); set('L extra',%s);\
-    set('radius',%s); set('y span',%s);\
-    set('waveguide width',%s); set('waveguide length,%s);'"
-    % (filename, GC_settings['duty_cycle'], GC_settings['etch_depth'],
-    GC_settings['pitch'],GC_settings['target_length'],GC_settings['length_extra'],
-    GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))
-
-    # set polarization, update port monitors
-    lumapi.evalScript(_globals.FDTD,
-    "select('FDTD::ports::port 1'); set('mode selection',%s);\
-    updateportmodes; select('FDTD::ports::port 2');\
-    set('mode selection',%s); updateportmodes;" % (polarization,polarization))
+    if (GC_settings['simulate_3d'] == 'yes'):
+      dir_path = pya.Application.instance().application_data_path()
+      search_str = 'grating_coupler_3D.fsp'
+      matches = []
+      for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+          for filename in fnmatch.filter(filenames, search_str):
+            if tech_name in root:
+              matches.append(os.path.join(root, filename))
+  
+      filename = matches[0]
+  
+      # set 2D GC geometry parameters
+      lumapi.evalScript(_globals.FDTD,
+      "load('%s'); select('grating_coupler_3D'); set('duty cycle',%s);\
+      set('etch depth',%s); set('pitch',%s);\
+      set('target length',%s); set('L extra',%s);\
+      set('radius',%s); set('y span',%s);\
+      set('waveguide width',%s); set('waveguide length,%s);'"
+      % (filename, GC_settings['duty_cycle'], GC_settings['etch_depth'],
+      GC_settings['pitch'],GC_settings['target_length'],GC_settings['length_extra'],
+      GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))
+  
+      # set polarization, update port monitors
+      lumapi.evalScript(_globals.FDTD,
+      "select('FDTD::ports::port 1'); set('mode selection',%s);\
+      updateportmodes; select('FDTD::ports::port 2');\
+      set('mode selection',%s); updateportmodes;" % (polarization,polarization))
 
     file_sparam  = os.path.join(_globals.TEMP_FOLDER, '%s.dat' % "GC_sparams")
     # run s-parameter sweep, collect results, visualize results
