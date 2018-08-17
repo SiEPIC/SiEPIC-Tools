@@ -10,7 +10,7 @@
  <autorun-early>false</autorun-early>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
- <group-name>0 Component Simulation</group-name>
+ <group-name>component</group-name>
  <menu-path>siepic_menu.simulation_components.end</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
