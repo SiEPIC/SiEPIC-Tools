@@ -797,22 +797,11 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
             matches.append(os.path.join(root, filename))
 
     filename = matches[0]
-
-    '''
-    # set 2D GC geometry parameters
-    lumapi.evalScript(_globals.FDTD,
-    "load('%s'); select('grating_coupler_2D');\
-    set('duty cycle',%s); set('target length',%s);\
-    set('etch depth',%s); set('pitch',%s);\
-    set('target length',%s); set('input length',%s);'"
-    % (filename, GC_settings['duty_cycle'], GC_settings['target_length'], GC_settings['etch_depth'],
-    GC_settings['pitch'],GC_settings['target_length'],GC_settings['L_extra']))
-    '''
     
     # simulate 3D option
     
     simulate_3d = GC_settings['simulate_3d']
-    print(simulate_3d)
+
     
     # set 2D GC geometry parameters
     lumapi.evalScript(_globals.FDTD,
@@ -839,9 +828,19 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     set('mode selection',%s);" % polarization)
 
     # run s-parameters sweep
-    lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
+    #lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
 
-
+    # run s-parameter sweep, collect results, visualize results
+    # export S-parameter data to file named xxx.dat to be loaded in INTERCONNECT
+    lumapi.evalScript(_globals.FDTD, " \
+      runsweep('s-parameter sweep'); \
+      S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
+      S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
+      S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
+      visualize(S_parameters); \
+      exportsweep('s-parameter sweep','%s'); \
+      " % ("2D_sparam") )
+      
     if GC_settings['particle_swarm_optimization'] == 'yes':
       # run optimization (PSO) to find optimal  duty cycle and length
       lumapi.evalScript(_globals.FDTD,"runsweep('optimization');")

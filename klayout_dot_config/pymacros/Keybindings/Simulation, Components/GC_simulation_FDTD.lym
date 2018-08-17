@@ -132,6 +132,7 @@ class GUI_GC_settings(pya.QDialog):
       paramLayout.addWidget(self.qtext[-1])
       paramsLayout.addLayout(paramLayout)
 
+    
     buttonsLayout = QHBoxLayout(self);
     ok = pya.QPushButton("OK",self)
     ok.clicked(self.ok)
