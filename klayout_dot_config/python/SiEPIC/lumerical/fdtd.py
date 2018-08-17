@@ -811,7 +811,7 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     
     # simulate 3D option
     
-    simulate_3d = GC_settings['sim3d']
+    simulate_3d = GC_settings['simulate_3d']
     print(simulate_3d)
     
     # set 2D GC geometry parameters
