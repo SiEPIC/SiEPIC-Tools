@@ -6,7 +6,7 @@ Author: Thomas Ferreira de Lima @thomaslima
 
 """
 import numpy as np
-from numpy import sqrt, pi, cos, sin
+from numpy import sqrt
 from . import sample_function
 
 MAGIC_NUMBER = 15.0
@@ -54,7 +54,7 @@ class Point(object):
         return self.x == other.x and self.y == other.y
 
     def __str__(self):
-        return f"Point({self.x}, {self.y})"
+        return "Point({}, {})".format(self.x, self.y)
 
     def norm(self):
         return sqrt(self.x**2 + self.y**2)
@@ -90,6 +90,7 @@ assert isinstance(a * t, Line)
 
 
 def rotate(point, angle_rad):
+    ''' Rotates point counter-clockwisely about its origin by an angle given in radians'''
     th = angle_rad
     x, y = point.x, point.y
     new_x = x * np.cos(th) - y * np.sin(th)
@@ -99,11 +100,6 @@ def rotate(point, angle_rad):
 
 rotate90 = lambda point: rotate(point, np.pi / 2)
 
-
-def projection(length, angle):
-    x = length * cos(angle * pi / 180)
-    y = length * sin(angle * pi / 180)
-    return x, y
 # ####################### ARC METHODS    ##########################
 
 
@@ -186,6 +182,12 @@ def logistic_penalty(x, a):
 
 
 def curve_length(curve, t0=0, t1=1):
+    ''' Computes the total length of a curve.
+
+    Args:
+        curve: list of Points, or
+            parametric function of points, to be computed from t0 to t1.
+    '''
     if isinstance(curve, list):
         # assuming curve is a list of points
         scale = (curve[-1] - curve[0]).norm()
@@ -344,6 +346,8 @@ try:
     _bezier_optimal_pure = bezier_optimal
 
     def bezier_optimal(P0, P3, *args, **kwargs):
+        ''' If inside KLayout, return computed list of KLayout points.
+        '''
         P0 = Point(P0.x, P0.y)
         P3 = Point(P3.x, P3.y)
         scale = (P3 - P0).norm()  # rough length.
@@ -379,7 +383,9 @@ except ImportError:
 
 def manhattan_intersection(vertical_point, horizontal_point, ex):
     """ returns the point that intersects vertical_point's x coordinate
-    and horizontal_point's y coordinate.
+        and horizontal_point's y coordinate.
+
+        Args: ex (Vector/Point): orientation of x axis.
     """
     ey = rotate90(ex)
     return vertical_point * ex * ex + horizontal_point * ey * ey
@@ -388,7 +394,10 @@ def manhattan_intersection(vertical_point, horizontal_point, ex):
 
 
 def find_Z_orientation(P0, P1, ex):
-    """compute the orientation of Point P0 against Point P1
+    """Compute the orientation of Point P0 against Point P1
+    P1 is assumed to be above P0.
+
+    Args: ex (Vector/Point): orientation of x axis.
 
     Returns:
         0 for Z-oriented and 1 for S-oriented
@@ -403,7 +412,14 @@ def find_Z_orientation(P0, P1, ex):
 
 def cluster_ports(ports_from, ports_to, ex):
     """Given two (equal length) port arrays, divide them into clusters
-    based on the connection orientation. TODO document more.
+    based on the connection orientation. The idea is that each cluster
+    can be routed independently with an array of Z or S traces that don't
+    touch each other.
+
+    Args: ex (Vector/Point): orientation of the axis along with the ports
+    are placed.
+
+    TODO document more.
 
     Returns:
         an array of k 2-tuples (port_pair_list, orientation),
@@ -443,6 +459,8 @@ def cluster_ports(ports_from, ports_to, ex):
         orient_old = orient_new
     port_clusters.append((port_cluster, orient_old))
     return port_clusters
+
+
 # ####################### SIEPIC EXTENSION ##########################
 
 
@@ -466,7 +484,7 @@ class Port(object):
 try:
     import pya
 
-    # Defining following methods to allow for serialization
+    # Defining following methods to allow for serialization by pickle
     def getstate(self):
         try:
             direction = self.direction.x, self.direction.y

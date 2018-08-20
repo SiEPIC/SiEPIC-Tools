@@ -217,6 +217,27 @@ cache_dir = os.path.join(os.getcwd(), 'cache')
 def cache_cell(cls, cache_dir=cache_dir):
     """ Caches results of pcell call to save build time.
 
+    First, it computes a hash based on:
+        1. the source code of the class and its bases.
+        2. the non-default parameter with which the pcell method is called
+
+    Second, it saves a cell with name cache_HASH in cache_HASH.gds inside
+    the cache folder. The port list and position is also saved in cache_HASH.klayout.pkl,
+    and it is a pickle of the ports dictionary.
+
+    Third, if wraps the pcell method so it loads the cached cell and cached port
+    positions instead of recalculating everything.
+
+    Warnings:
+        - The name of the cell is not in the hash, so multiple cells that use
+        the same instantiation parameters but different nameswill have the
+        same underlying cell instance in the layout.
+        - If the cell contents depend on something other than the contents
+        of the hash described above, for example an external .gds file, any
+        external change will not be seen by the caching algorithm. You have
+        to manually delete the corresponding cache file so it get updated
+        in the mask.
+
     Use as a decorator:
 
         @cache_cell
