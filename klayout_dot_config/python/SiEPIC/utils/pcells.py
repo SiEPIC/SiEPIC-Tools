@@ -287,7 +287,7 @@ def cache_cell(cls, cache_dir=cache_dir):
                             layout.rename_cell(i, "")
 
                         lmap = layout.read(gds_filename, load_options)
-                        # in the new layout, get all cells with starting names cache_
+                        # in the new layout, get all cells names
                         cell_names2 = [(cell.cell_index(), cell.name)
                                        for cell in layout.each_cell()]
 
