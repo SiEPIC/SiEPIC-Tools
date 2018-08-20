@@ -15,7 +15,7 @@ def place_cell(parent_cell, pcell, ports_dict, placement_origin, relative_to=Non
     """ Places an pya cell and return ports with updated positions
     Args:
         parent_cell: cell to place into
-        pcell, ports_dict: result of IMECell.pcell call
+        pcell, ports_dict: result of KLayoutPCell.pcell call
         placement_origin: pya.Point object to be used as origin
         relative_to: port name
             the cell is placed so that the port is located at placement_origin
@@ -186,7 +186,6 @@ class KLayoutPCell(object):
         """ Places this cell and return ports
         Args:
             parent_cell: cell to place into
-            ime_cell: IMECell to be placed
             placement_origin: pya.Point object to be used as origin
             relative_to: port name
                 the cell is placed so that the port is located at placement_origin
