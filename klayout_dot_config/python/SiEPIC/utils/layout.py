@@ -26,8 +26,23 @@ def insert_shape(cell, layer, shape):
 
 
 class DSimplePolygon(pya.DSimplePolygon):
+    """ DSimplePolygon with some added functionalities:
+            - transform_and_rotate
+            - clip
+            - layout
+            - layout_drc_exclude
+            - resize
+            - round_corners
+    """
 
     def transform_and_rotate(self, center, ex=None):
+        """ Translates the polygon by 'center' and rotates by the 'ex' orientation.
+
+        Example: if current polygon is a unit square with bottom-left corner at (0,0),
+        then square.transform_and_rotate(DPoint(0, 1), DVector(0, 1)) will
+        rotate the square by 90 degrees and translate it by 1 y-unit.
+        The new square's bottom-left corner will be at (-1, 1).
+        """
         if ex is None:
             ex = pya.DPoint(1, 0)
         ey = rotate90(ex)
@@ -38,6 +53,10 @@ class DSimplePolygon(pya.DSimplePolygon):
         return self
 
     def clip(self, x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
+        ''' Clips the polygon at four possible boundaries.
+        The boundaries are tuples based on absolute coordinates and cartesian axes.
+        This method is very powerful when used with transform_and_rotate.
+        '''
         # Add points exactly at the boundary, so that the filter below works.
         x_bounds = (np.min(x_bounds), np.max(x_bounds))
         y_bounds = (np.min(y_bounds), np.max(y_bounds))
@@ -138,11 +157,12 @@ class DSimplePolygon(pya.DSimplePolygon):
         return self
 
     def layout(self, cell, layer):
+        """ Places polygon as a shape into a cell at a particular layer."""
         return insert_shape(cell, layer, self)
 
     def layout_drc_exclude(self, cell, drclayer, ex):
         """ Places a drc exclude square at every corner.
-        A corner is defined by an angle greater than 30 degrees (conservative)
+        A corner is defined by an outer angle greater than 85 degrees (conservative)
         """
         if drclayer is not None:
             points = list(self.each_point())
@@ -162,7 +182,12 @@ class DSimplePolygon(pya.DSimplePolygon):
                     layout_square(cell, drclayer, points[i - 1], 0.1, ex)
                 prev_delta, prev_angle = delta, angle
 
-    def resize(self, dx, dbu, magic_flag=False):
+    def resize(self, dx, dbu):
+        """ Resizes the polygon by a positive or negative quantity dx.
+        Args:
+            dbu: typically 0.001
+        """
+
         dpoly = pya.DPolygon(self)
         dpoly.size(dx, 5)
         dpoly = pya.EdgeProcessor().simple_merge_p2p([dpoly.to_itype(dbu)], False, False, 1)
@@ -184,7 +209,7 @@ class DSimplePolygon(pya.DSimplePolygon):
         return self
 
     def round_corners(self, radius, N):
-        """ This only works if the polygon points are sparse."""
+        """ This only works if the polygon edges are longer than the radius."""
 
         dpoly = super().round_corners(radius, radius, N)
         self.assign(dpoly)
@@ -194,10 +219,15 @@ class DSimplePolygon(pya.DSimplePolygon):
 def waveguide_dpolygon(points_list, width, dbu, smooth=True):
     """ Returns a polygon outlining a waveguide.
 
+    This was updated over many iterations of failure. It can be used for both
+    smooth optical waveguides or DC metal traces with corners. It is better
+    than klayout's Path because it can have varying width.
+
     Args:
-        cell: cell to place into
         points_list: list of pya.DPoint (at least 2 points)
         width (microns): constant or list. If list, then it has to have the same length as points
+        dbu: dbu: typically 0.001, only used for accuracy calculations.
+        smooth: tries to smooth final polygons to avoid very sharp edges (greater than 130 deg)
     Returns:
         polygon DPoints
 
@@ -394,6 +424,7 @@ def layout_waveguide(cell, layer, points_list, width, smooth=False):
         layer: layer to place into. It is done with cell.shapes(layer).insert(pya.Polygon)
         points_list: list of pya.DPoint (at least 2 points)
         width (microns): constant or list. If list, then it has to have the same length as points
+        smooth: tries to smooth final polygons to avoid very sharp edges (greater than 130 deg)
 
     """
 
@@ -473,12 +504,14 @@ def layout_waveguide_angle(cell, layer, points_list, width, angle):
 
 
 def layout_disk(cell, layer, center, r):
-    # function to produce the layout of a disk
-    # cell: layout cell to place the layout
-    # layer: which layer to use
-    # center: origin DPoint
-    # r: radius
-    # units in microns
+    """
+    function to produce the layout of a disk
+    cell: layout cell to place the layout
+    layer: which layer to use
+    center: origin DPoint
+    r: radius
+    units in microns
+    """
 
     # outer arc
     # optimal sampling
@@ -498,17 +531,16 @@ def layout_disk(cell, layer, center, r):
 
 
 def layout_ring(cell, layer, center, r, w):
-    # function to produce the layout of a ring
-    # cell: layout cell to place the layout
-    # layer: which layer to use
-    # center: origin DPoint
-    # r: radius
-    # w: waveguide width
-    # units in microns
+    """
+    function to produce the layout of a ring
+    cell: layout cell to place the layout
+    layer: which layer to use
+    center: origin DPoint
+    r: radius
+    w: waveguide width
+    units in microns
 
-    # example usage.  Places the ring layout in the presently selected cell.
-    # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-    # layout_ring(cell, cell.layout().layer(LayerInfo(1, 0)), pya.DPoint(0,0), 10, 0.5)
+    """
 
     # outer arc
     # optimal sampling
@@ -540,21 +572,18 @@ def layout_ring(cell, layer, center, r, w):
 
 def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
                x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
-    """ function to produce the layout of an arc"""
-    # cell: layout cell to place the layout
-    # layer: which layer to use
-    # center: origin DPoint (not affected by ex)
-    # r: radius
-    # w: waveguide width
-    # theta_start, theta_end: angle in radians
-    # x_bounds and y_bounds relative to the center, before rotation by ex.
-    # units in microns
-    # returns a dpolygon
+    """ function to produce the layout of an arc
+    cell: layout cell to place the layout
+    layer: which layer to use
+    center: origin DPoint (not affected by ex)
+    r: radius
+    w: waveguide width
+    theta_start, theta_end: angle in radians
+    x_bounds and y_bounds relative to the center, before rotation by ex.
+    units in microns
+    returns a dpolygon
 
-    # example usage.  Places the ring layout in the presently selected cell.
-    # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-    # layout_arc(cell, layer, pya.DPoint(0,0), 10, 0.5, 0, np.pi/2)
-
+    """
     # fetch the database parameters
 
     if r <= 0:
@@ -589,6 +618,7 @@ def layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex=None,
 
 def layout_arc2(cell, layer, center, r1, r2, theta_start, theta_end, ex=None,
                 x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
+    ''' modified layout_arc with r1 and r2, instead of r (radius) and w (width). '''
     r1, r2 = min(r1, r2), max(r1, r2)
 
     r = (r1 + r2) / 2
@@ -599,6 +629,16 @@ def layout_arc2(cell, layer, center, r1, r2, theta_start, theta_end, ex=None,
 
 def layout_section(cell, layer, center, r2, theta_start, theta_end, ex=None,
                    x_bounds=(-np.inf, np.inf), y_bounds=(-np.inf, np.inf)):
+    ''' Layout section of a circle.
+    cell: layout cell to place the layout
+    layer: which layer to use
+    center: origin DPoint (not affected by ex)
+    r2: radius
+    theta_start, theta_end: angle in radians
+    x_bounds and y_bounds relative to the center, before rotation by ex.
+    units in microns
+    returns a dpolygon
+    '''
 
     assert r2 > 0
 
@@ -630,6 +670,9 @@ def layout_section(cell, layer, center, r2, theta_start, theta_end, ex=None,
 
 
 def layout_arc_drc_exclude(cell, drc_layer, center, r, w, theta_start, theta_end, ex=None):
+    ''' Places squares of 100nm size in the drc_layer located in corners of arc.
+        Try to use DSimplePolygon.layout_drc_exclude instead.
+    '''
     corner_points = [center + (r + w / 2) * rotate(ex, theta_start),
                      center + (r - w / 2) * rotate(ex, theta_start),
                      center + (r + w / 2) * rotate(ex, theta_end),
@@ -639,21 +682,24 @@ def layout_arc_drc_exclude(cell, drc_layer, center, r, w, theta_start, theta_end
 
 
 def layout_arc_with_drc_exclude(cell, layer, drc_layer, center, r, w, theta_start, theta_end, ex=None, **kwargs):
+    ''' Layout arc with drc exclude squares '''
     dpoly = layout_arc(cell, layer, center, r, w, theta_start, theta_end, ex, **kwargs)
     dpoly.layout_drc_exclude(cell, drc_layer, ex)
     return dpoly
 
 
 def layout_circle(cell, layer, center, r):
-    # function to produce the layout of a filled circle
-    # cell: layout cell to place the layout
-    # layer: which layer to use
-    # center: origin DPoint
-    # r: radius
-    # w: waveguide width
-    # theta_start, theta_end: angle in radians
-    # units in microns
-    # optimal sampling
+    """
+    function to produce the layout of a filled circle
+    cell: layout cell to place the layout
+    layer: which layer to use
+    center: origin DPoint
+    r: radius
+    w: waveguide width
+    theta_start, theta_end: angle in radians
+    units in microns
+    optimal sampling
+    """
 
     arc_function = lambda t: np.array([center.x + r * np.cos(t), center.y + r * np.sin(t)])
     t, coords = sample_function(arc_function,
@@ -665,16 +711,20 @@ def layout_circle(cell, layer, center, r):
 
 
 def layout_path(cell, layer, point_iterator, w):
+    ''' Simple wrapper for pya.DPath.'''
     path = pya.DPath(list(point_iterator), w, 0, 0).to_itype(cell.layout().dbu)
     cell.shapes(layer).insert(pya.Path.from_dpath(path))
 
 
 def layout_path_with_ends(cell, layer, point_iterator, w):
+    ''' Simple wrapper for pya.DPath.'''
     dpath = pya.DPath(list(point_iterator), w, w / 2, w / 2)
     cell.shapes(layer).insert(dpath)
 
 
 def box_dpolygon(point1, point3, ex):
+    """ Returns a dpolygon of a box defined by point1, point3 and orientation ex.
+    """
     # position point2 to the right of point1
     ey = rotate90(ex)
     point2 = point1 * ex * ex + point3 * ey * ey
@@ -698,8 +748,10 @@ def layout_box(cell, layer, point1, point3, ex):
 
 
 def rectangle_dpolygon(center, width, height, ex):
-    # returns the polygon of a rectangle centered at center,
-    # aligned with ex, with width and height in microns
+    """
+    returns the polygon of a rectangle centered at center,
+    aligned with ex, with width and height in microns
+    """
 
     ey = rotate90(ex)
 
@@ -710,14 +762,15 @@ def rectangle_dpolygon(center, width, height, ex):
 
 
 def square_dpolygon(center, width, ex=None):
-    # returns the polygon of a square centered at center,
-    # aligned with ex, with width in microns
-
+    """
+    returns the polygon of a square centered at center,
+    aligned with ex, with width in microns
+    """
     return rectangle_dpolygon(center, width, width, ex=ex)
 
 
 def layout_square(cell, layer, center, width, ex=None):
-    """ Lays out a square in the DRC layer
+    """ Lays out a square in a layer
 
     Args:
         center: pya.DPoint (um units)
@@ -768,6 +821,8 @@ def append_relative(points, *relative_vectors):
 
 
 def layout_connect_ports(cell, layer, port_from, port_to, smooth=True):
+    ''' Places an "optimal" bezier curve from port_from to port_to.
+    '''
 
     if port_from.name.startswith("el"):
         assert port_to.name.startswith("el")
@@ -791,6 +846,10 @@ def layout_connect_ports(cell, layer, port_from, port_to, smooth=True):
 
 
 def layout_connect_ports_angle(cell, layer, port_from, port_to, angle):
+    ''' Places an "optimal" bezier curve from port_from to port_to, with a fixed orientation angle.
+
+    Use when connecting ports that are like horizontal-in and horizontal-out.
+    '''
 
     if port_from.name.startswith("el"):
         assert port_to.name.startswith("el")
@@ -808,6 +867,7 @@ def layout_connect_ports_angle(cell, layer, port_from, port_to, angle):
 
 
 def layout_text(cell, layer_text, position, text_string, size):
+    ''' Layout documentation text in layer_text. Not a polygon. Will not be printed. '''
     dtext = pya.DText(str(text_string), pya.DTrans(
         pya.DTrans.R0, position.x, position.y))
     dtext.size = size
