@@ -1,6 +1,6 @@
 # Lumerical INTERCONNECT Python integration
 
-from . import interconnect, fdtd
+from . import interconnect, fdtd, mode, ApodizedContraDC
 # Don't import load_lumapi on start-up, in case user doesn't have Lumerical tools installed
 
 #from . import interconnect, fdtd, load_lumapi

@@ -119,8 +119,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   fh.writelines(_globals.INTC_ELEMENTS)
   fh.close()
 
-  lumapi.evalScript(_globals.INTC, "?'KLayout integration successful, CML library (%s) is available.';switchtodesign;\n" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
-
+  lumapi.evalScript(_globals.INTC, "message('KLayout-Lumerical INTERCONNECT integration successful, CML library (%s) is available.');switchtodesign;\n" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
 
   # instantiate all library elements onto the canvas
   question = pya.QMessageBox()
@@ -129,7 +128,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   question.setText("Do you wish to see all the components in the library?")
 #  question.setInformativeText("Do you wish to see all the components in the library?")
   if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
-    lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+    # lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
     return
   intc_elements = _globals.INTC_ELEMENTS.split('\n')
 #  tech_elements = [ e.split('::')[-1] for e in intc_elements if "design kits::"+TECHNOLOGY['technology_name'].lower()+"::" in e ]

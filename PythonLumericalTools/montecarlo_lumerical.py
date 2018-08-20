@@ -9,11 +9,14 @@ num_detectors = 2 # number of detectors to connect to the circuit
 circuit_name = "RingResonator"
 num_detectors = 3 # number of detectors to connect to the circuit
 
+circuit_name = "tanner"
+num_detectors = 1
 
 # Find path to the example netlist files
 import os, inspect
 path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 folder = os.path.join(path,circuit_name)
+folder = "/Users/lukasc/Desktop/tanner"
 if not os.path.exists(folder):
     folder = os.path.join(path,"..",circuit_name)
 print(folder)

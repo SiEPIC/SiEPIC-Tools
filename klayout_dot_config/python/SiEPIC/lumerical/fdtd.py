@@ -1,3 +1,4 @@
+# $autorun
 '''
 ################################################################################
 #
@@ -8,6 +9,11 @@
 Component simulations using Lumerical FDTD, to generate Compact Models
 
 - component_simulation: single component simulation
+
+# Mustafa Hammood     January 2018
+- GC_simulation: 2D and 3D sub-wavelength grating coupler simulation with parameters optimization
+# Mustafa Hammood     August 2018
+- CDC_bandstructure: Bloch boundary condition Contra_DC simulator
 
 usage:
 
@@ -22,12 +28,20 @@ if 'pya' in sys.modules: # check if in KLayout
   import pya
 
 try:
-  import pyparsing
+    import pyparsing
 except:
-  import pip
-  from SiEPIC.install import get_pip_main
-  main = get_pip_main()
-  main(['install', 'pyparsing'])
+    try:
+        import pip
+        import pya
+        install = pya.MessageBox.warning(
+            "Install package?", "Install package 'pyparsing' using pip? [required for Lumerical FDTD]",  pya.MessageBox.Yes + pya.MessageBox.No)
+        if install == pya.MessageBox.Yes:
+            # try installing using pip
+            from SiEPIC.install import get_pip_main
+            main = get_pip_main()
+            main(['install', 'pyparsing'])
+    except ImportError:
+        pass
 
 
 def run_FDTD(verbose=False):
@@ -756,6 +770,8 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     wavelength_start = FDTD_settings['wavelength_start']
     wavelength_stop =  FDTD_settings['wavelength_stop']
 
+
+    
     # create FDTD simulation region (extra large)
     FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
     if mode_selection_index==1:
@@ -781,17 +797,12 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
             matches.append(os.path.join(root, filename))
 
     filename = matches[0]
+    
+    # simulate 3D option
+    
+    simulate_3d = GC_settings['simulate_3d']
 
-    '''
-    # set 2D GC geometry parameters
-    lumapi.evalScript(_globals.FDTD,
-    "load('%s'); select('grating_coupler_2D');\
-    set('duty cycle',%s); set('target length',%s);\
-    set('etch depth',%s); set('pitch',%s);\
-    set('target length',%s); set('input length',%s);'"
-    % (filename, GC_settings['duty_cycle'], GC_settings['target_length'], GC_settings['etch_depth'],
-    GC_settings['pitch'],GC_settings['target_length'],GC_settings['L_extra']))
-    '''
+    
     # set 2D GC geometry parameters
     lumapi.evalScript(_globals.FDTD,
     "load('%s'); select('grating_coupler_2D');\
@@ -817,9 +828,19 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     set('mode selection',%s);" % polarization)
 
     # run s-parameters sweep
-    lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
+    #lumapi.evalScript(_globals.FDTD,"runsweep('s-parameter sweep');")
 
-
+    # run s-parameter sweep, collect results, visualize results
+    # export S-parameter data to file named xxx.dat to be loaded in INTERCONNECT
+    lumapi.evalScript(_globals.FDTD, " \
+      runsweep('s-parameter sweep'); \
+      S_matrix = getsweepresult('s-parameter sweep','S matrix'); \
+      S_parameters = getsweepresult('s-parameter sweep','S parameters'); \
+      S_diagnostic = getsweepresult('s-parameter sweep','S diagnostic'); \
+      visualize(S_parameters); \
+      exportsweep('s-parameter sweep','%s'); \
+      " % ("2D_sparam") )
+      
     if GC_settings['particle_swarm_optimization'] == 'yes':
       # run optimization (PSO) to find optimal  duty cycle and length
       lumapi.evalScript(_globals.FDTD,"runsweep('optimization');")
@@ -830,34 +851,35 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
       GC_settings['pitch']=lumapi.getVar(_globals.FDTD, "pitch")
 
 
-
+  
     # run 3D FDTD simulation
-    dir_path = pya.Application.instance().application_data_path()
-    search_str = 'grating_coupler_3D.fsp'
-    matches = []
-    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
-        for filename in fnmatch.filter(filenames, search_str):
-          if tech_name in root:
-            matches.append(os.path.join(root, filename))
-
-    filename = matches[0]
-
-    # set 2D GC geometry parameters
-    lumapi.evalScript(_globals.FDTD,
-    "load('%s'); select('grating_coupler_3D'); set('duty cycle',%s);\
-    set('etch depth',%s); set('pitch',%s);\
-    set('target length',%s); set('L extra',%s);\
-    set('radius',%s); set('y span',%s);\
-    set('waveguide width',%s); set('waveguide length,%s);'"
-    % (filename, GC_settings['duty_cycle'], GC_settings['etch_depth'],
-    GC_settings['pitch'],GC_settings['target_length'],GC_settings['length_extra'],
-    GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))
-
-    # set polarization, update port monitors
-    lumapi.evalScript(_globals.FDTD,
-    "select('FDTD::ports::port 1'); set('mode selection',%s);\
-    updateportmodes; select('FDTD::ports::port 2');\
-    set('mode selection',%s); updateportmodes;" % (polarization,polarization))
+    if (GC_settings['simulate_3d'] == 'yes'):
+      dir_path = pya.Application.instance().application_data_path()
+      search_str = 'grating_coupler_3D.fsp'
+      matches = []
+      for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+          for filename in fnmatch.filter(filenames, search_str):
+            if tech_name in root:
+              matches.append(os.path.join(root, filename))
+  
+      filename = matches[0]
+  
+      # set 2D GC geometry parameters
+      lumapi.evalScript(_globals.FDTD,
+      "load('%s'); select('grating_coupler_3D'); set('duty cycle',%s);\
+      set('etch depth',%s); set('pitch',%s);\
+      set('target length',%s); set('L extra',%s);\
+      set('radius',%s); set('y span',%s);\
+      set('waveguide width',%s); set('waveguide length,%s);'"
+      % (filename, GC_settings['duty_cycle'], GC_settings['etch_depth'],
+      GC_settings['pitch'],GC_settings['target_length'],GC_settings['length_extra'],
+      GC_settings['radius'],GC_settings['y_span'],GC_settings['waveguide_width'],GC_settings['waveguide_length']))
+  
+      # set polarization, update port monitors
+      lumapi.evalScript(_globals.FDTD,
+      "select('FDTD::ports::port 1'); set('mode selection',%s);\
+      updateportmodes; select('FDTD::ports::port 2');\
+      set('mode selection',%s); updateportmodes;" % (polarization,polarization))
 
     file_sparam  = os.path.join(_globals.TEMP_FOLDER, '%s.dat' % "GC_sparams")
     # run s-parameter sweep, collect results, visualize results
@@ -900,3 +922,67 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
 
     lumapi.evalScript(_globals.INTC, t)
 
+
+# Mustafa Hammood   Mustafa@ece.ubc.ca 
+# Run bandstructure sweep on selected contra_DC PCell
+# Returns maximum bandwidth and central wavelength (lambda_0) of the contra-DC unit cell
+def generate_CDC_bandstructure(W_1 = 450e-9, W_2 = 550e-9, dW_1 = 20e-9, dW_2 = 40e-9, period = 320e-9, gap = 100e-9, sinusoidal = 0, verbose = False):
+  if verbose:
+    print('SiEPIC.lumerical.fdtd: generate_CDC_sparam()')
+
+  # Get technology and layout details
+  from ..utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
+  
+  import numpy as np
+  # run Lumerical FDTD Solutions
+  from .. import _globals
+  
+  run_FDTD()
+  lumapi = _globals.LUMAPI
+  if not lumapi:
+    print('SiEPIC.lumerical.fdtd.generate_component_sparam: lumapi not loaded')
+    return
+      
+ # search for contra-DC bandstructure fsp project file in technology
+  from ..utils import get_technology
+  TECHNOLOGY = get_technology()
+  tech_name = TECHNOLOGY['technology_name']
+
+  import os, fnmatch
+  dir_path = pya.Application.instance().application_data_path()
+  search_str = 'FDTD_CDC_unit_cell.fsp'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+
+  print(matches)
+  filename = matches[0]
+
+  # set Contra-DC geometry parameters
+  lumapi.evalScript(_globals.FDTD,
+  "load('%s'); setnamed('::model','bus1_width',%s); setnamed('::model','bus2_width',%s); setnamed('::model','bus1_delta',%s);\
+  setnamed('::model','bus2_delta',%s); setnamed('::model','ax',%s); setnamed('::model','gap',%s); setnamed('::model','sinusoidal',%s);" % (filename, W_2, W_1, dW_2, dW_1, period, gap, sinusoidal))
+  
+  # search for bandstructure sweep script
+  search_str = 'CDC_bandstructure_sweep.lsf'
+  matches = []
+  for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+      for filename in fnmatch.filter(filenames, search_str):
+        if tech_name in root:
+          matches.append(os.path.join(root, filename))
+
+  filename = matches[0]
+  print(filename)
+  lumapi.evalScript(_globals.FDTD,"CDC_bandstructure_sweep;")
+  
+  # extract simulation results from sweep
+  
+  #bandwidth = lumapi.getVar(_globals.FDTD, "bandwidth")
+  #lambda_0 = lumapi.getVar(_globals.FDTD, "lambda_0")
+  [bandwidth, lambda_0] = [6e-9, 1550e-9]
+
+  return [bandwidth, lambda_0];

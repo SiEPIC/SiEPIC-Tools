@@ -11,7 +11,7 @@
  <shortcut/>
  <show-in-menu>true</show-in-menu>
  <group-name>Setup</group-name>
- <menu-path>siepic_menu.simulation.begin</menu-path>
+ <menu-path>siepic_menu.simulation_circuits.begin</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Setup Lumerical INTERCONNECT-KLayout Python integration

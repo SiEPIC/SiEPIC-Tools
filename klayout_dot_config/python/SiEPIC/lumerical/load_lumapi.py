@@ -7,28 +7,24 @@ def load_lumapi(verbose=False):
 
 
   import sys
-  if 'numpy' not in sys.modules:
-    try:
-      import pip
-    except ImportError:
-      pass
-    if 'pip' in sys.modules:
-      import pya
-      install = pya.MessageBox.warning("Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
-      if install == pya.MessageBox.Yes:
-        # try installing using pip
-        pip.main(['install', 'numpy'])
+
 
   try:
     import numpy
   except:
-    print('Missing numpy. Cannot load Lumerical Python integration')
-    warning = pya.QMessageBox()
-    warning.setStandardButtons(pya.QMessageBox.Cancel)
-    warning.setText("Missing Python module numpy.  \nCannot load Lumerical Python integration. ") 
-    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.\nPlease install numpy.  For Windows users, install the Package Windows_Python_packages_for_KLayout.")
-    pya.QMessageBox_StandardButton(warning.exec_())
-    return
+      try:
+          import pip
+          import pya
+          install = pya.MessageBox.warning(
+              "Install package?", "Install package 'numpy' using pip? [required for Lumerical tools]",  pya.MessageBox.Yes + pya.MessageBox.No)
+          if install == pya.MessageBox.Yes:
+              # try installing using pip
+              from SiEPIC.install import get_pip_main
+              main = get_pip_main()
+              main(['install', 'numpy'])
+      except ImportError:
+          pass
+  
 
   import os, platform, sys, inspect
 
