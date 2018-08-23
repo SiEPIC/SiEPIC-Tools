@@ -485,6 +485,8 @@ def select_paths(layer, cell=None, verbose=None):
         ly = cell.layout()
 
     selection = lv.object_selection
+    if verbose:
+        print("SiEPIC.utils.select_paths: selection, before: %s" % lv.object_selection)
     if selection == []:
         itr = cell.begin_shapes_rec(ly.layer(layer))
         while not(itr.at_end()):
@@ -504,7 +506,7 @@ def select_paths(layer, cell=None, verbose=None):
         lv.object_selection = [o for o in selection if (
             not o.is_cell_inst()) and o.shape.is_path()]
     if verbose:
-        print("SiEPIC.utils.select_paths: selection: %s" % lv.object_selection)
+        print("SiEPIC.utils.select_paths: selection, after: %s" % lv.object_selection)
     return lv.object_selection
 
 # Return all selected waveguides. If nothing is selected, select waveguides automatically
