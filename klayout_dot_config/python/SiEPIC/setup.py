@@ -117,6 +117,10 @@ def registerKeyBindings():
     mapping['edit_menu.selection_menu.sel_flip_x'] = "'Shift+H'"
     mapping['edit_menu.selection_menu.sel_flip_y'] = "'Shift+V'"
     mapping['edit_menu.selection_menu.sel_move'] = "'Ctrl+M'"
+    mapping['edit_menu.selection_menu.sel_rot_ccw'] = "'Ctrl+R'"
+    mapping['edit_menu.selection_menu.sel_free_rot'] = "'Ctrl+Shift+R'"
+    mapping['edit_menu.selection_menu.flatten_insts'] = "'Ctrl+Shift+F'"
+    mapping['edit_menu.selection_menu.make_cell'] = "'Ctrl+Shift+M'"
     #  mapping['edit_menu.selection_menu.size'] = "'Z'"
     #  mapping['edit_menu.selection_menu.tap'] = "''"
 
