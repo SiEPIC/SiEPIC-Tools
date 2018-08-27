@@ -88,18 +88,6 @@ class Pin():
     def __init__(self, path=None, _type=None, box=None, polygon=None, component=None, net=None, pin_name=None):
         from .utils import angle_vector
         from . import _globals
-        self.path = path            # the pin's Path (Optical)
-        if path:
-            pts = path.get_points()
-            self.center = (pts[0] + pts[1]) * 0.5  # center of the pin: a Point
-            self.rotation = angle_vector(pts[1] - pts[0])  # direction / angle of the optical pin
-        else:
-            self.rotation = 0
-        self.box = box              # the pin's Box (Electrical)
-        if box:
-            self.center = box.center()  # center of the pin: a Point
-        if polygon:
-            self.center = polygon.center()  # center of the pin: a Point (relative coordinates, within component)
         self.type = _type           # one of PIN_TYPES, defined in SiEPIC._globals.PINTYPES
         if net:                     # Net for netlist generation
             self.net = net            # which net this pin is connected to
@@ -107,6 +95,24 @@ class Pin():
             self.net = _globals.NET_DISCONNECTED
         self.pin_name = pin_name    # label read from the cell layout (PinRec text)
         self.component = component  # which component index this pin belongs to
+        self.path = path            # the pin's Path (Optical)
+        if path:
+            pts = path.get_points()
+            if len(pts) == 2:
+              self.center = (pts[0] + pts[1]) * 0.5  # center of the pin: a Point
+            else:
+              print('SiEPIC-Tools: class Pin():__init__: detected invalid Pin')
+              self.rotation = 0
+              return
+            self.rotation = angle_vector(pts[1] - pts[0])  # direction / angle of the optical pin
+        else:
+            self.rotation = 0
+        self.box = box              # the pin's Box (Electrical)
+        if box:
+            self.center = box.center()  # center of the pin: a Point
+        if polygon:
+            self.rotation = 0
+            self.center = polygon.bbox().center()  # center of the pin: a Point (relative coordinates, within component)
 
     def transform(self, trans):
         # Transformation of the pin location

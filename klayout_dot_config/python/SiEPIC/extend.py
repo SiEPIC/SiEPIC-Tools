@@ -424,13 +424,14 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                 if iter2.shape().is_text():
                     pin_name = iter2.shape().text.string
                 iter2.next()
-            if pin_name == None:
+            if pin_name == None or pin_path.num_points()!=2:
                 print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
-                error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name." %
+                error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name.\n" %
                                (pin_path, subcell.name))
 #        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
-            # Store the pin information in the pins array
-            pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+            else:
+              # Store the pin information in the pins array
+              pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
 
         # Assume a PinRec Box is an electrical pin
         # similar to optical pin
@@ -453,7 +454,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                     pin_name = iter2.shape().text.string
                 iter2.next()
             if pin_name == None:
-                error_text += ("Invalid pin Box detected: %s, Cell: %s, Electrical Pins must have a pin name." %
+                error_text += ("Invalid pin Box detected: %s, Cell: %s, Electrical Pins must have a pin name.\n" %
                                (pin_box, subcell.name))
 #        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_box)
             pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
@@ -486,7 +487,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                     pin_name = iter2.shape().text.string
                 iter2.next()
             # Store the pin information in the pins array
-            pins.append(Pin(path=it.shape().polygon.transformed(it.itrans()),
+            pins.append(Pin(polygon=it.shape().polygon.transformed(it.itrans()),
                             _type=_globals.PIN_TYPES.OPTICALIO,
                             pin_name=pin_name))
         it.next()
