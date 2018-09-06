@@ -96,6 +96,7 @@ class Pin():
         self.pin_name = pin_name    # label read from the cell layout (PinRec text)
         self.component = component  # which component index this pin belongs to
         self.path = path            # the pin's Path (Optical)
+        self.polygon = polygon      # the pin's polygon (Optical IO)
         if path:
             pts = path.get_points()
             if len(pts) == 2:
@@ -122,6 +123,10 @@ class Pin():
             pts = self.path.get_points()
             self.center = (pts[0] + pts[1]) * 0.5
             self.rotation = angle_vector(pts[1] - pts[0])
+        if self.polygon:
+            self.polygon = self.polygon.transformed(trans)
+            self.center = self.polygon.bbox().center()
+            self.rotation = 0
         return self
 
     def display(self):
