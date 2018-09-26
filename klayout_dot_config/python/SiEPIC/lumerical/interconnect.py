@@ -371,7 +371,7 @@ def component_simulation(verbose=False, simulate=True):
         # Run using Python integration:
         lumapi = _globals.LUMAPI
         lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-        lumapi.evalScript(_globals.INTC, c.component + ";")
+        lumapi.evalScript(_globals.INTC, "feval('"+ c.component + "');\n")
       except:
         from .. import scripts
         scripts.open_folder(tmp_folder)
@@ -508,10 +508,13 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
       from .. import scripts
       scripts.open_folder(tmp_folder)
       INTC_commandline(filename)
+      print('SiEPIC.lumerical.interconnect: circuit_simulation: error 1')
     try:
-      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, circuit_name + ";")
+      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');\n")
+      print("feval('"+ circuit_name + "');\n")
+      lumapi.evalScript(_globals.INTC, "feval('"+ circuit_name + "');\n")
     except:
+      print('SiEPIC.lumerical.interconnect: circuit_simulation: error 2')
       pass
   else:
     from .. import scripts
@@ -839,7 +842,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
       # Run using Python integration:
       lumapi = _globals.LUMAPI
       lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, circuit_name + ";")
+      lumapi.evalScript(_globals.INTC, "feval('"+ circuit_name + "');\n")
     except:
       from .. import scripts
       scripts.open_folder(tmp_folder)
