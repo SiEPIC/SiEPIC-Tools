@@ -59,6 +59,11 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
     warning = pya.QMessageBox()
     warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
     warning.setDefaultButton(pya.QMessageBox.Yes)
+    if not selected_paths:
+        warning.setText(
+            "Warning: Cannot make Waveguides - No Path objects selected or found in the layout.")
+        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+            return
     for obj in selected_paths:
         path = obj.shape.path
         path.unique_points()
