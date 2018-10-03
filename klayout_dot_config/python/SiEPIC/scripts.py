@@ -1736,7 +1736,7 @@ def resize_waveguide():
 
             elif sys.platform.startswith('darwin'):
                     # OSX specific
-                titlefont = QFont("Arial", 13, QFont.Bold, False)
+                titlefont = QFont("Arial", 9, QFont.Bold, False)
 
             elif sys.platform.startswith('win'):
                 titlefont = QFont("Arial", 9, QFont.Bold, False)
