@@ -203,7 +203,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       set('y min bc','Metal'); set('y max bc','Metal'); \
       set('z min bc','%s'); set('z max bc','%s'); \
       setglobalsource('wavelength start',%s); setglobalsource('wavelength stop', %s); \
-      setglobalmonitor('frequency points',%s); set('simulation time', %s/c+400e-15); \
+      setglobalmonitor('frequency points',%s); set('simulation time', %s/c+1500e-15); \
       addmesh; set('override x mesh',0); set('override y mesh',0); set('override z mesh',1); set('z span', 0); set('dz', %s); set('z', %s); \
       ?'FDTD solver with mesh override added'; " % ( FDTDxmin,FDTDxmax,FDTDymin,FDTDymax,FDTDzspan, \
          Z_symmetry, FDTD_settings['Initial_Z-Boundary-Conditions'], \
