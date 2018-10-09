@@ -54,7 +54,7 @@ def registerMenuItems():
         ACTIONS.append(pya.Action())
         menu.insert_item("@toolbar.end", "cir_sim", ACTIONS[count])
     ACTIONS[count].title = "Circuit \nSimulation"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
+    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_toolbar)
     ACTIONS[count].icon = path
     count += 1
     

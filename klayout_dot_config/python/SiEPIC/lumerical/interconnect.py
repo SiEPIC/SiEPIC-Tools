@@ -380,7 +380,11 @@ def component_simulation(verbose=False, simulate=True):
       from .. import scripts
       scripts.open_folder(tmp_folder)
 
+def circuit_simulation_toolbar():
+  circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True)
+
 def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True):
+  print ('*** circuit_simulation(), opt_in: %s' % opt_in_selection_text)
   if verbose:
     print('*** circuit_simulation()')
   
