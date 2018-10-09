@@ -487,7 +487,10 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                     pin_name = iter2.shape().text.string
                 iter2.next()
             # Store the pin information in the pins array
-            pins.append(Pin(polygon=it.shape().polygon.transformed(it.itrans()),
+            # check if this one already exists (duplicate polygons)
+            if not([p for p in pins if p.type == _globals.PIN_TYPES.OPTICALIO and 
+              p.polygon == it.shape().polygon.transformed(it.itrans())]):
+                pins.append(Pin(polygon=it.shape().polygon.transformed(it.itrans()),
                             _type=_globals.PIN_TYPES.OPTICALIO,
                             pin_name=pin_name))
         it.next()
