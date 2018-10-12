@@ -40,7 +40,7 @@ def sample_function(func, points, tol=0.001, min_points=8, max_level=16,
     Returns
     -------
     x : ndarray
-        X-coordinates
+        X-coordinates (WARNING: returns sorted samples)
     y : ndarray
         Corresponding values of func(x)
 

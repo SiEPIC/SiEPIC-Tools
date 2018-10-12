@@ -54,7 +54,7 @@ class Point(object):
         return self.x == other.x and self.y == other.y
 
     def __str__(self):
-        return f"Point({self.x}, {self.y})"
+        return "Point({}, {})".format(self.x, self.y)
 
     def norm(self):
         return sqrt(self.x**2 + self.y**2)
@@ -90,6 +90,7 @@ assert isinstance(a * t, Line)
 
 
 def rotate(point, angle_rad):
+    ''' Rotates point counter-clockwisely about its origin by an angle given in radians'''
     th = angle_rad
     x, y = point.x, point.y
     new_x = x * np.cos(th) - y * np.sin(th)
@@ -98,7 +99,6 @@ def rotate(point, angle_rad):
 
 
 rotate90 = lambda point: rotate(point, np.pi / 2)
-
 
 # ####################### ARC METHODS    ##########################
 
@@ -182,6 +182,12 @@ def logistic_penalty(x, a):
 
 
 def curve_length(curve, t0=0, t1=1):
+    ''' Computes the total length of a curve.
+
+    Args:
+        curve: list of Points, or
+            parametric function of points, to be computed from t0 to t1.
+    '''
     if isinstance(curve, list):
         # assuming curve is a list of points
         scale = (curve[-1] - curve[0]).norm()
@@ -312,8 +318,11 @@ def bezier_optimal(P0, P3, angle0, angle3):
         P2 = P3 - b * scaling * Point(np.cos(angle3), np.sin(angle3))
         curve_func = bezier_line(P0, P1, P2, P3)
         with np.errstate(divide='ignore'):
-            print("Min radius: {:.2f} um".format(np.true_divide(1, max_curvature(P0, P1, P2, P3))))
-            print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
+            # warn if minimum radius is smaller than 3um
+            min_radius = np.true_divide(1, max_curvature(P0, P1, P2, P3))
+            if min_radius < 3:
+                print("Warning! Min radius: {:.2f} um".format(np.true_divide(1, max_curvature(P0, P1, P2, P3))))
+            # print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
         return curve_func
     else:
         raise GeometryError(f"Error: calling bezier between two identical points: {P0}, {P3}")
@@ -337,6 +346,8 @@ try:
     _bezier_optimal_pure = bezier_optimal
 
     def bezier_optimal(P0, P3, *args, **kwargs):
+        ''' If inside KLayout, return computed list of KLayout points.
+        '''
         P0 = Point(P0.x, P0.y)
         P3 = Point(P3.x, P3.y)
         scale = (P3 - P0).norm()  # rough length.
@@ -346,15 +357,19 @@ try:
         new_bezier_line = _bezier_optimal_pure(P0, P3, *args, **kwargs)
         bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
 
-        _, bezier_point_coordinates_sampled = \
+        t_sampled, bezier_point_coordinates_sampled = \
             sample_function(bezier_point_coordinates, [0, 1], tol=0.005 / scale)  # tol about 5 nm
 
         # # This yields a better polygon
+        insert_at = np.argmax(0.001 / scale < t_sampled)
+        t_sampled = np.insert(t_sampled, insert_at, 0.001 / scale)
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(.001 / scale),
+            np.insert(bezier_point_coordinates_sampled, insert_at, bezier_point_coordinates(.001 / scale),
                       axis=1)  # add a point right after the first one
+        insert_at = np.argmax(1 - 0.001 / scale < t_sampled)
+        # t_sampled = np.insert(t_sampled, insert_at, 1 - 0.001 / scale)
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - .001 / scale),
+            np.insert(bezier_point_coordinates_sampled, insert_at, bezier_point_coordinates(1 - .001 / scale),
                       axis=1)  # add a point right before the last one
         # bezier_point_coordinates_sampled = \
         #     np.append(bezier_point_coordinates_sampled, np.atleast_2d(bezier_point_coordinates(1 + .001 / scale)).T,
@@ -364,6 +379,87 @@ try:
 
 except ImportError:
     pass
+
+
+def manhattan_intersection(vertical_point, horizontal_point, ex):
+    """ returns the point that intersects vertical_point's x coordinate
+        and horizontal_point's y coordinate.
+
+        Args: ex (Vector/Point): orientation of x axis.
+    """
+    ey = rotate90(ex)
+    return vertical_point * ex * ex + horizontal_point * ey * ey
+
+# ####################### CLUSTERING METHODS    ##########################
+
+
+def find_Z_orientation(P0, P1, ex):
+    """Compute the orientation of Point P0 against Point P1
+    P1 is assumed to be above P0.
+
+    Args: ex (Vector/Point): orientation of x axis.
+
+    Returns:
+        0 for Z-oriented and 1 for S-oriented
+
+    """
+    if P1 * ex > P0 * ex:
+        orient = 0  # Z-oriented
+    else:
+        orient = 1  # S-oriented
+    return orient
+
+
+def cluster_ports(ports_from, ports_to, ex):
+    """Given two (equal length) port arrays, divide them into clusters
+    based on the connection orientation. The idea is that each cluster
+    can be routed independently with an array of Z or S traces that don't
+    touch each other.
+
+    Args: ex (Vector/Point): orientation of the axis along with the ports
+    are placed.
+
+    TODO document more.
+
+    Returns:
+        an array of k 2-tuples (port_pair_list, orientation),
+            where k is the number of clusters,
+            port_pair list an array of (p0, p1),
+            and orientation is 0 for Z and 1 for S
+    """
+    orient_old = None
+    port_cluster = []
+    port_clusters = []
+    # sort the arrays first
+    proj_ex = lambda p: p.position * ex
+    ports_from = sorted(ports_from, key=proj_ex)
+    ports_to = sorted(ports_to, key=proj_ex)
+    for port_from, port_to in zip(ports_from, ports_to):
+        new_cluster = False
+        orient_new = find_Z_orientation(port_from.position, port_to.position, ex)
+        # first pair
+        if orient_old is None:
+            port_cluster.append((port_from, port_to))
+        # the rest pairs
+        elif orient_new == orient_old:
+            # if the ports are too spaced apart, initiate new cluster
+            right_port = min(port_from, port_to, key=proj_ex)
+            left_port = max(port_cluster[-1], key=proj_ex)
+            if proj_ex(right_port) - right_port.width > proj_ex(left_port) + left_port.width:
+                new_cluster = True
+            else:
+                port_cluster.append((port_from, port_to))
+        else:
+            new_cluster = True
+
+        if new_cluster:
+            port_clusters.append((port_cluster, orient_old))
+            port_cluster = []
+            port_cluster.append((port_from, port_to))
+        orient_old = orient_new
+    port_clusters.append((port_cluster, orient_old))
+    return port_clusters
+
 
 # ####################### SIEPIC EXTENSION ##########################
 
@@ -376,3 +472,44 @@ class Port(object):
         self.position = position
         self.direction = direction
         self.width = width
+
+    def rename(self, new_name):
+        self.name = new_name
+        return self
+
+    def __repr__(self):
+        return f"{self.name}, {self.position}"
+
+
+try:
+    import pya
+
+    # Defining following methods to allow for serialization by pickle
+    def getstate(self):
+        try:
+            direction = self.direction.x, self.direction.y
+        except AttributeError:
+            direction = self.direction
+
+        state = {"name": self.name,
+                 "position": (self.position.x, self.position.y),
+                 "direction": direction,
+                 "width": self.width}
+        return state
+    Port.__getstate__ = getstate
+
+    def setstate(self, state):
+        self.name = state['name']
+        x, y = state['position']
+        self.position = pya.DPoint(x, y)
+        direction = state['direction']
+        if isinstance(direction, tuple):
+            x, y = direction
+            self.direction = pya.DVector(x, y)
+        else:
+            self.direction = direction
+        self.width = state['width']
+    Port.__setstate__ = setstate
+
+except ImportError:
+    pass
