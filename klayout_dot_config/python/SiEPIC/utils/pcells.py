@@ -1,5 +1,9 @@
 import pya
+from math import pi
 from SiEPIC.extend import to_dtype
+from SiEPIC.utils.geometry import rotate, rotate90
+
+EX = pya.DVector(1, 0)
 
 
 class objectview(object):
@@ -201,7 +205,25 @@ class KLayoutPCell(object):
         return place_cell(parent_cell, pcell, ports, origin, relative_to=relative_to, transform_into=transform_into)
 
 
+class CellWithPosition(KLayoutPCell):
+    ''' handles the angle_ex parameter '''
+
+    def initialize_default_params(self):
+        self.define_param("angle_ex", self.TypeDouble,
+                          "Placement Angle (0, 90, ..)", default=0)
+
+    def origin_ex_ey(self, params=None, multiple_of_90=False):  # pylint: disable=unused-argument
+        cp = self.parse_param_args(params)
+        origin = pya.DPoint(0, 0)
+        if multiple_of_90:
+            if cp.angle_ex % 90 != 0:
+                raise RuntimeError("Specify an angle multiple of 90 degrees")
+        ex = rotate(EX, cp.angle_ex * pi / 180)
+        ey = rotate90(ex)
+        return origin, ex, ey
+
 # CACHE TOOLS
+
 
 import os
 from hashlib import sha256
