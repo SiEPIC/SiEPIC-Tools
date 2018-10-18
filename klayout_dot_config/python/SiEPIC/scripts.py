@@ -25,6 +25,7 @@ user_select_opt_in
 fetch_measurement_data_from_github
 measurement_vs_simulation
 resize waveguide
+replace_cell
 '''
 
 
@@ -1855,3 +1856,50 @@ def resize_waveguide():
             objlist.append(lf1text3)
             selection(None)
             wdg.show()
+
+
+
+'''
+Search and replace: cell_x with cell_y
+- load layout containing cell_y_name from cell_y_file
+- replace all cell_x_name instances with cell_y
+'''
+def replace_cell(layout, topcell, cell_x_name, cell_y_name, cell_y_file):
+    
+    # Load cell_y_name:
+    layout.read(cell_y_file)
+
+    # find cell name cell_x_name
+    cell_x = layout.cell(cell_x_name)
+    if cell_x == None:
+        raise Exception("No cell '%s' found in layout." % cell_x_name)
+    #print(" - found cell_x: %s" % cell_x.name)
+    # find cell name CELL_Y
+    cell_y = layout.cell(cell_y_name)
+    if cell_y == None:
+        raise Exception("No cell '%s' found in layout." % cell_y_name)
+    #print(" - found cell_y: %s" % cell_y.name)
+    # find caller cells
+    caller_cells = cell_x.caller_cells()
+    # loop through all caller cells:
+    for c in caller_cells:
+        cc = layout.cell(c)
+        #print("  - found caller cell: %s" % cc.name)
+        # find instaces of CELL_X in caller cell
+        itr = cc.each_inst()
+        try:
+            while True:
+                inst = next(itr)
+                #print("   - found inst: %s, %s" % (inst, inst.cell.name))
+                if inst.cell.name == CELL_X:
+                    # replace with CELL_Y
+                    if inst.is_regular_array():
+                        ci = inst.cell_inst
+                        cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
+                        print("    - replacing with cell array: %s" % (cell_y.name))
+                    else:
+                        cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans))
+                        print("    - replacing with cell: %s" % (cell_y.name))
+        except:
+            pass
+    cell_x.prune_cell()
