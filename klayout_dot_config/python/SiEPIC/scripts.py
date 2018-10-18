@@ -1864,7 +1864,7 @@ Search and replace: cell_x with cell_y
 - load layout containing cell_y_name from cell_y_file
 - replace all cell_x_name instances with cell_y
 '''
-def replace_cell(layout, topcell, cell_x_name, cell_y_name, cell_y_file):
+def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file):
     
     # Load cell_y_name:
     layout.read(cell_y_file)
@@ -1872,7 +1872,9 @@ def replace_cell(layout, topcell, cell_x_name, cell_y_name, cell_y_file):
     # find cell name cell_x_name
     cell_x = layout.cell(cell_x_name)
     if cell_x == None:
-        raise Exception("No cell '%s' found in layout." % cell_x_name)
+        # raise Exception("No cell '%s' found in layout." % cell_x_name)
+        print (' - layout %s does not contain cell %s' % (cell_y_file, cell_x_name) )
+        return
     #print(" - found cell_x: %s" % cell_x.name)
     # find cell name CELL_Y
     cell_y = layout.cell(cell_y_name)
@@ -1891,7 +1893,7 @@ def replace_cell(layout, topcell, cell_x_name, cell_y_name, cell_y_file):
             while True:
                 inst = next(itr)
                 #print("   - found inst: %s, %s" % (inst, inst.cell.name))
-                if inst.cell.name == CELL_X:
+                if inst.cell.name == cell_x_name:
                     # replace with CELL_Y
                     if inst.is_regular_array():
                         ci = inst.cell_inst
