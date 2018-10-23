@@ -44,7 +44,7 @@ sample_function
 
 '''
 
-import pya
+from lygadgets import pya
 
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html

@@ -22,7 +22,7 @@ if 'requests' not in sys.modules:
     except ImportError:
         pass
     if 'pip' in sys.modules:
-        import pya
+        from lygadgets import pya
         install = pya.MessageBox.warning(
             "Install package?", "Install package 'requests' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
         if install == pya.MessageBox.Yes:
@@ -38,7 +38,7 @@ if 'json' not in sys.modules:
     except ImportError:
         pass
     if 'pip' in sys.modules:
-        import pya
+        from lygadgets import pya
         install = pya.MessageBox.warning(
             "Install package?", "Install package 'json' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
         if install == pya.MessageBox.Yes:
@@ -55,7 +55,7 @@ if 'json' not in sys.modules:
 def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbose=None):
 
     import sys
-    import pya
+    from lygadgets import pya
 
     try:
         import requests

@@ -10,7 +10,7 @@ TODO: make some of the functions in util use these.
 """
 
 from itertools import repeat
-import pya
+from lygadgets import pya
 import numpy as np
 from numpy import cos, sin, pi, sqrt
 from functools import reduce

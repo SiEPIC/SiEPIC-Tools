@@ -7,7 +7,7 @@ db_module = None
 outside_klayout = False
 
 try:
-    import pya
+    from lygadgets import pya
     db_module = sys.modules['db_module'] = pya
 except ImportError:
     outside_klayout = True

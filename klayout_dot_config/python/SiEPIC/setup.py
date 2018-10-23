@@ -1,4 +1,4 @@
-import pya
+from lygadgets import pya
 
 
 def registerMenuItems():
@@ -57,7 +57,7 @@ def registerMenuItems():
     ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_toolbar)
     ACTIONS[count].icon = path
     count += 1
-    
+
     if 0:
         if not(menu.is_menu("@toolbar.cir_sim.mc_sim")):
             ACTIONS.append(pya.Action())
@@ -66,7 +66,7 @@ def registerMenuItems():
         ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_monte_carlo)
         ACTIONS[count].icon = path
         count += 1
-    
+
         if not(menu.is_menu("@toolbar.cir_sim.launch_lumerical")):
             ACTIONS.append(pya.Action())
             menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", ACTIONS[count])
@@ -74,7 +74,7 @@ def registerMenuItems():
         ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
         ACTIONS[count].icon = path
         count += 1
-    
+
         if not(menu.is_menu("@toolbar.cir_sim.update_netlist")):
             ACTIONS.append(pya.Action())
             menu.insert_item("@toolbar.cir_sim.end", "update_netlist", ACTIONS[count])

@@ -39,7 +39,7 @@ def install_numpy():
     except:
         try:
             import pip
-            import pya
+            from lygadgets import pya
             install = pya.MessageBox.warning(
                 "Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
             if install == pya.MessageBox.Yes:
@@ -58,7 +58,7 @@ def install_scipy():
     except:
         try:
             import pip
-            import pya
+            from lygadgets import pya
             install = pya.MessageBox.warning(
                 "Install package?", "Install package 'scipy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
             if install == pya.MessageBox.Yes:

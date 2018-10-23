@@ -1,4 +1,4 @@
-import pya
+from lygadgets import pya
 
 # Netlist extraction will merge straight+bend sections into waveguide (1),
 # or extract each bend, straight section, etc. (0)
@@ -81,7 +81,7 @@ try:
 except:
     FDTD = None
     print('resetting Lumerical FDTD Python integration')
-    
+
 try:
     MODE
 except:

@@ -3,7 +3,7 @@
     This allows new classes for particular GDS files to inherit lots of the shared functionality.
 '''
 
-import pya
+from lygadgets import pya
 import os
 from SiEPIC.utils.pcells import CellWithPosition
 
