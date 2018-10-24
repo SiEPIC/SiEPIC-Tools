@@ -7,9 +7,7 @@ install:
 - echo $TRAVIS_BRANCH
 - pip install scipy
 - pip install --upgrade pytest
-- pip uninstall lygadgets
 - pip install --upgrade lygadgets
-- pip uninstall lytests
 - pip install --upgrade lytest
 script:
 - DOCKER=1 pytest tests
