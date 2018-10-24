@@ -14,11 +14,13 @@ If you want to write tests, I recommend [lyipc](https://github.com/atait/klayout
 
 
 ## How to run the tests
-In terminal,
+You can use either regular klayout pya or klayout.db standalone. In terminal,
 ```
 pytest
+# or
+klayout -r launch_pytest.py
 ```
-where you can specify a filename optionally.
+where you can specify a filename optionally. The second one essentially just enters the klayout GSI, then calls pytest. They use the same set of tests and reference files and should behave the same.
 
 
 ## Dev and debugging
