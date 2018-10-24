@@ -10,7 +10,7 @@ TODO: make some of the functions in util use these.
 """
 
 from itertools import repeat
-from lygadgets import pya
+import pya
 import numpy as np
 from numpy import cos, sin, pi, sqrt
 from functools import reduce
@@ -207,6 +207,12 @@ class DSimplePolygon(pya.DSimplePolygon):
         sdpoly = DSimplePolygon(new_points)  # convert to SimplePolygon
         self.assign(sdpoly)
         return self
+
+    def moved(self, dx, dy):
+        pya_dpoly = super().moved(dx, dy)
+        siepic_dpoly = self.__class__()
+        siepic_dpoly.__dict__.update(pya_dpoly)
+        return siepic_dpoly
 
     def round_corners(self, radius, N):
         """ This only works if the polygon edges are longer than the radius."""

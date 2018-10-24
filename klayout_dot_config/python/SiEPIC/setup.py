@@ -1,4 +1,4 @@
-from lygadgets import pya
+import pya
 
 
 def registerMenuItems():

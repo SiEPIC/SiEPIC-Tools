@@ -1,4 +1,4 @@
-from lygadgets import pya
+import pya
 
 # Netlist extraction will merge straight+bend sections into waveguide (1),
 # or extract each bend, straight section, etc. (0)

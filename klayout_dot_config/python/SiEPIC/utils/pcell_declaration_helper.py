@@ -3,11 +3,21 @@ See documentation in https://www.klayout.de/doc/code/class_PCellDeclarationHelpe
 """
 
 import sys
-from lygadgets import pya, isGSI
+db_module = None
+import lygadgets
+outside_klayout = not lygadgets.isGSI()
 
-if not isGSI():
+# try:
+#     import pya
+#     db_module = sys.modules['db_module'] = pya
+# except ImportError:
+#     outside_klayout = True
 
-    from pya import Trans, PCellDeclaration, PCellParameterDeclaration
+if outside_klayout:
+    import klayout.db
+    db_module = sys.modules['db_module'] = klayout.db
+
+    from db_module import Trans, PCellDeclaration, PCellParameterDeclaration
 
     class _PCellDeclarationHelperLayerDescriptor(object):
         """
@@ -280,4 +290,4 @@ if not isGSI():
             setattr(_PCellDeclarationHelper, k, getattr(PCellParameterDeclaration, k))
 
     # Inject the PCellDeclarationHelper into pya module for consistency:
-    setattr(pya, "PCellDeclarationHelper", _PCellDeclarationHelper)
+    setattr(db_module, "PCellDeclarationHelper", _PCellDeclarationHelper)

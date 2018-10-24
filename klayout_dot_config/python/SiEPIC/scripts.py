@@ -28,7 +28,7 @@ resize waveguide
 '''
 
 
-from lygadgets import pya
+import pya
 
 
 def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
@@ -1394,7 +1394,7 @@ Get data, one of:
 
 
 def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
-    from lygadgets import pya
+    import pya
     from . import _globals
     tmp_folder = _globals.TEMP_FOLDER
     from .github import github_get_filenames, github_get_files, github_get_file
@@ -1548,7 +1548,7 @@ Plot data together
 
 
 def measurement_vs_simulation(verbose=None):
-    from lygadgets import pya
+    import pya
     from . import _globals
     tmp_folder = _globals.TEMP_FOLDER
     from .scripts import fetch_measurement_data_from_github
@@ -1600,7 +1600,7 @@ def measurement_vs_simulation(verbose=None):
 
 
 def resize_waveguide():
-    from lygadgets import pya
+    import pya
     import sys
     import copy
     from pya import QFont, QWidget, Qt, QVBoxLayout, QFrame, QLabel, QComboBox, QLineEdit, QPushButton, QGridLayout, QSplitter, QTextEdit

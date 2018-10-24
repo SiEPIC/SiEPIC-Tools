@@ -1,4 +1,4 @@
-from lygadgets import pya
+import pya
 from math import pi
 from SiEPIC.extend import to_dtype
 from SiEPIC.utils.geometry import rotate, rotate90

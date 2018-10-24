@@ -55,7 +55,7 @@ pya.Point Extensions:
 #################################################################################
 
 
-from lygadgets import pya
+import pya
 
 warning = pya.QMessageBox()
 warning.setStandardButtons(pya.QMessageBox.Ok)

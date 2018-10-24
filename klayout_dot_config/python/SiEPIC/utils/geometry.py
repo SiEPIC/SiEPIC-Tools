@@ -342,7 +342,7 @@ bezier_vertical = partial(bezier_parallel, angle=90)
 # Allow us to use these functions directly with pya.DPoints
 
 try:
-    from lygadgets import pya
+    import pya
     _bezier_optimal_pure = bezier_optimal
 
     def bezier_optimal(P0, P3, *args, **kwargs):
@@ -482,7 +482,7 @@ class Port(object):
 
 
 try:
-    from lygadgets import pya
+    import pya
 
     # Defining following methods to allow for serialization by pickle
     def getstate(self):

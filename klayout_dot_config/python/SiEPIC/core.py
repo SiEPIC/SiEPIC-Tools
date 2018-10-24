@@ -32,7 +32,7 @@ Also functions:
 '''
 
 
-from lygadgets import pya
+import pya
 
 '''
 Net:

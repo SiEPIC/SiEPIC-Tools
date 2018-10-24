@@ -1,7 +1,7 @@
-from lygadgets import pya
+import pya
 
 def load_lumapi(verbose=False):
-  from lygadgets import pya
+  import pya
   if verbose:
     print("SiEPIC.lumerical.load_lumapi")
 
@@ -14,7 +14,7 @@ def load_lumapi(verbose=False):
   except:
       try:
           import pip
-          from lygadgets import pya
+          import pya
           install = pya.MessageBox.warning(
               "Install package?", "Install package 'numpy' using pip? [required for Lumerical tools]",  pya.MessageBox.Yes + pya.MessageBox.No)
           if install == pya.MessageBox.Yes:

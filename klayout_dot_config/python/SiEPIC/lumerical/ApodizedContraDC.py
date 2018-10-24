@@ -8,14 +8,14 @@
 import cmath
 import sys, os
 if 'pya' in sys.modules: # check if in KLayout
-  from lygadgets import pya
+  import pya
 
 try:
     import pyparsing
 except:
     try:
         import pip
-        from lygadgets import pya
+        import pya
         install = pya.MessageBox.warning(
             "Install package?", "Install package 'pyparsing' using pip? [required for Lumerical MODE]",  pya.MessageBox.Yes + pya.MessageBox.No)
         if install == pya.MessageBox.Yes:

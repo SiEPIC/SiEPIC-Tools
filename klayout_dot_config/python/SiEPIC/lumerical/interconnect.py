@@ -26,7 +26,7 @@ usage:
 
 
 
-from lygadgets import pya
+import pya
 
 def run_INTC(verbose=False):
   from . import load_lumapi
