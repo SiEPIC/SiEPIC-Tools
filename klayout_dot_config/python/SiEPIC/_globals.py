@@ -81,7 +81,7 @@ try:
 except:
     FDTD = None
     print('resetting Lumerical FDTD Python integration')
-
+    
 try:
     MODE
 except:

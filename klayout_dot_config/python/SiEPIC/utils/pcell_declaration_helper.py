@@ -4,6 +4,8 @@ See documentation in https://www.klayout.de/doc/code/class_PCellDeclarationHelpe
 
 import sys
 db_module = None
+
+# We have to use lygadgets here while pytesting because it has messed with sys.modules but knows how it did
 import lygadgets
 outside_klayout = not lygadgets.isGSI()
 

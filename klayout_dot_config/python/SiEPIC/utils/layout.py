@@ -208,12 +208,6 @@ class DSimplePolygon(pya.DSimplePolygon):
         self.assign(sdpoly)
         return self
 
-    def moved(self, dx, dy):
-        pya_dpoly = super().moved(dx, dy)
-        siepic_dpoly = self.__class__()
-        siepic_dpoly.__dict__.update(pya_dpoly)
-        return siepic_dpoly
-
     def round_corners(self, radius, N):
         """ This only works if the polygon edges are longer than the radius."""
 

@@ -800,14 +800,14 @@ def calculate_area():
         area += itr.shape().area()
         itr.next()
     print("Waveguide area: %s mm^2, chip area: %s mm^2, percentage: %s %%" % (area/1e6*dbu*dbu,total/1e6*dbu*dbu, area/total*100))
-
+    
     if total == 1e99:
       v = pya.MessageBox.warning(
         "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2)" % (area/1e6*dbu*dbu, area/1e6), pya.MessageBox.Ok)
     else:
       v = pya.MessageBox.warning(
         "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2),\nChip Floorplan: %.5g mm^2, \nPercentage: %.3g %%" % (area/1e6*dbu*dbu, area/1e6, total/1e6*dbu*dbu, area/total*100), pya.MessageBox.Ok)
-
+    
     if 0:
         area = 0
         itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch1']))
@@ -815,7 +815,7 @@ def calculate_area():
             area += itr.shape().area()
             itr.next()
         print(area / total)
-
+    
         area = 0
         itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch2']))
         while not itr.at_end():
