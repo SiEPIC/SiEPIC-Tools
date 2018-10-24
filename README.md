@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/lukasc-ubc/SiEPIC-Tools.svg?branch=master)](https://travis-ci.org/lukasc-ubc/SiEPIC-Tools)
+
 # SiEPIC-Tools
 
 - <a href="www.siepic.ubc.ca">SiEPIC</a>-Tools - for silicon photonics layout, design, verification and circuit simulation
