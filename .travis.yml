@@ -5,7 +5,9 @@ cache: pip
 install:
 - python --version
 - echo $TRAVIS_BRANCH
-- pip install pytest
-- pip install lytest
+- pip install scipy
+- pip install --upgrade pytest
+- pip install --upgrade lygadgets
+- pip install --upgrade lytest
 script:
 - DOCKER=1 pytest tests
