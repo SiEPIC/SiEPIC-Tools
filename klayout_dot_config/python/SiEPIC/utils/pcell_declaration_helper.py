@@ -2,19 +2,23 @@
 See documentation in https://www.klayout.de/doc/code/class_PCellDeclarationHelper.html
 """
 
-import pya
 import sys
-db_module = None
 
-# We have to use lygadgets here while pytesting because it has messed with sys.modules but knows how it did
-import lygadgets
-outside_klayout = not lygadgets.isGSI()
+# We have to use lygadgets here while pytesting in case it has messed with sys.modules
+try:
+    import lygadgets
+    import pya
+    outside_klayout = not lygadgets.isGSI()
+except ImportError:
+    try:
+        import pya
+        # sys.modules['pya'] = pya  # this is already the case
+        outside_klayout = False
+    except ImportError:
+        import klayout.db
+        pya = sys.modules['pya'] = klayout.db
+        outside_klayout = True
 
-# try:
-#     import pya
-#     db_module = sys.modules['db_module'] = pya
-# except ImportError:
-#     outside_klayout = True
 
 if outside_klayout:
 

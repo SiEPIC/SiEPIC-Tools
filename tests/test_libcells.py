@@ -213,7 +213,7 @@ cell_name = 'GSiP_RingMod_Transceiver'
 def Fixed_RingMod_Classic(TOP):
     ''' Using klayout's traditional read gds, insert cell method '''
     ly = TOP.layout()
-    ringmod = GDSCell(cell_name, filename=gds_name, gds_dir=LOCAL_GDS_DIR)
+    # ringmod = GDSCell(cell_name, filename=gds_name, gds_dir=LOCAL_GDS_DIR)
     ly.read(os.path.join(LOCAL_GDS_DIR, gds_name))
     gdscell2 = ly.cell(cell_name)
     rot_DTrans = pya.DTrans.R0
