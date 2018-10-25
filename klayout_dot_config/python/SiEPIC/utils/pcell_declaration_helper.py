@@ -2,21 +2,27 @@
 See documentation in https://www.klayout.de/doc/code/class_PCellDeclarationHelper.html
 """
 
-import sys
-db_module = None
-outside_klayout = False
 
+import sys
+
+# We have to use lygadgets here while pytesting in case it has messed with sys.modules
 try:
+    import lygadgets
     import pya
-    db_module = sys.modules['db_module'] = pya
+    outside_klayout = not lygadgets.isGSI()
 except ImportError:
-    outside_klayout = True
+    try:
+        import pya
+        # sys.modules['pya'] = pya  # this is already the case
+        outside_klayout = False
+    except ImportError:
+        import klayout.db
+        pya = sys.modules['pya'] = klayout.db
+        outside_klayout = True
+
 
 if outside_klayout:
-    import klayout.db
-    db_module = sys.modules['db_module'] = klayout.db
-
-    from db_module import Trans, PCellDeclaration, PCellParameterDeclaration
+    from pya import Trans, PCellDeclaration, PCellParameterDeclaration
 
     class _PCellDeclarationHelperLayerDescriptor(object):
         """
@@ -289,4 +295,4 @@ if outside_klayout:
             setattr(_PCellDeclarationHelper, k, getattr(PCellParameterDeclaration, k))
 
     # Inject the PCellDeclarationHelper into pya module for consistency:
-    setattr(db_module, "PCellDeclarationHelper", _PCellDeclarationHelper)
+    setattr(pya, "PCellDeclarationHelper", _PCellDeclarationHelper)
