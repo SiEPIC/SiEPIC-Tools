@@ -15,9 +15,10 @@ layerspecs = [pya.LayerInfo(1, 0), pya.LayerInfo(2, 0)]
 
 
 # klayout.db does not initialize technologies, so we have to spoof it
-# TECHNOLOGY = dict(Waveguide=?,
-#                   DevRec=?,
-#                   PinRec=?,)
+# I have commented out the get_technology_by_name calls
+TECHNOLOGY = dict(Waveguide=pya.LayerInfo(1, 0),
+                  DevRec=pya.LayerInfo(68, 0),
+                  PinRec=pya.LayerInfo(1, 10))
 
 # This is COPIED out of GSiP. It is not a live test, just a proof of concept
 # Since it is defined in a lym file, it cannot be imported by python
@@ -190,9 +191,14 @@ class Waveguide(PCellDeclarationHelper):
 # Begin testing
 @contained_pyaCell
 def PCell_Waveguide(TOP):
+    ''' I am having trouble with this because unspecified parameters are not getting default values.
+        The initializer of Waveguide does not error, but produce_impl fails.
+    '''
     ly = TOP.layout()
-    layers = [ly.insert_layer(ls) for ls in TECHNOLOGY]
-    pcell = Waveguide()
+    # pcell = Waveguide(cell=TOP, layout=ly)  # this fails
+    pcell = Waveguide()  # this works
+    # pcell.layout = ly; pcell.cell = TOP  # but then these do nothing
+    pcell.produce_impl()
 
 # def test_PCell_Waveguide(): difftest_it(PCell_Waveguide, file_ext='.oas')()
 
@@ -220,10 +226,11 @@ def test_Fixed_RingMod_Classic(): difftest_it(Fixed_RingMod_Classic, file_ext='.
 @contained_pyaCell
 def Fixed_RingMod_PCell(TOP):
     ''' SiEPIC's handling of pcells with fixed gds is quite complex.
-        @tlima I'm having problems with the pcell call. It says its not getting the required positional argument of "layout"
+        @tlima I'm having problems with the pcell call.
+        It says its not getting the required positional argument of "layout".
+
         This test is deactivated
     '''
-    import pdb; pdb.set_trace()
     ly = TOP.layout()
     ringmod = GDSCell(cell_name, filename=gds_name, gds_dir=LOCAL_GDS_DIR)
     ringmod.pcell(ly, cell=TOP, params=None)
