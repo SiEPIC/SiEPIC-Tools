@@ -357,6 +357,7 @@ def print_parameter_list(self):
 
 #################################################################################
 
+import SiEPIC.utils.pcell_declaration_helper  # trigger extension of this to pya
 pya.PCellDeclarationHelper.print_parameter_list = print_parameter_list
 
 #################################################################################
