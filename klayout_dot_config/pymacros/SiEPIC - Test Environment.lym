@@ -55,8 +55,10 @@ if 1:
     SiEPIC.github = reload(SiEPIC.github)
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
+    SiEPIC.lumerical.mode = reload(SiEPIC.lumerical.mode)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
-#    SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
+    SiEPIC.lumerical.ApodizedContraDC = reload(SiEPIC.lumerical.ApodizedContraDC)
+    #SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.setup = reload(SiEPIC.setup)
@@ -72,8 +74,8 @@ if 0:
 
 if 0:
   import SiEPIC.lumerical as lumerical
-#  lumerical.interconnect.run_INTC(verbose=True)
-  lumerical.interconnect.circuit_simulation_monte_carlo(verbose=True)
+  lumerical.interconnect.circuit_simulation(verbose=True, opt_in_selection_text=[])
+  #lumerical.interconnect.circuit_simulation_monte_carlo(verbose=True)
 
 if 0:
   import SiEPIC.lumerical as lumerical

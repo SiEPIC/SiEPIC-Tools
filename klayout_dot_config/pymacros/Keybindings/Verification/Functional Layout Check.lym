@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Component: show Compact Model in Lumerical INTERCONNECT</description>
+ <description>Functional Layout Check</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -8,19 +8,18 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
- <shortcut/>
+ <shortcut>V</shortcut>
  <show-in-menu>true</show-in-menu>
- <group-name>0 Component Simulation</group-name>
- <menu-path>siepic_menu.simulation.end</menu-path>
+ <group-name/>
+ <menu-path>siepic_menu.verification.begin</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function
-# SiEPIC Update Netlist in Lumerical
+# SiEPIC Graphical Layout Check
 
 import pya
-from SiEPIC import lumerical
+from SiEPIC import scripts
 
-lumerical.interconnect.component_simulation()
-
+scripts.layout_check(verbose=True)
 </text>
 </klayout-macro>

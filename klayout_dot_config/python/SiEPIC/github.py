@@ -27,7 +27,10 @@ if 'requests' not in sys.modules:
             "Install package?", "Install package 'requests' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
         if install == pya.MessageBox.Yes:
             # try installing using pip
-            pip.main(['install', 'requests'])
+            from SiEPIC.install import get_pip_main
+            main = get_pip_main()
+            main(['install', 'requests'])
+
 
 if 'json' not in sys.modules:
     try:
@@ -40,7 +43,10 @@ if 'json' not in sys.modules:
             "Install package?", "Install package 'json' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
         if install == pya.MessageBox.Yes:
             # try installing using pip
-            pip.main(['install', 'json'])
+            from SiEPIC.install import get_pip_main
+            main = get_pip_main()
+            main(['install', 'json'])
+
 
 # Search the GitHub repository for files containing the string
 # "filesearch", with optional extension

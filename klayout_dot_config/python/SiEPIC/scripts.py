@@ -25,18 +25,22 @@ user_select_opt_in
 fetch_measurement_data_from_github
 measurement_vs_simulation
 resize waveguide
+replace_cell
 '''
 
 
 import pya
 
 
-def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose=False):
+def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
     from . import _globals
     from .utils import select_paths, get_layout_variables
     TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
     if not cell:
         cell = top_cell
+
+    if verbose:
+        print("SiEPIC.scripts path_to_waveguide()" )
 
     if lv_commit:
         lv.transaction("Path to Waveguide")
@@ -44,15 +48,23 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
     if params is None:
         params = _globals.WG_GUI.get_parameters(GUI)
     if params is None:
+        print("SiEPIC.scripts path_to_waveguide(): no params; returning")
         return
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(): params = %s" % params)
     selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell, verbose=verbose)
+    if verbose:
+        print("SiEPIC.scripts path_to_waveguide(): selected_paths = %s" % selected_paths)
     selection = []
 
     warning = pya.QMessageBox()
     warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
     warning.setDefaultButton(pya.QMessageBox.Yes)
+    if not selected_paths:
+        warning.setText(
+            "Warning: Cannot make Waveguides - No Path objects selected or found in the layout.")
+        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+            return
     for obj in selected_paths:
         path = obj.shape.path
         path.unique_points()
@@ -115,7 +127,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         obj.shape.delete()
 
     lv.clear_object_selection()
-    lv.object_selection = selection
+    if select_waveguides:
+        lv.object_selection = selection
     if lv_commit:
         lv.commit()
 
@@ -776,28 +789,40 @@ def auto_coord_extract():
 def calculate_area():
     from .utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    dbu = TECHNOLOGY['dbu']
 
-    total = cell.each_shape(ly.layer(TECHNOLOGY['FloorPlan'])).__next__().polygon.area()
+    try:
+      total = cell.each_shape(ly.layer(TECHNOLOGY['FloorPlan'])).__next__().polygon.area()
+    except:
+      total = 1e99
     area = 0
-    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['LayerSi']))
+    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['Waveguide']))
     while not itr.at_end():
         area += itr.shape().area()
         itr.next()
-    print(area / total)
-
-    area = 0
-    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch1']))
-    while not itr.at_end():
-        area += itr.shape().area()
-        itr.next()
-    print(area / total)
-
-    area = 0
-    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch2']))
-    while not itr.at_end():
-        area += itr.shape().area()
-        itr.next()
-    print(area / total)
+    print("Waveguide area: %s mm^2, chip area: %s mm^2, percentage: %s %%" % (area/1e6*dbu*dbu,total/1e6*dbu*dbu, area/total*100))
+    
+    if total == 1e99:
+      v = pya.MessageBox.warning(
+        "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2)" % (area/1e6*dbu*dbu, area/1e6), pya.MessageBox.Ok)
+    else:
+      v = pya.MessageBox.warning(
+        "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2),\nChip Floorplan: %.5g mm^2, \nPercentage: %.3g %%" % (area/1e6*dbu*dbu, area/1e6, total/1e6*dbu*dbu, area/total*100), pya.MessageBox.Ok)
+    
+    if 0:
+        area = 0
+        itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch1']))
+        while not itr.at_end():
+            area += itr.shape().area()
+            itr.next()
+        print(area / total)
+    
+        area = 0
+        itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch2']))
+        while not itr.at_end():
+            area += itr.shape().area()
+            itr.next()
+        print(area / total)
 
 
 """
@@ -1712,7 +1737,7 @@ def resize_waveguide():
 
             elif sys.platform.startswith('darwin'):
                     # OSX specific
-                titlefont = QFont("Arial", 13, QFont.Bold, False)
+                titlefont = QFont("Arial", 9, QFont.Bold, False)
 
             elif sys.platform.startswith('win'):
                 titlefont = QFont("Arial", 9, QFont.Bold, False)
@@ -1831,3 +1856,52 @@ def resize_waveguide():
             objlist.append(lf1text3)
             selection(None)
             wdg.show()
+
+
+
+'''
+Search and replace: cell_x with cell_y
+- load layout containing cell_y_name from cell_y_file
+- replace all cell_x_name instances with cell_y
+'''
+def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file):
+    
+    # Load cell_y_name:
+    layout.read(cell_y_file)
+
+    # find cell name cell_x_name
+    cell_x = layout.cell(cell_x_name)
+    if cell_x == None:
+        # raise Exception("No cell '%s' found in layout." % cell_x_name)
+        print (' - layout %s does not contain cell %s' % (cell_y_file, cell_x_name) )
+        return
+    #print(" - found cell_x: %s" % cell_x.name)
+    # find cell name CELL_Y
+    cell_y = layout.cell(cell_y_name)
+    if cell_y == None:
+        raise Exception("No cell '%s' found in layout." % cell_y_name)
+    #print(" - found cell_y: %s" % cell_y.name)
+    # find caller cells
+    caller_cells = cell_x.caller_cells()
+    # loop through all caller cells:
+    for c in caller_cells:
+        cc = layout.cell(c)
+        #print("  - found caller cell: %s" % cc.name)
+        # find instaces of CELL_X in caller cell
+        itr = cc.each_inst()
+        try:
+            while True:
+                inst = next(itr)
+                #print("   - found inst: %s, %s" % (inst, inst.cell.name))
+                if inst.cell.name == cell_x_name:
+                    # replace with CELL_Y
+                    if inst.is_regular_array():
+                        ci = inst.cell_inst
+                        cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
+                        print("    - replacing with cell array: %s" % (cell_y.name))
+                    else:
+                        cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans))
+                        print("    - replacing with cell: %s" % (cell_y.name))
+        except:
+            pass
+    cell_x.prune_cell()

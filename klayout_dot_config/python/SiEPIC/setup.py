@@ -38,9 +38,13 @@ def registerMenuItems():
     if not(menu.is_menu(s1 + "." + s2)):
         menu.insert_menu(s1 + ".end", s2, "Verification")
 
-    s2 = "simulation"
+    s2 = "simulation_circuits"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Simulation")
+        menu.insert_menu(s1 + ".end", s2, "Simulation, Circuits")
+
+    s2 = "simulation_components"
+    if not(menu.is_menu(s1 + "." + s2)):
+        menu.insert_menu(s1 + ".end", s2, "Simulation, Components")
 
     s2 = "measurements"
     if not(menu.is_menu(s1 + "." + s2)):
@@ -50,32 +54,33 @@ def registerMenuItems():
         ACTIONS.append(pya.Action())
         menu.insert_item("@toolbar.end", "cir_sim", ACTIONS[count])
     ACTIONS[count].title = "Circuit \nSimulation"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
+    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_toolbar)
     ACTIONS[count].icon = path
     count += 1
-
-    if not(menu.is_menu("@toolbar.cir_sim.mc_sim")):
-        ACTIONS.append(pya.Action())
-        menu.insert_item("@toolbar.cir_sim.end", "mc_sim", ACTIONS[count])
-    ACTIONS[count].title = "INTERCONNECT Monte Carlo Simulations"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_monte_carlo)
-    ACTIONS[count].icon = path
-    count += 1
-
-    if not(menu.is_menu("@toolbar.cir_sim.launch_lumerical")):
-        ACTIONS.append(pya.Action())
-        menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", ACTIONS[count])
-    ACTIONS[count].title = "INTERCONNECT Circuit Simulation"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
-    ACTIONS[count].icon = path
-    count += 1
-
-    if not(menu.is_menu("@toolbar.cir_sim.update_netlist")):
-        ACTIONS.append(pya.Action())
-        menu.insert_item("@toolbar.cir_sim.end", "update_netlist", ACTIONS[count])
-    ACTIONS[count].title = "INTERCONNECT Update Netlist"
-    ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_update_netlist)
-    ACTIONS[count].icon = path
+    
+    if 0:
+        if not(menu.is_menu("@toolbar.cir_sim.mc_sim")):
+            ACTIONS.append(pya.Action())
+            menu.insert_item("@toolbar.cir_sim.end", "mc_sim", ACTIONS[count])
+        ACTIONS[count].title = "INTERCONNECT Monte Carlo Simulations"
+        ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_monte_carlo)
+        ACTIONS[count].icon = path
+        count += 1
+    
+        if not(menu.is_menu("@toolbar.cir_sim.launch_lumerical")):
+            ACTIONS.append(pya.Action())
+            menu.insert_item("@toolbar.cir_sim.end", "launch_lumerical", ACTIONS[count])
+        ACTIONS[count].title = "INTERCONNECT Circuit Simulation"
+        ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation)
+        ACTIONS[count].icon = path
+        count += 1
+    
+        if not(menu.is_menu("@toolbar.cir_sim.update_netlist")):
+            ACTIONS.append(pya.Action())
+            menu.insert_item("@toolbar.cir_sim.end", "update_netlist", ACTIONS[count])
+        ACTIONS[count].title = "INTERCONNECT Update Netlist"
+        ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_update_netlist)
+        ACTIONS[count].icon = path
 
 
 def registerKeyBindings():
@@ -112,6 +117,10 @@ def registerKeyBindings():
     mapping['edit_menu.selection_menu.sel_flip_x'] = "'Shift+H'"
     mapping['edit_menu.selection_menu.sel_flip_y'] = "'Shift+V'"
     mapping['edit_menu.selection_menu.sel_move'] = "'Ctrl+M'"
+    mapping['edit_menu.selection_menu.sel_rot_ccw'] = "'Shift+R'"
+    mapping['edit_menu.selection_menu.sel_free_rot'] = "'Ctrl+Shift+R'"
+    mapping['edit_menu.selection_menu.flatten_insts'] = "'Ctrl+Shift+F'"
+    mapping['edit_menu.selection_menu.make_cell'] = "'Ctrl+Shift+M'"
     #  mapping['edit_menu.selection_menu.size'] = "'Z'"
     #  mapping['edit_menu.selection_menu.tap'] = "''"
 

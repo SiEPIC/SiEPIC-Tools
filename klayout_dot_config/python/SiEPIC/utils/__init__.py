@@ -396,6 +396,7 @@ def load_GC_settings():
             GC1[k] = float(GC['floats'][k])
         for k in GC['strings'].keys():
             GC1[k] = GC['strings'][k]
+            #print(GC)
         return GC1
     else:
         return None
@@ -484,6 +485,8 @@ def select_paths(layer, cell=None, verbose=None):
         ly = cell.layout()
 
     selection = lv.object_selection
+    if verbose:
+        print("SiEPIC.utils.select_paths: selection, before: %s" % lv.object_selection)
     if selection == []:
         itr = cell.begin_shapes_rec(ly.layer(layer))
         while not(itr.at_end()):
@@ -503,7 +506,7 @@ def select_paths(layer, cell=None, verbose=None):
         lv.object_selection = [o for o in selection if (
             not o.is_cell_inst()) and o.shape.is_path()]
     if verbose:
-        print("SiEPIC.utils.select_paths: selection: %s" % lv.object_selection)
+        print("SiEPIC.utils.select_paths: selection, after: %s" % lv.object_selection)
     return lv.object_selection
 
 # Return all selected waveguides. If nothing is selected, select waveguides automatically
@@ -603,7 +606,7 @@ def points_per_circle(radius):
     from . import get_technology
     TECHNOLOGY = get_technology()
     err = 1e3 * TECHNOLOGY['dbu'] / 2
-    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 0.1 else 100
+    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
 
 def arc(r, theta_start, theta_stop):
@@ -975,7 +978,7 @@ def svg_from_component(component, filename, verbose=False):
         return
 
     if TECHNOLOGY['Waveguide_color'] > 0:
-        c = bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:-1])
+        c = bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:10])
     else:
         c = [150, 50, 50]
     color = svgwrite.rgb(c[0], c[1], c[2], 'RGB')

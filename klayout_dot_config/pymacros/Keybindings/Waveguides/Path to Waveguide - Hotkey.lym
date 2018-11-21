@@ -18,6 +18,6 @@
 # SiEPIC Path to Waveguide
 import pya
 from SiEPIC import scripts
-scripts.path_to_waveguide()
+scripts.path_to_waveguide(select_waveguides=True)
 </text>
 </klayout-macro>

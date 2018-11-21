@@ -424,13 +424,14 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                 if iter2.shape().is_text():
                     pin_name = iter2.shape().text.string
                 iter2.next()
-            if pin_name == None:
+            if pin_name == None or pin_path.num_points()!=2:
                 print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
-                error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name." %
+                error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name.\n" %
                                (pin_path, subcell.name))
 #        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
-            # Store the pin information in the pins array
-            pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+            else:
+              # Store the pin information in the pins array
+              pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
 
         # Assume a PinRec Box is an electrical pin
         # similar to optical pin
@@ -453,7 +454,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                     pin_name = iter2.shape().text.string
                 iter2.next()
             if pin_name == None:
-                error_text += ("Invalid pin Box detected: %s, Cell: %s, Electrical Pins must have a pin name." %
+                error_text += ("Invalid pin Box detected: %s, Cell: %s, Electrical Pins must have a pin name.\n" %
                                (pin_box, subcell.name))
 #        raise Exception("Invalid pin Box detected: %s.\nElectrical Pins must have a pin name." % pin_box)
             pins.append(Pin(box=pin_box, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
@@ -486,7 +487,10 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                     pin_name = iter2.shape().text.string
                 iter2.next()
             # Store the pin information in the pins array
-            pins.append(Pin(path=it.shape().polygon.transformed(it.itrans()),
+            # check if this one already exists (duplicate polygons)
+            if not([p for p in pins if p.type == _globals.PIN_TYPES.OPTICALIO and 
+              p.polygon == it.shape().polygon.transformed(it.itrans())]):
+                pins.append(Pin(polygon=it.shape().polygon.transformed(it.itrans()),
                             _type=_globals.PIN_TYPES.OPTICALIO,
                             pin_name=pin_name))
         it.next()
@@ -842,7 +846,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     if not DFT:
         if verbose:
             print(' no DFT rules available.')
-        return False, False, False, False, False, False, False
+        return False, False, False, False, False, False, False, False
 
     from .scripts import user_select_opt_in
     opt_in_selection_text, opt_in_dict = user_select_opt_in(
@@ -850,12 +854,19 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     if not opt_in_dict:
         if verbose:
             print(' no opt_in selected.')
-        return False, False, False, False, False, False, False
+        return False, False, False, False, False, False, False, False
 
     # find closest GC to opt_in (pick the 1st one... ignore the others)
     t = opt_in_dict[0]['Text']
     components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
                                key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
+    if not(components_sorted):
+        warning = pya.QMessageBox()
+        warning.setStandardButtons(pya.QMessageBox.Ok)
+        warning.setText("To run a simulation, you need to have optical IO in the layout." )
+        pya.QMessageBox_StandardButton(warning.exec_())
+        return False, False, False, False, False, False, False, False
+        
     dist_optin_c = components_sorted[0].trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1))
     if verbose:
         print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in_dict[0][
@@ -866,7 +877,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         warning.setText("To run a simulation, you need to have an opt_in label with %s microns from the nearest grating coupler" % int(
             DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']))
         pya.QMessageBox_StandardButton(warning.exec_())
-        return False, False, False, False, False, False, False
+        return False, False, False, False, False, False, False, False
     # starting with the opt_in label, identify the sub-circuit, then GCs
     detector_GCs = [c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (
         c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0, 0)]
@@ -892,7 +903,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         warning.setText("No laser at %s nm is available. Tunable laser definition is in the technology's DFT.xml file." %
                         opt_in_dict[0]['wavelength'])
         pya.QMessageBox_StandardButton(warning.exec_())
-        return False, False, False, False, False, False, False
+        return False, False, False, False, False, False, False, False
 
     if opt_in_dict[0]['pol'] == 'TE':
         orthogonal_identifier = 1
@@ -903,7 +914,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         warning.setStandardButtons(pya.QMessageBox.Ok)
         warning.setText("Unknown polarization: %s." % opt_in_dict[0]['pol'])
         pya.QMessageBox_StandardButton(warning.exec_())
-        return False, False, False, False, False, False, False
+        return False, False, False, False, False, False, False, False
     ignoreOpticalIOs = False
 
     # find the GCs in the circuit and connect detectors based on DFT rules

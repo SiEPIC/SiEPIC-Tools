@@ -119,8 +119,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   fh.writelines(_globals.INTC_ELEMENTS)
   fh.close()
 
-  lumapi.evalScript(_globals.INTC, "?'KLayout integration successful, CML library (%s) is available.';switchtodesign;\n" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
-
+  lumapi.evalScript(_globals.INTC, "message('KLayout-Lumerical INTERCONNECT integration successful, CML library (%s) is available.');switchtodesign;\n" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
 
   # instantiate all library elements onto the canvas
   question = pya.QMessageBox()
@@ -129,7 +128,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   question.setText("Do you wish to see all the components in the library?")
 #  question.setInformativeText("Do you wish to see all the components in the library?")
   if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
-    lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
+    # lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
     return
   intc_elements = _globals.INTC_ELEMENTS.split('\n')
 #  tech_elements = [ e.split('::')[-1] for e in intc_elements if "design kits::"+TECHNOLOGY['technology_name'].lower()+"::" in e ]
@@ -372,7 +371,7 @@ def component_simulation(verbose=False, simulate=True):
         # Run using Python integration:
         lumapi = _globals.LUMAPI
         lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-        lumapi.evalScript(_globals.INTC, c.component + ";")
+        lumapi.evalScript(_globals.INTC, "feval('"+ c.component + "');\n")
       except:
         from .. import scripts
         scripts.open_folder(tmp_folder)
@@ -381,7 +380,11 @@ def component_simulation(verbose=False, simulate=True):
       from .. import scripts
       scripts.open_folder(tmp_folder)
 
+def circuit_simulation_toolbar():
+  circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True)
+
 def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True):
+  print ('*** circuit_simulation(), opt_in: %s' % opt_in_selection_text)
   if verbose:
     print('*** circuit_simulation()')
   
@@ -509,10 +512,13 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
       from .. import scripts
       scripts.open_folder(tmp_folder)
       INTC_commandline(filename)
+      print('SiEPIC.lumerical.interconnect: circuit_simulation: error 1')
     try:
-      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, circuit_name + ";")
+      lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');\n")
+      print("feval('"+ circuit_name + "');\n")
+      lumapi.evalScript(_globals.INTC, "feval('"+ circuit_name + "');\n")
     except:
+      print('SiEPIC.lumerical.interconnect: circuit_simulation: error 2')
       pass
   else:
     from .. import scripts
@@ -550,7 +556,8 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
     return
 
   circuit_name = topcell.name.replace('.','') # remove "."
-  circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+  if '_' in circuit_name[0]:
+    circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
   
   if verbose:
@@ -839,7 +846,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
       # Run using Python integration:
       lumapi = _globals.LUMAPI
       lumapi.evalScript(_globals.INTC, "cd ('" + tmp_folder + "');")
-      lumapi.evalScript(_globals.INTC, circuit_name + ";")
+      lumapi.evalScript(_globals.INTC, "feval('"+ circuit_name + "');\n")
     except:
       from .. import scripts
       scripts.open_folder(tmp_folder)

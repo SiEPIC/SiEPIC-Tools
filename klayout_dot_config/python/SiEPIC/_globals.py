@@ -33,11 +33,20 @@ def enum(*sequential, **named):
 PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 100  # 0.1 micron
 
+
 try:
     MODULE_NUMPY = True
     import numpy
 except ImportError:
     MODULE_NUMPY = False
+
+if not MODULE_NUMPY:
+    from .install import install_numpy
+    try:
+        install_numpy()
+        MODULE_NUMPY = True
+    except Exception as e:
+        print("Could not install numpy with pip. ERROR:", e)
 
 #ACTIONS = []
 
@@ -72,6 +81,12 @@ try:
 except:
     FDTD = None
     print('resetting Lumerical FDTD Python integration')
+    
+try:
+    MODE
+except:
+    MODE = None
+    print('resetting Lumerical MODE Python integration')
 
 try:
     LUMAPI
