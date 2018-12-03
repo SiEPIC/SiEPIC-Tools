@@ -123,14 +123,19 @@ def radius_check(self, radius):
         return True
 
     points = self.get_points()
-    lengths = [points[i].distance(points[i - 1]) for i, pt in enumerate(points) if i > 0]
-
-    # first and last segment must be >= radius
-    check1 = (lengths[0] >= radius)
-    check2 = (lengths[-1] >= radius)
-    # middle segments must accommodate two bends, hence >= 2 radius
-    check3 = [length >= 2 * radius for length in lengths[1:-1]]
-    return check1 and check2 and all(check3)
+    
+    if len(points) > 2:
+    
+      lengths = [points[i].distance(points[i - 1]) for i, pt in enumerate(points) if i > 0]
+  
+      # first and last segment must be >= radius
+      check1 = (lengths[0] >= radius)
+      check2 = (lengths[-1] >= radius)
+      # middle segments must accommodate two bends, hence >= 2 radius
+      check3 = [length >= 2 * radius for length in lengths[1:-1]]
+      return check1 and check2 and all(check3)
+    else:
+      return True
 
 # remove all but 1 colinear point
 
@@ -235,48 +240,112 @@ def snap(self, pins):
 
     # array of path vertices:
     pts = self.get_points()
+    
+    def snap_endpoints(input_pts, pins):  
+      # function takes a list of pts of a path, and finds the closest pins to this path
+      # provided that the pins are facing the correct way to make a connection.
+      # when you have 2 or more segments (3 or more points), then you can move the two end segments.
+    
+      pts = input_pts
 
-    # angles of all segments:
-    ang = angle_vector(pts[0] - pts[1])
-
-    # sort all the pins based on distance to the Path endpoint
-    # only consider pins that are facing each other, 180 degrees
-    pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
-                          180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[0]))
-
-    if len(pins_sorted):
-        # pins_sorted[0] is the closest one
-        dpt = pins_sorted[0].center - pts[0]
-        # check if the pin is close enough to the path endpoint
-        if dpt.abs() <= d_min:
-            # snap the endpoint to the pin
-            pts[0] += dpt
-            # move the first corner
-            if(round(ang % 180) == 0):
-                pts[1].y += dpt.y
-            else:
-                pts[1].x += dpt.x
-
-    # do the same thing on the other end (check that it isn't the same pin as above):
-    ang = angle_vector(pts[-1] - pts[-2])
-    pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
-                          180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
-    if len(pins_sorted):
-        if pins_sorted[0].center != pts[0]:
-            dpt = pins_sorted[0].center - pts[-1]
-            if dpt.abs() <= d_min:
-                pts[-1] += dpt
+      # find closest pin to the first pts
+      # angles of all segments:
+      ang = angle_vector(pts[0] - pts[1])
+      # sort all the pins based on distance to the Path endpoint
+      # only consider pins that are facing each other, 180 degrees
+      pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
+                            180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[0]))
+  
+      if len(pins_sorted):
+          # pins_sorted[0] is the closest one
+          dpt = pins_sorted[0].center - pts[0]
+          # check if the pin is close enough to the path endpoint
+          if dpt.abs() <= d_min:
+              # snap the endpoint to the pin
+              pts[0] += dpt
+              if len(pts)>2:
+                # move the first corner
                 if(round(ang % 180) == 0):
-                    pts[-2].y += dpt.y
+                    pts[1].y += dpt.y
                 else:
-                    pts[-2].x += dpt.x
+                    pts[1].x += dpt.x
+              snapped0 = True
+          else:
+              snapped0 = False
+      else:
+          snapped0 = False
+  
+      # find closest pin to the last pts
+      # do the same thing on the other end (check that it isn't the same pin as above):
+      ang = angle_vector(pts[-1] - pts[-2])
+      pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
+                            180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
+      if len(pins_sorted):
+          if pins_sorted[0].center != pts[0]:
+              dpt = pins_sorted[0].center - pts[-1]
+              if dpt.abs() <= d_min:
+                  # snap the endpoint to the pin
+                  pts[-1] += dpt
+                  if len(pts)>2:
+                    # move the last corner
+                    if(round(ang % 180) == 0):
+                        pts[-2].y += dpt.y
+                    else:
+                        pts[-2].x += dpt.x
+              snapped1 = True
+          else:
+              snapped1 = False
+      else:
+          snapped1 = False
 
-    # check that the path has non-zero length after the snapping operation
-    test_path = pya.Path()
-    test_path.points = pts
-    if test_path.length() > 0:
-        self.points = pts
+      # check that the path has non-zero length after the snapping operation
+      test_path = pya.Path()
+      test_path.points = pts
+      if test_path.length() > 0:
+          return_pts = pts
+      else:
+          return_pts = input_pts
+          
+      # return flag to track whether BOTH endpoints were snapped
+      return return_pts, snapped0 & snapped1
 
+    if len(pts) > 2:
+      self.points, snapped_both = snap_endpoints(pts, pins)
+    elif len(pts) == 2:
+      # call the snap and check if it worked. case where the two components' pins are already aligned
+      newpoints, snapped_both = snap_endpoints(pts, pins)
+      if snapped_both:
+        self.points = newpoints
+        return True
+      else:
+        # - snapping failed; case where the two components' pins are not aligned
+        # - need to add extra vertices; assume we add two more points, that we have scenario of an S-Bend
+        #   - add two more points,  
+        ang = angle_vector(pts[0] - pts[1])
+        if(round(ang % 180) == 0):
+            # move the y coordinate
+            newpoints = [ pts[0], 
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[0].y),
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[1].y),
+                          pts[1] ]
+        else:
+            # move the x coordinate
+            newpoints = [ pts[0], 
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[0].y),
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[1].y),
+                          pts[1] ]
+
+        #  - call the snap and check if it worked.  
+        newpoints, snapped_both = snap_endpoints(newpoints, pins)
+        if snapped_both:
+          #  - snapping successful, added 2 points.  
+          self.points = newpoints
+          return True
+        else:
+          return False  
+    else:
+      return False
+      
 # Path Extension
 #################################################################################
 
