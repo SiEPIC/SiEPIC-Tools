@@ -226,13 +226,9 @@ def test_Fixed_RingMod_Classic(): difftest_it(Fixed_RingMod_Classic, file_ext='.
 @contained_pyaCell
 def Fixed_RingMod_PCell(TOP):
     ''' SiEPIC's handling of pcells with fixed gds is quite complex.
-        @tlima I'm having problems with the pcell call.
-        It says its not getting the required positional argument of "layout".
-
-        This test is deactivated
     '''
     ly = TOP.layout()
     ringmod = GDSCell(cell_name, filename=gds_name, gds_dir=LOCAL_GDS_DIR)
-    ringmod.pcell(ly, cell=TOP, params=None)
+    ringmod().pcell(ly, cell=TOP, params=None)
 
-# def test_Fixed_RingMod_PCell(): difftest_it(Fixed_RingMod_PCell, file_ext='.oas')()
+def test_Fixed_RingMod_PCell(): difftest_it(Fixed_RingMod_PCell, file_ext='.oas')()
