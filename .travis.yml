@@ -5,8 +5,8 @@ cache: pip
 install:
 - python --version
 - pip install scipy
-- pip install --upgrade pytest
-- pip install --upgrade lygadgets
-- pip install --upgrade lytest
+- pip install pytest
+- pip install lygadgets
+- pip install lytest==0.0.9
 script:
 - DOCKER=1 pytest tests
