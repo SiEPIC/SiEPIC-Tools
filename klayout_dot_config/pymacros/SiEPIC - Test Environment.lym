@@ -15,7 +15,7 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text>
-import SiEPIC, pya
+import SiEPIC_klayout, pya
 
 '''
 #################################################################################
@@ -33,7 +33,7 @@ Example 1:
 def arc_test():
   return [pya.Point(0,0)]
 
-from SiEPIC import utils
+from SiEPIC_klayout import utils
 utils.arc = arc_test
 
 *run macro*
@@ -47,50 +47,50 @@ if 1:
     print (sys.version[0])
     if int(sys.version[0]) &gt; 2:
       from importlib import reload
-    SiEPIC = reload(SiEPIC)
-    SiEPIC.extend = reload(SiEPIC.extend)
-    SiEPIC._globals = reload(SiEPIC._globals)
-    SiEPIC.core = reload(SiEPIC.core)
-    SiEPIC.examples = reload(SiEPIC.examples)
-    SiEPIC.github = reload(SiEPIC.github)
-    SiEPIC.lumerical = reload(SiEPIC.lumerical)
-    SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
-    SiEPIC.lumerical.mode = reload(SiEPIC.lumerical.mode)
-    SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
-    SiEPIC.lumerical.ApodizedContraDC = reload(SiEPIC.lumerical.ApodizedContraDC)
-    #SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
-    SiEPIC.scripts = reload(SiEPIC.scripts)
-    SiEPIC.utils = reload(SiEPIC.utils)
-    SiEPIC.setup = reload(SiEPIC.setup)
-    print('Reloaded SiEPIC')
+    SiEPIC_klayout = reload(SiEPIC_klayout)
+    SiEPIC_klayout.extend = reload(SiEPIC_klayout.extend)
+    SiEPIC_klayout._globals = reload(SiEPIC_klayout._globals)
+    SiEPIC_klayout.core = reload(SiEPIC_klayout.core)
+    SiEPIC_klayout.examples = reload(SiEPIC_klayout.examples)
+    SiEPIC_klayout.github = reload(SiEPIC_klayout.github)
+    SiEPIC_klayout.lumerical = reload(SiEPIC_klayout.lumerical)
+    SiEPIC_klayout.lumerical.fdtd = reload(SiEPIC_klayout.lumerical.fdtd)
+    SiEPIC_klayout.lumerical.mode = reload(SiEPIC_klayout.lumerical.mode)
+    SiEPIC_klayout.lumerical.interconnect = reload(SiEPIC_klayout.lumerical.interconnect)
+    SiEPIC_klayout.lumerical.ApodizedContraDC = reload(SiEPIC_klayout.lumerical.ApodizedContraDC)
+    #SiEPIC_klayout.lumerical.load_lumapi = reload(SiEPIC_klayout.lumerical.load_lumapi)
+    SiEPIC_klayout.scripts = reload(SiEPIC_klayout.scripts)
+    SiEPIC_klayout.utils = reload(SiEPIC_klayout.utils)
+    SiEPIC_klayout.setup = reload(SiEPIC_klayout.setup)
+    print('Reloaded SiEPIC_klayout')
 
 
 print ("*** SiEPIC test environment ***")
 
 if 0:
-  from SiEPIC import _globals
+  from SiEPIC_klayout import _globals
   print("lumapi: %s" % _globals.LUMAPI)
 
 
 if 0:
-  import SiEPIC.lumerical as lumerical
+  import SiEPIC_klayout.lumerical as lumerical
   lumerical.interconnect.circuit_simulation(verbose=True, opt_in_selection_text=[])
   #lumerical.interconnect.circuit_simulation_monte_carlo(verbose=True)
 
 if 0:
-  import SiEPIC.lumerical as lumerical
+  import SiEPIC_klayout.lumerical as lumerical
 #  lumerical.fdtd.run_FDTD(verbose=True)
   lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=True, addto_CML=True)
 
 if 0:
   verbose = True
   # Get technology and layout details
-  from SiEPIC.utils import get_layout_variables
+  from SiEPIC_klayout.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()  
   dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
 
   # get selected instances; only one
-  from SiEPIC.utils import select_instances
+  from SiEPIC_klayout.utils import select_instances
   selected_instances = select_instances()
   error = pya.QMessageBox()
   error.setStandardButtons(pya.QMessageBox.Ok )
@@ -129,8 +129,8 @@ if 0:
 
 
 if 0:
-  import SiEPIC.lumerical.lumapi_fdtd as lumapi
-  from SiEPIC import _globals
+  import SiEPIC_klayout.lumerical.lumapi_fdtd as lumapi
+  from SiEPIC_klayout import _globals
   lumapi.putMatrix(_globals.FDTD, 'test', [[1,2],[2,6]])
 
 if 0:
@@ -154,8 +154,8 @@ if 0:
   
     
 if 0: 
-  import SiEPIC.utils
-  DFT = SiEPIC.utils.load_DFT()
+  import SiEPIC_klayout.utils
+  DFT = SiEPIC_klayout.utils.load_DFT()
   print(DFT)
 
 if 0:
@@ -165,9 +165,9 @@ if 0:
 
 # test for finding Component based on selected object.
 if 0:
-  from SiEPIC.utils import select_instances
+  from SiEPIC_klayout.utils import select_instances
   selected_instances = select_instances()
-  from SiEPIC.utils import get_layout_variables
+  from SiEPIC_klayout.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   for obj in selected_instances:
     print("  selected component: %s" % obj.inst().cell )
@@ -215,23 +215,23 @@ if 0:
   # Error: Ambiguous overload variants - multiple method declarations match arguments in QXmlSimpleReader.parse
 
 if 0:
-  import SiEPIC.utils
-  DFT=SiEPIC.utils.load_DFT()
+  import SiEPIC_klayout.utils
+  DFT=SiEPIC_klayout.utils.load_DFT()
   print(DFT)
 
 if 0:
-  import SiEPIC.lumerical as lumerical
+  import SiEPIC_klayout.lumerical as lumerical
   lumerical.interconnect.component_simulation(verbose=True)
 
 if 0:
-  import SiEPIC.lumerical as lumerical
+  import SiEPIC_klayout.lumerical as lumerical
   lumerical.interconnect.circuit_simulation(verbose=True)
   
 
 # Nets, Net trimming:
 if 0:
-  from SiEPIC import scripts  
-  from SiEPIC.utils import get_layout_variables
+  from SiEPIC_klayout import scripts  
+  from SiEPIC_klayout.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   nets, components = cell.identify_nets(verbose=True)
   print ("* Display list of components:" )
@@ -247,13 +247,13 @@ if 0:
 
 # Verification
 if 0:
-  from SiEPIC import scripts  
+  from SiEPIC_klayout import scripts  
   
   scripts.layout_check(verbose=True)
 
 
 if 0:
-  from SiEPIC.utils import get_layout_variables
+  from SiEPIC_klayout.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   print ("* find_components():" )
   components = cell.find_components (verbose=True)
@@ -263,7 +263,7 @@ if 0:
 
 if 0:
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
-  from SiEPIC import utils
+  from SiEPIC_klayout import utils
   text_out, texts = utils.find_automated_measurement_labels(cell)
   print(text_out)
   print(texts)
@@ -281,7 +281,7 @@ if 0:
   
 
 if 0:
-  from SiEPIC.utils import get_layout_variables
+  from SiEPIC_klayout.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
   #pins = cell.find_pins()
@@ -307,9 +307,9 @@ if 0:
     print(text_subckt)
 
   
-  #from SiEPIC.core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net, Component
-  #from SiEPIC import _globals
-  #from SiEPIC.netlist import find_all_components
+  #from SiEPIC_klayout.core import WaveguideGUI, MonteCarloGUI, CalibreGUI, Net, Component
+  #from SiEPIC_klayout import _globals
+  #from SiEPIC_klayout.netlist import find_all_components
 
 
 # bug in KLayout 0.25  
@@ -329,7 +329,7 @@ if 0:
 
 # test Component.has_compactmodel()
 if 0:
-  from SiEPIC.utils import get_layout_variables
+  from SiEPIC_klayout.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
   if 0:
@@ -357,26 +357,26 @@ if 0:
       v = pya.MessageBox.warning("Errors", missing, pya.MessageBox.Ok)
    
 if 0:
-  import SiEPIC.github
-  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='PCM')
+  import SiEPIC_klayout.github
+  files = SiEPIC_klayout.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='PCM')
   print(files)
-  SiEPIC.github.github_get_files(user='lukasc-ubc', repo='edX-Phot1x', filesearch='PCM', save_folder='/tmp/t')
+  SiEPIC_klayout.github.github_get_files(user='lukasc-ubc', repo='edX-Phot1x', filesearch='PCM', save_folder='/tmp/t')
     
 if 0:
-  from SiEPIC.utils import find_automated_measurement_labels
+  from SiEPIC_klayout.utils import find_automated_measurement_labels
   text_out, opt_in = find_automated_measurement_labels()
   print(text_out)
   print(opt_in)
       
 if 0:
-  from SiEPIC.scripts import fetch_measurement_data_from_github
+  from SiEPIC_klayout.scripts import fetch_measurement_data_from_github
   savefilepath = fetch_measurement_data_from_github (verbose=True)
 #  savefilepath = fetch_all_measurement_data_from_github(verbose=True)
 if 0:
-  import SiEPIC.github
-#  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat')
-#  files = SiEPIC.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='TMAlign_FarmMiddle_1.mat')
-  SiEPIC.github.github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filepath_search='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat', filename_search='TMAlign_FarmMiddle_1.mat', save_folder='/tmp/t')
+  import SiEPIC_klayout.github
+#  files = SiEPIC_klayout.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat')
+#  files = SiEPIC_klayout.github.github_get_filenames(user='lukasc-ubc', repo='edX-Phot1x', filesearch='TMAlign_FarmMiddle_1.mat')
+  SiEPIC_klayout.github.github_get_file(user='lukasc-ubc', repo='edX-Phot1x', filepath_search='2017T3/ANT_chip/TM%2020%20deg%20C/05_Dec_2017_20_17_27/TMAlign_FarmMiddle_1.mat', filename_search='TMAlign_FarmMiddle_1.mat', save_folder='/tmp/t')
   
 if 0:
   import time

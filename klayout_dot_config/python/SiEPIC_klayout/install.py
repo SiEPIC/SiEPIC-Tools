@@ -44,7 +44,7 @@ def install_numpy():
                 "Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
             if install == pya.MessageBox.Yes:
                 # try installing using pip
-                from SiEPIC.install import get_pip_main
+                from SiEPIC_klayout.install import get_pip_main
                 main = get_pip_main()
                 main(['install', 'numpy'])
         except ImportError:
@@ -63,7 +63,7 @@ def install_scipy():
                 "Install package?", "Install package 'scipy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
             if install == pya.MessageBox.Yes:
                 # try installing using pip
-                from SiEPIC.install import get_pip_main
+                from SiEPIC_klayout.install import get_pip_main
                 main = get_pip_main()
                 main(['install', 'scipy'])
         except ImportError:

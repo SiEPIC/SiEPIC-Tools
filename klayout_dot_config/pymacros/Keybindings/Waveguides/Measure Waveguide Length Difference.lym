@@ -17,7 +17,7 @@
  <text># Key binding for SiEPIC-Tools function
 # SiEPIC Measure Waveguide Length Difference
 import pya
-from SiEPIC import scripts
+from SiEPIC_klayout import scripts
 scripts.waveguide_length_diff()
 </text>
 </klayout-macro>

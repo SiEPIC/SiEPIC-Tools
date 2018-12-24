@@ -14,8 +14,8 @@
  <menu-path>siepic_menu.simulation.begin</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
- <text>import SiEPIC, pya
+ <text>import SiEPIC_klayout, pya
 
-SiEPIC.extend.check_components_models()
+SiEPIC_klayout.extend.check_components_models()
 </text>
 </klayout-macro>

@@ -29,7 +29,7 @@ class GUI_FDTD_component_simulation(pya.QDialog):
     mainLayout = pya.QVBoxLayout(self)
     self.setLayout(mainLayout)
 
-    from SiEPIC.utils import load_FDTD_settings
+    from SiEPIC_klayout.utils import load_FDTD_settings
     FDTD_settings=load_FDTD_settings()
     if self.verbose:
       print(FDTD_settings)
@@ -89,7 +89,7 @@ class GUI_FDTD_component_simulation(pya.QDialog):
     if self.verbose:
       print('closing GUI')
 
-    from SiEPIC import lumerical
+    from SiEPIC_klayout import lumerical
     lumerical.fdtd.generate_component_sparam(verbose=True, do_simulation=True, FDTD_settings=FDTD_settings)
     
     

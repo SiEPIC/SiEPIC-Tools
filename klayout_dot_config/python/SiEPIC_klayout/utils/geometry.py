@@ -143,7 +143,7 @@ def curvature_bezier(P0, P1, P2, P3):
 try:
     import scipy
 except ModuleNotFoundError:
-    from SiEPIC.install import install_scipy
+    from SiEPIC_klayout.install import install_scipy
     install_scipy()
 
 from scipy.optimize import minimize

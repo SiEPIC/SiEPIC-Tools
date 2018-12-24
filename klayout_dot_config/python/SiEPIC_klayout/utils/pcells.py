@@ -1,7 +1,7 @@
 import pya
 from math import pi
-from SiEPIC.extend import to_dtype
-from SiEPIC.utils.geometry import rotate, rotate90
+from SiEPIC_klayout.extend import to_dtype
+from SiEPIC_klayout.utils.geometry import rotate, rotate90
 
 EX = pya.DVector(1, 0)
 
@@ -55,7 +55,7 @@ def place_cell(parent_cell, pcell, ports_dict, placement_origin, relative_to=Non
 
 def port_to_pin_helper(ports_list, cell, layerPinRec):
     # Create the pins, as short paths:
-    from SiEPIC._globals import PIN_LENGTH
+    from SiEPIC_klayout._globals import PIN_LENGTH
     dbu = cell.layout().dbu
 
     for port in ports_list:

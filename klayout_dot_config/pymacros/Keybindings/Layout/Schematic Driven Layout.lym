@@ -30,8 +30,8 @@ def schematic_driven_layout():
     
     # Enter your Python code here ..
     
-    from SiEPIC import _globals
-    from SiEPIC.lumerical.interconnect import run_INTC
+    from SiEPIC_klayout import _globals
+    from SiEPIC_klayout.lumerical.interconnect import run_INTC
     
     # Run using Python integration:
     try: 
@@ -59,12 +59,12 @@ def schematic_driven_layout():
             
           #lumapi.close(_globals.INTC)
         
-          # Import functions from SiEPIC-Tools, and get technology details
-          from SiEPIC.utils import select_paths, get_layout_variables
+          # Import functions from SiEPIC_klayout-Tools, and get technology details
+          from SiEPIC_klayout.utils import select_paths, get_layout_variables
           TECHNOLOGY, lv, ly, cell = get_layout_variables()
           dbu = ly.dbu
-          from SiEPIC.extend import to_itype
-          from SiEPIC.scripts import path_to_waveguide
+          from SiEPIC_klayout.extend import to_itype
+          from SiEPIC_klayout.scripts import path_to_waveguide
           
           
           # Layer mapping:

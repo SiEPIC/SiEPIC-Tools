@@ -18,7 +18,7 @@
 # SiEPIC Launch Lumerical Interconnect
 
 import pya
-from SiEPIC import lumerical
+from SiEPIC_klayout import lumerical
 
 lumerical.interconnect.circuit_simulation(verbose=True, simulate=False)
 </text>

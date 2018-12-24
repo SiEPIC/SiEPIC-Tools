@@ -18,7 +18,7 @@
 # SiEPIC Snap Components
 
 import pya
-from SiEPIC import scripts
+from SiEPIC_klayout import scripts
 
 scripts.snap_component()
 </text>

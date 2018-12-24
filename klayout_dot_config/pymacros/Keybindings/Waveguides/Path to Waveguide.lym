@@ -17,7 +17,7 @@
  <text># Key binding for SiEPIC-Tools function
 # SiEPIC Path to Waveguide
 import pya
-from SiEPIC import scripts
+from SiEPIC_klayout import scripts
 scripts.path_to_waveguide(GUI = True, select_waveguides=True)
 </text>
 </klayout-macro>

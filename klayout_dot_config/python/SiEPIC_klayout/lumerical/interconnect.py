@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  SiEPIC-Tools
-#  
+#
 ################################################################################
 
 Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
@@ -10,7 +10,7 @@ Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 - run_INTC: run INTERCONNECT using Python integration
 - INTC_commandline: invoke INTC via the command line, with an lsf file as input.
 - Setup_Lumerical_KLayoutPython_integration
-    Configure PATH env, import lumapi, run interconnect, 
+    Configure PATH env, import lumapi, run interconnect,
     Install technology CML, read CML elements
 - circuit_simulation: netlist extract and run simulation
 - circuit_simulation_update_netlist: update netlist and run simulation
@@ -18,7 +18,7 @@ Circuit simulations using Lumerical INTERCONNECT and a Compact Model Library
 - component_simulation: single component simulation
 
 usage:
- import SiEPIC.lumerical.interconnect
+ import SiEPIC_klayout.lumerical.interconnect
 
 
 ################################################################################
@@ -41,7 +41,7 @@ def run_INTC(verbose=False):
         else:
             from importlib import reload
     elif sys.version_info[0] == 2:
-        from imp import reload    
+        from imp import reload
     reload(load_lumapi)
 
   if not lumapi:
@@ -49,15 +49,15 @@ def run_INTC(verbose=False):
     pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Cannot load Lumerical Python integration. \nSome SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
 #    warning = pya.QMessageBox()
 #    warning.setStandardButtons(pya.QMessageBox.Cancel)
-#    warning.setText("Cannot load Lumerical Python integration.") 
+#    warning.setText("Cannot load Lumerical Python integration.")
 #    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
 #    pya.QMessageBox_StandardButton(warning.exec_())
     return
-    
-  
+
+
   if verbose:
     print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
-  
+
   if not _globals.INTC: # Not running, start a new session
     _globals.INTC = lumapi.open('interconnect')
     if verbose:
@@ -77,9 +77,9 @@ def run_INTC(verbose=False):
 
 def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   import sys, os, string
-  
+
   ##################################################################
-  # Load Lumerical API: 
+  # Load Lumerical API:
   from .. import _globals
   run_INTC()
   lumapi = _globals.LUMAPI
@@ -87,7 +87,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
     print('SiEPIC.lumerical.interconnect.Setup_Lumerical_KLayoutPython_integration: lumapi not loaded')
     return
 
-  import os 
+  import os
   # Read INTC element library
   lumapi.evalScript(_globals.INTC, "out=library;")
   _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
@@ -96,7 +96,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
   from ..utils import get_technology, get_technology_by_name
   # get current technology
-  TECHNOLOGY = get_technology(query_activecellview_technology=True)  
+  TECHNOLOGY = get_technology(query_activecellview_technology=True)
   # load more technology details (CML file location)
   TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
   # check if the latest version of the CML is in KLayout's tech
@@ -110,7 +110,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
     # Close INTERCONNECT so that the library information is saved, then re-open
     lumapi.close(_globals.INTC)
     run_INTC()
- 
+
 
   # Save INTC element library to KLayout application data path
   if not os.path.exists(dir_path):
@@ -144,7 +144,7 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
 def INTC_commandline(filename2):
   print ("Running Lumerical INTERCONNECT using the command interface.")
   import sys, os, string
-  
+
   if sys.platform.startswith('linux'):
     import subprocess
     # Linux-specific code here...
@@ -152,14 +152,14 @@ def INTC_commandline(filename2):
     # Location of INTERCONNECT program (this found from RPM installation)
     file_path = '/opt/lumerical/interconnect/bin/interconnect'
     subprocess.Popen([file_path, '-run', filename2])
-      
-  
+
+
   elif sys.platform.startswith('darwin'):
     # OSX specific
     import sys
     if int(sys.version[0]) > 2:
       import subprocess
-      subprocess.Popen(['/usr/bin/open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app', '-run', '--args -run %s' % filename2])          
+      subprocess.Popen(['/usr/bin/open -n /Applications/Lumerical/INTERCONNECT/INTERCONNECT.app', '-run', '--args -run %s' % filename2])
     else:
       import commands
       print("Running INTERCONNECT")
@@ -168,7 +168,7 @@ def INTC_commandline(filename2):
       a=commands.getstatusoutput(runcmd)
       print(a)
 
-  
+
   elif sys.platform.startswith('win'):
     # Windows specific code here
     import subprocess
@@ -186,7 +186,7 @@ def INTC_commandline(filename2):
       warning_window.setInformativeText("Do you want to specify it manually?")
       warning_window.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel);
       warning_window.setDefaultButton(pya.QMessageBox.Yes)
-      response = warning_window.exec_()        
+      response = warning_window.exec_()
       if(response == pya.QMessageBox.Yes):
         dialog = pya.QFileDialog()
         path = str(dialog.getOpenFileName())
@@ -204,8 +204,8 @@ def component_simulation(verbose=False, simulate=True):
 
   from ..utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
-    
-  
+
+
   # check that it is one or more:
   error = pya.QMessageBox()
   error.setStandardButtons(pya.QMessageBox.Ok )
@@ -220,7 +220,7 @@ def component_simulation(verbose=False, simulate=True):
     warning.setInformativeText("Do you want to Proceed?")
     if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
       return
-  
+
   # Check if the component has a compact model loaded in INTERCONNECT
   # Loop if more than one component selected
   for obj in selected_instances:
@@ -233,7 +233,7 @@ def component_simulation(verbose=False, simulate=True):
       c=c[0]
     else:
       continue
-    
+
     if not c.has_model():
       if len(selected_instances) == 0:
         error.setText("Error: Component '%s' does not have a compact model. Cannot perform simulation." % c)
@@ -248,12 +248,12 @@ def component_simulation(verbose=False, simulate=True):
       return
     if verbose:
       print("Pin selected from InputDialog = %s, for component '%s'." % (pin_injection, c.component) )
-    
+
     # Write spice netlist and simulation script
     from ..utils import get_technology
     TECHNOLOGY = get_technology()  # get current technology
-    import SiEPIC
-    from time import strftime 
+    import SiEPIC_klayout
+    from time import strftime
     text_main = '* Spice output from KLayout SiEPIC-Tools v%s, %s technology (SiEPIC.lumerical.interconnect.component_simulation), %s.\n\n' % (SiEPIC.__version__, TECHNOLOGY['technology_name'], strftime("%Y-%m-%d %H:%M:%S") )
 
 
@@ -277,7 +277,7 @@ def component_simulation(verbose=False, simulate=True):
     nets_str = ''
     DCsources = "" # string to create DC sources for each pin
     Vn = 1
-    for p in c.pins: 
+    for p in c.pins:
       if p.type == _globals.PIN_TYPES.ELECTRICAL:
         if not p.pin_name:
           continue
@@ -289,7 +289,7 @@ def component_simulation(verbose=False, simulate=True):
         nets_str += " " + str(p.pin_name)
 
 
-        
+
     # *** todo: some other way of getting this information; not hard coded.
     # GUI? Defaults from PCell?
     orthogonal_identifier=1
@@ -297,7 +297,7 @@ def component_simulation(verbose=False, simulate=True):
     wavelength_stop=1600
     wavelength_points=2000
     text_main += '* Optical Network Analyzer:\n'
-    text_main += '.ona input_unit=wavelength input_parameter=start_and_stop\n  + minimum_loss=80\n  + analysis_type=scattering_data\n  + multithreading=user_defined number_of_threads=1\n' 
+    text_main += '.ona input_unit=wavelength input_parameter=start_and_stop\n  + minimum_loss=80\n  + analysis_type=scattering_data\n  + multithreading=user_defined number_of_threads=1\n'
     text_main += '  + orthogonal_identifier=%s\n' % orthogonal_identifier
     text_main += '  + start=%4.3fe-9\n' % wavelength_start
     text_main += '  + stop=%4.3fe-9\n' % wavelength_stop
@@ -310,14 +310,14 @@ def component_simulation(verbose=False, simulate=True):
 
     text_main += 'SUBCIRCUIT %s SUBCIRCUIT sch_x=-1 sch_y=-1 \n\n' % (nets_str)
     text_main += '.subckt SUBCIRCUIT %s\n' % (nets_str)
-    text_main += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_1", nets_str, c.component.replace(' ', '_') ) 
+    text_main += ' %s %s %s ' % ( c.component.replace(' ', '_') +"_1", nets_str, c.component.replace(' ', '_') )
     if c.library != None:
       text_main += 'library="%s" %s ' % (c.library, c.params)
     text_main += '\n.ends SUBCIRCUIT\n'
 
     from .. import _globals
     tmp_folder = _globals.TEMP_FOLDER
-    import os    
+    import os
     filename = os.path.join(tmp_folder, '%s_main.spi' % c.component)
     filename2 = os.path.join(tmp_folder, '%s.lsf' % c.component)
     filename_icp = os.path.join(tmp_folder, '%s.icp' % c.component)
@@ -336,7 +336,7 @@ def component_simulation(verbose=False, simulate=True):
     opt_in_selection_text = pya.InputDialog.ask_item("opt_in selection", "Choose one of the opt_in labels, to fetch experimental data.",  opt_in_labels, 0)
     if not opt_in_selection_text: # user pressed cancel
       pass
-    '''    
+    '''
 
     # Write the Lumerical INTERCONNECT start-up script.
     text_lsf =  'switchtolayout;\n'
@@ -362,10 +362,10 @@ def component_simulation(verbose=False, simulate=True):
     file.close()
     if verbose:
       print(text_lsf)
-    
+
     if simulate:
       # Run using Python integration:
-      try: 
+      try:
         from .. import _globals
         run_INTC()
         # Run using Python integration:
@@ -387,7 +387,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   print ('*** circuit_simulation(), opt_in: %s' % opt_in_selection_text)
   if verbose:
     print('*** circuit_simulation()')
-  
+
   # check for supported operating system, tested on:
   # Windows 7, 10
   # OSX Sierra, High Sierra
@@ -395,11 +395,11 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   import sys
   if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
     raise Exception("Unsupported operating system: %s" % sys.platform)
-  
+
   from .. import _globals
-  from SiEPIC.utils import get_layout_variables
+  from SiEPIC_klayout.utils import get_layout_variables
   TECHNOLOGY, lv, layout, topcell = get_layout_variables()
-  
+
   # Save the layout prior to running simulations, if there are changes.
   mw = pya.Application.instance().main_window()
   if mw.manager().has_undo():
@@ -407,8 +407,8 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   layout_filename = mw.current_view().active_cellview().filename()
   if len(layout_filename) == 0:
     raise Exception("Please save your layout before running the simulation")
-    
-  # *** todo    
+
+  # *** todo
   #   Add the "disconnected" component to all disconnected pins
   #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
 
@@ -418,13 +418,13 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   if not text_Spice:
     raise Exception("No netlist available. Cannot run simulation.")
     return
-  if verbose:   
+  if verbose:
     print(text_Spice)
 
   circuit_name = topcell.name.replace('.','') # remove "."
   if '_' in circuit_name[0]:
     circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
-  
+
   from .. import _globals
   tmp_folder = _globals.TEMP_FOLDER
   import os
@@ -432,9 +432,9 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   filename_subckt = os.path.join(tmp_folder,  '%s.spi' % circuit_name)
   filename2 = os.path.join(tmp_folder, '%s.lsf' % circuit_name)
   filename_icp = os.path.join(tmp_folder, '%s.icp' % circuit_name)
-  
+
   text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
-  
+
   # Write the Spice netlist to file
   file = open(filename, 'w')
   file.write (text_Spice_main)
@@ -442,7 +442,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   file = open(filename_subckt, 'w')
   file.write (text_Spice)
   file.close()
-  
+
   # Write the Lumerical INTERCONNECT start-up script.
   file = open(filename2, 'w')
   text_lsf = 'switchtolayout;\n'
@@ -468,7 +468,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
       text_lsf += 't%s.addattribute("Simulation, Detector %s",getresultdata("ONA_1", "input %s/mode 1/gain"));\n' % (i,i, i)
     else:
       text_lsf += 't%s = getresult("ONA_1", "input %s/mode 1/gain");\n' % (i, i)
-      
+
   # load measurement data files
   m_count=0
   if matlab_data_files:
@@ -477,7 +477,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
         m_count += 1
 
         # *** todo, use DFT rules to determine which measurements we should load.
-        
+
         # INTERCONNECT load data
         head, tail = os.path.split(m)
         tail = tail.split('.mat')[0]
@@ -486,23 +486,23 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
         text_lsf += 'm%s.addparameter("wavelength",scandata.wavelength*%s);\n'  % (m_count, wavelenth_scale)
         for d in detector_list:
           text_lsf += 'm%s.addattribute("Measured: %s",scandata.power(:,%s));\n'  % (m_count, tail, d)
-  
+
   text_lsf += 'visualize(t1'
   for i in range(2, num_detectors+1):
     text_lsf += ', t%s' % i
   for i in range(1, m_count+1):
     text_lsf += ', m%s' % i
   text_lsf += ');\n'
-  
+
   file.write (text_lsf)
   file.close()
-  
+
   if verbose:
     print(text_lsf)
 
   if simulate:
     # Run using Python integration:
-    try: 
+    try:
       from .. import _globals
       run_INTC()
       # Run using Python integration:
@@ -523,15 +523,15 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   else:
     from .. import scripts
     scripts.open_folder(tmp_folder)
-    
+
   if verbose:
     print('Done Lumerical INTERCONNECT circuit simulation.')
 
-  
+
 def circuit_simulation_update_netlist():
   print('update netlist')
-  
-  
+
+
 def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, opt_in_selection_text=[], matlab_data_files=[], simulate=True):
   print('*** circuit_simulation_monte_carlo()')
   from .. import _globals
@@ -541,13 +541,13 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   else:
     TECHNOLOGY, lv, _, _ = get_layout_variables()
     ly = topcell.layout()
-  
+
   if params is None: params = _globals.MC_GUI.get_parameters()
-  if params is None: 
+  if params is None:
     pya.MessageBox.warning("No MC parameters", "No Monte Carlo parameters. Cancelling.", pya.MessageBox.Cancel)
     return
   print(params)
-  
+
   if int(params['num_wafers'])<1:
     pya.MessageBox.warning("Insufficient number of wafers", "The number of wafers for Monte Carlo simulations need to be 1 or more.", pya.MessageBox.Cancel)
     return
@@ -558,11 +558,11 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   circuit_name = topcell.name.replace('.','') # remove "."
   if '_' in circuit_name[0]:
     circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
-  
-  
+
+
   if verbose:
     print('*** circuit_simulation_monte_carlo()')
-  
+
   # check for supported operating system, tested on:
   # Windows 7, 10
   # OSX Sierra, High Sierra
@@ -570,7 +570,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   import sys
   if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
     raise Exception("Unsupported operating system: %s" % sys.platform)
-    
+
   # Save the layout prior to running simulations, if there are changes.
   mw = pya.Application.instance().main_window()
   if mw.manager().has_undo():
@@ -579,8 +579,8 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   if len(layout_filename) == 0:
     pya.MessageBox.warning("Please save your layout before running the simulation.", "Please save your layout before running the simulation.", pya.MessageBox.Cancel)
     return
-    
-  # *** todo    
+
+  # *** todo
   #   Add the "disconnected" component to all disconnected pins
   #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
 
@@ -590,18 +590,18 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   if not text_Spice:
     pya.MessageBox.warning("No netlist available.", "No netlist available. Cannot run simulation.", pya.MessageBox.Cancel)
     return
-  if verbose:   
+  if verbose:
     print(text_Spice)
-  
+
   tmp_folder = _globals.TEMP_FOLDER
-  import os    
+  import os
   filename = os.path.join(tmp_folder, '%s_main.spi' % circuit_name)
   filename_subckt = os.path.join(tmp_folder,  '%s.spi' % circuit_name)
   filename2 = os.path.join(tmp_folder, '%s.lsf' % circuit_name)
   filename_icp = os.path.join(tmp_folder, '%s.icp' % circuit_name)
-  
+
   text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
-  
+
   # Write the Spice netlist to file
   file = open(filename, 'w')
   file.write (text_Spice_main)
@@ -609,19 +609,19 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   file = open(filename_subckt, 'w')
   file.write (text_Spice)
   file.close()
-  
+
   # Write the Lumerical INTERCONNECT start-up script.
   file = open(filename2, 'w')
 
-  text_lsf = '###DEVELOPER:Zeqin Lu, zqlu@ece.ubc.ca, University of British Columbia \n' 
+  text_lsf = '###DEVELOPER:Zeqin Lu, zqlu@ece.ubc.ca, University of British Columbia \n'
   text_lsf += 'switchtolayout;\n'
   text_lsf += 'deleteall;\n'
   text_lsf += "importnetlist('%s');\n" % filename
-  text_lsf += 'addproperty("::Root Element", "wafer_uniformity_thickness", "wafer", "Matrix");\n' 
-  text_lsf += 'addproperty("::Root Element", "wafer_uniformity_width", "wafer", "Matrix");\n' 
-  text_lsf += 'addproperty("::Root Element", "N", "wafer", "Number");\n'  
-  text_lsf += 'addproperty("::Root Element", "selected_die", "wafer", "Number");\n' 
-  text_lsf += 'addproperty("::Root Element", "wafer_length", "wafer", "Number");\n'   
+  text_lsf += 'addproperty("::Root Element", "wafer_uniformity_thickness", "wafer", "Matrix");\n'
+  text_lsf += 'addproperty("::Root Element", "wafer_uniformity_width", "wafer", "Matrix");\n'
+  text_lsf += 'addproperty("::Root Element", "N", "wafer", "Number");\n'
+  text_lsf += 'addproperty("::Root Element", "selected_die", "wafer", "Number");\n'
+  text_lsf += 'addproperty("::Root Element", "wafer_length", "wafer", "Number");\n'
   text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_thickness", "wafer", "Matrix");\n' % circuit_name
   text_lsf += 'addproperty("::Root Element::%s", "MC_uniformity_width", "wafer", "Matrix");\n' % circuit_name
   text_lsf += 'addproperty("::Root Element::%s", "MC_grid", "wafer", "Number");\n' % circuit_name
@@ -629,16 +629,16 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += 'addproperty("::Root Element::%s", "MC_resolution_y", "wafer", "Number");\n' % circuit_name
   text_lsf += 'addproperty("::Root Element::%s", "MC_non_uniform", "wafer", "Number");\n'  % circuit_name
   text_lsf += 'select("::Root Element::%s");\n'  % circuit_name
-  text_lsf += 'set("MC_non_uniform",99);\n'  
+  text_lsf += 'set("MC_non_uniform",99);\n'
   text_lsf += 'n_wafer = %s;  \n'  % params['num_wafers']  #  GUI INPUT: Number of testing wafer
   text_lsf += 'n_die = %s;  \n'  % params['num_dies']  #  GUI INPUT: Number of testing die per wafer
   text_lsf += 'kk = 1;  \n'
   text_lsf += 'select("ONA_1");\n'
   text_lsf += 'num_points = get("number of points");\n'
-  
+
   for i in range(0, num_detectors):
     text_lsf += 'mc%s = matrixdataset("mc%s"); # initialize visualizer data, mc%s \n' % (i+1, i+1, i+1)
-    text_lsf += 'Gain_Data_input%s = matrix(num_points,n_wafer*n_die);  \n' % (i+1) 
+    text_lsf += 'Gain_Data_input%s = matrix(num_points,n_wafer*n_die);  \n' % (i+1)
 
   ###Define histograms datasets
   if(params['histograms']['fsr']==True):
@@ -647,19 +647,19 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
     text_lsf += 'freq_dataset = matrix(1,n_wafer*n_die,1);\n'
   if(params['histograms']['gain']==True):
     text_lsf += 'gain_dataset = matrix(1,n_wafer*n_die,1);\n'
-  
+
   text_lsf += '#Run Monte Carlo simulations; \n'
   text_lsf += 'for (jj=1; jj<=n_wafer; jj=jj+1) {   \n'
   ############################## Wafer generation ###########################################
   text_lsf += ' wafer_length = %s;  \n'  % 100e-3 # datadict["wafer_length_x"]  # [m], GUI INPUT: wafer length
   text_lsf += ' wafer_cl_width = %s;  \n' % params['waf_var']['width']['corr_len']  # [m],  GUI INPUT: wafer correlation length
-  text_lsf += ' wafer_cl_thickness = %s;  \n' % params['waf_var']['height']['corr_len']  # [m],  GUI INPUT: wafer correlation length  
-  text_lsf += ' wafer_clx_width = wafer_cl_width;  \n'  
-  text_lsf += ' wafer_cly_width = wafer_cl_width; \n'   
-  text_lsf += ' wafer_clx_thickness = wafer_cl_thickness;  \n'  
-  text_lsf += ' wafer_cly_thickness = wafer_cl_thickness; \n'  
-  text_lsf += ' N = 500;  \n'        
-  text_lsf += ' wafer_grid=wafer_length/N; \n'   
+  text_lsf += ' wafer_cl_thickness = %s;  \n' % params['waf_var']['height']['corr_len']  # [m],  GUI INPUT: wafer correlation length
+  text_lsf += ' wafer_clx_width = wafer_cl_width;  \n'
+  text_lsf += ' wafer_cly_width = wafer_cl_width; \n'
+  text_lsf += ' wafer_clx_thickness = wafer_cl_thickness;  \n'
+  text_lsf += ' wafer_cly_thickness = wafer_cl_thickness; \n'
+  text_lsf += ' N = 500;  \n'
+  text_lsf += ' wafer_grid=wafer_length/N; \n'
   text_lsf += ' wafer_RMS_w = %s;     \n' % params['waf_var']['width']['std_dev'] # [nm], GUI INPUT: Within wafer Sigma RMS for width
   text_lsf += ' wafer_RMS_t = %s;   \n' % params['waf_var']['height']['std_dev']    # [nm], GUI INPUT: Within wafer Sigma RMS for thickness
   text_lsf += ' x = linspace(-wafer_length/2,wafer_length/2,N); \n'
@@ -668,25 +668,25 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += ' yy = meshgridy(x,y) ;  \n'
   text_lsf += ' wafer_Z_thickness = wafer_RMS_t*randnmatrix(N,N);  \n'
   text_lsf += ' wafer_F_thickness = exp(-(xx^2/(wafer_clx_thickness^2/2)+yy^2/(wafer_cly_thickness^2/2))); \n'  # Gaussian filter
-  text_lsf += ' wafer_uniformity_thickness = real( 2/sqrt(pi)*wafer_length/N/sqrt(wafer_clx_thickness)/sqrt(wafer_cly_thickness)*invfft(fft(wafer_Z_thickness,1,0)*fft(wafer_F_thickness,1,0), 1, 0)  );    \n' # wafer created using Gaussian filter   
+  text_lsf += ' wafer_uniformity_thickness = real( 2/sqrt(pi)*wafer_length/N/sqrt(wafer_clx_thickness)/sqrt(wafer_cly_thickness)*invfft(fft(wafer_Z_thickness,1,0)*fft(wafer_F_thickness,1,0), 1, 0)  );    \n' # wafer created using Gaussian filter
   text_lsf += ' wafer_Z_width = wafer_RMS_w*randnmatrix(N,N);  \n'
   text_lsf += ' wafer_F_width = exp(-(xx^2/(wafer_clx_width^2/2)+yy^2/(wafer_cly_width^2/2))); \n'  # Gaussian filter
-  text_lsf += ' wafer_uniformity_width = real( 2/sqrt(pi)*wafer_length/N/sqrt(wafer_clx_width)/sqrt(wafer_cly_width)*invfft(fft(wafer_Z_width,1,0)*fft(wafer_F_width,1,0), 1, 0)  );    \n' # wafer created using Gaussian filter 
-  
+  text_lsf += ' wafer_uniformity_width = real( 2/sqrt(pi)*wafer_length/N/sqrt(wafer_clx_width)/sqrt(wafer_cly_width)*invfft(fft(wafer_Z_width,1,0)*fft(wafer_F_width,1,0), 1, 0)  );    \n' # wafer created using Gaussian filter
+
   ######################## adjust Wafer mean ###################
   text_lsf += ' mean_RMS_w = %s;     \n' % params['waf_to_waf_var']['width']['std_dev'] # [nm], GUI INPUT:  wafer Sigma RMS for width
   text_lsf += ' mean_RMS_t = %s;   \n' % params['waf_to_waf_var']['thickness']['std_dev']    # [nm], GUI INPUT:  wafer Sigma RMS for thickness
   text_lsf += ' wafer_uniformity_thickness = wafer_uniformity_thickness + randn(0,mean_RMS_t); \n'
   text_lsf += ' wafer_uniformity_width = wafer_uniformity_width + randn(0,mean_RMS_w); \n'
-  
+
   ##################################### pass wafer to Root ###################
   text_lsf += ' #pass wafers to object \n'
-  text_lsf += ' select("::Root Element");  \n' 
+  text_lsf += ' select("::Root Element");  \n'
   text_lsf += ' set("wafer_uniformity_thickness", wafer_uniformity_thickness);  \n'
   text_lsf += ' set("wafer_uniformity_width", wafer_uniformity_width);  \n'
   text_lsf += ' set("N",N);  \n'
   text_lsf += ' set("wafer_length",wafer_length);  \n'
-  
+
   #################################### embed wafer selection script in Root ###################
   text_lsf += ' select("::Root Element");\n'
   text_lsf += ' set("setup script",'+ "'" +  ' \n'
@@ -701,7 +701,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += '  die_num_total = die_num_x*die_num_y; \n'
   text_lsf += '  x = linspace(-wafer_length/2,wafer_length/2,N); \n'
   text_lsf += '  y = linspace(-wafer_length/2,wafer_length/2,N); \n'
-              # pick die for simulation, and do high resolution interpolation 
+              # pick die for simulation, and do high resolution interpolation
   text_lsf += '  j=selected_die; \n'
   text_lsf += '  die_min_x = -wafer_length/2+(j-1)*die_span_x -floor((j-1)/die_num_x)*wafer_length; \n'
   text_lsf += '  die_max_x = -wafer_length/2+j*die_span_x -floor((j-1)/die_num_x)*wafer_length; \n'
@@ -722,7 +722,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += '  set("MC_grid",MC_grid);  \n'
   text_lsf += '  set("MC_non_uniform",1);  \n'
   text_lsf += " '"+'); \n'
-  
+
   text_lsf += ' for (ii=1;  ii<=n_die; ii=ii+1) {   \n'
   text_lsf += '  switchtodesign; \n'
   text_lsf += '  setnamed("ONA_1","peak analysis", "single");\n'
@@ -731,14 +731,14 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += '  run;\n'
   text_lsf += '  select("ONA_1");\n'
   text_lsf += '  T=getresult("ONA_1","input 1/mode 1/transmission");\n'
-  text_lsf += '  wavelength = T.wavelength;\n'   
-  
+  text_lsf += '  wavelength = T.wavelength;\n'
+
   for i in range(0, num_detectors):
-    text_lsf += '  if (kk==1) { mc%s.addparameter("wavelength",wavelength);} \n' % (i+1) 
+    text_lsf += '  if (kk==1) { mc%s.addparameter("wavelength",wavelength);} \n' % (i+1)
     text_lsf += '  mc%s.addattribute("run", getattribute( getresult("ONA_1", "input %s/mode 1/gain"), getattribute(getresult("ONA_1", "input %s/mode 1/gain")) ) );\n' % (i+1, i+1, i+1)
     text_lsf += '  Gain_Data_input%s(1:num_points, kk) = getattribute( getresult("ONA_1", "input %s/mode 1/gain"), getattribute(getresult("ONA_1", "input %s/mode 1/gain")) ); \n'  % (i+1, i+1, i+1)
-    
-#add simulation data to their corresponding datalists  
+
+#add simulation data to their corresponding datalists
   if(params['histograms']['fsr']==True):
       text_lsf += '  fsr_select = getresult("ONA_1", "input 1/mode 1/peak/free spectral range");\n'
       text_lsf += '  fsr_dataset(1,kk) = real(fsr_select.getattribute(getattribute(fsr_select)));\n'
@@ -754,21 +754,21 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   text_lsf += '  kk = kk + 1;  \n'
   text_lsf += ' }\n'   # end for wafer iteration
   text_lsf += '}\n'  # end for die iteration
-  text_lsf += '?"Spectrum data for each input can be found in the Script Workspace tab:";\n'    
-  for i in range(0, num_detectors): 
+  text_lsf += '?"Spectrum data for each input can be found in the Script Workspace tab:";\n'
+  for i in range(0, num_detectors):
       text_lsf += '?"Gain_Data_input%s"; \n' %(i+1)
-  text_lsf += '?"Plot spectrums using script: plot(wavelength, Gain_Data_input#)";\n'  
+  text_lsf += '?"Plot spectrums using script: plot(wavelength, Gain_Data_input#)";\n'
   for i in range(0, num_detectors):
     text_lsf += 'visualize(mc%s);\n' % (i+1)
-  
+
 #### Display Histograms for the selected components
 #FSR
   if(params['histograms']['fsr']==True):
       text_lsf += 'dataset = fsr_dataset*1e9;\n'  #select fsr dataset defined above
       text_lsf += 'bin_hist = max( [ 10, (max(dataset)-min(dataset)) / std(dataset) * 10 ]);\n' #define number of bins according to the number of data
-      text_lsf += 'histc(dataset, bin_hist, "Free Spectral Range (nm)", "Count", "Histogram - FSR");\n' #generate histogram 
+      text_lsf += 'histc(dataset, bin_hist, "Free Spectral Range (nm)", "Count", "Histogram - FSR");\n' #generate histogram
       text_lsf += 'legend("Mean: " + num2str(mean(dataset)) + ", Std Dev: " + num2str(std(dataset)));\n' #define plot legends
-      
+
 #wavelength
   if(params['histograms']['wavelength']==True):
       text_lsf += 'dataset = freq_dataset*1e9;\n'
@@ -799,7 +799,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
       text_lsf += 't%s.addattribute("Simulation, Detector %s",getresultdata("ONA_1", "input %s/mode 1/gain"));\n' % (i,i, i)
     else:
       text_lsf += 't%s = getresult("ONA_1", "input %s/mode 1/gain");\n' % (i, i)
-      
+
   # load measurement data files
   m_count=0
   if matlab_data_files:
@@ -814,7 +814,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
         wavelength = matData['scandata'].wavelength
         power = matData['scandata'].power[:,PORT-1]
         savemat(m, {'wavelength': wavelength, 'power': power})
-        
+
         # INTERCONNECT load data
         head, tail = os.path.split(m)
         tail = tail.split('.mat')[0]
@@ -822,25 +822,25 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
         text_lsf += 'm%s = matrixdataset("Measurement");\n' % m_count
         text_lsf += 'm%s.addparameter("wavelength",wavelength*%s);\n'  % (m_count, wavelenth_scale)
         text_lsf += 'm%s.addattribute("Measured: %s",power);\n'  % (m_count, tail)
-  
+
   text_lsf += 'visualize(t1'
   for i in range(2, num_detectors+1):
     text_lsf += ', t%s' % i
   for i in range(1, m_count+1):
     text_lsf += ', m%s' % i
   text_lsf += ');\n'
-  
+
   '''
-  
+
   file.write (text_lsf)
   file.close()
-  
+
   if verbose:
     print(text_lsf)
 
   if simulate:
     # Run using Python integration:
-    try: 
+    try:
       from .. import _globals
       run_INTC()
       # Run using Python integration:
@@ -854,7 +854,7 @@ def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, 
   else:
     from .. import scripts
     scripts.open_folder(tmp_folder)
-    
+
   if verbose:
     print('Done Lumerical INTERCONNECT Monte Carlo circuit simulation.')
 

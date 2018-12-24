@@ -18,7 +18,7 @@
 # SiEPIC Remote Calibre DRC
 
 import pya
-from SiEPIC import scripts
+from SiEPIC_klayout import scripts
 
 scripts.calibreDRC()
 </text>

@@ -17,7 +17,7 @@
  <text># Key binding for SiEPIC-Tools function
 # SiEPIC-EBeam-PDK v0.1.41 and under ROUND_PATH to Waveguide
 import pya
-from SiEPIC import scripts
+from SiEPIC_klayout import scripts
 scripts.roundpath_to_waveguide()
 
 </text>

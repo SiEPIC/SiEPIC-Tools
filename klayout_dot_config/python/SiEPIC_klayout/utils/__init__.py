@@ -73,7 +73,7 @@ TECHNOLOGY['layer name'] is a LayerInfo object.
 '''
 Read the layer table for a given technology.
 Usage:
-import SiEPIC.utils
+import SiEPIC_klayout.utils
 SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 

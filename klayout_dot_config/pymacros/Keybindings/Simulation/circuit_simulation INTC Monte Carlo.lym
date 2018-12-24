@@ -18,7 +18,7 @@
 # SiEPIC Monte Carlo Simulation
 
 import pya
-from SiEPIC import lumerical
+from SiEPIC_klayout import lumerical
 
 lumerical.interconnect.circuit_simulation_monte_carlo()
 </text>

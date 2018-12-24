@@ -23,7 +23,7 @@ Script_SiEPIC_General=1
 # Import KLayout Python API methods:
 # Box, Point, Polygon, Text, Trans, LayerInfo, etc
 from pya import *
-from SiEPIC.utils import get_technology, get_technology_by_name
+from SiEPIC_klayout.utils import get_technology, get_technology_by_name
 
 class LumericalINTERCONNECT_Laser(PCellDeclarationHelper):
   """
@@ -57,7 +57,7 @@ class LumericalINTERCONNECT_Laser(PCellDeclarationHelper):
     return False
     
   def produce_impl(self):
-    from SiEPIC.utils import layout_pgtext, get_technology
+    from SiEPIC_klayout.utils import layout_pgtext, get_technology
     TECHNOLOGY = get_technology()
     ly = self.layout
     shapes = self.cell.shapes
@@ -99,7 +99,7 @@ class LumericalINTERCONNECT_Detector(PCellDeclarationHelper):
     pass
            
   def produce_impl(self):
-    from SiEPIC.utils import layout_pgtext, get_technology
+    from SiEPIC_klayout.utils import layout_pgtext, get_technology
     TECHNOLOGY = get_technology()
     ly = self.layout
     shapes = self.cell.shapes

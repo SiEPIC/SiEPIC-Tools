@@ -14,8 +14,8 @@
  <menu-path>siepic_menu.measurements.begin</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
- <text>import SiEPIC, pya
+ <text>import SiEPIC_klayout, pya
 
-SiEPIC.scripts.fetch_measurement_data_from_github(verbose=True)
+SiEPIC_klayout.scripts.fetch_measurement_data_from_github(verbose=True)
 </text>
 </klayout-macro>
