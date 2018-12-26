@@ -8,6 +8,6 @@ install:
 - pip install scipy
 - pip install pytest
 - pip install lygadgets
-- pip install lytest==0.0.9
+- pip install lytest==0.0.8
 script:
 - DOCKER=1 pytest tests
