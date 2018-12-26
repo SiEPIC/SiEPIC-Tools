@@ -992,4 +992,4 @@ def svg_from_component(component, filename, verbose=False):
 
 from .._globals import MODULE_NUMPY
 if MODULE_NUMPY:
-    from .sampling import sample_function
+    from siepic_tools.utils.sampling import sample_function  # noqa

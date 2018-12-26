@@ -357,7 +357,6 @@ def print_parameter_list(self):
 
 #################################################################################
 
-import SiEPIC.utils.pcell_declaration_helper  # trigger extension of this to pya
 pya.PCellDeclarationHelper.print_parameter_list = print_parameter_list
 
 #################################################################################
@@ -489,7 +488,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                 iter2.next()
             # Store the pin information in the pins array
             # check if this one already exists (duplicate polygons)
-            if not([p for p in pins if p.type == _globals.PIN_TYPES.OPTICALIO and 
+            if not([p for p in pins if p.type == _globals.PIN_TYPES.OPTICALIO and
               p.polygon == it.shape().polygon.transformed(it.itrans())]):
                 pins.append(Pin(polygon=it.shape().polygon.transformed(it.itrans()),
                             _type=_globals.PIN_TYPES.OPTICALIO,
@@ -867,7 +866,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         warning.setText("To run a simulation, you need to have optical IO in the layout." )
         pya.QMessageBox_StandardButton(warning.exec_())
         return False, False, False, False, False, False, False, False
-        
+
     dist_optin_c = components_sorted[0].trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1))
     if verbose:
         print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in_dict[0][
