@@ -2,6 +2,6 @@
 
 try:
     import pya
-    is_GSI = pya.__spec__.origin == 'built-in'
+    is_GSI = pya.__package__ == ''
 except ImportError:
     is_GSI = False
