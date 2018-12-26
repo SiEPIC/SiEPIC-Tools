@@ -18,7 +18,7 @@
 # SiEPIC Automated A* Routing
 
 import pya
-from SiEPIC_klayout import scripts
+from SiEPIC import scripts
 
 scripts.auto_route()
 </text>

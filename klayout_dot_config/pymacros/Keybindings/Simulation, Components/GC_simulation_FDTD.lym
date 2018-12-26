@@ -30,7 +30,7 @@ class GUI_FDTD_settings(pya.QDialog):
     mainLayout = pya.QVBoxLayout(self)
     self.setLayout(mainLayout)
 
-    from SiEPIC_klayout.utils import load_FDTD_settings
+    from SiEPIC.utils import load_FDTD_settings
     FDTD_settings=load_FDTD_settings()
     if self.verbose:
       print(FDTD_settings)
@@ -106,7 +106,7 @@ class GUI_GC_settings(pya.QDialog):
     mainLayout = pya.QVBoxLayout(self)
     self.setLayout(mainLayout)
 
-    from SiEPIC_klayout.utils import load_GC_settings
+    from SiEPIC.utils import load_GC_settings
     GC_settings=load_GC_settings()
     if self.verbose:
       print(GC_settings)
@@ -173,7 +173,7 @@ class GUI_GC_settings(pya.QDialog):
 
     return GC_settings
 
-from SiEPIC_klayout import lumerical
+from SiEPIC import lumerical
 GC_settings = GUI_GC_settings(pya.Application.instance().main_window(), verbose=True)
 
 

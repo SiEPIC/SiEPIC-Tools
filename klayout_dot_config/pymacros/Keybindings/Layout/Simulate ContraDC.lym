@@ -16,7 +16,7 @@
  <dsl-interpreter-name/>
  <text>import pya
 
-from SiEPIC_klayout import lumerical
+from SiEPIC import lumerical
 
 lumerical.ApodizedContraDC.TOP()
 </text>

@@ -5,7 +5,7 @@
 
 import pya
 import os
-from SiEPIC_klayout.utils.pcells import CellWithPosition
+from SiEPIC.utils.pcells import CellWithPosition
 
 
 def get_lib_cell(layout, name, libname="EBeam"):

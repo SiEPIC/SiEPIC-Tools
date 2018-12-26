@@ -329,12 +329,12 @@ def waveguide_length():
 
     from .utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
-    import SiEPIC_klayout.utils
+    import SiEPIC.utils
 
     selection = lv.object_selection
     if len(selection) == 1 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name():
         cell = selection[0].inst().cell
-        area = SiEPIC_klayout.utils.advance_iterator(cell.each_shape(
+        area = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
         width = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
         pya.MessageBox.warning("Waveguide Length", "Waveguide length (um): %s" %
@@ -348,16 +348,16 @@ def waveguide_length_diff():
 
     from .utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
-    import SiEPIC_klayout.utils
+    import SiEPIC.utils
 
     selection = lv.object_selection
     if len(selection) == 2 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name() and selection[1].inst().is_pcell() and "Waveguide" in selection[1].inst().cell.basic_name():
         cell = selection[0].inst().cell
-        area1 = SiEPIC_klayout.utils.advance_iterator(cell.each_shape(
+        area1 = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
         width1 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
         cell = selection[1].inst().cell
-        area2 = SiEPIC_klayout.utils.advance_iterator(cell.each_shape(
+        area2 = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
         width2 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
         pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(
@@ -800,14 +800,14 @@ def calculate_area():
         area += itr.shape().area()
         itr.next()
     print("Waveguide area: %s mm^2, chip area: %s mm^2, percentage: %s %%" % (area/1e6*dbu*dbu,total/1e6*dbu*dbu, area/total*100))
-
+    
     if total == 1e99:
       v = pya.MessageBox.warning(
         "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2)" % (area/1e6*dbu*dbu, area/1e6), pya.MessageBox.Ok)
     else:
       v = pya.MessageBox.warning(
         "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2),\nChip Floorplan: %.5g mm^2, \nPercentage: %.3g %%" % (area/1e6*dbu*dbu, area/1e6, total/1e6*dbu*dbu, area/total*100), pya.MessageBox.Ok)
-
+    
     if 0:
         area = 0
         itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch1']))
@@ -815,7 +815,7 @@ def calculate_area():
             area += itr.shape().area()
             itr.next()
         print(area / total)
-
+    
         area = 0
         itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch2']))
         while not itr.at_end():
@@ -970,7 +970,7 @@ def layout_check(cell=None, verbose=False):
     rdb_cat_id_sim_nomodel.description = "A compact model for this component was not found. Possible reasons: 1) Please run SiEPIC | Simulation | Setup Lumerical INTERCONNECT and CML, to make sure that the Compact Model Library is installed in INTERCONNECT, and that KLayout has a list of all component models. 2) the library does not have a compact model for this component. "
 
     # Design for Test checking
-    from SiEPIC_klayout.utils import load_DFT
+    from SiEPIC.utils import load_DFT
     DFT = load_DFT()
     if DFT:
         if verbose:
@@ -1264,11 +1264,11 @@ def layout_check(cell=None, verbose=False):
                 iter1.shape().delete()
         iter1.next()
 
-    import SiEPIC_klayout.__init__
+    import SiEPIC.__init__
     import sys
     from time import strftime
     text = pya.DText("SiEPIC-Tools verification: %s errors\n%s\nSiEPIC-Tools v%s\ntechnology: %s\n%s\nPython: %s, %s\n%s" % (rdb.num_items(), strftime("%Y-%m-%d %H:%M:%S"),
-                                                                                                                             SiEPIC_klayout.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.Application.instance().version()), pya.DTrans(cell.dbbox().p1))
+                                                                                                                             SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.Application.instance().version()), pya.DTrans(cell.dbbox().p1))
     shape = cell.shapes(LayerTextN).insert(text)
     shape.text_size = 0.1 / dbu
 
@@ -1606,7 +1606,7 @@ def resize_waveguide():
     from pya import QFont, QWidget, Qt, QVBoxLayout, QFrame, QLabel, QComboBox, QLineEdit, QPushButton, QGridLayout, QSplitter, QTextEdit
     from SiEPIC import utils
     TECHNOLOGY, lv, ly, cell = utils.get_layout_variables()
-    from SiEPIC_klayout.scripts import path_to_waveguide
+    from SiEPIC.scripts import path_to_waveguide
 
     net, comp = cell.identify_nets()
     global points, copy_pts, diff

@@ -17,7 +17,7 @@
  <text># Key binding for SiEPIC-Tools function
 # SiEPIC Measure Waveguide Length
 import pya
-from SiEPIC_klayout import scripts
+from SiEPIC import scripts
 scripts.waveguide_length()
 </text>
 </klayout-macro>

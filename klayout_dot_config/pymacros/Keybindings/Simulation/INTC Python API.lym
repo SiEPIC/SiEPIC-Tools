@@ -16,7 +16,7 @@
  <dsl-interpreter-name/>
  <text># Setup Lumerical-KLayout Python integration
 
-import SiEPIC_klayout, pya
+import SiEPIC, pya
 
 
 def Setup_Lumerical_KLayoutPython_integration():
@@ -32,7 +32,7 @@ def Setup_Lumerical_KLayoutPython_integration():
     print(matches)
     
   
-  import SiEPIC_klayout.lumerical.lumapi_osx as lumapi
+  import SiEPIC.lumerical.lumapi_osx as lumapi
   
   '''
   Python Lumerical API

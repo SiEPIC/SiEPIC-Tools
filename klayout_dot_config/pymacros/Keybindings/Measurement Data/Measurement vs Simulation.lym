@@ -15,9 +15,9 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text>import pya
-import SiEPIC_klayout
+import SiEPIC
 
-SiEPIC_klayout.scripts.measurement_vs_simulation(verbose=True)
+SiEPIC.scripts.measurement_vs_simulation(verbose=True)
 
 </text>
 </klayout-macro>

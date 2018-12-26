@@ -26,7 +26,7 @@ class GUI_FDTD_component_simulation(pya.QDialog):
     mainLayout = pya.QVBoxLayout(self)
     self.setLayout(mainLayout)
 
-    from SiEPIC_klayout.utils import load_FDTD_settings
+    from SiEPIC.utils import load_FDTD_settings
     FDTD_settings=load_FDTD_settings()
     if self.verbose:
       print(FDTD_settings)

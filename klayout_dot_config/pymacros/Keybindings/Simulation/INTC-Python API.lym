@@ -18,7 +18,7 @@
 
 import pya
 
-from SiEPIC_klayout import lumerical
+from SiEPIC import lumerical
 
 lumerical.interconnect.Setup_Lumerical_KLayoutPython_integration()    
     

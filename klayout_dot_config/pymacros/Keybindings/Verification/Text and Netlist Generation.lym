@@ -18,7 +18,7 @@
 # SiEPIC Text and Netlist Generation
 
 import pya
-from SiEPIC_klayout import scripts
+from SiEPIC import scripts
 
 scripts.text_netlist_check()
 </text>

@@ -30,9 +30,7 @@ import ctypes
 
 # Determine whether we have Python 2 or Python 3
 import sys
-import SiEPIC_klayout
-from SiEPIC_klayout import install, extend, _globals, core, examples, github, scripts, utils, setup
-
+import SiEPIC
 
 if sys.version_info[0] == 3:
     import builtins as builtins
@@ -44,7 +42,7 @@ try:
 except:
 #if 'SiEPIC' not in sys.modules: for some reason this doesn't always work, see issue #44
     builtins.ACTIONS = []
-    import SiEPIC_klayout
+    import SiEPIC
 else:
     if sys.version_info[0] == 3:
         if sys.version_info[1] &lt; 4:
@@ -54,25 +52,25 @@ else:
     elif sys.version_info[0] == 2:
         pass
     
-    SiEPIC_klayout = reload(SiEPIC_klayout)
-    SiEPIC_klayout.extend = reload(SiEPIC_klayout.extend)
-    SiEPIC_klayout._globals = reload(SiEPIC_klayout._globals)
-    SiEPIC_klayout.core = reload(SiEPIC_klayout.core)
-    SiEPIC_klayout.examples = reload(SiEPIC_klayout.examples)
-#    SiEPIC_klayout.lumerical = reload(SiEPIC_klayout.lumerical)
-#    SiEPIC_klayout.lumerical.fdtd = reload(SiEPIC_klayout.lumerical.fdtd)
-#    SiEPIC_klayout.lumerical.interconnect = reload(SiEPIC_klayout.lumerical.interconnect)
-#    SiEPIC_klayout.lumerical.load_lumapi = reload(SiEPIC_klayout.lumerical.load_lumapi)
-#    SiEPIC_klayout.scipy = reload(SiEPIC_klayout.scipy)
-    SiEPIC_klayout.scripts = reload(SiEPIC_klayout.scripts)
-    SiEPIC_klayout.utils = reload(SiEPIC_klayout.utils)
-    SiEPIC_klayout.setup = reload(SiEPIC_klayout.setup)
-    SiEPIC_klayout.github = reload(SiEPIC_klayout.github)
-    SiEPIC_klayout.install = reload(SiEPIC_klayout.install)
-    print('Reloaded SiEPIC_klayout')
+    SiEPIC = reload(SiEPIC)
+    SiEPIC.extend = reload(SiEPIC.extend)
+    SiEPIC._globals = reload(SiEPIC._globals)
+    SiEPIC.core = reload(SiEPIC.core)
+    SiEPIC.examples = reload(SiEPIC.examples)
+#    SiEPIC.lumerical = reload(SiEPIC.lumerical)
+#    SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
+#    SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
+#    SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
+#    SiEPIC.scipy = reload(SiEPIC.scipy)
+    SiEPIC.scripts = reload(SiEPIC.scripts)
+    SiEPIC.utils = reload(SiEPIC.utils)
+    SiEPIC.setup = reload(SiEPIC.setup)
+    SiEPIC.github = reload(SiEPIC.github)
+    SiEPIC.install = reload(SiEPIC.install)
+    print('Reloaded SiEPIC')
 
-SiEPIC_klayout.setup.registerMenuItems()
-SiEPIC_klayout.setup.registerKeyBindings()
+SiEPIC.setup.registerMenuItems()
+SiEPIC.setup.registerKeyBindings()
 pya.Application.instance().main_window().message('SiEPIC - Initialization complete.',5000)
 </text>
 </klayout-macro>

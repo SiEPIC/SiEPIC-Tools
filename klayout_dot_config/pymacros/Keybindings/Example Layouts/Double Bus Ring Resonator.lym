@@ -18,7 +18,7 @@
 # SiEPIC Double Bus Ring Resonator
 
 import pya
-from SiEPIC_klayout import examples
+from SiEPIC import examples
 
 examples.dbl_bus_ring_res()
 </text>

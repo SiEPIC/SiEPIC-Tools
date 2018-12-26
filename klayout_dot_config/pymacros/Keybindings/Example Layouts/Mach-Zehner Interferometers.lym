@@ -18,7 +18,7 @@
 # SiEPIC 12 TE Mach-Zehner Interferometers - Jaspreet Jhoja
 
 import pya
-from SiEPIC_klayout import examples
+from SiEPIC import examples
 
 examples.mzi()
 </text>

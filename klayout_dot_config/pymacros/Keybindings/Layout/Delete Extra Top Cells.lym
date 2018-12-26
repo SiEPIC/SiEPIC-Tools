@@ -18,7 +18,7 @@
 # SiEPIC Delete Extra Top Cells
 
 import pya
-from SiEPIC_klayout import scripts
+from SiEPIC import scripts
 
 scripts.delete_top_cells()
 </text>

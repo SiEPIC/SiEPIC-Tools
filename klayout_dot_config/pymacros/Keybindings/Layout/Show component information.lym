@@ -59,9 +59,9 @@ def show_component_info():
     wdg_show_component_info.show()
   
 
-  from SiEPIC_klayout.utils import select_instances
+  from SiEPIC.utils import select_instances
   selected_instances = select_instances()
-  from SiEPIC_klayout.utils import get_layout_variables
+  from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
 #  text = 'Information on selected components:&lt;br&gt;&lt;br&gt;'

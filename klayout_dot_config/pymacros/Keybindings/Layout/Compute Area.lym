@@ -18,7 +18,7 @@
 # SiEPIC Calculate Areas
 
 import pya
-from SiEPIC_klayout import scripts
+from SiEPIC import scripts
 
 scripts.calculate_area()
 </text>
