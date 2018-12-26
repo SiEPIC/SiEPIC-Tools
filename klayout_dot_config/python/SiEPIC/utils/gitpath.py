@@ -1,1 +1,1 @@
-from siepic_tools import root, abspath  # noqa
+from siepic_tools.utils.gitpath import root, abspath  # noqa
