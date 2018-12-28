@@ -57,9 +57,10 @@ pya.Point Extensions:
 
 import pya
 
-warning = pya.QMessageBox()
-warning.setStandardButtons(pya.QMessageBox.Ok)
-warning.setDefaultButton(pya.QMessageBox.Ok)
+# Commented by @tlima. Seems useless
+# warning = pya.QMessageBox()
+# warning.setStandardButtons(pya.QMessageBox.Ok)
+# warning.setDefaultButton(pya.QMessageBox.Ok)
 
 #################################################################################
 #                SiEPIC Class Extension of Path & DPath Class                   #
