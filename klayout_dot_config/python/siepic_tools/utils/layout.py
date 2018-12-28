@@ -219,10 +219,11 @@ class DSimplePolygon(pya.DSimplePolygon):
         if isinstance(dx_or_dpoint, (pya.DPoint, pya.DVector)):
             dx_or_dpoint = dx_or_dpoint.x
             dy = dx_or_dpoint.y
-        pya_dpoly = super().moved(dx, dy)
+        pya_dpoly = super().moved(dx_or_dpoint, dy)
         siepic_dpoly = self.__class__()
         siepic_dpoly.__dict__.update(pya_dpoly)
         return siepic_dpoly
+
 
 def waveguide_dpolygon(points_list, width, dbu, smooth=True):
     """ Returns a polygon outlining a waveguide.
