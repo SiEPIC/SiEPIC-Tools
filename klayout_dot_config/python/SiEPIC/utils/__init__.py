@@ -579,12 +579,21 @@ def angle_trunc(a, trunc):
 
 # Calculate the recommended number of points in a circle, based on
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
-def points_per_circle(radius):
+def _points_per_circle(radius, dbu):
     from math import acos, pi, ceil
-    from . import get_technology
-    TECHNOLOGY = get_technology()
-    err = 1e3 * TECHNOLOGY['dbu'] / 2
+    err = 1e3 * dbu / 2
     return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
+
+
+# TODO: refactor so it does not depend on global variables (see _points_per_circle)
+def points_per_circle(radius):
+    try:
+        from . import get_technology
+        TECHNOLOGY = get_technology()
+        dbu = TECHNOLOGY['dbu']
+        return _points_per_circle(radius, dbu)
+    except Exception:
+        return _points_per_circle(radius, dbu=0.001)
 
 
 def arc(r, theta_start, theta_stop):
@@ -938,6 +947,4 @@ def svg_from_component(component, filename, verbose=False):
     dwg.save()
 
 
-from .._globals import MODULE_NUMPY
-if MODULE_NUMPY:
-    from siepic_tools.utils.sampling import sample_function  # noqa
+from siepic_tools.utils.sampling import sample_function  # noqa

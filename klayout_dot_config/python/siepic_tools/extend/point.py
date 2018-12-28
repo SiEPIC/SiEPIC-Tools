@@ -1,6 +1,14 @@
 ##########################################################################################
 #                    SiEPIC Class Extension of Point/Vector Classes                      #
 ##########################################################################################
+'''
+pya.Point Extensions:
+  - P * np/number
+  - np/number * P
+  - P * P
+  - P / number
+  - P.norm()
+'''
 from numbers import Number
 from math import sqrt
 from siepic_tools._globals import check_numpy
