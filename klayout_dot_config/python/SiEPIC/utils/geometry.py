@@ -54,7 +54,8 @@ class Point(object):
         return self.x == other.x and self.y == other.y
 
     def __str__(self):
-        return f"Point({self.x}, {self.y})"
+#        return f"Point({self.x}, {self.y})"
+        return str(Point({self.x}, {self.y}))
 
     def norm(self):
         return sqrt(self.x**2 + self.y**2)
@@ -286,7 +287,7 @@ def _bezier_optimal(angle0, angle3):
         if result.message == "Maximum number of function evaluations has been exceeded.":
             a, b = result.x[0], result.x[1]
         else:
-            print(f"Could not optimize. Exited with message:{result.message}")
+            print("Could not optimize. Exited with message:{%s}" % result.message)
     # print("{:.3f}<{:.3f} {:.3f}<{:.3f}".format(a, a_bound, b, b_bound))
     return a, b
 
@@ -316,7 +317,7 @@ def bezier_optimal(P0, P3, angle0, angle3):
             print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
         return curve_func
     else:
-        raise GeometryError(f"Error: calling bezier between two identical points: {P0}, {P3}")
+        raise GeometryError(str("Error: calling bezier between two identical points: {%s}, {%s}" % (P0, P3)))
 
 
 from functools import partial
