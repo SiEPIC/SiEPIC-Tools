@@ -496,7 +496,7 @@ def snap_component():
                 pin_pairs = sorted([[pin_t, pin_s]
                                     for pin_t in pins_transient
                                     for pin_s in pins_selection
-                                    if (abs(pin_t.rotation - pin_s.rotation) % 360 - 180) < 1 and pin_t.type == _globals.PIN_TYPES.OPTICAL and pin_s.type == _globals.PIN_TYPES.OPTICAL],
+                                    if (abs(pin_t.rotation - pin_s.rotation) % 360 == 180) and pin_t.type == _globals.PIN_TYPES.OPTICAL and pin_s.type == _globals.PIN_TYPES.OPTICAL],
                                    key=lambda x: x[0].center.distance(x[1].center))
 
                 if pin_pairs:
