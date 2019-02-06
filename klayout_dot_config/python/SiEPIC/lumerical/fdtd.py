@@ -558,9 +558,6 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
                       leg{li} = 'S_%s_%s:%s - %s, %s'; \
                        " % ( Sparam_pin_max_modes[mode_selection_index.index(m)]+1, pins[Sparam_pin_max_modes[mode_selection_index.index(m)]].pin_name, in_pin.pin_name, mode_selection_index.index(m)+1, pin_h,pin_w) )
 
-                # Add legend to the Corner plots
-                lumapi.evalScript(_globals.FDTD, "legend(leg);\n")
-
                 # Write XML file for INTC scripted compact model
                 # height and width are set to the first pin width/height
                 xml_out = '\
@@ -574,6 +571,9 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   </extracted> \n\
 </association>\n' % (pin_h, pin_w, os.path.basename(file_sparam))
                 fh.writelines(xml_out)
+
+        # Add legend to the Corner plots
+        lumapi.evalScript(_globals.FDTD, "legend(leg);\n")
 
     xml_out = '\
 </lumerical_lookup_table>'
