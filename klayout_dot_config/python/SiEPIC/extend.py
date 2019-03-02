@@ -249,26 +249,29 @@ def snap(self, pins):
       pts = input_pts
 
       # find closest pin to the first pts
-      # angles of all segments:
+      # angle of first segment:
       ang = angle_vector(pts[0] - pts[1])
       # sort all the pins based on distance to the Path endpoint
       # only consider pins that are facing each other, 180 degrees
       pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
                             180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[0]))
+
+      # angle of last segment (do it before moving the pts)
+      ang2 = angle_vector(pts[-1] - pts[-2])
   
       if len(pins_sorted):
           # pins_sorted[0] is the closest one
           dpt = pins_sorted[0].center - pts[0]
+          print(dpt)
           # check if the pin is close enough to the path endpoint
           if dpt.abs() <= d_min:
               # snap the endpoint to the pin
               pts[0] += dpt
-              if len(pts)>2:
-                # move the first corner
-                if(round(ang % 180) == 0):
-                    pts[1].y += dpt.y
-                else:
-                    pts[1].x += dpt.x
+              # move the first corner
+              if(round(ang % 180) == 0):
+                  pts[1].y += dpt.y
+              else:
+                  pts[1].x += dpt.x
               snapped0 = True
           else:
               snapped0 = False
@@ -277,21 +280,22 @@ def snap(self, pins):
   
       # find closest pin to the last pts
       # do the same thing on the other end (check that it isn't the same pin as above):
-      ang = angle_vector(pts[-1] - pts[-2])
-      pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
+      pins_sorted = sorted([pin for pin in pins if round((ang2 - pin.rotation) % 360) ==
                             180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
       if len(pins_sorted):
-          if pins_sorted[0].center != pts[0]:
+          if (len(pts)==2) and (pins_sorted[0].center != pts[-1]):
+              snapped1 = False
+        
+          elif pins_sorted[0].center != pts[0]:
               dpt = pins_sorted[0].center - pts[-1]
               if dpt.abs() <= d_min:
                   # snap the endpoint to the pin
                   pts[-1] += dpt
-                  if len(pts)>2:
-                    # move the last corner
-                    if(round(ang % 180) == 0):
-                        pts[-2].y += dpt.y
-                    else:
-                        pts[-2].x += dpt.x
+                  # move the last corner
+                  if(round(ang2 % 180) == 0):
+                      pts[-2].y += dpt.y
+                  else:
+                      pts[-2].x += dpt.x
               snapped1 = True
           else:
               snapped1 = False
@@ -309,8 +313,15 @@ def snap(self, pins):
       # return flag to track whether BOTH endpoints were snapped
       return return_pts, snapped0 & snapped1
 
+
+    # Perform snapping:
     if len(pts) > 2:
-      self.points, snapped_both = snap_endpoints(pts, pins)
+      newpoints, snapped_both = snap_endpoints(pts, pins)
+      # for a previously created extra 2 vertices, check if we still need it
+      if len(pts) == 4:
+        if newpoints[1] == newpoints[2]:
+            newpoints = [ newpoints[0],newpoints[3] ]
+      self.points = newpoints  
     elif len(pts) == 2:
       # call the snap and check if it worked. case where the two components' pins are already aligned
       newpoints, snapped_both = snap_endpoints(pts, pins)
@@ -331,15 +342,19 @@ def snap(self, pins):
         else:
             # move the x coordinate
             newpoints = [ pts[0], 
-                          pya.Point((pts[0].x+pts[1].x)/2, pts[0].y),
-                          pya.Point((pts[0].x+pts[1].x)/2, pts[1].y),
+                          pya.Point(pts[0].x, (pts[0].y+pts[1].y)/2),
+                          pya.Point(pts[0].x, (pts[0].y+pts[1].y)/2),
                           pts[1] ]
 
         #  - call the snap and check if it worked.  
         newpoints, snapped_both = snap_endpoints(newpoints, pins)
         if snapped_both:
-          #  - snapping successful, added 2 points.  
           self.points = newpoints
+          # if we still need the 2 extra
+          if newpoints[1] == newpoints[2]:
+             newpoints = [ newpoints[0],newpoints[3] ]
+          #  - snapping successful:
+          self.points = newpoints  
           return True
         else:
           return False  
