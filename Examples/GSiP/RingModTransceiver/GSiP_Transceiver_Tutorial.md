@@ -1,5 +1,7 @@
 # GSiP 4-Channel WDM Ring Modulator - Ring Filter Transceiver
 
+This example is based on the publication "Ring resonator based polarization diversity WDM receiver", https://doi.org/10.1364/OE.27.006147, by Anthony Park. 
+
 ## Ring Modulator Analysis
 
 ### Layout: GSiP_1_RingMod_gds
