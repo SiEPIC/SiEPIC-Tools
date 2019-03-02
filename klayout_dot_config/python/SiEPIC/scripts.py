@@ -89,16 +89,18 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
 
         path.snap(cell.find_pins())
         Dpath = path.to_dtype(TECHNOLOGY['dbu'])
-        width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
+        if ('DevRec' not in [wg['layer'] for wg in params['wgs']]):
+            width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
+            params['wgs'].append({'width': width_devrec, 'layer': 'DevRec', 'offset': 0.0})
         try:
             pcell = ly.create_cell("Waveguide", TECHNOLOGY['technology_name'], {"path": Dpath,
                                                                                 "radius": params['radius'],
                                                                                 "width": params['width'],
                                                                                 "adiab": params['adiabatic'],
                                                                                 "bezier": params['bezier'],
-                                                                                "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
-                                                                                "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
-                                                                                "offsets": [wg['offset'] for wg in params['wgs']] + [0]})
+                                                                                "layers": [wg['layer'] for wg in params['wgs']],
+                                                                                "widths": [wg['width'] for wg in params['wgs']],
+                                                                                "offsets": [wg['offset'] for wg in params['wgs']]})
             print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
                   (TECHNOLOGY['technology_name'], pcell))
         except:
@@ -110,9 +112,9 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
                                                                        "width": params['width'],
                                                                        "adiab": params['adiabatic'],
                                                                        "bezier": params['bezier'],
-                                                                       "layers": [wg['layer'] for wg in params['wgs']] + ['DevRec'],
-                                                                       "widths": [wg['width'] for wg in params['wgs']] + [width_devrec],
-                                                                       "offsets": [wg['offset'] for wg in params['wgs']] + [0]})
+                                                                       "layers": [wg['layer'] for wg in params['wgs']],
+                                                                       "widths": [wg['width'] for wg in params['wgs']],
+                                                                       "offsets": [wg['offset'] for wg in params['wgs']]})
                 print("SiEPIC.scripts.path_to_waveguide(): Waveguide from SiEPIC General, %s" % pcell)
             except:
                 pass
