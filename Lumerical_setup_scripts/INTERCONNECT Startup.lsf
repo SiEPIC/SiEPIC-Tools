@@ -1,0 +1,37 @@
+# ################    INTERCONNECT STARTUP SCRIPT    ######################
+# Jaspreet Jhoja, University of British Columbia, jaspreetj@ece.ubc.ca
+# Purpose: startup script to fix MC errors when dragging and dropping components
+# How to install:
+#        Windows: place the file in "C:\Users\[USERNAME]\AppData\Roaming\Lumerical\" directory
+#        Mac OS: place the file in "/Users/[USERNAME]/.config/Lumerical/" directory
+#        Linux: place the file in "~/.config/Lumerical/" directory
+#
+# For more info: refer to => https://kb.lumerical.com/installation_and_setup_startup-scripts.html
+
+addproperty("::Root Element", "MC_uniformity_thickness", "wafer", "Matrix");
+addproperty("::Root Element", "MC_uniformity_width", "wafer", "Matrix");
+addproperty("::Root Element", "MC_grid", "wafer", "Number");
+addproperty("::Root Element", "MC_resolution_x", "wafer", "Number");
+addproperty("::Root Element", "MC_resolution_y", "wafer", "Number");
+addproperty("::Root Element", "MC_non_uniform", "wafer", "Number");
+
+
+select("::Root Element");
+ set("setup script",' 
+  ######################## setup MC variables in root element ################# 
+
+    MC_non_uniform = 0;
+    MC_resolution_x = 100;
+    MC_resolution_y = 100;
+    MC_grid = 1e-5;
+    MC_uniformity_width = [100,100];
+    MC_uniformity_thickness = [100,100];
+    try{
+    set("MC_uniformity_thickness",MC_uniformity_thickness);  
+    set("MC_uniformity_width",MC_uniformity_width);  
+    set("MC_resolution_x",MC_resolution_x);  
+    set("MC_resolution_y",MC_resolution_y);  
+    set("MC_grid",MC_grid);  
+    set("MC_non_uniform",0);} catch(err);  
+ '); 
+ 
