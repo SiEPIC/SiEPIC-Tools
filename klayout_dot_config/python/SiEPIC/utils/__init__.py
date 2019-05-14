@@ -256,17 +256,25 @@ def load_Calibre():
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
+    technology = {}
+    technology['technology_name'] = tech_name
+    technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
+
     import os
     import fnmatch
-    dir_path = pya.Application.instance().application_data_path()
+#    dir_path = pya.Application.instance().application_data_path()
+    
     search_str = 'CALIBRE.xml'
+
+
+    import fnmatch
+    dir_path = technology['base_path']
     matches = []
     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
         for filename in fnmatch.filter(filenames, search_str):
-            if tech_name in root:
-                matches.append(os.path.join(root, filename))
+            matches.append(os.path.join(root, filename))
     if matches:
-        CALIBRE_file = matches[0]
+        CALIBRE_file = os.path.join(technology['base_path'], matches[-1])
         file = open(CALIBRE_file, 'r')
         print(CALIBRE_file)
         CALIBRE = xml_to_dict(file.read())
