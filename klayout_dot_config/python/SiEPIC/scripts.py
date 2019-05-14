@@ -674,7 +674,48 @@ def calibreDRC(params=None, cell=None):
         progress.format = "Finishing"
         pya.Application.instance().main_window().repaint()
 
-    elif version.find("3.") > -1:
+    elif (version.find("3.")>-1) & ('Darwin' in platform.system()):
+        import subprocess
+        cmd = subprocess.check_output
+
+        progress.format = "Uploading Layout and Scripts"
+        progress.set(2, True)
+        pya.Application.instance().main_window().repaint()
+
+        try:
+            c = ['ssh', server, 'mkdir', '-p', remote_path]
+            print(c)
+            out += cmd(c).decode('utf-8')
+            c = ['scp', os.path.join(local_path,local_file), '%s:%s' %(server, remote_path)]
+            print(c)
+            out += cmd(c).decode('utf-8')
+            c = ['scp',os.path.join(local_path,'run_calibre'),'%s:%s'%(server, remote_path)]
+            print(c)
+            out += cmd(c).decode('utf-8')
+            c = ['scp',os.path.join(local_path,'drc.cal'),'%s:%s'%(server, remote_path)]
+            print(c)
+            out += cmd(c).decode('utf-8')
+
+            progress.format = "Checking Layout for Errors"
+            progress.set(3, True)
+            pya.Application.instance().main_window().repaint()
+
+            c = ['ssh', server, 'cd',remote_path,';source','run_calibre']
+            print(c)
+            out += cmd(c).decode('utf-8')
+
+            progress.format = "Downloading Results"
+            progress.set(4, True)
+            pya.Application.instance().main_window().repaint()
+
+            c = ['scp','%s:%s/drc.rve'%(server, remote_path), os.path.join(local_path,results_file)]
+            print(c)
+            out += cmd(c).decode('utf-8')
+        except subprocess.CalledProcessError as e:
+            out += '\nError running ssh or scp commands. Please check that these programs are available.\n'
+            out += str(e.output)
+            
+    elif (version.find("3.")>-1) & ('Win' in platform.system()):
         import subprocess
         cmd = subprocess.check_output
 
@@ -718,6 +759,9 @@ def calibreDRC(params=None, cell=None):
     print(out)
     progress._destroy()
     if os.path.exists(results_pathfile):
+        pya.MessageBox.warning(
+            "Success", "Calibre DRC run complete. Results downloaded and available in the Marker Browser window.",  pya.MessageBox.Ok)
+
         rdb_i = lv.create_rdb("Calibre Verification")
         rdb = lv.rdb(rdb_i)
         rdb.load(results_pathfile)

@@ -268,7 +268,9 @@ def load_Calibre():
     if matches:
         CALIBRE_file = matches[0]
         file = open(CALIBRE_file, 'r')
+        print(CALIBRE_file)
         CALIBRE = xml_to_dict(file.read())
+        print(CALIBRE)
         file.close()
         return CALIBRE
     else:
