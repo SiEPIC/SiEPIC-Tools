@@ -1,4 +1,4 @@
-__version__ = '0.3.54'
+__version__ = '0.3.55'
 #from . import install, extend, _globals, core, examples, github, lumerical, scripts, utils, setup
 # from . import install, extend, _globals, core, examples, github, scripts, utils, setup
 from . import extend, _globals, core, examples, github, scripts, utils, setup, install
