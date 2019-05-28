@@ -386,6 +386,8 @@ def manhattan_intersection(vertical_point, horizontal_point, ex):
         and horizontal_point's y coordinate.
 
         Args: ex (Vector/Point): orientation of x axis.
+
+        Caveat: this formula only works for orthogonal coordinate systems.
     """
     ey = rotate90(ex)
     return vertical_point * ex * ex + horizontal_point * ey * ey
