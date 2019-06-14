@@ -25,6 +25,10 @@ def registerMenuItems():
     s2 = "waveguides"
     if not(menu.is_menu(s1 + "." + s2)):
         menu.insert_menu(s1 + ".end", s2, "Waveguides")
+    
+    s2 = "metal"
+    if not(menu.is_menu(s1 + "." + s2)):
+       menu.insert_menu(s1 + ".end", s2, "Metal")
 
     s2 = "layout"
     if not(menu.is_menu(s1 + "." + s2)):
