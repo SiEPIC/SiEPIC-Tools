@@ -2,9 +2,11 @@
 
 This example is based on the publication "Ring resonator based polarization diversity WDM receiver", https://doi.org/10.1364/OE.27.006147, by Anthony Park. 
 
+Note: GDS files are saved in "text GDS" format. Useful for version control tracking of changes.
+
 ## Ring Modulator Analysis
 
-### Layout: GSiP_1_RingMod_gds
+### Layout: GSiP_1_RingMod_gds.txt
 
 
 
@@ -66,7 +68,7 @@ This example is based on the publication "Ring resonator based polarization dive
 
 ## Ring Filter Analysis
 
-### Layout: GSiP_4_RingFilter_gds
+### Layout: GSiP_4_RingFilter_gds.txt
 
 
 
@@ -98,7 +100,7 @@ This example is based on the publication "Ring resonator based polarization dive
 
 ## Transceiver Analysis
 
-### Layout: GSiP_RingMod_Transceiver_gds
+### Layout: GSiP_RingMod_Transceiver_gds.txt
 
 * Open the layout using KLayout, with the SiEPIC-Tools package installed
 
