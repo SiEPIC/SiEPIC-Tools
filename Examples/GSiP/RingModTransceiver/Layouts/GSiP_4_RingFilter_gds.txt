@@ -499,7 +499,7 @@ PROPVALUE P(vllayer)=[layer:44/0]
 PROPATTR 8 
 PROPVALUE P(si3layer)=[layer:3/0]
 PROPATTR 7 
-PROPVALUE P(component_ID)=#0
+PROPVALUE P(component_ID)=#4
 PROPATTR 6 
 PROPVALUE P(gmon)=##0.45
 PROPATTR 5 
@@ -537,7 +537,7 @@ PROPVALUE P(vllayer)=[layer:44/0]
 PROPATTR 8 
 PROPVALUE P(si3layer)=[layer:3/0]
 PROPATTR 7 
-PROPVALUE P(component_ID)=#0
+PROPVALUE P(component_ID)=#3
 PROPATTR 6 
 PROPVALUE P(gmon)=##0.45
 PROPATTR 5 
@@ -575,7 +575,7 @@ PROPVALUE P(vllayer)=[layer:44/0]
 PROPATTR 8 
 PROPVALUE P(si3layer)=[layer:3/0]
 PROPATTR 7 
-PROPVALUE P(component_ID)=#0
+PROPVALUE P(component_ID)=#2
 PROPATTR 6 
 PROPVALUE P(gmon)=##0.45
 PROPATTR 5 
@@ -613,7 +613,7 @@ PROPVALUE P(vllayer)=[layer:44/0]
 PROPATTR 8 
 PROPVALUE P(si3layer)=[layer:3/0]
 PROPATTR 7 
-PROPVALUE P(component_ID)=#0
+PROPVALUE P(component_ID)=#1
 PROPATTR 6 
 PROPVALUE P(gmon)=##0.45
 PROPATTR 5 
