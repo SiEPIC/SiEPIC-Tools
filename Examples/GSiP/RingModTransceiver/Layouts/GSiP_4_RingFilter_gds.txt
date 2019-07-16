@@ -485,7 +485,7 @@ PROPVALUE PCELL=Ring_Filter_DB
 PROPATTR 15 
 PROPVALUE P(devrec)=[layer:68/0]
 PROPATTR 14 
-PROPVALUE P(pinrec)=[layer:69/0]
+PROPVALUE P(pinrec)=[layer:1/10]
 PROPATTR 13 
 PROPVALUE P(textl)=[layer:66/0]
 PROPATTR 12 
@@ -523,7 +523,7 @@ PROPVALUE PCELL=Ring_Filter_DB
 PROPATTR 15 
 PROPVALUE P(devrec)=[layer:68/0]
 PROPATTR 14 
-PROPVALUE P(pinrec)=[layer:69/0]
+PROPVALUE P(pinrec)=[layer:1/10]
 PROPATTR 13 
 PROPVALUE P(textl)=[layer:66/0]
 PROPATTR 12 
@@ -561,7 +561,7 @@ PROPVALUE PCELL=Ring_Filter_DB
 PROPATTR 15 
 PROPVALUE P(devrec)=[layer:68/0]
 PROPATTR 14 
-PROPVALUE P(pinrec)=[layer:69/0]
+PROPVALUE P(pinrec)=[layer:1/10]
 PROPATTR 13 
 PROPVALUE P(textl)=[layer:66/0]
 PROPATTR 12 
@@ -599,7 +599,7 @@ PROPVALUE PCELL=Ring_Filter_DB
 PROPATTR 15 
 PROPVALUE P(devrec)=[layer:68/0]
 PROPATTR 14 
-PROPVALUE P(pinrec)=[layer:69/0]
+PROPVALUE P(pinrec)=[layer:1/10]
 PROPATTR 13 
 PROPVALUE P(textl)=[layer:66/0]
 PROPATTR 12 
@@ -10492,14 +10492,6 @@ XY 0: 0
 ENDEL 
 SREF 
 SNAME Waveguide$3
-XY 0: 0
-ENDEL 
-SREF 
-SNAME Waveguide$1
-XY 0: 0
-ENDEL 
-SREF 
-SNAME Waveguide$2
 XY 0: 0
 ENDEL 
 
