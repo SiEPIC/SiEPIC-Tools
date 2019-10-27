@@ -16,7 +16,7 @@ def registerMenuItems():
     if int(sys.version[0]) > 2 and sys.platform == 'darwin':
         extra = " Py3"
     else:
-        extra = ''
+        extra = " Py2"
 
     s1 = "siepic_menu"
     if not(menu.is_menu(s1)):
