@@ -100,9 +100,9 @@ def select_paths_m(layers, cell=None, verbose=None):
                     selection[-1].top = cell.cell_index()
                     selection[-1].cv_index = 0
                 itr.next()
-            for o in selection: # set the LayerName property if the object (path) does not already have a LayerName
-                if not o.shape.property('LayerName'): # check for LayerName property
-                    o.shape.set_property('LayerName', layer_str_name) # add LayerName propery if not present
+            #for o in selection: # set the LayerName property if the object (path) does not already have a LayerName
+            #    if not o.shape.property('LayerName'): # check for LayerName property
+            #        o.shape.set_property('LayerName', layer_str_name) # add LayerName propery if not present
         lv.object_selection = selection # set the return item equal to selection after all loops are finished
     else:
         lv.object_selection = [o for o in selection if (not o.is_cell_inst() and not o.shape.cell.pcell_parameters()) and o.shape.is_path()] # must be a path and not a pcell
