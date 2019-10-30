@@ -342,7 +342,7 @@ class WaveguideGUI():
                 params['wgs'].append({'layer': component['layer'], 'width': float(
                     component['width']), 'offset': float(component['offset'])})
                 w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
-                if (params['width'] < w) & (component['layer'] != 'DevRec'):
+                if ((params['width'] < w) & (component['layer'] != 'DevRec')) and (w < 10):
                     params['width'] = w
             return params
         else:

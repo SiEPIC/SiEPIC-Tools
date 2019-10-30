@@ -642,6 +642,8 @@ def calibreDRC(params=None, cell=None):
 
     import platform
     version = platform.python_version()
+    print(version)
+    print(platform.system())
     out = ''
     if version.find("2.") > -1:
         import commands
@@ -674,7 +676,7 @@ def calibreDRC(params=None, cell=None):
         progress.format = "Finishing"
         pya.Application.instance().main_window().repaint()
 
-    elif (version.find("3.")>-1) & ('Darwin' in platform.system()):
+    elif (version.find("3.")>-1) & (('Darwin' in platform.system()) | ('Linux' in platform.system())):
         import subprocess
         cmd = subprocess.check_output
 
