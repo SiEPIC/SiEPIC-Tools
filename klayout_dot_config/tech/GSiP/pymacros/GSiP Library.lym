@@ -222,7 +222,7 @@ class Waveguide(pya.PCellDeclarationHelper):
     
 # RIT Integrated Photonics Group (Karl McNulty) 
 # new wireguide class (essentially the metal path equivalent to a waveguide but no bend is allowed)
-class Wireguide(PCellDeclarationHelper):
+class Wireguide(pya.PCellDeclarationHelper):
 
   def __init__(self):
     # Important: initialize the super class
@@ -354,21 +354,6 @@ class Wireguide(PCellDeclarationHelper):
       pt2=pts[0] + Point(wg_width,0)
       pt3=pts[0] + Point(-wg_width,0)
       
-    t = Trans(angle, False, pts[0]) 
-    text = Text ('Lumerical_INTERCONNECT_library=Design kits/GSiP', t, 0.1/dbu, -1)
-    text.halign=halign
-    shape = self.cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt2)
-    text = Text ('Component=wg_strip_integral_1550', t, 0.1/dbu, -1)
-    text.halign=halign
-    shape = self.cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt3)
-    pts_txt = str([ [round(p.to_dtype(dbu).x,3), round(p.to_dtype(dbu).y,3)] for p in pts ]).replace(', ',',')
-    text = Text ( \
-      'Spice_param:wg_length=%.3fu wg_width=%.3fu points="%s" radius=%s' %\
-        (waveguide_length, self.width, pts_txt,self.radius ), t, 0.1/dbu, -1  )
-    text.halign=halign
-    shape = self.cell.shapes(LayerDevRecN).insert(text)
 
 
 class Ring(pya.PCellDeclarationHelper):
