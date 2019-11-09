@@ -785,7 +785,7 @@ def auto_coord_extract():
     def gen_ui():
         global wdg
         if 'wdg' in globals():
-            if wdg is not None and not wdg.destroyed():
+            if wdg is not None and not wdg.destroyed:
                 wdg.destroy()
         global wtext
 
