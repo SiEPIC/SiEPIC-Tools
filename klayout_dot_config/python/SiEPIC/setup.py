@@ -16,7 +16,7 @@ def registerMenuItems():
     if int(sys.version[0]) > 2 and sys.platform == 'darwin':
         extra = " Py3"
     else:
-        extra = ''
+        extra = " Py2"
 
     s1 = "siepic_menu"
     if not(menu.is_menu(s1)):
@@ -25,6 +25,10 @@ def registerMenuItems():
     s2 = "waveguides"
     if not(menu.is_menu(s1 + "." + s2)):
         menu.insert_menu(s1 + ".end", s2, "Waveguides")
+    
+    s2 = "metal"
+    if not(menu.is_menu(s1 + "." + s2)):
+       menu.insert_menu(s1 + ".end", s2, "Metal")
 
     s2 = "layout"
     if not(menu.is_menu(s1 + "." + s2)):

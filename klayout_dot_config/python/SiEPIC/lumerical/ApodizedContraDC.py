@@ -26,8 +26,6 @@ except:
     except ImportError:
         pass
         
-import numpy as np
-
 
 def TOP():
   # Get technology and layout details
@@ -112,6 +110,9 @@ def TOP():
   
   
 def ApodizedContraDC(starting_wavelength = 1520, ending_wavelength = 1580, resolution = 500, neffwg1 = 2.5220, neffwg2 = 2.3282, Dneffwg1 = -9.6552e5, Dneffwg2 = -1.2195e6, period = 320):
+  if MODULE_NUMPY:
+    import numpy as np
+
   # Constants
   c = 299792458           #[m/s]
   dneffdT = 1.87E-04    #[/K] assuming dneff/dn=1 (very confined)

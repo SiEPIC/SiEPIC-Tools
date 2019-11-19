@@ -34,10 +34,10 @@ def load_lumapi(verbose=False):
   # if it isn't defined, start with Lumerical's defaults
   if not path:
     if platform.system() == 'Darwin':
-      path_fdtd = "/Applications/Lumerical/FDTD Solutions/FDTD Solutions.app/Contents/API/Python"
+      path_fdtd = "/Applications/Lumerical 2019b.app/Contents/API/Python"
       if os.path.exists(path_fdtd):
         path = path_fdtd
-      path_intc = "/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python"
+      path_intc = "/Applications/Lumerical 2019b.app/Contents/API/Python"
       if os.path.exists(path_intc):
         path = path_intc
     elif platform.system() == 'Linux':
