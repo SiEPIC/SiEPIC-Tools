@@ -521,13 +521,14 @@ def waveguide_length_diff():
                 [paths.append(os.path.join(root, filename))
                  for filename in fnmatch.filter(filenames, 'MONTECARLO.xml') if tech_name in root]
             if paths:
+                print(paths[0])
                 with open(paths[0], 'r') as file:
                     montecarlo = xml_to_dict(file.read())
                     montecarlo = montecarlo['technologies']['technology']
                     if len(montecarlo) >1:
                       montecarlo = montecarlo[0]
 
-        #
+
 
         nsamples = 10000
         lambda_not  = 1.55
@@ -565,7 +566,11 @@ def waveguide_length_diff():
 
 
           #load neff data
-          geovsneff_data = np.load('geo_vs_neff.npy').flatten()[0]
+          filename = 'geo_vs_neff.npy'
+          pathsdata = [each for each in os.walk(pya.Application.instance().application_data_path(), followlinks=True)]
+          match = [each for each in pathsdata if (len(each)==3) and (filename in each[-1]) ]
+          filedir = match[0][0]
+          geovsneff_data = np.load(filedir+ '\\'+ filename).flatten()[0]
           neff_data = geovsneff_data['neff']
           width_data = geovsneff_data['width']
           thickness_data = geovsneff_data['thickness']
