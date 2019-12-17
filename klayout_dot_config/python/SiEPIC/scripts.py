@@ -380,6 +380,12 @@ def waveguide_length_diff():
             idx = (np.abs(array - value)).argmin()
             return array[idx]
 
+        def distance(a,b):
+                return np.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+        
+        def is_between(a,c,b):
+                return distance(a,c) + distance(c,b) == distance(a,b)
+
         #location function to get correlation values
         def get_local_correlation_matrix(corr_length, resolution, temp_comp):
 
@@ -476,27 +482,49 @@ def waveguide_length_diff():
                                 else:
                                   wg_pts.append([[each.center.x*dbu, each.center.y*dbu]])
 
-                              new_wg_pts = []
-                              for each in wg_pts:
-                                if(len(each)>1):
-                                   new_wg_pts.append(split_line(each, resolution))
-                                else:
-                                   new_wg_pts.append(each)
-                              #print('new wg points', len(new_wg_pts))
-                              inner_corr_matrix = np.zeros(shape=(len(new_wg_pts[0]),len(new_wg_pts[1])))
-                              #print('inner corr matrix', inner_corr_matrix.shape)
-                              for i in range(len(new_wg_pts[0])):
-                                for j in range(len(new_wg_pts[1])):
-                                  inner_corr_value = get_corr(new_wg_pts[0][i][0], new_wg_pts[0][i][1], new_wg_pts[1][j][0],new_wg_pts[1][j][1], corr_length)
 
-                                  inner_corr_matrix[i,j] = inner_corr_value
-                              #np.savetxt('test.txt', inner_corr_matrix)
-                              corr_value = inner_corr_matrix.mean()
-                              full_matrix_data.append([idx1, idx2, inner_corr_matrix])
-
+                              #check if coincidental
+                              coincidental = []
+                              
+                              if(second.basic_name == 'Waveguide'):
+                                for pt_idx1 in range(len(wg_pts[0])):
+                                  for pt_idx2 in range(1,len(wg_pts[1])):
+                                    if(is_between(wg_pts[1][pt_idx2-1], wg_pts[0][pt_idx1], wg_pts[1][pt_idx2])):
+                                          coincidental.append(1)
+                                    else:
+                                      coincidental.append(0)
+                              else:
+                                for pt_idx2 in range(len(wg_pts[1])):
+                                  for pt_idx1 in range(1,len(wg_pts[0])):
+                                    if(is_between(wg_pts[0][pt_idx1-1], wg_pts[1][pt_idx2], wg_pts[0][pt_idx1])):
+                                          coincidental.append(1)
+                                    else:
+                                      coincidental.append(0)                              
+                              if(min(coincidental)==1):
+                                corr_value = (1-1e-15)
+                                
+                              else:
+                                new_wg_pts = []
+                                for each in wg_pts:
+                                  if(len(each)>1):
+                                     new_wg_pts.append(split_line(each, resolution))
+                                  else:
+                                     new_wg_pts.append(each)
+                                #print('new wg points', len(new_wg_pts))
+                                inner_corr_matrix = np.zeros(shape=(len(new_wg_pts[0]),len(new_wg_pts[1])))
+                                #print('inner corr matrix', inner_corr_matrix.shape)
+                                for i in range(len(new_wg_pts[0])):
+                                  for j in range(len(new_wg_pts[1])):
+                                    inner_corr_value = get_corr(new_wg_pts[0][i][0], new_wg_pts[0][i][1], new_wg_pts[1][j][0],new_wg_pts[1][j][1], corr_length)
+  
+                                    inner_corr_matrix[i,j] = inner_corr_value
+                                #np.savetxt('test.txt', inner_corr_matrix)
+                                corr_value = inner_corr_matrix.mean()
+                                full_matrix_data.append([idx1, idx2, inner_corr_matrix])
+  
                             else:
-                              corr_value = get_corr(first.center.x*dbu, first.center.y*dbu, second.center.x*dbu, second.center.y*dbu, corr_length)
-                              full_matrix_data.append([idx1, idx2, corr_value])
+                                corr_value = get_corr(first.center.x*dbu, first.center.y*dbu, second.center.x*dbu, second.center.y*dbu, corr_length)
+                                full_matrix_data.append([idx1, idx2, corr_value])
 
                         corr_matrix[idx1, idx2] = corr_matrix[idx2, idx1] = corr_value
                         s2i = comp[idx1].basic_name+"_" +str(idx1)+ " & " + comp[idx2].basic_name+"_"+str(idx2)
