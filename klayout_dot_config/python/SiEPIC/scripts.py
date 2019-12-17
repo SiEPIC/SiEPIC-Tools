@@ -570,7 +570,8 @@ def waveguide_length_diff():
           pathsdata = [each for each in os.walk(pya.Application.instance().application_data_path(), followlinks=True)]
           match = [each for each in pathsdata if (len(each)==3) and (filename in each[-1]) ]
           filedir = match[0][0]
-          geovsneff_data = np.load(filedir+ '\\'+ filename).flatten()[0]
+          import os
+          geovsneff_data = np.load(os.path.join(filedir, filename)).flatten()[0]
           neff_data = geovsneff_data['neff']
           width_data = geovsneff_data['width']
           thickness_data = geovsneff_data['thickness']
@@ -603,7 +604,7 @@ def waveguide_length_diff():
         #
 
         pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(
-            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: '+ str(round(np.std(phase_arr),2))+' pi radians', pya.MessageBox.Ok)
+            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: '+ str(round(np.std(phase_arr),3))+' pi radians', pya.MessageBox.Ok)
 
     else:
         pya.MessageBox.warning("Selection are not a waveguides",
