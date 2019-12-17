@@ -330,12 +330,12 @@ def waveguide_to_path(cell=None):
 
 def waveguide_length():
 
-    from .utils import get_layout_variables
+    from .utils import get_layout_variables, select_waveguides
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
     import SiEPIC.utils
 
-    selection = lv.object_selection
-    if len(selection) == 1 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name():
+    selection = select_waveguides(cell)
+    if len(selection) == 1:
         cell = selection[0].inst().cell
         area = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
@@ -358,10 +358,10 @@ def waveguide_length_diff():
     import SiEPIC
     import time, os, fnmatch
     from SiEPIC.utils import get_technology, xml_to_dict
-    os.chdir('C:\\Users\\root\\KLayout\\python\\SiEPIC\\lumerical')
+
     # calculate length difference
-    selection = lv.object_selection
-    if len(selection) == 2 and selection[0].inst().is_pcell() and "Waveguide" in selection[0].inst().cell.basic_name() and selection[1].inst().is_pcell() and "Waveguide" in selection[1].inst().cell.basic_name():
+    selection = select_waveguides(cell)
+    if len(selection) == 2:
         cell = selection[0].inst().cell
         area1 = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
@@ -598,12 +598,11 @@ def waveguide_length_diff():
         #
 
         pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(
-            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error:'+ str(round(np.std(phase_arr),2))+' pi radians', pya.MessageBox.Ok)
+            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: '+ str(round(np.std(phase_arr),2))+' pi radians', pya.MessageBox.Ok)
 
     else:
         pya.MessageBox.warning("Selection are not a waveguides",
                                "Select two waveguides you wish to measure.", pya.MessageBox.Ok)
-
 
 def waveguide_heal():
     print("waveguide_heal")
