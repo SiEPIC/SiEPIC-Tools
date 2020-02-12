@@ -1052,9 +1052,9 @@ def auto_coord_extract():
 
     def gen_ui():
         global wdg
-        if 'wdg' in globals():
-            if wdg is not None and not wdg.destroyed:
-                wdg.destroy()
+#        if 'wdg' in globals():
+#            if wdg is not None and not wdg.destroyed:
+#                wdg.destroy()
         global wtext
 
         def button_clicked(checked):
@@ -1063,7 +1063,8 @@ def auto_coord_extract():
 
         wdg = pya.QDialog(pya.Application.instance().main_window())
 
-        wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+#        wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+        wdg.setAttribute=pya.Qt.WA_DeleteOnClose
         wdg.setWindowTitle("SiEPIC-Tools: Automated measurement coordinate extraction")
 
         wdg.resize(1000, 500)
@@ -2045,6 +2046,7 @@ def resize_waveguide():
             wdg = QWidget()
             #wdg = QDialog(pya.Application.instance().main_window())
 #            wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+            wdg.setAttribute=pya.Qt.WA_DeleteOnClose
             wdg.setWindowTitle("Waveguide resizer")
 
             if sys.platform.startswith('linux'):
