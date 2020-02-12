@@ -1959,7 +1959,7 @@ def resize_waveguide():
 
         path_obj = c.pcell_parameters_by_name()['path']
 
-        if(path_obj.points <= 2):
+        if(path_obj.points <= 3):
             v = pya.MessageBox.warning(
                 "Message", "Cannot perform this operation on the selected cell/path.\n Hint: Select a cell/path with more than 2 vertices.", pya.MessageBox.Ok)
 
@@ -2044,7 +2044,7 @@ def resize_waveguide():
             global wdg, hbox, lframe1, titlefont, lf1title, parameters, lf1label1, lf1label2, lf1label3, lf1title2, lf1text3, lf1form, lframe1, leftsplitter, splitter1, container, ok
             wdg = QWidget()
             #wdg = QDialog(pya.Application.instance().main_window())
-            wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+#            wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
             wdg.setWindowTitle("Waveguide resizer")
 
             if sys.platform.startswith('linux'):
@@ -2160,10 +2160,12 @@ def resize_waveguide():
         #  lf1form.addWidget(lf1text2, 5,1)
             lf1form.addWidget(ok, 7, 1)
             lframe1.setLayout(lf1form)
-            leftsplitter = QSplitter(Qt.Vertical)
+            leftsplitter = QSplitter()
+            leftsplitter.setOrientation=Qt.Vertical
             leftsplitter.addWidget(lframe1)
             leftsplitter.setSizes([500, 400, 10])
-            splitter1 = QSplitter(Qt.Horizontal)
+            splitter1 = QSplitter()
+            splitter1.setOrientation=Qt.Horizontal
             textedit = QTextEdit()
             splitter1.addWidget(leftsplitter)
             splitter1.setSizes([400, 500])
