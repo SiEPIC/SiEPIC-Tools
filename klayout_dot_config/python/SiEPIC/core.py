@@ -307,10 +307,12 @@ class WaveguideGUI():
             else:
                 self.window.findChild('radius').text = '5'
             if 'bezier' in waveguide:
-                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Checked
+                self.window.findChild('adiabatic').setChecked(True)
+#                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Checked
                 self.window.findChild('bezier').text = waveguide['bezier']
             else:
-                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Unchecked
+                self.window.findChild('adiabatic').setChecked(False)
+#                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Unchecked
                 self.window.findChild('bezier').text = '0.45'
 
     def get_parameters(self, show):
