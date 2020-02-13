@@ -67,6 +67,11 @@ if 1:
 
 print ("*** SiEPIC test environment ***")
 
+
+if 1:
+  import SiEPIC.github as github
+  github.github_check_SiEPICTools_version()
+
 if 0:
   from SiEPIC import _globals
   print("lumapi: %s" % _globals.LUMAPI)
