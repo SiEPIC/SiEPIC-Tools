@@ -9,6 +9,7 @@ advance_iterator
 get_technology_by_name
 get_technology
 load_Waveguides
+load_Waveguides_by_Tech
 load_Calibre
 load_Monte_Carlo
 load_DFT
@@ -230,6 +231,30 @@ def load_Waveguides():
     from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
+    paths = []
+    for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
+        [paths.append(os.path.join(root, filename))
+         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name in root]
+
+    waveguides = []
+    if paths:
+        with open(paths[0], 'r') as file:
+            waveguides = xml_to_dict(file.read())
+            waveguides = waveguides['waveguides']['waveguide']
+            for waveguide in waveguides:
+                if not isinstance(waveguide['component'], list):
+                    waveguide['component'] = [waveguide['component']]
+    return waveguides if waveguides else None
+
+'''
+Load Waveguide configuration for specific technology
+These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
+'''
+
+def load_Waveguides_by_Tech(tech_name):
+    import os
+    import fnmatch
+
     paths = []
     for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
         [paths.append(os.path.join(root, filename))
