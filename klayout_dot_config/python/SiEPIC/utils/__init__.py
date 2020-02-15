@@ -637,11 +637,14 @@ def angle_trunc(a, trunc):
 # Calculate the recommended number of points in a circle, based on
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
 def points_per_circle(radius):
+    # radius in microns
     from math import acos, pi, ceil
     from . import get_technology
     TECHNOLOGY = get_technology()
-    err = 1e3 * TECHNOLOGY['dbu'] / 2
-    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
+    err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
+    return int(ceil(pi / acos(1 - err / radius))) # Lukas' derivation (same answer as below)
+#    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1)))
+#    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
 
 def arc(r, theta_start, theta_stop):
@@ -656,7 +659,7 @@ def arc(r, theta_start, theta_stop):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r) * circle_fraction)
+    npoints = int(points_per_circle(r/1000) * circle_fraction)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -680,9 +683,9 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r) * circle_fraction)
+    npoints = int(points_per_circle(r/1000) * circle_fraction)
     if DevRec:
-        npoints = int(npoints / 10)
+        npoints = int(npoints / 3)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -707,9 +710,9 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
 
     print("SiEPIC.utils arc_wg")
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(radius) * circle_fraction)
+    npoints = int(points_per_circle(radius/1000) * circle_fraction)
     if DevRec:
-        npoints = int(npoints / 10)
+        npoints = int(npoints / 3)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -737,9 +740,9 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r) * circle_fraction)
+    npoints = int(points_per_circle(r/1000) * circle_fraction)
     if DevRec:
-        npoints = int(npoints / 10)
+        npoints = int(npoints / 3)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -758,9 +761,11 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 # degrees, this is currently only implemented for 90 degree bends
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
-    N = 100
+    from SiEPIC.utils import points_per_circle
+    N = points_per_circle(radius/1000)/4
+#    N = 100
     if DevRec:
-        N = int(N / 10)
+        N = int(N / 3)
     L = radius  # effective bend radius / Length of the bend
     diff = 1. / (N - 1)  # convert int to float
     xp = [0, (1 - bezier) * L, L, L]
