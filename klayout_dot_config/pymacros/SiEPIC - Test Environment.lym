@@ -57,11 +57,10 @@ if 1:
     SiEPIC.lumerical.fdtd = reload(SiEPIC.lumerical.fdtd)
     SiEPIC.lumerical.mode = reload(SiEPIC.lumerical.mode)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
-    SiEPIC.lumerical.ApodizedContraDC = reload(SiEPIC.lumerical.ApodizedContraDC)
-    #SiEPIC.lumerical.load_lumapi = reload(SiEPIC.lumerical.load_lumapi)
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.setup = reload(SiEPIC.setup)
+    SiEPIC.lumerical.contraDirectionalCoupler = reload(lumerical.contraDirectionalCoupler)
     print('Reloaded SiEPIC')
 
 
@@ -77,9 +76,10 @@ if 0:
   print("lumapi: %s" % _globals.LUMAPI)
 
 
-if 0:
+if 1:
   import SiEPIC.lumerical as lumerical
-  lumerical.interconnect.circuit_simulation(verbose=True, opt_in_selection_text=[])
+  lumerical.interconnect.run_INTC(verbose=False)
+  # lumerical.interconnect.circuit_simulation(verbose=True, opt_in_selection_text=[])
   #lumerical.interconnect.circuit_simulation_monte_carlo(verbose=True)
 
 if 0:

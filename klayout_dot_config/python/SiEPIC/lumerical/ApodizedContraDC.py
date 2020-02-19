@@ -46,22 +46,18 @@ def TOP():
     response = error.exec_()
     return
     
-  #  text = 'Information on selected components:<br><br>'
-  text = ''
-  
-  # parse PCell parameters into text string and params array
+  # parse PCell parameters into params array
   for obj in selected_instances:
-    #print("  selected component: %s" % obj.inst().cell )
     c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
     if c:
-      text += c[0].display().replace(';','<br>&nbsp;&nbsp;&nbsp;')
       if c[0].cell.is_pcell_variant():
         params = c[0].cell.pcell_parameters_by_name()
         for key in params.keys():
-          text += ("Parameter: %s, Value: %s") % (key, params[key])
-          #params.append([key,params[key]])
-      text += '<br><br>'
+          print ("Parameter: %s, Value: %s" % (key, params[key]) )
+
   print(params)
+
+            if instance.cell.basic_name() == "Waveguide":
   
   # check if selected PCell is a contra DC
   if "component: ebeam_contra_dc" not in text:

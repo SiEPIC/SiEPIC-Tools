@@ -20,5 +20,5 @@
 import pya
 from SiEPIC import lumerical
 
-lumerical.ApodizedContraDC.TOP()</text>
+lumerical.contraDirectionalCoupler.cdc_simulation()</text>
 </klayout-macro>
