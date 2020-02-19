@@ -56,6 +56,8 @@ def load_lumapi(verbose=False):
           print(matches)
         path = matches[0]
 
+  print('Lumerical lumapi.py path: %s' % path)
+
       
   # if it is still not found, ask the user
   if not os.path.exists(path):
