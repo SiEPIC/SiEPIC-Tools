@@ -103,7 +103,7 @@ def contraDC_model(params, verbose = True):
     neffThermal = 0 # dneffdT*(simulation_setup.deviceTemp-simulation_setup.chipTemp)
 
     # Waveguides models
-    Lambda = np.linspace(params['wavelength_start'], params['wavelength_stop'], num=params['wavelength_points'])
+    Lambda = np.linspace(params['wavelength_start'], params['wavelength_stop'], num=int(params['wavelength_points']))
 
     neffwg1 = params['neff1_phaseMatch']
     Dneffwg1 = params['neff1_dispersion']
