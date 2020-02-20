@@ -203,8 +203,8 @@ def dispersion_2WG(params, verbose = False):
   lumapi.evalScript(_globals.MODE, "gap = %s; width_1 = %s; width_2 = %s; thick_Si = %s; period = %s;" 
                       % (params["gap"]*1e-6, params["wg1_width"]*1e-6, params["wg2_width"]*1e-6, params['thickness_Si'], params["grating_period"]*1e-6))
 
-  lumapi.evalScript(_globals.MODE, "wavelength = %s; wavelength_stop = %s; pol = %s;" 
-                      % (params['wavelength_start'], params['wavelength_stop'], params['pol']) )
+  lumapi.evalScript(_globals.MODE, "wavelength = %s; wavelength_stop = %s; number_of_plot_points = %s; pol = %s;" 
+                      % (params['wavelength_start'], params['wavelength_stop'], params['wavelength_points'], params['pol']) )
 
     
   lumapi.evalScript(_globals.MODE,"slab = 0;")
@@ -272,7 +272,7 @@ def cdc_EME(params, verbose = False):
                       % (params['contra_lambda']) )
 
    
-  lumapi.evalScript(_globals.MODE,"load('%s'); %s;" % (projectname, scriptname) )
+  lumapi.evalScript(_globals.MODE,"load('%s'); %s; ?'delta_lambda = '+num2str(delta_lambda)" % (projectname, scriptname) )
         
     
   params['delta_lambda_contra'] = lumapi.getVar(_globals.MODE,"delta_lambda")

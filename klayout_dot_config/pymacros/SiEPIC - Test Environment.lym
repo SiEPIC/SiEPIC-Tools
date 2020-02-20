@@ -76,7 +76,7 @@ if 0:
   print("lumapi: %s" % _globals.LUMAPI)
 
 
-if 1:
+if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.run_INTC(verbose=False)
   # lumerical.interconnect.circuit_simulation(verbose=True, opt_in_selection_text=[])
