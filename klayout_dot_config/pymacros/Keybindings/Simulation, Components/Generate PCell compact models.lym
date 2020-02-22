@@ -54,7 +54,7 @@ def export_PCell_parameters(filepath):
             child2.text = str(int(params[key]))
           elif type(params[key])==float:
             child2 = SubElement(child, key)
-            child2.text = str(float(params[key]))
+            child2.text = str(round(float(params[key]),14))
           elif type(params[key])==LayerInfo:
             pass
           else:
@@ -70,6 +70,7 @@ def export_PCell_parameters(filepath):
   return filepath
 
 # Import PCell parameters from XML; return an array of dict
+# Bug: this function only works if there are &gt;1 components
 def import_PCell_parameters(filepath):
   from SiEPIC.utils import get_technology, xml_to_dict
   print('Loading PCell parameters from file: %s' % filepath)
@@ -83,8 +84,54 @@ def import_PCell_parameters(filepath):
       print('CDC, gap=%s'%PCell_params['gap'])
   return d
 
-def run_command(arguments):
-    arguments.insert(0,'/Users/lukasc/opt/anaconda3/bin/python')
+def run_command_python(arguments):
+    import subprocess, os
+
+    # Load the external Python software location from the KLayout configuration
+    python_path = pya.Application.instance().get_config('external_Python_executable')
+
+    if not os.path.exists(python_path):
+
+        python_path_options = [
+            os.path.join(os.path.expanduser('~'), 'opt/anaconda3/bin/python'),
+            '/usr/local/bin/python3'
+        ]
+        for p in python_path_options: 
+            if os.path.exists(p):
+                print(p)
+                process = subprocess.Popen([p, '--version'], stdout=subprocess.PIPE, stderr = subprocess.PIPE, encoding='utf8')
+                output1b=''; output2b=''
+                while True:
+                    output1 = process.stdout.readline()
+                    output2 = process.stderr.readline()
+                    if output1 == '' and output2 == '' and process.poll() is not None:
+                        break
+                    output1b+=output1; output2b+=output2
+                    if output1:
+                        print (output1.strip())
+                    if output2:
+                        print (' * ' + output2.strip())
+                rc = process.poll()
+                if 'Python 3' in output1b:
+                    print('Found Python 3 in: %s' % p)
+                    python_path = p
+                    break
+
+    # if it is still not found, ask the user
+    if not os.path.exists(python_path):
+        print('SiEPIC.simulation.generate PCell: External Python software not found')
+        question = pya.QInputDialog()
+        # (QWidget ptr parent, string title, string label)
+        python_path = question.getText(pya.Application().instance().main_window(), "Python 3 path", "Please enter the path to the Python 3 executable:")
+
+    if not os.path.exists(python_path):
+        warning = pya.QMessageBox()
+        warning.setStandardButtons(pya.QMessageBox.Ok)
+        warning.setText("Error: SiEPIC.simulation.generate PCell: External Python software not found.")
+        pya.QMessageBox_StandardButton(warning.exec_())
+        return
+
+    arguments.insert(0,python_path)
     process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr = subprocess.PIPE, encoding='utf8')
     while True:
         output1 = process.stdout.readline()
@@ -96,6 +143,10 @@ def run_command(arguments):
         if output2:
             print (output2.strip())
     rc = process.poll()
+
+    # Save the external Python software location to the KLayout configuration
+    pya.Application.instance().set_config('external_Python_executable', python_path)
+                      
     return rc
 
 
@@ -140,18 +191,15 @@ filepath = os.path.join(pya.Application.instance().application_data_path(), 'Lum
 
 
 export_PCell_parameters(filepath)
-import_PCell_parameters(filepath)
+#import_PCell_parameters(filepath)
 
 #arguments = filepath
 #python_commandline(arguments)
 
-
-run_command(['--version'])
-
 #run_command(['/Users/lukasc/.klayout/Lumerical_CMLs/EBeam/source_data/CDC/main.py'])
 
 python_main = os.path.join(os.path.dirname(filepath),'CDC/main.py')
-run_command([python_main, filepath])
+run_command_python([python_main, filepath])
   
 #run_command('/Users/lukasc/opt/anaconda3/bin/python','--version')
 #run_command(['-c', '"print(100)"'])

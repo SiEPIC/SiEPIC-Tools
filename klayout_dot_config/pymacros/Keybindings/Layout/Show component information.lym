@@ -81,7 +81,7 @@ def show_component_info():
         text += ('&lt;br&gt;&amp;nbsp;&amp;nbsp;PCell parameters:')
         for key in params.keys():
           text += ('&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;')
-          text += ("Parameter: %s, Value: %s") % (key, params[key])
+          text += ("Parameter: %s, Value: %s") % (key, str(params[key]))
       text += '&lt;br&gt;&lt;br&gt;'
 
 
