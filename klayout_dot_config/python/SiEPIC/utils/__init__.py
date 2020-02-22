@@ -766,6 +766,8 @@ def arc_bezier(radius, start, stop, bezier, DevRec=None):
 #    N = 100
     if DevRec:
         N = int(N / 3)
+    else:
+        N = int(N)
     L = radius  # effective bend radius / Length of the bend
     diff = 1. / (N - 1)  # convert int to float
     xp = [0, (1 - bezier) * L, L, L]
