@@ -1,3 +1,5 @@
+# Start > cmd, and "run as adminstrator":
+
 mkdir %userprofile%\KLayout\tech
 mklink /d %userprofile%\KLayout\pymacros\SiEPIC-Tools %userprofile%\Documents\GitHub\SiEPIC-Tools\klayout_dot_config\pymacros
 
