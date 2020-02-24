@@ -120,10 +120,11 @@ def run_command_python(arguments):
         python_path_options = [
             os.path.join(os.path.expanduser('~'), 'opt/anaconda3/bin/python'),
             '/usr/local/bin/python3',
-            'C:\\ProgramData\\Anaconda3\\bin\\python',
-            os.path.join(os.path.expanduser('~'), 'Anaconda3/bin/python')
+            'C:\\ProgramData\\Anaconda3\\python.exe',
+            os.path.join(os.path.expanduser('~'), 'Anaconda3/python.exe' )
         ]
         for p in python_path_options: 
+            p = os.path.normpath(p)
             if os.path.exists(p):
                 print(p)
                 process = subprocess.Popen([p, '--version'], stdout=subprocess.PIPE, stderr = subprocess.PIPE, encoding='utf8')
@@ -237,9 +238,8 @@ from SiEPIC.utils import get_layout_variables
 
 TECHNOLOGY, lv, ly, cell = get_layout_variables()
 # location for the where the CMLs are installed:
-filepath = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs', TECHNOLOGY['technology_name'],'source_data',
-  'PCell_parameters.xml')
-
+filepath = os.path.normpath(os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs', TECHNOLOGY['technology_name'],'source_data',
+  'PCell_parameters.xml'))
 
 export_PCell_parameters(filepath)
 #import_PCell_parameters(filepath)
@@ -249,7 +249,7 @@ export_PCell_parameters(filepath)
 
 #run_command(['/Users/lukasc/.klayout/Lumerical_CMLs/EBeam/source_data/CDC/main.py'])
 
-python_main = os.path.join(os.path.dirname(filepath),'CDC/main.py')
+python_main = os.path.normpath(os.path.join(os.path.dirname(filepath),'CDC/main.py'))
 
 #await(run_command_python([python_main, filepath]))
 run_command_python([python_main, filepath])
