@@ -78,6 +78,10 @@ def export_PCell_parameters(filepath):
             pass
           elif type(params[key])==pya.Point:
             pass
+          elif type(params[key])==pya.DPath:
+            pass
+          elif type(params[key])==list:
+            pass
           else:
             child2 = SubElement(child, key)
             child2.text = params[key]
