@@ -47,13 +47,7 @@ def run_INTC(verbose=False):
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_INTC: lumapi not loaded")
     pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Cannot load Lumerical Python integration. \nSome SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
-#    warning = pya.QMessageBox()
-#    warning.setStandardButtons(pya.QMessageBox.Cancel)
-#    warning.setText("Cannot load Lumerical Python integration.") 
-#    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
-#    pya.QMessageBox_StandardButton(warning.exec_())
     return
-    
   
   if verbose:
     print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
