@@ -310,13 +310,27 @@ def layout_square(cell, layer, center, width, ex=None):
     square = square_dpolygon(center, width, ex)
     cell.shapes(layer).insert(square)
 
-def layout_waveguide_sbend(cell, layer, center, w=500, r=25000, h=2000, length=15000, ex=None):
+def layout_taper(cell, layer, trans, w1, w2, length):
     """ Lays out an s-bend
 
     Args:
-        center: pya.DPoint (um units)
+        trans: pya.Trans: location and rotation
+        w1: width of waveguide, float
+        w2: width of waveguide, float
+        length: length, float
+
+    """
+    import pya
+    pts = [pya.Point(0,-w1/2), pya.Point(0,w1/2), pya.Point(length,w2/2), pya.Point(length,-w2/2)]
+    cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
+    
+
+def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000):
+    """ Lays out an s-bend
+
+    Args:
+        trans: pya.Trans: location and rotation
         w: width of waveguide, float
-        ex: orientation
         r: radius, float
         h: height, float
         length: length, float
@@ -383,7 +397,7 @@ def layout_waveguide_sbend(cell, layer, center, w=500, r=25000, h=2000, length=1
           pts.append(pya.Point.from_dpoint(pya.DPoint((x1+(r-w/2)*cos(i*da+th1))/1, (y1+(r-w/2)*sin(i*da+th1))/1)))
         for i in range(0, npoints+1): # lower right
          pts.append(pya.Point.from_dpoint(pya.DPoint((x2+(r+w/2)*cos(i*da+th2))/1, (y2+(r+w/2)*sin(i*da+th2))/1)))
-      cell.shapes(layer).insert(pya.Polygon(pts))
+      cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
 
     return waveguide_length
 
