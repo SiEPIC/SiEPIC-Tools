@@ -70,7 +70,10 @@ def github_check_SiEPICTools_version():
 
     import json
     import os
-    r = requests.get("https://api.github.com/repos/lukasc-ubc/SiEPIC-Tools/releases/latest")
+    try:
+        r = requests.get("https://api.github.com/repos/lukasc-ubc/SiEPIC-Tools/releases/latest")
+    except:
+        return ''
     if 'name' not in json.loads(r.text):
         if 'message' in json.loads(r.text):
             message = json.loads(r.text)['message']
