@@ -85,7 +85,7 @@ def export_PCell_parameters(filepath):
           else:
             child2 = SubElement(child, key)
             child2.text = params[key]
-          print (f'{child2.text}, {type(child2.text)}')
+        print ('%s, %s' % (child2.text, type(child2.text)))
 
       count+=1
   print(top)
@@ -105,7 +105,7 @@ def import_PCell_parameters(filepath):
 
   with open(filepath, 'r') as file:
     d = xml_to_dict(file.read())
-  print('Found %s PCells'%len(d['PCells']['PCell']))
+  print('Found %s PCells' % len(d['PCells']['PCell']))
   for PCell_params in d['PCells']['PCell']:
     print(PCell_params)
     if PCell_params['Name'] == 'Contra-Directional Coupler':
@@ -185,11 +185,11 @@ def run_command_python(arguments):
             stderr += stderr1.strip()
     rc = process.poll()
 
-    print(f'[{arguments!r} exited with {process.returncode}]')
+    print('[%s exited with %s]' % (arguments, process.returncode))
     if stdout:
-        print(f'[stdout]\n{stdout}')
+        print('[stdout]\n%s' % stdout)
     if stderr:
-        print(f'[stderr]\n{stderr}')
+        print('[stderr]\n%s' % stderr)
         warning = pya.QMessageBox()
         warning.setStandardButtons(pya.QMessageBox.Ok)
         warning.setText("SiEPIC.simulation.generate PCell: \nPython code returned error:\n\n%s" % stderr )
