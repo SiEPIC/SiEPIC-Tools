@@ -311,7 +311,7 @@ def layout_square(cell, layer, center, width, ex=None):
     cell.shapes(layer).insert(square)
 
 def layout_taper(cell, layer, trans, w1, w2, length):
-    """ Lays out an s-bend
+    """ Lays out a taper
 
     Args:
         trans: pya.Trans: location and rotation
@@ -341,10 +341,19 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
     from SiEPIC.utils import points_per_circle
     import pya
     
-    theta = acos((r-abs(h/2))/r)*180/pi
+    theta = acos(float(r-abs(h/2))/r)*180/pi
     x = 2*r*sin(theta/180.0*pi)
     straight_l = (length - x)/2
+
+    if (straight_l < 0):
+        # Problem: target length is too short. increase
+        print('SBend, too short: straight_l = %s' % straight_l)
+        length += -straight_l + 1
+        straight_l = 1
+
     waveguide_length = (2*pi*r*(2*theta/360.0)+straight_l*2)
+    
+    # print('SBend: theta %s, x %s, straight_l %s, r %s, h %s' % (theta, x, straight_l, r, h) )
 
     # define the cell origin as the left side of the waveguide sbend
 
