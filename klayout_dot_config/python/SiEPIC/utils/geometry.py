@@ -108,26 +108,26 @@ rotate90 = lambda point: rotate(point, np.pi / 2)
 
 
 def bezier_line(P0, P1, P2, P3):
-    """Cubic Bézier formula
+    """Cubic Bezier formula
 
     Returns:
         Function of parameter t (1d array)
 
     Reference
-        https://en.wikipedia.org/wiki/Bézier_curve"""
+        https://en.wikipedia.org/wiki/Bezier_curve"""
 
     return lambda t: (1 - t)**3 * P0 + 3 * (1 - t)**2 * t * P1 + 3 * (1 - t) * t**2 * P2 + t**3 * P3
 
 
 def curvature_bezier(P0, P1, P2, P3):
-    """ Measures the curvature of the Bézier curve at every point t
+    """ Measures the curvature of the Bezier curve at every point t
 
     Returns:
         Function of parameter t (1d array)
 
     References:
         https://en.wikipedia.org/wiki/Radius_of_curvature
-        https://en.wikipedia.org/wiki/Bézier_curve
+        https://en.wikipedia.org/wiki/Bezier_curve
     """
     b_prime = lambda t: 3 * (1 - t)**2 * (P1 - P0) + 6 * (1 - t) * \
         t * (P2 - P1) + 3 * t**2 * (P3 - P2)
@@ -208,7 +208,7 @@ def curve_length(curve, t0=0, t1=1):
 
 
 def _bezier_optimal(angle0, angle3):
-    """ This is a reduced problem of the bézier connection.
+    """ This is a reduced problem of the bezier connection.
 
     Args:
         angle0: starting angle in radians
