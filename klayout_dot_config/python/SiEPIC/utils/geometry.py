@@ -140,16 +140,6 @@ def curvature_bezier(P0, P1, P2, P3):
     return lambda t: (dx(t) * ddy(t) - dy(t) * ddx(t)) / (dx(t) ** 2 + dy(t) ** 2) ** (3 / 2)
 
 
-# #### Computing best Bezier curves based on P0, P3, angle0, angle3
-try:
-    import scipy
-except ModuleNotFoundError:
-    from SiEPIC.install import install_scipy
-    install_scipy()
-
-from scipy.optimize import minimize
-
-
 def max_curvature(P0, P1, P2, P3):
     """Gets the maximum curvature of Bezier curve"""
     t = np.linspace(0, 1, 300)
@@ -216,6 +206,18 @@ def _bezier_optimal(angle0, angle3):
 
     This assumes P0 = (0,0), P3 = (1,0).
     """
+    
+    
+    # #### Computing best Bezier curves based on P0, P3, angle0, angle3
+    try:
+        import scipy
+    except:
+        from SiEPIC.install import install_scipy
+        install_scipy()
+
+    from scipy.optimize import minimize
+
+
 
     angle0 = fix_angle(angle0)
     angle3 = fix_angle(angle3)
