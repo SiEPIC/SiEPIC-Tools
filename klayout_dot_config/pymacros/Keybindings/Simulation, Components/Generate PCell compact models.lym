@@ -6,7 +6,7 @@
  <prolog/>
  <epilog/>
  <doc/>
- <autorun>true</autorun>
+ <autorun>false</autorun>
  <autorun-early>false</autorun-early>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
@@ -24,7 +24,7 @@
 
 
 
-import asyncio
+#import asyncio
 
 # Export XML file containing all the PCells and their parameters
 def export_PCell_parameters(filepath):
