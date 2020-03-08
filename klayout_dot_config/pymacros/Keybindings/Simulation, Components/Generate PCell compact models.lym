@@ -31,6 +31,7 @@ def export_PCell_parameters(filepath):
 
   from SiEPIC.utils import select_instances
   import os
+  import sys
   from xml.etree.ElementTree import ElementTree, Element, SubElement, Comment, tostring
 
   lv = pya.Application.instance().main_window().current_view()
@@ -70,7 +71,11 @@ def export_PCell_parameters(filepath):
         child2.text = str(count)
         params = c.cell.pcell_parameters_by_name()
         for key in params.keys():
-          if type(params[key]) in [bool, int, long]:
+          if sys.version_info[0] == 2:
+            types = [bool, int, long]
+          else:
+            types = [bool, int]
+          if type(params[key]) in types:
             child2 = SubElement(child, key)
             child2.text = str(int(params[key]))
           elif type(params[key])==float:
