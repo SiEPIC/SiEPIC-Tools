@@ -213,7 +213,11 @@ class Component():
         TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
 
         from ._globals import INTC_ELEMENTS
-        return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+        try:
+            return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+        except:
+            return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+          
 
     def get_polygons(self, include_pins=True):
         from .utils import get_layout_variables
