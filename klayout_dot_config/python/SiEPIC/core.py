@@ -214,7 +214,7 @@ class Component():
 
         from ._globals import INTC_ELEMENTS
         try:
-            return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+            return (self.library.lower().replace('/','::') + "::" + self.component.lower()) in INTC_ELEMENTS
         except:
             return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
           
