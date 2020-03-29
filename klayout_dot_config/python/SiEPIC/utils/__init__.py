@@ -150,7 +150,13 @@ def get_technology_by_name(tech_name, verbose=False):
                 technology[k['name']] = pya.LayerInfo(
                     int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
         else:
-            technology[k['name']] = pya.LayerInfo(
+            #IDAN deal with NanoSOI - don't use "name" field, instead name is part of the "source" field
+            if ' ' in layerInfo:
+              name = layerInfo.rsplit(' ',1)[0].strip("'") #IDAN get name, and if it is encased in ' then remove it
+              layerInfo = layerInfo.split(' ')[-1] #IDAN replaced index from "1" (second item) to "-1" last item
+            else:
+              name = k['name']
+            technology[name] = pya.LayerInfo(
                 int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
 
     return technology
@@ -206,13 +212,17 @@ def get_technology(verbose=False, query_activecellview_technology=False):
             break
         else:
             layerInfo = itr.current().source.split('@')[0]
-            if layerInfo == '*/*':
+            # IDAN - changed "if layerInfo == '*/*':" to support IMEC
+            if '/*' in layerInfo: 
                 # likely encoutered a layer group, skip it
                 pass
             else:
                 if ' ' in layerInfo:
-                    layerInfo = layerInfo.split(' ')[1]
-                technology[itr.current().name] = pya.LayerInfo(
+                  name = layerInfo.rsplit(' ',1)[0].strip("'") #IDAN get name, and if it is encased in ' then remove it
+                  layerInfo = layerInfo.split(' ')[-1] #IDAN replaced index from "1" (second item) to "-1" last item
+                else:
+                  name = itr.current().name #IDAN use intermittent variable name
+                technology[name] = pya.LayerInfo(
                     int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
             technology[itr.current().name + '_color'] = itr.current().fill_color
             itr.next()

@@ -61,7 +61,7 @@ def get_layout_variables_m():
 #    no components are selected in KLayout (just hit '3' without selecting a component and all metal layer paths will be converted
 #    to wireguides)
 # 3) A final "for" loop is added at the end of the empty section path (no objects are selected) in order to apply a property called
-#    "LayerName" to the object's shape. This property is used in the "path_to_wireguide()" function to create the pcell in the correct layer 
+#    "LayerName" to the object's shape. This property is used in the "path_to_wireguide()" function to create the pcell in the correct layer
 # 4) Another parameter is added in the "if" statement determining if an object is a path. The added parameter checks to make sure the object
 #    is also not a pcell (as wireguides are still considered paths by the "is_path()" function)
 # 5) Changed all "waveguide" names and variables to "wireguides"
@@ -108,7 +108,7 @@ def select_paths_m(layers, cell=None, verbose=None):
         lv.object_selection = [o for o in selection if (not o.is_cell_inst() and not o.shape.cell.pcell_parameters()) and o.shape.is_path()] # must be a path and not a pcell
     if verbose:
         print("SiEPIC.utils.select_paths: selection, after: %s" % lv.object_selection)
-    return lv.object_selection	
+    return lv.object_selection
 
 # ORIGINAL FUNCTION - select_waveguides()
 # The changes to the original function are as follows:
@@ -142,12 +142,12 @@ def select_wireguides(cell=None):
         ) and o.inst().cell.basic_name() == "Wireguide"]
 
     return lv.object_selection
-	
+
 
 # ORIGINAL FUNCTION - path_to_waveguide()
 # The changes to the original function are as follows:
 # 1) No GUI is necessary for the creation of the wireguides. All parameters (params) are specified below, as the wireguides
-#    do not require much need for user input. Note that the width of the wireguide is set to be whatever the path width the 
+#    do not require much need for user input. Note that the width of the wireguide is set to be whatever the path width the
 #    wireguide was created from (so the wireguides maintain the width of the path drawn)
 # 2) The selected paths are chosen based upon layers indicated in the xml layer files (looks for "Wireguide_...")
 # 3) The inserted component (though essentially the same as a waveguide pcell) is changed to be named Wireguide (and a corresponding pcell
@@ -186,7 +186,7 @@ def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguide
     warning = pya.QMessageBox()
     warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
     warning.setDefaultButton(pya.QMessageBox.Yes)
-    
+
     params = {'radius' : 0, 'width' : 2, 'adiabatic' : False, 'bezier' : '0', 'offset' : 0} # set parameters
 
     if verbose:
@@ -199,6 +199,8 @@ def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguide
         params['width'] = path.width * dbu # adjust the width and save for wireguide creation
         if obj.shape.property('LayerName'): # check if obj has LayerName (for no mouse selections)
             input_layer_name = obj.shape.property('LayerName') # save layer name for wireguide creation
+        elif obj.shape.layer_info: # IDAN - Alternate check if obj has layer_info
+            input_layer_name = obj.shape.layer_info.name  # save layer name for wireguide creation
         else: # find the name of the layer if not specified (for mouse selections)
             lv  = pya.Application.instance().main_window().current_view()
             ly  = lv.active_cellview().layout()
@@ -235,8 +237,17 @@ def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguide
         path.snap_m(cell.find_pins())
         Dpath = path.to_dtype(TECHNOLOGY['dbu'])
         width_devrec = params['width'] + _globals.WG_DEVREC_SPACE * 2 # get DevRec width based on the wireguide width found earlier
+        #IDAN - find all libraries of technology (all start the same) and find the one with a "waveguide" PCell
+        tech_libs = [lib for lib in pya.Library.library_names() if TECHNOLOGY['technology_name'] in lib]
+        for lib_name in tech_libs:
+          lib = pya.Library.library_by_name(lib_name)
+          if 'Wireguide' in lib.layout_const().pcell_names():
+            technology_name = lib_name
+          else:
+            technology_name = ''
         try:
-            pcell = ly.create_cell("Wireguide", TECHNOLOGY['technology_name'], {"path": Dpath, # input parameters
+        #IDAN - Replaced TECHNOLOGY['technology_name'] with technology_name
+            pcell = ly.create_cell("Wireguide", technology_name, {"path": Dpath, # input parameters
                                                                                 "radius": params['radius'],
                                                                                 "width": params['width'],
                                                                                 "adiab": params['adiabatic'],
@@ -270,7 +281,7 @@ def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguide
             pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
 
         obj.shape.delete()
-	
+
     lv.clear_object_selection()
     if select_wireguides:
         lv.object_selection = selection
@@ -355,7 +366,7 @@ def wireguide_to_path(cell=None):
 
 # ORIGINAL FUNCTION - snap_component()
 # The changes to the original function are as follows:
-# 1) Change the pin.TYPE to ELECTRICAL to enable electrical pin snapping instead of OPTICAL pin snapping 
+# 1) Change the pin.TYPE to ELECTRICAL to enable electrical pin snapping instead of OPTICAL pin snapping
 def snap_metal_component():
     print("*** snap_component, move selected object to snap onto the transient: ")
 

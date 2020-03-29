@@ -92,8 +92,22 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         if ('DevRec' not in [wg['layer'] for wg in params['wgs']]):
             width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
             params['wgs'].append({'width': width_devrec, 'layer': 'DevRec', 'offset': 0.0})
+
+        #IDAN - find all libraries of technology (all start the same) and find the one with a "waveguide" PCell
+        tech_libs = [lib for lib in pya.Library.library_names() if TECHNOLOGY['technology_name'] in lib]
+        for lib_name in tech_libs:
+          lib = pya.Library.library_by_name(lib_name)
+          if 'Waveguide' in lib.layout_const().pcell_names():
+            technology_name = lib_name
+            dbu = lib.layout_const().dbu
+          else:
+            technology_name = ''
         try:
-            pcell = ly.create_cell("Waveguide", TECHNOLOGY['technology_name'], {"path": Dpath,
+        #IDAN - support waveguides with width 0 components - inherit path width
+            if params['width'] == 0:
+              params['width'] = path.width * dbu
+        #IDAN - Replaced TECHNOLOGY['technology_name'] with technology_name
+            pcell = ly.create_cell("Waveguide", technology_name, {"path": Dpath,
                                                                                 "radius": params['radius'],
                                                                                 "width": params['width'],
                                                                                 "adiab": params['adiabatic'],
@@ -102,7 +116,7 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
                                                                                 "widths": [wg['width'] for wg in params['wgs']],
                                                                                 "offsets": [wg['offset'] for wg in params['wgs']]})
             print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
-                  (TECHNOLOGY['technology_name'], pcell))
+                  (technology_name, pcell))
         except:
             pass
         if not pcell:
