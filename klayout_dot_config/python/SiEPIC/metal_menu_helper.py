@@ -159,7 +159,7 @@ def select_wireguides(cell=None):
 #       selected by the mouse. The string name is then taken for that found layer and saved in a local variable
 # 5) Changed all "waveguide" names and variables to "wireguides"
 def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguides=False):
-    from . import _globals
+    from . import _globals, utils
     TECHNOLOGY, lv, ly, top_cell = get_layout_variables_m()
 
     if not cell:
@@ -200,7 +200,7 @@ def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguide
         if obj.shape.property('LayerName'): # check if obj has LayerName (for no mouse selections)
             input_layer_name = obj.shape.property('LayerName') # save layer name for wireguide creation
         elif obj.shape.layer_info: # IDAN - Alternate check if obj has layer_info
-            input_layer_name = obj.shape.layer_info.name  # save layer name for wireguide creation
+            input_layer_name = utils.get_layer_name_from_source(TECHNOLOGY, obj.shape.layer_info)  # save layer name for wireguide creation
         else: # find the name of the layer if not specified (for mouse selections)
             lv  = pya.Application.instance().main_window().current_view()
             ly  = lv.active_cellview().layout()

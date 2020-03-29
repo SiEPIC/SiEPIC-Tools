@@ -46,7 +46,7 @@ sample_function
 '''
 
 import pya
-
+from . import geometry, layout, sampling
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html
 # Python 2: iterator.next()
@@ -1041,7 +1041,13 @@ def svg_from_component(component, filename, verbose=False):
 
     dwg.save()
 
-
+# reverse search TECHNOLOGY for layer name from layer info
+def get_layer_name_from_source(TECHNOLOGY, layer_info):
+  for layer_name in TECHNOLOGY:
+    if type(TECHNOLOGY[layer_name]) == type(layer_info) and TECHNOLOGY[layer_name] == layer_info:
+      return layer_name
+  return ''
+    
 from .._globals import MODULE_NUMPY
 if MODULE_NUMPY:
     from .sampling import sample_function
