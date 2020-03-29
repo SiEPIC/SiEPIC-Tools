@@ -40,13 +40,21 @@ etree_to_dict: XML parser
 xml_to_dict
 eng_str
 svg_from_component
+get_layer_name_from_source
 sample_function
 
 
 '''
 
 import pya
-from . import geometry, layout, sampling
+    
+from .._globals import MODULE_NUMPY
+if MODULE_NUMPY:
+    from .sampling import sample_function
+
+from . import sampling
+from . import geometry
+from . import layout
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html
 # Python 2: iterator.next()
@@ -1047,7 +1055,4 @@ def get_layer_name_from_source(TECHNOLOGY, layer_info):
     if type(TECHNOLOGY[layer_name]) == type(layer_info) and TECHNOLOGY[layer_name] == layer_info:
       return layer_name
   return ''
-    
-from .._globals import MODULE_NUMPY
-if MODULE_NUMPY:
-    from .sampling import sample_function
+
