@@ -92,6 +92,9 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         if ('DevRec' not in [wg['layer'] for wg in params['wgs']]):
             width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
             params['wgs'].append({'width': width_devrec, 'layer': 'DevRec', 'offset': 0.0})
+        
+        # added 2 new parameters: CML and model to support multiple WG models
+        pcell = 0
         try:
             pcell = ly.create_cell("Waveguide", TECHNOLOGY['technology_name'], {"path": Dpath,
                                                                                 "radius": params['radius'],
@@ -100,11 +103,27 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
                                                                                 "bezier": params['bezier'],
                                                                                 "layers": [wg['layer'] for wg in params['wgs']],
                                                                                 "widths": [wg['width'] for wg in params['wgs']],
-                                                                                "offsets": [wg['offset'] for wg in params['wgs']]})
+                                                                                "offsets": [wg['offset'] for wg in params['wgs']],
+                                                                                "CML": params['CML'],
+                                                                                "model": params['model']})
             print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
-                  (TECHNOLOGY['technology_name'], pcell))
+                  (TECHNOLOGY['technology_name'], pcell))   
         except:
             pass
+        if not pcell:
+            try:
+                pcell = ly.create_cell("Waveguide", TECHNOLOGY['technology_name'], {"path": Dpath,
+                                                                                    "radius": params['radius'],
+                                                                                    "width": params['width'],
+                                                                                    "adiab": params['adiabatic'],
+                                                                                    "bezier": params['bezier'],
+                                                                                    "layers": [wg['layer'] for wg in params['wgs']],
+                                                                                    "widths": [wg['width'] for wg in params['wgs']],
+                                                                                    "offsets": [wg['offset'] for wg in params['wgs']]})
+                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
+                      (TECHNOLOGY['technology_name'], pcell))
+            except:
+                pass
         if not pcell:
             try:
                 pcell = ly.create_cell("Waveguide", "SiEPIC General", {"path": Dpath,

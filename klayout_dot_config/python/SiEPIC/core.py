@@ -209,7 +209,11 @@ class Component():
 
         # check if this component has a compact model in the INTC library
         from ._globals import INTC_ELEMENTS
-        return (self.library.lower().replace('/','::') + "::" + self.component.lower()) in INTC_ELEMENTS
+        try:
+            return (self.library.lower().replace('/','::') + "::" + self.component.lower()) in INTC_ELEMENTS
+        except:
+            return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+          
 
     def get_polygons(self, include_pins=True):
         from .utils import get_layout_variables
@@ -342,6 +346,12 @@ class WaveguideGUI():
                 w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
                 if ((params['width'] < w) & (component['layer'] != 'DevRec')) and (w < 10):
                     params['width'] = w
+                # enable 2 new parameters: CML and model to support multiple WG models
+                try: 
+                    params['CML'] = waveguide['CML']
+                    params['model'] = waveguide['model']
+                except:
+                    pass
             return params
         else:
             return None
