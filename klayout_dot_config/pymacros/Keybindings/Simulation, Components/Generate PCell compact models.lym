@@ -6,7 +6,7 @@
  <prolog/>
  <epilog/>
  <doc/>
- <autorun>true</autorun>
+ <autorun>false</autorun>
  <autorun-early>false</autorun-early>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
@@ -24,13 +24,14 @@
 
 
 
-import asyncio
+#import asyncio
 
 # Export XML file containing all the PCells and their parameters
 def export_PCell_parameters(filepath):
 
   from SiEPIC.utils import select_instances
   import os
+  import sys
   from xml.etree.ElementTree import ElementTree, Element, SubElement, Comment, tostring
 
   lv = pya.Application.instance().main_window().current_view()
@@ -56,6 +57,8 @@ def export_PCell_parameters(filepath):
   for c in components:
       print (c)
       print(c.component)
+      print (tostring(top))
+
       if c.cell.is_pcell_variant():
         print(c.component)
         child = SubElement(top, 'PCell')
@@ -68,7 +71,11 @@ def export_PCell_parameters(filepath):
         child2.text = str(count)
         params = c.cell.pcell_parameters_by_name()
         for key in params.keys():
-          if type(params[key]) in [bool,int]:
+          if sys.version_info[0] == 2:
+            types = [bool, int, long]
+          else:
+            types = [bool, int]
+          if type(params[key]) in types:
             child2 = SubElement(child, key)
             child2.text = str(int(params[key]))
           elif type(params[key])==float:
@@ -85,7 +92,7 @@ def export_PCell_parameters(filepath):
           else:
             child2 = SubElement(child, key)
             child2.text = params[key]
-          print (f'{child2.text}, {type(child2.text)}')
+        print ('%s, %s' % (child2.text, type(child2.text)))
 
       count+=1
   print(top)
@@ -105,7 +112,7 @@ def import_PCell_parameters(filepath):
 
   with open(filepath, 'r') as file:
     d = xml_to_dict(file.read())
-  print('Found %s PCells'%len(d['PCells']['PCell']))
+  print('Found %s PCells' % len(d['PCells']['PCell']))
   for PCell_params in d['PCells']['PCell']:
     print(PCell_params)
     if PCell_params['Name'] == 'Contra-Directional Coupler':
@@ -119,17 +126,19 @@ def run_command_python(arguments):
     # Load the external Python software location from the KLayout configuration
     python_path = pya.Application.instance().get_config('external_Python_executable')
 
-    if not os.path.exists(python_path):
+    if not os.path.isfile(python_path):
 
         python_path_options = [
             os.path.join(os.path.expanduser('~'), 'opt/anaconda3/bin/python'),
             '/usr/local/bin/python3',
             'C:\\ProgramData\\Anaconda3\\python.exe',
+            os.path.join(os.path.expanduser('~'), 'AppDta/Local/Continuum/anaconda3/bin/python.exe'),
+            os.path.join(os.path.expanduser('~'), 'AppDta/Local/Continuum/anaconda3/python.exe'),
             os.path.join(os.path.expanduser('~'), 'Anaconda3/python.exe' )
         ]
         for p in python_path_options: 
             p = os.path.normpath(p)
-            if os.path.exists(p):
+            if os.path.isfile(p):
                 print(p)
                 process = subprocess.Popen([p, '--version'], stdout=subprocess.PIPE, stderr = subprocess.PIPE, encoding='utf8')
                 output1b=''; output2b=''
@@ -150,13 +159,13 @@ def run_command_python(arguments):
                     break
 
     # if it is still not found, ask the user
-    if not os.path.exists(python_path):
+    if not os.path.isfile(python_path):
         print('SiEPIC.simulation.generate PCell: External Python software not found')
         question = pya.QInputDialog()
         # (QWidget ptr parent, string title, string label)
         python_path = question.getText(pya.Application().instance().main_window(), "Python 3 path", "Please enter the path to the Python 3 executable:")
 
-    if not os.path.exists(python_path):
+    if not os.path.isfile(python_path):
         warning = pya.QMessageBox()
         warning.setStandardButtons(pya.QMessageBox.Ok)
         warning.setText("Error: SiEPIC.simulation.generate PCell: External Python software not found.")
@@ -167,7 +176,11 @@ def run_command_python(arguments):
     pya.Application.instance().set_config('external_Python_executable', python_path)
                       
     arguments.insert(0,python_path)
-    process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr = subprocess.PIPE, encoding='utf8')
+    try:
+        process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr = subprocess.PIPE, encoding='utf8')
+    except:
+        process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+
 #    process = await asyncio.create_subprocess_shell(arguments, stdout=subprocess.PIPE, stderr = subprocess.PIPE, encoding='utf8')
 #    stdout, stderr = await process.communicate()
 
@@ -185,11 +198,11 @@ def run_command_python(arguments):
             stderr += stderr1.strip()
     rc = process.poll()
 
-    print(f'[{arguments!r} exited with {process.returncode}]')
+    print('[%s exited with %s]' % (arguments, process.returncode))
     if stdout:
-        print(f'[stdout]\n{stdout}')
+        print('[stdout]\n%s' % stdout)
     if stderr:
-        print(f'[stderr]\n{stderr}')
+        print('[stderr]\n%s' % stderr)
         warning = pya.QMessageBox()
         warning.setStandardButtons(pya.QMessageBox.Ok)
         warning.setText("SiEPIC.simulation.generate PCell: \nPython code returned error:\n\n%s" % stderr )

@@ -208,10 +208,6 @@ class Component():
     def has_model(self):
 
         # check if this component has a compact model in the INTC library
-        from .utils import get_technology, get_technology_by_name
-        TECHNOLOGY = get_technology()
-        TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
-
         from ._globals import INTC_ELEMENTS
         try:
             return (self.library.lower().replace('/','::') + "::" + self.component.lower()) in INTC_ELEMENTS
