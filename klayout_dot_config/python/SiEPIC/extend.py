@@ -1329,8 +1329,10 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
 
     # create individual sources:
     for c in components:
-        for p in c.pins:
+        for idx,p in enumerate(c.pins):
             if p.type == _globals.PIN_TYPES.ELECTRICAL:
+                if idx > 0:  
+                    if p.pin_name == c.pins[idx - 1].pin_name: continue  # Skip pins that have exactly the same name (assume they are internally connected in the component)
                 NetName = " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
                 electricalIO_pins += NetName
                 DCsources += "N" + \
@@ -1385,7 +1387,9 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
                
         nets_str = ''        
         if explicit_ordering:   # Order the pins numerically (Stefan Preble, RIT)
-            for p in c.pins:
+            for idx, p in enumerate(c.pins):
+                if idx > 0:  
+                    if p.pin_name == c.pins[idx - 1].pin_name: continue  # Skip pins that have exactly the same name (assume they are internally connected in the component)
                 if p.type == _globals.PIN_TYPES.ELECTRICAL:
                     nets_str += " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
                 if p.type == _globals.PIN_TYPES.OPTICALIO:
