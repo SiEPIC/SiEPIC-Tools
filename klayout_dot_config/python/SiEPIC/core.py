@@ -209,9 +209,11 @@ class Component():
 
         # check if this component has a compact model in the INTC library
         from ._globals import INTC_ELEMENTS
-        try:
+        if self.library and self.component:
             return (self.library.lower().replace('/','::') + "::" + self.component.lower()) in INTC_ELEMENTS
-        except:
+        else:
+            from .utils import get_layout_variables
+            TECHNOLOGY, lv, ly, cell = get_layout_variables()
             return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
           
 
