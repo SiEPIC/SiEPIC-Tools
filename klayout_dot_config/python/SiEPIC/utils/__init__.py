@@ -209,6 +209,9 @@ def get_technology(verbose=False, query_activecellview_technology=False):
             if layerInfo == '*/*':
                 # likely encoutered a layer group, skip it
                 pass
+            elif layerInfo == 'GUIDING_SHAPES':
+                # Perhaps someone copy and pasted from a PCell
+                pass
             else:
                 if ' ' in layerInfo:
                     layerInfo = layerInfo.split(' ')[1]
@@ -524,9 +527,11 @@ def select_paths(layer, cell=None, verbose=None):
         print("SiEPIC.utils.select_paths: selection, before: %s" % lv.object_selection)
     if selection == []:
         itr = cell.begin_shapes_rec(ly.layer(layer))
+        itr_count = 0
         while not(itr.at_end()):
-            if verbose:
-                print("SiEPIC.utils.select_paths: itr: %s" % itr)
+#            if verbose:
+#                print("SiEPIC.utils.select_paths: itr: %s" % itr)
+            itr_count += 1
             if itr.shape().is_path():
                 if verbose:
                     print("SiEPIC.utils.select_paths: path: %s" % itr.shape())
@@ -536,6 +541,8 @@ def select_paths(layer, cell=None, verbose=None):
                 selection[-1].top = cell.cell_index()
                 selection[-1].cv_index = 0
             itr.next()
+        if verbose:
+            print("SiEPIC.utils.select_paths: # shapes founded: %s" % itr_count)
         lv.object_selection = selection
     else:
         lv.object_selection = [o for o in selection if (
