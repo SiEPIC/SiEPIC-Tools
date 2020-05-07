@@ -24,13 +24,15 @@ def install_lumapi():
 
 
 def get_pip_main():
+
     import pip
     # check if pip version is new:
     if int(pip.__version__.split('.')[0]) > 9:
         from pip._internal import main
+        return main.main
     else:
         from pip import main
-    return main
+        return main
 
 
 def install_numpy():
@@ -39,16 +41,21 @@ def install_numpy():
     except:
         try:
             import pip
-            import pya
-            install = pya.MessageBox.warning(
-                "Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
-            if install == pya.MessageBox.Yes:
-                # try installing using pip
-                from SiEPIC.install import get_pip_main
-                main = get_pip_main()
-                main(['install', 'numpy'])
+            try:
+                import pya
+                install = pya.MessageBox.warning(
+                    "Install package?", "Install package 'numpy' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+                if install == pya.MessageBox.Yes:
+                    # try installing using pip
+                    from SiEPIC.install import get_pip_main
+                    main = get_pip_main()
+                    main(['install', 'numpy'])
+            except ImportError:
+                install = pya.MessageBox.warning(
+                    "Install using pip failed", "Error importing 'pip' to install package 'numpy'",  pya.MessageBox.Yes + pya.MessageBox.No)
+                return False
         except ImportError:
-            pass
+            return False
     return True
 
 
@@ -67,5 +74,5 @@ def install_scipy():
                 main = get_pip_main()
                 main(['install', 'scipy'])
         except ImportError:
-            pass
+            return False
     return True

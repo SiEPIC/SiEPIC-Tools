@@ -82,6 +82,11 @@ set("calculate graphs", true);
 connect("OSC_1", "input", "LPF_1", "output");
 connect("EYE_1", "input", "LPF_1", "output");
 
+select("EYE_1");
+set("ignore start periods",2);
+set("ignore end periods",1);
+
+
 run;
 
 # plot oscilloscope data

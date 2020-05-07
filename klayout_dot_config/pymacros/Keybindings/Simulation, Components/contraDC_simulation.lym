@@ -9,7 +9,7 @@
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
  <shortcut/>
- <show-in-menu>true</show-in-menu>
+ <show-in-menu>false</show-in-menu>
  <group-name>pcell</group-name>
  <menu-path>siepic_menu.simulation_components.begin</menu-path>
  <interpreter>python</interpreter>
@@ -20,5 +20,5 @@
 import pya
 from SiEPIC import lumerical
 
-lumerical.ApodizedContraDC.TOP()</text>
+lumerical.contraDirectionalCoupler.cdc_simulation()</text>
 </klayout-macro>

@@ -22,8 +22,12 @@ def show_component_info():
   def gen_ui():
     global wdg_show_component_info
     if 'wdg_show_component_info' in globals():
-      if wdg_show_component_info is not None and not wdg_show_component_info.destroyed():
-        wdg_show_component_info.destroy()
+#      if wdg_show_component_info is not None and not wdg_show_component_info.destroyed():
+      if wdg_show_component_info is not None:
+        try:
+          wdg_show_component_info.destroy()
+        except:
+          pass
     global wtext_show_component_info
   
     def button_clicked(checked):
@@ -32,7 +36,7 @@ def show_component_info():
   
     wdg_show_component_info = pya.QDialog(pya.Application.instance().main_window())
   
-    wdg_show_component_info.setAttribute(pya.Qt.WA_DeleteOnClose)
+#    wdg_show_component_info.setAttribute(pya.Qt.WA_DeleteOnClose)
     wdg_show_component_info.setWindowTitle("SiEPIC-Tools: Information on selected components")
   
     wdg_show_component_info.resize(800, 500)
@@ -77,7 +81,7 @@ def show_component_info():
         text += ('&lt;br&gt;&amp;nbsp;&amp;nbsp;PCell parameters:')
         for key in params.keys():
           text += ('&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;')
-          text += ("Parameter: %s, Value: %s") % (key, params[key])
+          text += ("Parameter: %s, Value: %s") % (key, str(params[key]))
       text += '&lt;br&gt;&lt;br&gt;'
 
 

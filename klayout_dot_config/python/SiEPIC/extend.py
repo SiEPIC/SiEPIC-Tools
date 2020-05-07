@@ -20,6 +20,7 @@ pya.Path and pya.DPath Extensions:
   - translate_from_center(offset), returns a new path whose points have been offset
     by 'offset' from the center of the original path
   - snap(pins), snaps the path in place to the nearest pin
+  - snap_m, snaps the path to the nearest metal pins [Karl McNulty, RIT Integrated Photonics Group]
   - to_dtype(dbu), for KLayout < 0.25, integer to float using dbu
   - to_itype(dbu), for KLayout < 0.25, float to integer using dbu
 
@@ -81,7 +82,6 @@ def to_itype(self, dbu):
     path.width = round(self.width / dbu)
     return path
 
-
 def snap(self, pins):
     '''
     snap - pya.Path extension
@@ -108,47 +108,261 @@ def snap(self, pins):
 
     # array of path vertices:
     pts = self.get_points()
+    
+    def snap_endpoints(input_pts, pins):  
+      # function takes a list of pts of a path, and finds the closest pins to this path
+      # provided that the pins are facing the correct way to make a connection.
+      # when you have 2 or more segments (3 or more points), then you can move the two end segments.
+    
+      pts = input_pts
 
-    # angles of all segments:
-    ang = angle_vector(pts[0] - pts[1])
+      # find closest pin to the first pts
+      # angle of first segment:
+      ang = angle_vector(pts[0] - pts[1])
+      # sort all the pins based on distance to the Path endpoint
+      # only consider pins that are facing each other, 180 degrees
+      pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
+                            180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[0]))
 
-    # sort all the pins based on distance to the Path endpoint
-    # only consider pins that are facing each other, 180 degrees
-    pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
-                          180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[0]))
+      # angle of last segment (do it before moving the pts)
+      ang2 = angle_vector(pts[-1] - pts[-2])
+  
+      if len(pins_sorted):
+          # pins_sorted[0] is the closest one
+          dpt = pins_sorted[0].center - pts[0]
+          print(dpt)
+          # check if the pin is close enough to the path endpoint
+          if dpt.abs() <= d_min:
+              # snap the endpoint to the pin
+              pts[0] += dpt
+              # move the first corner
+              if(round(ang % 180) == 0):
+                  pts[1].y += dpt.y
+              else:
+                  pts[1].x += dpt.x
+              snapped0 = True
+          else:
+              snapped0 = False
+      else:
+          snapped0 = False
+  
+      # find closest pin to the last pts
+      # do the same thing on the other end (check that it isn't the same pin as above):
+      pins_sorted = sorted([pin for pin in pins if round((ang2 - pin.rotation) % 360) ==
+                            180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
+      if len(pins_sorted):
+          if (len(pts)==2) and (pins_sorted[0].center != pts[-1]):
+              snapped1 = False
+        
+          elif pins_sorted[0].center != pts[0]:
+              dpt = pins_sorted[0].center - pts[-1]
+              if dpt.abs() <= d_min:
+                  # snap the endpoint to the pin
+                  pts[-1] += dpt
+                  # move the last corner
+                  if(round(ang2 % 180) == 0):
+                      pts[-2].y += dpt.y
+                  else:
+                      pts[-2].x += dpt.x
+              snapped1 = True
+          else:
+              snapped1 = False
+      else:
+          snapped1 = False
 
-    if len(pins_sorted):
-        # pins_sorted[0] is the closest one
-        dpt = pins_sorted[0].center - pts[0]
-        # check if the pin is close enough to the path endpoint
-        if dpt.abs() <= d_min:
-            # snap the endpoint to the pin
-            pts[0] += dpt
-            # move the first corner
-            if(round(ang % 180) == 0):
-                pts[1].y += dpt.y
-            else:
-                pts[1].x += dpt.x
+      # check that the path has non-zero length after the snapping operation
+      test_path = pya.Path()
+      test_path.points = pts
+      if test_path.length() > 0:
+          return_pts = pts
+      else:
+          return_pts = input_pts
+          
+      # return flag to track whether BOTH endpoints were snapped
+      return return_pts, snapped0 & snapped1
 
-    # do the same thing on the other end (check that it isn't the same pin as above):
-    ang = angle_vector(pts[-1] - pts[-2])
-    pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
-                          180 and pin.type == _globals.PIN_TYPES.OPTICAL], key=lambda x: x.center.distance(pts[-1]))
-    if len(pins_sorted):
-        if pins_sorted[0].center != pts[0]:
-            dpt = pins_sorted[0].center - pts[-1]
-            if dpt.abs() <= d_min:
-                pts[-1] += dpt
+
+    # Perform snapping:
+    if len(pts) > 2:
+      newpoints, snapped_both = snap_endpoints(pts, pins)
+      # for a previously created extra 2 vertices, check if we still need it
+      if len(pts) == 4:
+        if newpoints[1] == newpoints[2]:
+            newpoints = [ newpoints[0],newpoints[3] ]
+      self.points = newpoints  
+    elif len(pts) == 2:
+      # call the snap and check if it worked. case where the two components' pins are already aligned
+      newpoints, snapped_both = snap_endpoints(pts, pins)
+      if snapped_both:
+        self.points = newpoints
+        return True
+      else:
+        # - snapping failed; case where the two components' pins are not aligned
+        # - need to add extra vertices; assume we add two more points, that we have scenario of an S-Bend
+        #   - add two more points,  
+        ang = angle_vector(pts[0] - pts[1])
+        if(round(ang % 180) == 0):
+            # move the y coordinate
+            newpoints = [ pts[0], 
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[0].y),
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[1].y),
+                          pts[1] ]
+        else:
+            # move the x coordinate
+            newpoints = [ pts[0], 
+                          pya.Point(pts[0].x, (pts[0].y+pts[1].y)/2),
+                          pya.Point(pts[0].x, (pts[0].y+pts[1].y)/2),
+                          pts[1] ]
+
+        #  - call the snap and check if it worked.  
+        newpoints, snapped_both = snap_endpoints(newpoints, pins)
+        if snapped_both:
+          self.points = newpoints
+          # if we still need the 2 extra
+          if newpoints[1] == newpoints[2]:
+             newpoints = [ newpoints[0],newpoints[3] ]
+          #  - snapping successful:
+          self.points = newpoints  
+          return True
+        else:
+          return False  
+    else:
+      return False
+      
+
+'''
+snap_m - pya.Path extension
+This function snaps the two metal path endpoints to the nearest metal pins by adjusting the end segments
+Author: Karl McNulty, RIT Integrated Photonics Group
+Input:
+ - self: the Path object
+ - pins: an array of Pin objects, which are paths with 2 points,
+         with the vector giving the direction (out of the component)
+Output:
+ - modifies the original Path
+
+'''
+
+
+def snap_m(self, pins):
+    # Import functionality from SiEPIC-Tools:
+    from .utils import angle_vector, get_technology
+    from . import _globals
+    TECHNOLOGY = get_technology()
+
+    # Search for pins within this distance to the path endpoints, e.g., 10 microns
+    d_min = _globals.PATH_SNAP_PIN_MAXDIST / TECHNOLOGY['dbu']
+
+    if not len(pins):
+        return
+
+    # array of path vertices:
+    pts = self.get_points()
+    
+    def snap_endpoints(input_pts, pins):  
+      # function takes a list of pts of a path, and finds the closest pins to this path
+      # provided that the pins are facing the correct way to make a connection.
+      # when you have 2 or more segments (3 or more points), then you can move the two end segments.
+    
+      pts = input_pts
+
+      # find closest pin to the first pts
+      # angles of all segments:
+      ang = angle_vector(pts[0] - pts[1])
+      # sort all the pins based on distance to the Path endpoint
+      # only consider pins that are facing each other, 180 degrees
+      pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
+                            180 and pin.type == _globals.PIN_TYPES.ELECTRICAL], key=lambda x: x.center.distance(pts[0]))
+  
+      if len(pins_sorted):
+          # pins_sorted[0] is the closest one
+          dpt = pins_sorted[0].center - pts[0]
+          # check if the pin is close enough to the path endpoint
+          if dpt.abs() <= d_min:
+              # snap the endpoint to the pin
+              pts[0] += dpt
+              if len(pts)>2:
+                # move the first corner
                 if(round(ang % 180) == 0):
-                    pts[-2].y += dpt.y
+                    pts[1].y += dpt.y
                 else:
-                    pts[-2].x += dpt.x
+                    pts[1].x += dpt.x
+              snapped0 = True
+          else:
+              snapped0 = False
+      else:
+          snapped0 = False
+  
+      # find closest pin to the last pts
+      # do the same thing on the other end (check that it isn't the same pin as above):
+      ang = angle_vector(pts[-1] - pts[-2])
+      pins_sorted = sorted([pin for pin in pins if round((ang - pin.rotation) % 360) ==
+                            180 and pin.type == _globals.PIN_TYPES.ELECTRICAL], key=lambda x: x.center.distance(pts[-1]))
+      if len(pins_sorted):
+          if pins_sorted[0].center != pts[0]:
+              dpt = pins_sorted[0].center - pts[-1]
+              if dpt.abs() <= d_min:
+                  # snap the endpoint to the pin
+                  pts[-1] += dpt
+                  if len(pts)>2:
+                    # move the last corner
+                    if(round(ang % 180) == 0):
+                        pts[-2].y += dpt.y
+                    else:
+                        pts[-2].x += dpt.x
+              snapped1 = True
+          else:
+              snapped1 = False
+      else:
+          snapped1 = False
 
-    # check that the path has non-zero length after the snapping operation
-    test_path = pya.Path()
-    test_path.points = pts
-    if test_path.length() > 0:
-        self.points = pts
+      # check that the path has non-zero length after the snapping operation
+      test_path = pya.Path()
+      test_path.points = pts
+      if test_path.length() > 0:
+          return_pts = pts
+      else:
+          return_pts = input_pts
+          
+      # return flag to track whether BOTH endpoints were snapped
+      return return_pts, snapped0 & snapped1
+
+    if len(pts) > 2:
+      self.points, snapped_both = snap_endpoints(pts, pins)
+    elif len(pts) == 2:
+      # call the snap and check if it worked. case where the two components' pins are already aligned
+      newpoints, snapped_both = snap_endpoints(pts, pins)
+      if snapped_both:
+        self.points = newpoints
+        return True
+      else:
+        # - snapping failed; case where the two components' pins are not aligned
+        # - need to add extra vertices; assume we add two more points, that we have scenario of an S-Bend
+        #   - add two more points,  
+        ang = angle_vector(pts[0] - pts[1])
+        if(round(ang % 180) == 0):
+            # move the y coordinate
+            newpoints = [ pts[0], 
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[0].y),
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[1].y),
+                          pts[1] ]
+        else:
+            # move the x coordinate
+            newpoints = [ pts[0], 
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[0].y),
+                          pya.Point((pts[0].x+pts[1].x)/2, pts[1].y),
+                          pts[1] ]
+
+        #  - call the snap and check if it worked.  
+        newpoints, snapped_both = snap_endpoints(newpoints, pins)
+        if snapped_both:
+          #  - snapping successful, added 2 points.  
+          self.points = newpoints
+          return True
+        else:
+          return False  
+    else:
+      return False
 
 # pya.Path.get_points = get_points
 # pya.Path.get_dpoints = get_dpoints
@@ -167,6 +381,7 @@ import siepic_tools.extend.path  # noqa
 pya.Path.to_dtype = to_dtype
 pya.Path.to_itype = to_itype
 pya.Path.snap = snap
+pya.Path.snap_m = snap_m # function added by Karl McNulty (RIT) for metal pin functionality
 
 # DPath Extension
 #################################################################################
@@ -365,6 +580,52 @@ def find_pins(self, verbose=False, polygon_devrec=None):
 
     if error_text:
         pya.MessageBox.warning("Problem with component pin", error_text, pya.MessageBox.Ok)
+
+    # Metal Pin Recognition layer 
+    if not 'PinRec' in TECHNOLOGY:
+        pya.MessageBox.warning(
+            "Problem with Technology", "Problem with active Technology: missing layer PinRec", pya.MessageBox.Ok)
+        return
+
+    try:    
+        LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRecM'])
+    except:
+        LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
+
+
+    error_text = ''
+
+    # Metal Pin recognition by Karl McNulty (RIT)
+    # iterate through all the PinRec shapes in the cell
+    it = self.begin_shapes_rec(LayerPinRecN)
+    while not(it.at_end()):
+        #    if verbose:
+        #      print(it.shape().to_s())
+        # Assume a PinRec Path is an optical pin
+        if it.shape().is_path():
+            if verbose:
+                print("Path: %s" % it.shape())
+            # get the pin path
+            pin_path = it.shape().path.transformed(it.itrans())
+            # Find text label (pin name) for this pin by searching inside the Path bounding box
+            # Text label must be on DevRec layer
+            pin_name = None
+            subcell = it.cell()  # cell (component) to which this shape belongs
+            iter2 = subcell.begin_shapes_rec_touching(LayerPinRecN, it.shape().bbox())
+            while not(iter2.at_end()):
+                if iter2.shape().is_text():
+                    pin_name = iter2.shape().text.string
+                iter2.next()
+            if pin_name == None or pin_path.num_points()!=2:
+                print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
+                error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name.\n" %
+                               (pin_path, subcell.name))
+            # raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nElectrical Pins must have a pin name." % (pin_path, subcell.name))
+            else:
+              # Store the pin information in the pins array
+              pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
+        it.next()
+
 
     # return the array of pins
     return pins
@@ -930,8 +1191,10 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
 
     # create individual sources:
     for c in components:
-        for p in c.pins:
+        for idx,p in enumerate(c.pins):
             if p.type == _globals.PIN_TYPES.ELECTRICAL:
+                if idx > 0:  
+                    if p.pin_name == c.pins[idx - 1].pin_name: continue  # Skip pins that have exactly the same name (assume they are internally connected in the component)
                 NetName = " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
                 electricalIO_pins += NetName
                 DCsources += "N" + \
@@ -974,17 +1237,38 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
     text_subckt += '.param MC_non_uniform=99 \n'
 
     for c in components:
-        # optical nets: must be ordered electrical, optical IO, then optical
-        nets_str = ''
+        # Check pins to see if explicitly ordered numerically - requires first character in pin name to be a number (Stefan Preble, RIT)
+        explicit_ordering = False
         for p in c.pins:
-            if p.type == _globals.PIN_TYPES.ELECTRICAL:
-                nets_str += " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
-        for p in c.pins:
-            if p.type == _globals.PIN_TYPES.OPTICALIO:
-                nets_str += " " + str(p.net.idx)
-        for p in c.pins:
-            if p.type == _globals.PIN_TYPES.OPTICAL:
-                nets_str += " N$" + str(p.net.idx)
+            pinname1 = p.pin_name[0]
+            if pinname1.isdigit():
+                explicit_ordering = True
+            else:
+                explicit_ordering = False  # all pins must be numbered
+                break
+               
+        nets_str = ''        
+        if explicit_ordering:   # Order the pins numerically (Stefan Preble, RIT)
+            for idx, p in enumerate(c.pins):
+                if idx > 0:  
+                    if p.pin_name == c.pins[idx - 1].pin_name: continue  # Skip pins that have exactly the same name (assume they are internally connected in the component)
+                if p.type == _globals.PIN_TYPES.ELECTRICAL:
+                    nets_str += " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
+                if p.type == _globals.PIN_TYPES.OPTICALIO:
+                    nets_str += " " + str(p.net.idx)    
+                if p.type == _globals.PIN_TYPES.OPTICAL:
+                    nets_str += " N$" + str(p.net.idx)
+        else:
+            # optical nets: must be ordered electrical, optical IO, then optical
+            for p in c.pins:
+                if p.type == _globals.PIN_TYPES.ELECTRICAL:
+                    nets_str += " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
+            for p in c.pins:
+                if p.type == _globals.PIN_TYPES.OPTICALIO:
+                    nets_str += " " + str(p.net.idx)
+            for p in c.pins:
+                if p.type == _globals.PIN_TYPES.OPTICAL:
+                    nets_str += " N$" + str(p.net.idx)
 
         trans = KLayoutInterconnectRotFlip[(c.trans.angle, c.trans.is_mirror())]
 

@@ -225,7 +225,7 @@ PROPVALUE PCELL=Ring_Modulator_DB
 PROPATTR 22 
 PROPVALUE P(devrec)=[layer:68/0]
 PROPATTR 21 
-PROPVALUE P(pinrec)=[layer:69/0]
+PROPVALUE P(pinrec)=[layer:1/10]
 PROPATTR 20 
 PROPVALUE P(textl)=[layer:66/0]
 PROPATTR 19 

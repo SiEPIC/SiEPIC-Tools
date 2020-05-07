@@ -495,6 +495,23 @@
   <source>1/10@1</source>
  </properties>
  <properties>
+  <frame-color>#006080</frame-color>
+  <fill-color>#006080</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I11</dither-pattern>
+  <line-style />
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>2</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>PinRecM</name>
+  <source>999/10@1</source>
+ </properties>
+ <properties>
   <frame-color>#004080</frame-color>
   <fill-color>#004080</fill-color>
   <frame-brightness>0</frame-brightness>
@@ -543,6 +560,40 @@
    <animation>0</animation>
    <name>Waveguide</name>
    <source>1/0@1</source>
+  </group-members>
+  <group-members>
+   <frame-color>#80a8ff</frame-color>
+   <fill-color>#80a8ff</fill-color>
+   <frame-brightness>0</frame-brightness>
+   <fill-brightness>0</fill-brightness>
+   <dither-pattern>I15</dither-pattern>
+   <line-style/>
+   <valid>true</valid>
+   <visible>true</visible>
+   <transparent>false</transparent>
+   <width>2.0</width>
+   <marked>false</marked>
+   <xfill>false</xfill>
+   <animation>0</animation>
+   <name>Wireguide_M1</name>
+   <source>41/0@1</source>
+  </group-members>
+  <group-members>
+   <frame-color>#8000ff</frame-color>
+   <fill-color>#8000ff</fill-color>
+   <frame-brightness>0</frame-brightness>
+   <fill-brightness>0</fill-brightness>
+   <dither-pattern>I5</dither-pattern>
+   <line-style/>
+   <valid>true</valid>
+   <visible>true</visible>
+   <transparent>false</transparent>
+   <width/>
+   <marked>false</marked>
+   <xfill>false</xfill>
+   <animation>0</animation>
+   <name>Wireguide_ML</name>
+   <source>45/0@1</source>
   </group-members>
  </properties>
  <name/>

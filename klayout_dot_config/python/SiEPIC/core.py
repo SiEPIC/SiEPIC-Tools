@@ -208,12 +208,14 @@ class Component():
     def has_model(self):
 
         # check if this component has a compact model in the INTC library
-        from .utils import get_technology, get_technology_by_name
-        TECHNOLOGY = get_technology()
-        TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
-
         from ._globals import INTC_ELEMENTS
-        return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+        if self.library and self.component:
+            return (self.library.lower().replace('/','::') + "::" + self.component.lower()) in INTC_ELEMENTS
+        else:
+            from .utils import get_layout_variables
+            TECHNOLOGY, lv, ly, cell = get_layout_variables()
+            return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+          
 
     def get_polygons(self, include_pins=True):
         from .utils import get_layout_variables
@@ -307,10 +309,12 @@ class WaveguideGUI():
             else:
                 self.window.findChild('radius').text = '5'
             if 'bezier' in waveguide:
-                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Checked
+                self.window.findChild('adiabatic').setChecked(True)
+#                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Checked
                 self.window.findChild('bezier').text = waveguide['bezier']
             else:
-                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Unchecked
+                self.window.findChild('adiabatic').setChecked(False)
+#                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Unchecked
                 self.window.findChild('bezier').text = '0.45'
 
     def get_parameters(self, show):
@@ -342,8 +346,14 @@ class WaveguideGUI():
                 params['wgs'].append({'layer': component['layer'], 'width': float(
                     component['width']), 'offset': float(component['offset'])})
                 w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
-                if params['width'] < w:
+                if ((params['width'] < w) & (component['layer'] != 'DevRec')) and (w < 10):
                     params['width'] = w
+                # enable 2 new parameters: CML and model to support multiple WG models
+                try: 
+                    params['CML'] = waveguide['CML']
+                    params['model'] = waveguide['model']
+                except:
+                    pass
             return params
         else:
             return None

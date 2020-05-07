@@ -1,0 +1,4 @@
+# How to install:
+#        Windows: place the file in "C:\Users\[USERNAME]\AppData\Roaming\Lumerical\" directory
+#        Mac OS: place the file in "/Users/[USERNAME]/.config/Lumerical/" directory
+#        Linux: place the file in "~/.config/Lumerical/" directory

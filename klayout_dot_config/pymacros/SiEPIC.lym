@@ -45,6 +45,15 @@ if sys.version_info[0] == 3:
     import builtins as builtins
 elif sys.version_info[0] == 2:
     import __builtin__ as builtins
+    
+    question = pya.QMessageBox()
+    question.setStandardButtons(pya.QMessageBox.Ok)
+    question.setText("SiEPIC-Tools requires Python version 3. ")
+    KLayout_link0='https://www.klayout.de/build.html'
+    KLayout_link1='https://github.com/KLayout/klayout/issues/231'
+    KLayout_link2='https://github.com/KLayout/klayout/issues/381#issuecomment-546781403'
+    question.setInformativeText("\nPlease download an install from %s\nIf it is not available, please ask here: %s\nYou can also download it from here: %s" % (KLayout_link0, KLayout_link1, KLayout_link2 ))
+    pya.QMessageBox_StandardButton(question.exec_())
 
 try:
     builtins.ACTIONS

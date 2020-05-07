@@ -24,6 +24,7 @@ Script_SiEPIC_General=1
 # Box, Point, Polygon, Text, Trans, LayerInfo, etc
 from pya import *
 from SiEPIC.utils import get_technology, get_technology_by_name
+from pya import PCellDeclarationHelper
 
 class LumericalINTERCONNECT_Laser(PCellDeclarationHelper):
   """

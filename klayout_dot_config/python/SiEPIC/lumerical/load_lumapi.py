@@ -31,33 +31,34 @@ def load_lumapi(verbose=False):
   # Load the Lumerical software location from KLayout configuration
   path = pya.Application.instance().get_config('siepic_tools_Lumerical_Python_folder')
 
-  # if it isn't defined, start with Lumerical's defaults
-  if not path:
+  if not os.path.exists(path):
     if platform.system() == 'Darwin':
-      path_fdtd = "/Applications/Lumerical/FDTD Solutions/FDTD Solutions.app/Contents/API/Python"
-      if os.path.exists(path_fdtd):
-        path = path_fdtd
-      path_intc = "/Applications/Lumerical/INTERCONNECT/INTERCONNECT.app/Contents/API/Python"
-      if os.path.exists(path_intc):
-        path = path_intc
+      path_app = '/Applications'
     elif platform.system() == 'Linux':
-      path_fdtd = "/opt/lumerical/fdtd/api/python"
-      if os.path.exists(path_fdtd):
-        path = path_fdtd
-      path_intc = "/opt/lumerical/interconnect/api/python"
-      if os.path.exists(path_intc):
-        path = path_intc
+      path_app = '/opt'
     elif platform.system() == 'Windows': 
-      path_fdtd = "C:\\Program Files\\Lumerical\\FDTD Solutions\\api\\python"
-      if os.path.exists(path_fdtd):
-        path = path_fdtd
-      path_intc = "C:\\Program Files\\Lumerical\\INTERCONNECT\\api\\python"
-      if os.path.exists(path_intc):
-        path = path_intc
+      path_app = 'C:\\Program Files'
     else:
       print('Not a supported OS')
       return
+    # Application folder paths containing Lumerical
+    p = [s for s in os.listdir(path_app) if "Lumerical" in s]
+    # check sub-folders for lumapi.py
+    import fnmatch
+    for dir_path in p:
+      search_str = 'lumapi.py'
+      matches = []
+      for root, dirnames, filenames in os.walk(os.path.join(path_app,dir_path), followlinks=True):
+         for filename in fnmatch.filter(filenames, search_str):
+            matches.append(root)
+      if matches:
+        if verbose:
+          print(matches)
+        path = matches[0]
 
+  print('Lumerical lumapi.py path: %s' % path)
+
+      
   # if it is still not found, ask the user
   if not os.path.exists(path):
     print('SiEPIC.lumerical.load_api: Lumerical software not found')
