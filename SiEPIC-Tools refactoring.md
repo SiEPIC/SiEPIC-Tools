@@ -13,10 +13,10 @@ Rules of thumb:
 ```
 klayout_dot_config
 ├── pymacros
-│   └── *.lym (SiEPIC_klayout package initialization)
+│   └── *.lym (SiEPIC package initialization)
 ├── python
-│   ├── SiEPIC_klayout (module to be loaded from inside klayout)
-│   └── SiEPIC (main python package)
+│   ├── SiEPIC (module to be loaded from inside klayout)
+│   └── siepic_tools (main python package)
 │       └── tech (symlink to klayout's tech)
 ├── tech (files regarding tech)
 │   └── tech_name

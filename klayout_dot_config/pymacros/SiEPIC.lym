@@ -31,6 +31,15 @@ import ctypes
 # Determine whether we have Python 2 or Python 3
 import sys
 import SiEPIC
+import SiEPIC.install
+import SiEPIC.extend
+import SiEPIC._globals
+import SiEPIC.core
+import SiEPIC.examples
+import SiEPIC.github
+import SiEPIC.scripts
+import SiEPIC.utils
+import SiEPIC.setup
 
 if sys.version_info[0] == 3:
     import builtins as builtins
