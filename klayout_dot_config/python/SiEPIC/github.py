@@ -83,10 +83,12 @@ def github_check_SiEPICTools_version():
         return ''
 
     version = json.loads(r.text)['name']
-    print(version)
     
     from SiEPIC.__init__ import __version__
-    if __version__ not in version:
+
+    print('Latest version on GitHub: %s, current version: v%s' % (version, __version__))
+
+    if 'v'+__version__ < version:
         pya.MessageBox.warning("SiEPIC-Tools: new version available", "SiEPIC-Tools: new version available: %s.\nUpgrade using Tools > Manage Packages > Update Packages" % (version), pya.MessageBox.Ok)
       
 
