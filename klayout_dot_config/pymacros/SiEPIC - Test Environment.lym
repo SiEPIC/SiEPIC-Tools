@@ -15,7 +15,7 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text>
-import SiEPIC, pya
+import SiEPIC, siepic_tools, pya
 
 '''
 #################################################################################
@@ -42,12 +42,15 @@ utils.arc = arc_test
 #################################################F################################
 '''
 
+
 if 1:
     import sys
     print (sys.version[0])
     if int(sys.version[0]) &gt; 2:
       from importlib import reload
     SiEPIC = reload(SiEPIC)
+    siepic_tools = reload(siepic_tools)
+    siepic_tools.utils = reload(siepic_tools.utils)
     SiEPIC.extend = reload(SiEPIC.extend)
     SiEPIC._globals = reload(SiEPIC._globals)
     SiEPIC.core = reload(SiEPIC.core)

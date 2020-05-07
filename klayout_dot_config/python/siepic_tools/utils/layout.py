@@ -881,3 +881,104 @@ def layout_text(cell, layer_text, position, text_string, size):
         pya.DTrans.R0, position.x, position.y))
     dtext.size = size
     cell.shapes(layer_text).insert(dtext)
+
+def layout_taper(cell, layer, trans, w1, w2, length):
+    """ Lays out a taper
+
+    Args:
+        trans: pya.Trans: location and rotation
+        w1: width of waveguide, float
+        w2: width of waveguide, float
+        length: length, float
+
+    """
+    import pya
+    pts = [pya.Point(0,-w1/2), pya.Point(0,w1/2), pya.Point(length,w2/2), pya.Point(length,-w2/2)]
+    cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
+    
+
+def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000):
+    """ Lays out an s-bend
+
+    Args:
+        trans: pya.Trans: location and rotation
+        w: width of waveguide, float
+        r: radius, float
+        h: height, float
+        length: length, float
+
+    """
+
+    from math import pi, cos, sin, log, sqrt, acos
+    from SiEPIC.utils import points_per_circle
+    import pya
+    
+    theta = acos(float(r-abs(h/2))/r)*180/pi
+    x = 2*r*sin(theta/180.0*pi)
+    straight_l = (length - x)/2
+
+    if (straight_l < 0):
+        # Problem: target length is too short. increase
+        print('SBend, too short: straight_l = %s' % straight_l)
+        length += -straight_l + 1
+        straight_l = 1
+
+    waveguide_length = (2*pi*r*(2*theta/360.0)+straight_l*2)
+    
+    # print('SBend: theta %s, x %s, straight_l %s, r %s, h %s' % (theta, x, straight_l, r, h) )
+
+    # define the cell origin as the left side of the waveguide sbend
+
+    if (straight_l >= 0):
+      circle_fraction = abs(theta) / 360.0
+      npoints = int(points_per_circle(r) * circle_fraction)
+      if npoints == 0:
+        npoints = 1
+      da = 2 * pi / npoints * circle_fraction # increment, in radians
+      x1=straight_l
+      x2=length-straight_l
+
+      if h>0:
+        y1=r
+        theta_start1 = 270
+        y2=h-r
+        theta_start2 = 90
+        pts = []
+        th1 = theta_start1 / 360.0 * 2 * pi
+        th2 = theta_start2 / 360.0 * 2 * pi
+        pts.append(pya.Point.from_dpoint(pya.DPoint(0,w/2)))
+        pts.append(pya.Point.from_dpoint(pya.DPoint(0,-w/2)))
+        for i in range(0, npoints+1): # lower left
+          pts.append(pya.Point.from_dpoint(pya.DPoint((x1+(r+w/2)*cos(i*da+th1))/1, (y1+(r+w/2)*sin(i*da+th1))/1)))
+        for i in range(npoints, -1, -1): # lower right
+          pts.append(pya.Point.from_dpoint(pya.DPoint((x2+(r-w/2)*cos(i*da+th2))/1, (y2+(r-w/2)*sin(i*da+th2))/1)))
+        pts.append(pya.Point.from_dpoint(pya.DPoint(length,h-w/2)))
+        pts.append(pya.Point.from_dpoint(pya.DPoint(length,h+w/2)))
+        for i in range(0, npoints+1): # upper right
+         pts.append(pya.Point.from_dpoint(pya.DPoint((x2+(r+w/2)*cos(i*da+th2))/1, (y2+(r+w/2)*sin(i*da+th2))/1)))
+        for i in range(npoints, -1, -1): # upper left
+          pts.append(pya.Point.from_dpoint(pya.DPoint((x1+(r-w/2)*cos(i*da+th1))/1, (y1+(r-w/2)*sin(i*da+th1))/1)))
+      else:
+        y1=-r
+        theta_start1 = 90-theta
+        y2=r+h
+        theta_start2 = 270-theta
+        pts = []
+        th1 = theta_start1 / 360.0 * 2 * pi
+        th2 = theta_start2 / 360.0 * 2 * pi
+        pts.append(pya.Point.from_dpoint(pya.DPoint(length,h-w/2)))
+        pts.append(pya.Point.from_dpoint(pya.DPoint(length,h+w/2)))
+        for i in range(npoints, -1, -1): # upper right
+          pts.append(pya.Point.from_dpoint(pya.DPoint((x2+(r-w/2)*cos(i*da+th2))/1, (y2+(r-w/2)*sin(i*da+th2))/1)))
+        for i in range(0, npoints+1): # upper left
+          pts.append(pya.Point.from_dpoint(pya.DPoint((x1+(r+w/2)*cos(i*da+th1))/1, (y1+(r+w/2)*sin(i*da+th1))/1)))
+        pts.append(pya.Point.from_dpoint(pya.DPoint(0,w/2)))
+        pts.append(pya.Point.from_dpoint(pya.DPoint(0,-w/2)))
+        for i in range(npoints, -1, -1): # lower left
+          pts.append(pya.Point.from_dpoint(pya.DPoint((x1+(r-w/2)*cos(i*da+th1))/1, (y1+(r-w/2)*sin(i*da+th1))/1)))
+        for i in range(0, npoints+1): # lower right
+         pts.append(pya.Point.from_dpoint(pya.DPoint((x2+(r+w/2)*cos(i*da+th2))/1, (y2+(r+w/2)*sin(i*da+th2))/1)))
+      cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
+
+    return waveguide_length
+    
