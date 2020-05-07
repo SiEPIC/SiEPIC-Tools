@@ -47,13 +47,7 @@ def run_INTC(verbose=False):
   if not lumapi:
     print("SiEPIC.lumerical.interconnect.run_INTC: lumapi not loaded")
     pya.MessageBox.warning("Cannot load Lumerical Python integration.", "Cannot load Lumerical Python integration. \nSome SiEPIC-Tools Lumerical functionality will not be available.", pya.MessageBox.Cancel)
-#    warning = pya.QMessageBox()
-#    warning.setStandardButtons(pya.QMessageBox.Cancel)
-#    warning.setText("Cannot load Lumerical Python integration.") 
-#    warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
-#    pya.QMessageBox_StandardButton(warning.exec_())
     return
-    
   
   if verbose:
     print(_globals.INTC)  # Python Lumerical INTERCONNECT integration handle
@@ -77,6 +71,24 @@ def run_INTC(verbose=False):
 
 def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   import sys, os, string
+
+  from ..utils import get_technology, get_technology_by_name
+  # get current technology
+  TECHNOLOGY = get_technology(query_activecellview_technology=True)  
+  # load more technology details (CML file location)
+  TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
+
+  # location for the where the CMLs will locally be installed:
+  dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
+
+  question = pya.QMessageBox()
+  question.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.No)
+  question.setDefaultButton(pya.QMessageBox.Yes)
+  question.setText("SiEPIC-Tools will install the Compact Model Library (CML) in Lumerical INTERCONNECT for the currently active technology. Proceed?")
+  question.setInformativeText("\nTechnology %s\nSource CML file: %s\nInstall location: %s" % (TECHNOLOGY['technology_name'], TECHNOLOGY['INTC_CML_path'], dir_path ))
+  if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
+    return
+
   
   ##################################################################
   # Load Lumerical API: 
@@ -93,16 +105,11 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
 
   # Install technology CML if missing in INTC
-  dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
-  from ..utils import get_technology, get_technology_by_name
-  # get current technology
-  TECHNOLOGY = get_technology(query_activecellview_technology=True)  
-  # load more technology details (CML file location)
-  TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
   # check if the latest version of the CML is in KLayout's tech
   if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
     # install CML
     print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
+
     lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
     # Re-Read INTC element library
     lumapi.evalScript(_globals.INTC, "out=library;")

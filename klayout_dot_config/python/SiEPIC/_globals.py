@@ -34,17 +34,14 @@ PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 100  # 0.1 micron
 
 
+MODULE_NUMPY = False
 try:
-    MODULE_NUMPY = True
     import numpy
+    MODULE_NUMPY = True
 except ImportError:
-    MODULE_NUMPY = False
-
-if not MODULE_NUMPY:
     from .install import install_numpy
     try:
-        install_numpy()
-        MODULE_NUMPY = True
+        MODULE_NUMPY = install_numpy()
     except Exception as e:
         print("Could not install numpy with pip. ERROR:", e)
 

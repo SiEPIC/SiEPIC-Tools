@@ -48,6 +48,49 @@ if 'json' not in sys.modules:
             main(['install', 'json'])
 
 
+
+# Search the GitHub repository for files containing the string
+# "filesearch", with optional extension
+
+
+def github_check_SiEPICTools_version():
+
+    import sys
+    import pya
+
+    try:
+        import requests
+    except ImportError:
+        warning = pya.QMessageBox()
+        warning.setStandardButtons(pya.QMessageBox.Ok)
+        warning.setText(
+            "Missing Python module: 'requests'.  Please install, restart KLayout, and try again.")
+        pya.QMessageBox_StandardButton(warning.exec_())
+        return []
+
+    import json
+    import os
+    try:
+        r = requests.get("https://api.github.com/repos/lukasc-ubc/SiEPIC-Tools/releases/latest")
+    except:
+        return ''
+    if 'name' not in json.loads(r.text):
+        if 'message' in json.loads(r.text):
+            message = json.loads(r.text)['message']
+        else:
+            message = json.loads(r.text)
+        pya.MessageBox.warning("GitHub error", "GitHub error: %s" % (message), pya.MessageBox.Ok)
+        return ''
+
+    version = json.loads(r.text)['name']
+    print(version)
+    
+    from SiEPIC.__init__ import __version__
+    if __version__ not in version:
+        pya.MessageBox.warning("SiEPIC-Tools: new version available", "SiEPIC-Tools: new version available: %s.\nUpgrade using Tools > Manage Packages > Update Packages" % (version), pya.MessageBox.Ok)
+      
+
+
 # Search the GitHub repository for files containing the string
 # "filesearch", with optional extension
 

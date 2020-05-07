@@ -9,6 +9,7 @@ advance_iterator
 get_technology_by_name
 get_technology
 load_Waveguides
+load_Waveguides_by_Tech
 load_Calibre
 load_Monte_Carlo
 load_DFT
@@ -208,6 +209,9 @@ def get_technology(verbose=False, query_activecellview_technology=False):
             if layerInfo == '*/*':
                 # likely encoutered a layer group, skip it
                 pass
+            elif layerInfo == 'GUIDING_SHAPES':
+                # Perhaps someone copy and pasted from a PCell
+                pass
             else:
                 if ' ' in layerInfo:
                     layerInfo = layerInfo.split(' ')[1]
@@ -246,6 +250,30 @@ def load_Waveguides():
     return waveguides if waveguides else None
 
 '''
+Load Waveguide configuration for specific technology
+These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
+'''
+
+def load_Waveguides_by_Tech(tech_name):
+    import os
+    import fnmatch
+
+    paths = []
+    for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
+        [paths.append(os.path.join(root, filename))
+         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name in root]
+
+    waveguides = []
+    if paths:
+        with open(paths[0], 'r') as file:
+            waveguides = xml_to_dict(file.read())
+            waveguides = waveguides['waveguides']['waveguide']
+            for waveguide in waveguides:
+                if not isinstance(waveguide['component'], list):
+                    waveguide['component'] = [waveguide['component']]
+    return waveguides if waveguides else None
+
+'''
 Load Calibre configuration
 These are technology specific, and located in the tech folder, named CALIBRE.xml
 '''
@@ -256,19 +284,29 @@ def load_Calibre():
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
+    technology = {}
+    technology['technology_name'] = tech_name
+    technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
+
     import os
     import fnmatch
-    dir_path = pya.Application.instance().application_data_path()
+#    dir_path = pya.Application.instance().application_data_path()
+    
     search_str = 'CALIBRE.xml'
+
+
+    import fnmatch
+    dir_path = technology['base_path']
     matches = []
     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
         for filename in fnmatch.filter(filenames, search_str):
-            if tech_name in root:
-                matches.append(os.path.join(root, filename))
+            matches.append(os.path.join(root, filename))
     if matches:
-        CALIBRE_file = matches[0]
+        CALIBRE_file = os.path.join(technology['base_path'], matches[-1])
         file = open(CALIBRE_file, 'r')
+        print(CALIBRE_file)
         CALIBRE = xml_to_dict(file.read())
+        print(CALIBRE)
         file.close()
         return CALIBRE
     else:
@@ -489,9 +527,11 @@ def select_paths(layer, cell=None, verbose=None):
         print("SiEPIC.utils.select_paths: selection, before: %s" % lv.object_selection)
     if selection == []:
         itr = cell.begin_shapes_rec(ly.layer(layer))
+        itr_count = 0
         while not(itr.at_end()):
-            if verbose:
-                print("SiEPIC.utils.select_paths: itr: %s" % itr)
+#            if verbose:
+#                print("SiEPIC.utils.select_paths: itr: %s" % itr)
+            itr_count += 1
             if itr.shape().is_path():
                 if verbose:
                     print("SiEPIC.utils.select_paths: path: %s" % itr.shape())
@@ -501,6 +541,8 @@ def select_paths(layer, cell=None, verbose=None):
                 selection[-1].top = cell.cell_index()
                 selection[-1].cv_index = 0
             itr.next()
+        if verbose:
+            print("SiEPIC.utils.select_paths: # shapes founded: %s" % itr_count)
         lv.object_selection = selection
     else:
         lv.object_selection = [o for o in selection if (
@@ -602,11 +644,14 @@ def angle_trunc(a, trunc):
 # Calculate the recommended number of points in a circle, based on
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
 def points_per_circle(radius):
+    # radius in microns
     from math import acos, pi, ceil
     from . import get_technology
     TECHNOLOGY = get_technology()
-    err = 1e3 * TECHNOLOGY['dbu'] / 2
-    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
+    err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
+    return int(ceil(pi / acos(1 - err / radius))) # Lukas' derivation (same answer as below)
+#    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1)))
+#    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
 
 def arc(r, theta_start, theta_stop):
@@ -621,7 +666,7 @@ def arc(r, theta_start, theta_stop):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r) * circle_fraction)
+    npoints = int(points_per_circle(r/1000) * circle_fraction)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -645,9 +690,9 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r) * circle_fraction)
+    npoints = int(points_per_circle(r/1000) * circle_fraction)
     if DevRec:
-        npoints = int(npoints / 10)
+        npoints = int(npoints / 3)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -672,9 +717,9 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
 
     print("SiEPIC.utils arc_wg")
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(radius) * circle_fraction)
+    npoints = int(points_per_circle(radius/1000) * circle_fraction)
     if DevRec:
-        npoints = int(npoints / 10)
+        npoints = int(npoints / 3)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -702,9 +747,9 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r) * circle_fraction)
+    npoints = int(points_per_circle(r/1000) * circle_fraction)
     if DevRec:
-        npoints = int(npoints / 10)
+        npoints = int(npoints / 3)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -723,9 +768,13 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 # degrees, this is currently only implemented for 90 degree bends
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
-    N = 100
+    from SiEPIC.utils import points_per_circle
+    N = points_per_circle(radius/1000)/4
+#    N = 100
     if DevRec:
-        N = int(N / 10)
+        N = int(N / 3)
+    else:
+        N = int(N)
     L = radius  # effective bend radius / Length of the bend
     diff = 1. / (N - 1)  # convert int to float
     xp = [0, (1 - bezier) * L, L, L]
