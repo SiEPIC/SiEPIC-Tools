@@ -33,8 +33,8 @@ import pya
 
 
 def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
-    import time
-    time0 = time.perf_counter()
+#    import time
+#    time0 = time.perf_counter()
 #    verbose=True
 
     from . import _globals
@@ -44,7 +44,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         cell = top_cell
 
     if verbose:
-        print("SiEPIC.scripts path_to_waveguide(); start; time = %s" % (time.perf_counter()-time0))
+        print("SiEPIC.scripts path_to_waveguide(); start")
+#        print("SiEPIC.scripts path_to_waveguide(); start; time = %s" % (time.perf_counter()-time0))
 
     if lv_commit:
         lv.transaction("Path to Waveguide")
@@ -61,7 +62,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         print("SiEPIC.scripts path_to_waveguide(): params = %s" % params)
     selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell, verbose=verbose)
     if verbose:
-        print("SiEPIC.scripts path_to_waveguide(): selected_paths = %s; time = %s" % (selected_paths, time.perf_counter()-time0))
+        print("SiEPIC.scripts path_to_waveguide(): selected_paths = %s" % (selected_paths))
+#        print("SiEPIC.scripts path_to_waveguide(): selected_paths = %s; time = %s" % (selected_paths, time.perf_counter()-time0))
     selection = []
 
     warning = pya.QMessageBox()
@@ -104,8 +106,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
 #          print("SiEPIC.scripts path_to_waveguide(); cell.find_pins(); time = %s" % (time.perf_counter()-time0))
 
         path.snap(p)
-        if verbose:
-          print("SiEPIC.scripts path_to_waveguide(); path.snap(...); time = %s" % (time.perf_counter()-time0))
+#        if verbose:
+#          print("SiEPIC.scripts path_to_waveguide(); path.snap(...); time = %s" % (time.perf_counter()-time0))
 
         Dpath = path.to_dtype(TECHNOLOGY['dbu'])
         if ('DevRec' not in [wg['layer'] for wg in params['wgs']]):
@@ -126,8 +128,10 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
                                                                                 "offsets": [wg['offset'] for wg in params['wgs']],
                                                                                 "CML": params['CML'],
                                                                                 "model": params['model']})
-            print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
-                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
+            print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
+                  (TECHNOLOGY['technology_name'], pcell))   
+#            print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
+#                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
           except:
               pass
         if not pcell:
@@ -140,8 +144,10 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
                                                                                     "layers": [wg['layer'] for wg in params['wgs']],
                                                                                     "widths": [wg['width'] for wg in params['wgs']],
                                                                                     "offsets": [wg['offset'] for wg in params['wgs']]})
-                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
-                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
+                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
+                  (TECHNOLOGY['technology_name'], pcell))   
+#                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
+#                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
             except:
                 pass
         if not pcell:
@@ -174,7 +180,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         lv.commit()
 
     if verbose:
-        print("SiEPIC.scripts path_to_waveguide(); done; time = %s" % (time.perf_counter()-time0))
+        print("SiEPIC.scripts path_to_waveguide(); done" )
+#        print("SiEPIC.scripts path_to_waveguide(); done; time = %s" % (time.perf_counter()-time0))
 
 '''
 convert a KLayout ROUND_PATH, which was used to make a waveguide
