@@ -138,15 +138,19 @@ def radius_check(self, radius):
     else:
       return True
 
-# remove all but 1 colinear point
-
-
+# remove all colinear points (only keep corners)
 def remove_colinear_points(self):
     from .utils import pt_intersects_segment
     if self.__class__ == pya.Path:
         pts = self.get_points()
     else:
         pts = self.get_dpoints()
+
+    for i in range(1,len(pts)-1):
+      turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
+      angle = angle_vector(pts[i]-pts[i-1])/90
+      print('%s, %s' %(turn, angle))
+
 
     # this version removed all colinear points, which doesn't make sense for a path
     self.points = [pts[0]] + [pts[i]
