@@ -808,6 +808,8 @@ def arc_to_waveguide(pts, width):
 def translate_from_normal(pts, trans):
     #  pts = [pya.DPoint(pt) for pt in pts]
     pts = [pt.to_dtype(1) for pt in pts]
+    if len(pts) < 2:
+        return pts    
     from math import cos, sin, pi
     d = 1. / (len(pts) - 1)
     a = angle_vector(pts[1] - pts[0]) * pi / 180 + (pi / 2 if trans > 0 else -pi / 2)
