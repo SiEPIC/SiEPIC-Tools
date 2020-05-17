@@ -1,16 +1,18 @@
 # SiEPIC-Tools
 
-- <a href="www.siepic.ubc.ca">SiEPIC</a>-Tools - for silicon photonics layout, design, verification and circuit simulation
-- by <a href="https://ca.linkedin.com/in/chrostowski">Lukas Chrostowski</a>, (c) 2015-2016, with contributions by: <a href="https://ca.linkedin.com/in/zeqin-lu-13a52394">Zeqin Lu</a>, <a href="https://uk.linkedin.com/in/jaspreet-jhoja-00a56b64">Jaspreet Jhoja</a>, <a href="https://ca.linkedin.com/in/121comeon">Xu Wang</a>, <a href="https://ca.linkedin.com/in/jonas-flückiger-92a4831">Jonas Flueckiger</a>.
-- Package for KLayout, klayout.de (developed on KLayout version 0.24.3, OSX)
+- <a href="http://www.siepic.ubc.ca">SiEPIC</a>-Tools - for silicon photonics layout, design, verification and circuit simulation
+- by <a href="https://ca.linkedin.com/in/chrostowski">Lukas Chrostowski</a>, (c) 2015-2020, with contributions by: <a href="https://ca.linkedin.com/in/zeqin-lu-13a52394">Zeqin Lu</a>, <a href="https://uk.linkedin.com/in/jaspreet-jhoja-00a56b64">Jaspreet Jhoja</a>, <a href="https://ca.linkedin.com/in/121comeon">Xu Wang</a>, <a href="https://ca.linkedin.com/in/jonas-flückiger-92a4831">Jonas Flueckiger</a>.
+- Package for <a href="http://www.klayout.de">KLayout</a>.
 - Instruction on design, layout, fabrication, test, data analysis for silicon photonics provided in the edX course: <a href="http://edx.org/course/silicon-photonics-design-fabrication-ubcx-phot1x">Silicon Photonics Design, Fabrication and Data Analysis</a> and textbook <a href="http://www.cambridge.org/ca/academic/subjects/engineering/electronic-optoelectronic-devices-and-nanotechnology/silicon-photonics-design-devices-systems">Silicon Photonics Design: From Devices to Systems</a> by Lukas Chrostowski and Michael Hochberg.
 - Fabrication runs via Electron Beam Lithography are available, including <a href="https://www.linkedin.com/pulse/openebl-fabrication-test-passive-silicon-photonic-lukas-chrostowski">openEBL</a> fabrication.
-- Citing this work:  Lukas Chrostowski, Zeqin Lu, Jonas Flueckiger, Xu Wang, Jackson Klein, Amy Liu, Jaspreet Jhoja, James Pond,
-"<a href="http://mina.ubc.ca/ref_design-and-simulation-sili">Design and simulation of silicon photonic schematics and layouts</a>," Proc. SPIE 9891, Silicon Photonics and Photonic Integrated Circuits V, 989114 (May 13, 2016); doi:10.1117/12.2230376.
+- Citing this work:  
+  - Lukas Chrostowski, Zeqin Lu, Jonas Flueckiger, Xu Wang, Jackson Klein, Amy Liu, Jaspreet Jhoja, James Pond,
+"<a href=https://doi.org/10.1117/12.2230376>Design and simulation of silicon photonic schematics and layouts</a>," Proc. SPIE 9891, Silicon Photonics and Photonic Integrated Circuits V, 989114 (May 13, 2016); doi:10.1117/12.2230376.
+  - Lukas Chrostowski, Hossam Shoman, Mustafa Hammood, Han Yun,  Jaspreet Jhoja, Enxiao Luan,  Stephen Lin, Ajay Mistry, Donald Witt, Nicolas A. F. Jaeger, Sudip Shekhar,  Hasitha Jayatilleka, Philippe Jean, Simon B.-de Villers, Jonathan Cauchon, Wei Shi,  Cameron Horvath, Jocelyn N. Westwood-Bachman, Kevin Setzer, Mirwais Aktary, N. Shane Patrick, Richard Bojko, Amin Khavasi, Xu Wang, Thomas Ferreira de Lima,  Alexander N. Tait, Paul R. Prucnal, David E. Hagan, Doris Stevanovic, Andy P. Knights, "<a href="https://doi.org/10.1109/JSTQE.2019.2917501">Silicon Photonic Circuit Design Using Rapid Prototyping Foundry Process Design Kits</a>" IEEE Journal of Selected Topics in Quantum Electronics, Volume: 25, Issue: 5, Sept.-Oct. 2019. (<a href="https://www.dropbox.com/s/i1z4ackr3q7fz1l/2019_JSTQE_foundry.pdf?dl=1">PDF</a>)
 
 ## Download and Installation instructions:
  - in KLayout v0.25, use Tools | Package Manager, and find SiEPIC-Tools there
- - in KLayout v0.24, see <a href="https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/wiki/Installation-instructions">SiEPIC_EBeam_PDK download and installation instructions</a> on the wiki page.  
+ - install PDK, e.g., <a href="https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/wiki/Installation-instructions">SiEPIC_EBeam_PDK download and installation instructions</a> on the wiki page.  
 
  
 ## Objectives:
@@ -18,7 +20,6 @@
  - Support for both GUI and script-based layout, or combinations of both.
  - KLayout-INTERCONNECT integration offers a layout-first design methodology. Inspired by Layout Versus Schematic tools, this PDK includes netlist extraction routines to generate a schematic from the layout. This allows the user to directly simulate from the layout, without needing to create the schematic first. This approach is possibly more appealing to photonics designers who are accustomed to designing physical layouts, rather than schematics. A library of components (layout and compact models) is included in the Process Design Kit, specifically for silicon photonics fabrication via Electron Beam Lithography.
  - Whereas a typical schematic-driven design flow includes a schematic, circuit simulation, layout, and verification (see Chapter 10 of the <a href="http://www.cambridge.org/ca/academic/subjects/engineering/electronic-optoelectronic-devices-and-nanotechnology/silicon-photonics-design-devices-systems">textbook</a>), the approach taken here is <b>Layout-driven</b>, followed by verification, then a schematic (via a netlist extraction) and simulations.
- - Read more details in our two SPIE papers: <a href="http://mina.ubc.ca/ref_design-and-simulation-sili">Design and simulation of silicon photonic schematics and layouts</a> and <a href="http://mina.ubc.ca/ref_schematic-driven-silicon-p">Schematic Driven Silicon Photonics Design</a>.
 
 
 **Video of a layout and simulation of a ring resonator circuit**:
