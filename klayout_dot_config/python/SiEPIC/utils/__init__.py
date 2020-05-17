@@ -625,8 +625,11 @@ def angle_b_vectors(u, v):
 
 def inner_angle_b_vectors(u, v):
     from math import acos, pi
-    return acos((u.x * v.x + u.y * v.y) / (u.abs() * v.abs())) / pi * 180
-
+    if (u.abs() * v.abs()) > 0:
+        return acos((u.x * v.x + u.y * v.y) / (u.abs() * v.abs())) / pi * 180
+    else:
+        return 0
+        
 # Find the angle of a vector
 
 

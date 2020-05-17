@@ -19,13 +19,15 @@ from .sampling import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 
-def layout_waveguide2(TECHNOLOGY, layout, cell, layers, width, widths, offsets, pts, radius, adiab, bezier):
+def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier):
   from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
   from SiEPIC.extend import to_itype
   from pya import Path, Polygon, Trans
   dbu = layout.dbu
 
+  width=widths[0]
   turn=0
+  waveguide_length = 0
   for lr in range(0, len(layers)):
     wg_pts = [pts[0]]
     layer = layout.layer(TECHNOLOGY[layers[lr]])
@@ -63,9 +65,7 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, width, widths, offsets, 
     cell.shapes(layer).insert(wg_polygon)
   
     if layout.layer(TECHNOLOGY['Waveguide']) == layer:
-      waveguide_length = wg_polygon.area() / width * dbu**2
-    else: 
-      waveguide_length = 0
+      waveguide_length = wg_polygon.area() / width * dbu
   return waveguide_length
 
 
