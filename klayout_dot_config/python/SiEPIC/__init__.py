@@ -1,7 +1,5 @@
-__version__ = '0.4.0'
+__version__ = '0.3.66'
 #from . import install, extend, _globals, core, examples, github, lumerical, scripts, utils, setup
 # from . import install, extend, _globals, core, examples, github, scripts, utils, setup
-
-# removed by Thomas Lima:
-# from . import extend, _globals, core, examples, github, scripts, utils, setup, install
+from . import extend, _globals, core, examples, github, scripts, utils, setup, install
 

@@ -50,11 +50,8 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
     if lv_commit:
         lv.transaction("Path to Waveguide")
 
-    from .core import WaveguideGUI
-    WG_GUI = WaveguideGUI()
-
     if params is None:
-        params = WG_GUI.get_parameters(GUI)
+        params = _globals.WG_GUI.get_parameters(GUI)
     if params is None:
         print("SiEPIC.scripts path_to_waveguide(): no params; returning")
         return
