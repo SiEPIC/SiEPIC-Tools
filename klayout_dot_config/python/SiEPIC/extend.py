@@ -58,9 +58,10 @@ pya.Point Extensions:
 
 import pya
 
-warning = pya.QMessageBox()
-warning.setStandardButtons(pya.QMessageBox.Ok)
-warning.setDefaultButton(pya.QMessageBox.Ok)
+# Commented by @tlima. Seems useless
+# warning = pya.QMessageBox()
+# warning.setStandardButtons(pya.QMessageBox.Ok)
+# warning.setDefaultButton(pya.QMessageBox.Ok)
 
 #################################################################################
 #                SiEPIC Class Extension of Path & DPath Class                   #
@@ -81,157 +82,20 @@ def to_itype(self, dbu):
     path.width = round(self.width / dbu)
     return path
 
-
-def get_points(self):
-    return [pya.Point(pt.x, pt.y) for pt in self.each_point()]
-
-
-def get_dpoints(self):
-    return [pya.DPoint(pt.x, pt.y) for pt in self.each_point()]
-
-
-def is_manhattan_endsegments(self):
-    if self.__class__ == pya.Path:
-        pts = self.get_points()
-    else:
-        pts = self.get_dpoints()
-    check = 1 if len(pts) == 2 else 0
-    for i, pt in enumerate(pts):
-        if (i == 1 or pts[i] == pts[-1]):
-            if(pts[i].x == pts[i - 1].x or pts[i].y == pts[i - 1].y):
-                check += 1
-    return check == 2
-
-
-def is_manhattan(self):
-    if self.__class__ == pya.Path:
-        pts = self.get_points()
-    else:
-        pts = self.get_dpoints()
-    if len(pts) == 2:
-        return True
-    for i, pt in enumerate(pts[0:-1]):
-        if not (pts[i].x == pts[i + 1].x or pts[i].y == pts[i + 1].y):
-            return False
-    return True
-
-
-def radius_check(self, radius):
-    def all2(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
-
-    points = self.get_points()
-    
-    if len(points) > 2:
-    
-      lengths = [points[i].distance(points[i - 1]) for i, pt in enumerate(points) if i > 0]
-  
-      # first and last segment must be >= radius
-      check1 = (lengths[0] >= radius)
-      check2 = (lengths[-1] >= radius)
-      # middle segments must accommodate two bends, hence >= 2 radius
-      check3 = [length >= 2 * radius for length in lengths[1:-1]]
-      return check1 and check2 and all(check3)
-    else:
-      return True
-
-# remove all colinear points (only keep corners)
-def remove_colinear_points(self):
-    from .utils import pt_intersects_segment
-    if self.__class__ == pya.Path:
-        pts = self.get_points()
-    else:
-        pts = self.get_dpoints()
-
-    for i in range(1,len(pts)-1):
-      turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
-      angle = angle_vector(pts[i]-pts[i-1])/90
-      print('%s, %s' %(turn, angle))
-
-
-    # this version removed all colinear points, which doesn't make sense for a path
-    self.points = [pts[0]] + [pts[i]
-                              for i in range(1, len(pts) - 1) if not pt_intersects_segment(pts[i + 1], pts[i - 1], pts[i])] + [pts[-1]]
-    return self
-
-
-def unique_points(self):
-    if self.__class__ == pya.Path:
-        pts = self.get_points()
-    else:
-        pts = self.get_dpoints()
-
-    # only keep unique path points:
-    output = []
-    for pt in pts:
-        if pt not in output:
-            output.append(pt)
-    self.points = output
-    return self
-
-
-def translate_from_center(self, offset):
-    from math import pi, cos, sin, acos, sqrt
-    from .utils import angle_vector
-    pts = [pt for pt in self.get_dpoints()]
-    tpts = [pt for pt in self.get_dpoints()]
-    for i in range(0, len(pts)):
-        if i == 0:
-            u = pts[i] - pts[i + 1]
-            v = -u
-        elif i == (len(pts) - 1):
-            u = pts[i - 1] - pts[i]
-            v = -u
-        else:
-            u = pts[i - 1] - pts[i]
-            v = pts[i + 1] - pts[i]
-
-        if offset < 0:
-            o1 = pya.DPoint(abs(offset) * cos(angle_vector(u) * pi / 180 - pi / 2),
-                            abs(offset) * sin(angle_vector(u) * pi / 180 - pi / 2))
-            o2 = pya.DPoint(abs(offset) * cos(angle_vector(v) * pi / 180 + pi / 2),
-                            abs(offset) * sin(angle_vector(v) * pi / 180 + pi / 2))
-        else:
-            o1 = pya.DPoint(abs(offset) * cos(angle_vector(u) * pi / 180 + pi / 2),
-                            abs(offset) * sin(angle_vector(u) * pi / 180 + pi / 2))
-            o2 = pya.DPoint(abs(offset) * cos(angle_vector(v) * pi / 180 - pi / 2),
-                            abs(offset) * sin(angle_vector(v) * pi / 180 - pi / 2))
-
-        p1 = u + o1
-        p2 = o1
-        p3 = v + o2
-        p4 = o2
-        d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x)
-
-        if round(d, 10) == 0:
-            tpts[i] += p2
-        else:
-            tpts[i] += pya.DPoint(((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) / d,
-                                  ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)) / d)
-
-    if self.__class__ == pya.Path:
-        return pya.Path([pya.Point(pt.x, pt.y) for pt in tpts], self.width)
-    elif self.__class__ == pya.DPath:
-        return pya.DPath(tpts, self.width)
-
-'''
-snap - pya.Path extension
-This function snaps the two path endpoints to the nearest pins by adjusting the end segments
-
-Input:
- - self: the Path object
- - pins: an array of Pin objects, which are paths with 2 points,
-         with the vector giving the direction (out of the component)
-Output:
- - modifies the original Path
-
-'''
-
-
 def snap(self, pins):
+    '''
+    snap - pya.Path extension
+    This function snaps the two path endpoints to the nearest pins by adjusting the end segments
+
+=======
+    Input:
+     - self: the Path object
+     - pins: an array of Pin objects, which are paths with 2 points,
+             with the vector giving the direction (out of the component)
+    Output:
+     - modifies the original Path
+
+    '''
     # Import functionality from SiEPIC-Tools:
     from .utils import angle_vector, get_technology
     from . import _globals
@@ -501,19 +365,22 @@ def snap_m(self, pins):
     else:
       return False
 
+# pya.Path.get_points = get_points
+# pya.Path.get_dpoints = get_dpoints
+# pya.Path.is_manhattan_endsegments = is_manhattan_endsegments
+# pya.Path.is_manhattan = is_manhattan
+# pya.Path.radius_check = radius_check
+# pya.Path.remove_colinear_points = remove_colinear_points
+# pya.Path.unique_points = unique_points
+# pya.Path.translate_from_center = translate_from_center
+# Code moved to
+import siepic_tools.extend.path  # noqa
+
 # Path Extension
 #################################################################################
 
 pya.Path.to_dtype = to_dtype
 pya.Path.to_itype = to_itype
-pya.Path.get_points = get_points
-pya.Path.get_dpoints = get_dpoints
-pya.Path.is_manhattan_endsegments = is_manhattan_endsegments
-pya.Path.is_manhattan = is_manhattan
-pya.Path.radius_check = radius_check
-pya.Path.remove_colinear_points = remove_colinear_points
-pya.Path.unique_points = unique_points
-pya.Path.translate_from_center = translate_from_center
 pya.Path.snap = snap
 pya.Path.snap_m = snap_m # function added by Karl McNulty (RIT) for metal pin functionality
 
@@ -522,14 +389,6 @@ pya.Path.snap_m = snap_m # function added by Karl McNulty (RIT) for metal pin fu
 
 pya.DPath.to_itype = to_itype
 pya.DPath.to_dtype = to_dtype
-pya.DPath.get_points = get_points
-pya.DPath.get_dpoints = get_dpoints
-pya.DPath.is_manhattan_endsegments = is_manhattan_endsegments
-pya.DPath.is_manhattan = is_manhattan
-pya.DPath.radius_check = radius_check
-pya.DPath.remove_colinear_points = remove_colinear_points
-pya.DPath.unique_points = unique_points
-pya.DPath.translate_from_center = translate_from_center
 pya.DPath.snap = snap
 
 #################################################################################
@@ -713,7 +572,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                 iter2.next()
             # Store the pin information in the pins array
             # check if this one already exists (duplicate polygons)
-            if not([p for p in pins if p.type == _globals.PIN_TYPES.OPTICALIO and 
+            if not([p for p in pins if p.type == _globals.PIN_TYPES.OPTICALIO and
               p.polygon == it.shape().polygon.transformed(it.itrans())]):
                 pins.append(Pin(polygon=it.shape().polygon.transformed(it.itrans()),
                             _type=_globals.PIN_TYPES.OPTICALIO,
@@ -1137,7 +996,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         warning.setText("To run a simulation, you need to have optical IO in the layout." )
         pya.QMessageBox_StandardButton(warning.exec_())
         return False, False, False, False, False, False, False, False
-        
+
     dist_optin_c = components_sorted[0].trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1))
     if verbose:
         print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in_dict[0][
@@ -1581,60 +1440,10 @@ pya.DPoint.angle_vector = angle_vector
 ##########################################################################################
 #                    SiEPIC Class Extension of Point/Vector Classes                      #
 ##########################################################################################
-from ._globals import MODULE_NUMPY
-
-if MODULE_NUMPY:
-    import numpy as np
-from numbers import Number
-from math import sqrt
-
-# Point-like classes
-PointLike = (pya.Point, pya.DPoint, pya.DVector, pya.Vector)
-
-
-def pyaPoint__rmul__(self, factor):
-    """ This implements factor * P """
-    if isinstance(factor, Number):
-        return self.__class__(self.x * factor, self.y * factor)
-    elif MODULE_NUMPY and isinstance(factor, np.ndarray):  # ideally this is never called
-        return factor.__mul__(self)
-    else:
-        return NotImplemented
-
-
-def pyaPoint__mul__(self, factor):
-    """ This implements P * factor """
-    if isinstance(factor, Number):
-        return self.__class__(self.x * factor, self.y * factor)
-    elif MODULE_NUMPY and isinstance(factor, np.ndarray):  # Numpy can multiply any object
-        return factor.__mul__(self)
-    elif isinstance(factor, PointLike):
-        return self.x * factor.x + self.y * factor.y
-    else:
-        return NotImplemented
-
-
-def pyaPoint__truediv__(self, dividend):
-    """ This implements P / dividend """
-    return self.__class__(self.x / dividend, self.y / dividend)
-
-
-def pyaPoint_norm(self):
-    """ This implements the L2 norm """
-    return sqrt(self.x ** 2 + self.y ** 2)
-
-
-for klass in PointLike:
-    klass.__rmul__ = pyaPoint__rmul__
-    klass.__mul__ = pyaPoint__mul__
-    klass.__truediv__ = pyaPoint__truediv__
-    klass.norm = pyaPoint_norm
-
-import sys
-if sys.version_info[0] > 2:
-    assert pya.DPoint(1, 2) / 1.0 == pya.DPoint(1, 2)
-    assert 0.5 * pya.DPoint(1, 2) == pya.DPoint(0.5, 1)
-
+# The following implements P * factor, factor * P, P * P,
+# P / number, and P.norm(), including when factor is a numpy array
+# Code was moved to
+import siepic_tools.extend.point  # noqa
 
 '''
 dbu float-int extension:
