@@ -769,15 +769,17 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 
 # Create a bezier curve. While there are parameters for start and stop in
 # degrees, this is currently only implemented for 90 degree bends
+# Radius in Database units (dbu)
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
     N = points_per_circle(radius/1000)/4
-#    N = 100
     if DevRec:
         N = int(N / 3)
     else:
         N = int(N)
+    if N < 5:
+      N = 100
     L = radius  # effective bend radius / Length of the bend
     diff = 1. / (N - 1)  # convert int to float
     xp = [0, (1 - bezier) * L, L, L]
