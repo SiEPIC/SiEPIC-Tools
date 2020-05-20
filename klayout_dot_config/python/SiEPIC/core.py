@@ -304,11 +304,7 @@ class WaveguideGUI():
                    self.window.findChild('configuration').currentText]
         if options:
             waveguide = options[0]
-            if 'width' in waveguide:
-                self.window.findChild('width').text = waveguide['width']
-            else:
-                self.window.findChild('width').text = '0.5'
-            if 'width' in waveguide:
+            if 'radius' in waveguide:
                 self.window.findChild('radius').text = waveguide['radius']
             else:
                 self.window.findChild('radius').text = '5'
@@ -338,7 +334,7 @@ class WaveguideGUI():
         self.loaded_technology = TECHNOLOGY['technology_name']
 
         params = {'radius': float(self.window.findChild('radius').text),
-                  'width': float(self.window.findChild('width').text),
+                  'width': 0,
                   'adiabatic': self.window.findChild('adiabatic').isChecked(),
                   'bezier': float(self.window.findChild('bezier').text),
                   'wgs': []}
@@ -350,8 +346,8 @@ class WaveguideGUI():
                 params['wgs'].append({'layer': component['layer'], 'width': float(
                     component['width']), 'offset': float(component['offset'])})
                 w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
-#                if ((params['width'] < w) & (component['layer'] != 'DevRec')) and (w < 10):
-#                    params['width'] = w
+                if ((params['width'] < w) & (component['layer'] != 'DevRec')) and (w < 10):
+                    params['width'] = w
                 # enable 2 new parameters: CML and model to support multiple WG models
                 try: 
                     params['CML'] = waveguide['CML']

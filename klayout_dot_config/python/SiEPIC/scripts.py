@@ -32,7 +32,7 @@ replace_cell
 import pya
 
 
-def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
+def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
 #    import time
 #    time0 = time.perf_counter()
 #    verbose=True
@@ -76,8 +76,7 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
             return
             
     # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
-    if snap:
-        p=cell.find_pins()            
+    p=cell.find_pins()            
 
     for obj in selected_paths:
         path = obj.shape.path
@@ -106,8 +105,7 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
 #        if verbose:
 #          print("SiEPIC.scripts path_to_waveguide(); cell.find_pins(); time = %s" % (time.perf_counter()-time0))
 
-        if snap:
-            path.snap(p)
+        path.snap(p)
 #        if verbose:
 #          print("SiEPIC.scripts path_to_waveguide(); path.snap(...); time = %s" % (time.perf_counter()-time0))
 

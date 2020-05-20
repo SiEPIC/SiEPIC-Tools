@@ -603,11 +603,8 @@ def angle_b_vectors(u, v):
 
 def inner_angle_b_vectors(u, v):
     from math import acos, pi
-    if (u.abs() * v.abs()) > 0:
-        return acos((u.x * v.x + u.y * v.y) / (u.abs() * v.abs())) / pi * 180
-    else:
-        return 0
-        
+    return acos((u.x * v.x + u.y * v.y) / (u.abs() * v.abs())) / pi * 180
+
 # Find the angle of a vector
 
 
@@ -755,17 +752,15 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 
 # Create a bezier curve. While there are parameters for start and stop in
 # degrees, this is currently only implemented for 90 degree bends
-# Radius in Database units (dbu)
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
     N = points_per_circle(radius/1000)/4
+#    N = 100
     if DevRec:
         N = int(N / 3)
     else:
         N = int(N)
-    if N < 5:
-      N = 100
     L = radius  # effective bend radius / Length of the bend
     diff = 1. / (N - 1)  # convert int to float
     xp = [0, (1 - bezier) * L, L, L]
@@ -799,8 +794,6 @@ def arc_to_waveguide(pts, width):
 def translate_from_normal(pts, trans):
     #  pts = [pya.DPoint(pt) for pt in pts]
     pts = [pt.to_dtype(1) for pt in pts]
-    if len(pts) < 2:
-        return pts    
     from math import cos, sin, pi
     d = 1. / (len(pts) - 1)
     a = angle_vector(pts[1] - pts[0]) * pi / 180 + (pi / 2 if trans > 0 else -pi / 2)
@@ -976,9 +969,8 @@ def svg_from_component(component, filename, verbose=False):
     polygons_vertices = [[[round((vertex.x - x) * 100. / scale + s1 / 2, 2), round((y - vertex.y) * 100. / scale + s2 / 2, 2)]
                           for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons]]
 
-    
-    try:  # not sure why the first time it gives an error (Windows 8.1 lukas VM), Mustafa: svgwrite is not a module available in KL windows python
-        import svgwrite
+    import svgwrite
+    try:  # not sure why the first time it gives an error (Windows 8.1 lukas VM)
         dwg = svgwrite.Drawing(filename, size=(str(s1) + '%', str(s2) + '%'), debug=False)
     except:
         pass
