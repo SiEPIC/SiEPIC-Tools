@@ -87,6 +87,7 @@ def snap(self, pins):
     snap - pya.Path extension
     This function snaps the two path endpoints to the nearest pins by adjusting the end segments
 
+=======
     Input:
      - self: the Path object
      - pins: an array of Pin objects, which are paths with 2 points,
@@ -1373,16 +1374,22 @@ pya.Cell.spice_netlist_export = spice_netlist_export
 # Function Definitions
 #################################################################################
 
-
+# find the Pins associated with the Instance:
 def find_pins(self, verbose=False):
     if verbose:
         print("Instance.find_pins, self: %s" % self)
         print("Instance.find_pins, cplx_trans: %s" % self.cplx_trans)
     return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)]
 
+# find the Pin's Point, whose name matches the input, for the given Instance
+def pinPoint(self, pin_name, verbose=False):
+    return [p for p in self.find_pins() if (p.pin_name==pin_name)][0].center
+
+
 #################################################################################
 
 pya.Instance.find_pins = find_pins
+pya.Instance.pinPoint = pinPoint
 
 
 #################################################################################
