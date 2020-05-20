@@ -1020,8 +1020,9 @@ def svg_from_component(component, filename, verbose=False):
     polygons_vertices = [[[round((vertex.x - x) * 100. / scale + s1 / 2, 2), round((y - vertex.y) * 100. / scale + s2 / 2, 2)]
                           for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons]]
 
-    import svgwrite
-    try:  # not sure why the first time it gives an error (Windows 8.1 lukas VM)
+    
+    try:  # not sure why the first time it gives an error (Windows 8.1 lukas VM), Mustafa: svgwrite is not a module available in KL windows python
+        import svgwrite
         dwg = svgwrite.Drawing(filename, size=(str(s1) + '%', str(s2) + '%'), debug=False)
     except:
         pass
