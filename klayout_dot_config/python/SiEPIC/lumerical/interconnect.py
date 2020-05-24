@@ -70,7 +70,7 @@ def run_INTC(verbose=False):
 
 
 def Setup_Lumerical_KLayoutPython_integration(verbose=False):
-  import sys, os, string
+  import sys, os, string, pya
 
   from ..utils import get_technology, get_technology_by_name
   # get current technology
@@ -81,11 +81,18 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   # location for the where the CMLs will locally be installed:
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
 
+  try:
+    libraries = [n for n in pya.Library.library_names() if (pya.Library.library_by_name(n).technology == TECHNOLOGY['technology_name'])]
+    for n in [pya.Library.library_by_name(l) for l in libraries]:
+      print(n.layout().meta_info_value("path"))
+  except:
+    pass
+
   question = pya.QMessageBox()
   question.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.No)
   question.setDefaultButton(pya.QMessageBox.Yes)
-  question.setText("SiEPIC-Tools will install the Compact Model Library (CML) in Lumerical INTERCONNECT for the currently active technology. Proceed?")
-  question.setInformativeText("\nTechnology %s\nSource CML file: %s\nInstall location: %s" % (TECHNOLOGY['technology_name'], TECHNOLOGY['INTC_CML_path'], dir_path ))
+  question.setText("SiEPIC-Tools will install the Compact Model Library (CML) in Lumerical INTERCONNECT for the currently active technology. \nThis includes the libraries %s.  \nProceed?" % libraries)
+  question.setInformativeText("\nTechnology: %s\nSource CML file: %s\nInstall location: %s" % (TECHNOLOGY['technology_name'], TECHNOLOGY['INTC_CML_path'], dir_path ))
   if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
     return
 

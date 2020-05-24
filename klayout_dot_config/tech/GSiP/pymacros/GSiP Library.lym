@@ -932,7 +932,9 @@ class GSiP(pya.Library):
     if int(Application.instance().version().split('.')[1]) &gt; 24:
       # KLayout v0.25 introduced technology variable:
       self.technology=tech_name
-    
+
+    self.assign(LayoutMetaInfo("path",os.path.realpath(__file__))
+   
 GSiP()
 
 </text>
