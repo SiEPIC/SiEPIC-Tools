@@ -94,7 +94,7 @@ To contribute to the PDK:
  - "Commit to master" (your own master)
  - Create a <a href="https://help.github.com/articles/using-pull-requests/">Pull Request</a> -- this will notify me of your contribution, which I can merge into the main project
 
-I am personally using <a href="https://desktop.github.com/">GitHub desktop</a> to synchronize my files. Then I created symbolic links in my .klayout folder to point to the local copy of this repository. This is useful to automatically update my local KLayout installation (e.g., multiple computers), as changes are made in GitHub.
+I am personally using <a href="https://desktop.github.com/">GitHub desktop</a> to synchronize my files. [Then I created symbolic links in my .klayout folder to point to the local copy of this repository](https://www.youtube.com/watch?v=Y5a9kZVgZns). This is useful to automatically update my local KLayout installation (e.g., multiple computers), as changes are made in GitHub.
 
 ## Screenshots:
 
