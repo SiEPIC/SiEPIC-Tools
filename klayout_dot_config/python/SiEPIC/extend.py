@@ -1536,12 +1536,17 @@ def find_pins(self, verbose=False):
 
 # find the Pin's Point, whose name matches the input, for the given Instance
 def pinPoint(self, pin_name, verbose=False):
+    from pya import Point
     pins = self.find_pins()
     if pins:
-        return [p for p in pins if (p.pin_name==pin_name)][0].center
+        p = [ p for p in pins if (p.pin_name==pin_name)]
+        if p:
+          return p[0].center
+        else:
+          print("pinPoint, not found: %s, other pins: %s" % (pin_name, [p.pin_name for p in pins]))
+          return Point(0,0)
     else:
-        pass
-
+        return Point(0,0)
 
 #################################################################################
 
