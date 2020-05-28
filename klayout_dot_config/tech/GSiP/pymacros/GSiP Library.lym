@@ -933,7 +933,7 @@ class GSiP(pya.Library):
       # KLayout v0.25 introduced technology variable:
       self.technology=tech_name
 
-    self.assign(LayoutMetaInfo("path",os.path.realpath(__file__))
+    self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(__file__)))
    
 GSiP()
 
