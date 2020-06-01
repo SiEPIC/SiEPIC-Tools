@@ -928,6 +928,8 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
                                                               2], fields[3], fields[4], fields[5], params_txt)
         iter.next()
     text_out += "<br> Number of automated measurement labels: %s.<br>" % i
+    text_out += "<br> Number of sub-cells: %s<br>" % topcell.child_cells()
+    
     return text_out, opt_in
 
 

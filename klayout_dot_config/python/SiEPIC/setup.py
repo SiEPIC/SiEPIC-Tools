@@ -62,6 +62,24 @@ def registerMenuItems():
     ACTIONS[count].on_triggered(lumerical.interconnect.circuit_simulation_toolbar)
     ACTIONS[count].icon = path
     count += 1
+
+    if not(menu.is_menu("@toolbar.verification")):
+        ACTIONS.append(pya.Action())
+        menu.insert_item("@toolbar.end", "verification", ACTIONS[count])
+    ACTIONS[count].title = "Functional\nVerification"
+    ACTIONS[count].on_triggered(scripts.layout_check)
+#    ACTIONS[count].icon = path
+    count += 1
+
+    if not(menu.is_menu("@toolbar.coordinates")):
+        ACTIONS.append(pya.Action())
+        menu.insert_item("@toolbar.end", "coordinates", ACTIONS[count])
+    ACTIONS[count].title = "Test\nCoordinates"
+    ACTIONS[count].on_triggered(scripts.auto_coord_extract)
+#    ACTIONS[count].icon = path
+    count += 1
+
+
     
     if 0:
         if not(menu.is_menu("@toolbar.cir_sim.mc_sim")):
