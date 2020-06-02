@@ -178,7 +178,8 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
         lv.object_selection = selection
     if lv_commit:
         lv.commit()
-
+    pya.Application.instance().main_window().redraw()    
+    
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(); done" )
 #        print("SiEPIC.scripts path_to_waveguide(); done; time = %s" % (time.perf_counter()-time0))
@@ -394,6 +395,7 @@ def waveguide_length():
         pya.MessageBox.warning("Selection is not a waveguide",
                                "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
 
+    pya.Application.instance().main_window().redraw()    
 
 def waveguide_length_diff():
     from .utils import get_layout_variables, select_waveguides
@@ -686,6 +688,7 @@ def waveguide_length_diff():
         pya.MessageBox.warning("Selection are not a waveguides",
                                "Select two waveguides you wish to measure.", pya.MessageBox.Ok)
 
+    pya.Application.instance().main_window().redraw()    
 
 def waveguide_heal():
     print("waveguide_heal")
@@ -842,8 +845,10 @@ def snap_component():
                 pya.Application.instance().main_window().message(
                     'SiEPIC snap_components: moved by %s.' % trans, 2000)
 
+                pya.Application.instance().main_window().redraw()    
                 return
 # end def snap_component()
+    pya.Application.instance().main_window().redraw()    
 
 
 # keep the selected top cell; delete everything else
@@ -866,6 +871,7 @@ def delete_top_cells():
         v = pya.MessageBox.warning(
             "No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
 
+    pya.Application.instance().main_window().redraw()    
 
 def compute_area():
     print("compute_area")
@@ -1150,6 +1156,7 @@ def auto_coord_extract():
     cell = pya.Application.instance().main_window().current_view().active_cellview().cell
     text_out, opt_in = find_automated_measurement_labels(cell)
     wtext.insertHtml(text_out)
+    pya.Application.instance().main_window().redraw()    
 
 def find_SEM_labels_gui(topcell=None, LayerSEMN=None):
     from .utils import get_technology
