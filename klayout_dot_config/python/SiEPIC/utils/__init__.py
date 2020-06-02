@@ -36,6 +36,7 @@ translate_from_normal
 pt_intersects_segment
 layout_pgtext
 find_automated_measurement_labels
+find_SEM_labels
 etree_to_dict: XML parser
 xml_to_dict
 eng_str
@@ -938,6 +939,59 @@ try:
 except NameError:
     def advance_iterator(it):
         return it.next()
+
+
+def find_SEM_labels(topcell=None, LayerSEMN=None):
+    # example usage:
+    # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    # LayerSEM = pya.LayerInfo(200, 0)
+    # LayerSEMN = topcell.layout().layer(LayerSEM)
+    # find_SEM_labels(topcell, LayerSEMN)
+    import string
+    if not LayerSEMN:
+        from . import get_technology, find_paths
+        TECHNOLOGY = get_technology()
+        dbu = TECHNOLOGY['dbu']
+        LayerSEMN = TECHNOLOGY['SEM']
+    if not topcell:
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            print("No view selected")
+            raise UserWarning("No view selected. Make sure you have an open layout.")
+        # Find the currently selected layout.
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        if ly == None:
+            raise UserWarning("No layout. Make sure you have an open layout.")
+        # find the currently selected cell:
+        cv = pya.Application.instance().main_window().current_view().active_cellview()
+        topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+        if topcell == None:
+            raise UserWarning("No cell. Make sure you have an open layout.")
+
+    text_out = 'SEM image locations <br>'
+    dbu = topcell.layout().dbu
+    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerSEMN))
+    i = 0
+    texts = []  # pya Text, for Verification
+    while not(iter.at_end()):
+        if iter.shape().is_box():
+            box = iter.shape().box
+            i += 1
+            box2 = iter.shape().box.transformed(iter.itrans())
+            texts.append(box2)
+            text_out += "%s, %s<br>" % (int(box2.left * dbu), int(box2.bottom * dbu) )
+        iter.next()
+    text_out += "<br> Number of SEM boxes: %s.<br>" % i
+    
+    return text_out
+
+
+try:
+    advance_iterator = next
+except NameError:
+    def advance_iterator(it):
+        return it.next()
+
 
 
 # XML to Dict parser, from:
