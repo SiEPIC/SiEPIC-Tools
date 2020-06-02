@@ -1167,7 +1167,7 @@ def find_SEM_labels_gui(topcell=None, LayerSEMN=None):
         from .utils import get_technology, find_paths
         TECHNOLOGY = get_technology()
         dbu = TECHNOLOGY['dbu']
-        if 'SEaM' in TECHNOLOGY:
+        if 'SEM' in TECHNOLOGY:
             LayerSEMN = TECHNOLOGY['SEM']
         else:
             v = pya.MessageBox.warning("SEM images", "No 'SEM' layer found in the Technology.", pya.MessageBox.Ok)
