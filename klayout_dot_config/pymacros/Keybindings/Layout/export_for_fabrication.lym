@@ -19,6 +19,8 @@ import pya
 
 def export_for_fabrication():
  
+  extra = "static" # what to append at the end of the filename.
+  
   from SiEPIC import _globals
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, topcell = get_layout_variables()
@@ -38,7 +40,7 @@ def export_for_fabrication():
   save_options.format='GDS' # standard format
   save_options.format='OASIS' # smaller file size
   save_options.oasis_compression_level=10
-  file_out = os.path.join(os.path.dirname(layout_filename), os.path.splitext(os.path.basename(layout_filename))[0]+'_exported.'+save_options.format[0:3].lower())
+  file_out = os.path.join(os.path.dirname(layout_filename), os.path.splitext(os.path.basename(layout_filename))[0]+'_%s.'%extra+save_options.format[0:3].lower())
   print("saving output %s: %s" % (save_options.format, file_out) )
 
   try:
