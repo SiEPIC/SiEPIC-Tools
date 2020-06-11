@@ -30,6 +30,8 @@ def get_pip_main():
     if hasattr(pip, 'main'):
         return pip.main
     else:
+        from pip import main
+        return main
         return pip._internal.main.main
 
 

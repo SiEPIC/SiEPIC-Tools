@@ -16,6 +16,7 @@ delete_top_cells
 compute_area
 calibreDRC
 auto_coord_extract
+find_SEM_labels_gui
 calculate_area
 trim_netlist
 layout_check
@@ -50,11 +51,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
     if lv_commit:
         lv.transaction("Path to Waveguide")
 
-    from .core import WaveguideGUI
-    WG_GUI = WaveguideGUI()
-
     if params is None:
-        params = WG_GUI.get_parameters(GUI)
+        params = _globals.WG_GUI.get_parameters(GUI)
     if params is None:
         print("SiEPIC.scripts path_to_waveguide(): no params; returning")
         return
@@ -178,7 +176,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         lv.object_selection = selection
     if lv_commit:
         lv.commit()
-
+    pya.Application.instance().main_window().redraw()    
+    
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(); done" )
 #        print("SiEPIC.scripts path_to_waveguide(); done; time = %s" % (time.perf_counter()-time0))
@@ -188,8 +187,6 @@ convert a KLayout ROUND_PATH, which was used to make a waveguide
 in SiEPIC_EBeam_PDK versions up to v0.1.41, back to a Path, then waveguide.
 This allows the user to migrate designs to the new Waveguide PCell.
 '''
-
-
 def roundpath_to_waveguide(verbose=False):
 
     from . import _globals
@@ -376,6 +373,7 @@ def waveguide_to_path(cell=None):
     # Record a transaction, to enable "undo"
     lv.commit()
 
+    pya.Application.instance().main_window().redraw()
 
 def waveguide_length():
 
@@ -395,6 +393,7 @@ def waveguide_length():
         pya.MessageBox.warning("Selection is not a waveguide",
                                "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
 
+    pya.Application.instance().main_window().redraw()    
 
 def waveguide_length_diff():
     from .utils import get_layout_variables, select_waveguides
@@ -687,6 +686,8 @@ def waveguide_length_diff():
         pya.MessageBox.warning("Selection are not a waveguides",
                                "Select two waveguides you wish to measure.", pya.MessageBox.Ok)
 
+    pya.Application.instance().main_window().redraw()    
+
 def waveguide_heal():
     print("waveguide_heal")
 
@@ -842,8 +843,10 @@ def snap_component():
                 pya.Application.instance().main_window().message(
                     'SiEPIC snap_components: moved by %s.' % trans, 2000)
 
+                pya.Application.instance().main_window().redraw()    
                 return
 # end def snap_component()
+    pya.Application.instance().main_window().redraw()    
 
 
 # keep the selected top cell; delete everything else
@@ -866,6 +869,7 @@ def delete_top_cells():
         v = pya.MessageBox.warning(
             "No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
 
+    pya.Application.instance().main_window().redraw()    
 
 def compute_area():
     print("compute_area")
@@ -1150,6 +1154,70 @@ def auto_coord_extract():
     cell = pya.Application.instance().main_window().current_view().active_cellview().cell
     text_out, opt_in = find_automated_measurement_labels(cell)
     wtext.insertHtml(text_out)
+    pya.Application.instance().main_window().redraw()    
+
+def find_SEM_labels_gui(topcell=None, LayerSEMN=None):
+    from .utils import get_technology
+    TECHNOLOGY = get_technology()
+
+    import string
+    if not LayerSEMN:
+        from .utils import get_technology, find_paths
+        TECHNOLOGY = get_technology()
+        dbu = TECHNOLOGY['dbu']
+        if 'SEM' in TECHNOLOGY:
+            LayerSEMN = TECHNOLOGY['SEM']
+        else:
+            v = pya.MessageBox.warning("SEM images", "No 'SEM' layer found in the Technology.", pya.MessageBox.Ok)
+            return
+    if not topcell:
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            print("No view selected")
+            raise UserWarning("No view selected. Make sure you have an open layout.")
+        # Find the currently selected layout.
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        if ly == None:
+            raise UserWarning("No layout. Make sure you have an open layout.")
+        # find the currently selected cell:
+        cv = pya.Application.instance().main_window().current_view().active_cellview()
+        topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+        if topcell == None:
+            raise UserWarning("No cell. Make sure you have an open layout.")
+
+
+    # Create a Results Database
+    rdb_i = lv.create_rdb("SiEPIC-Tools SEM images: %s technology" %
+                          TECHNOLOGY['technology_name'])
+    rdb = lv.rdb(rdb_i)
+    rdb.top_cell_name = topcell.name
+    rdb_cell = rdb.create_cell(topcell.name)
+
+    # SEM images
+    rdb_cell = next(rdb.each_cell())
+    rdb_cat_id_SEM = rdb.create_category("SEM images")
+    rdb_cat_id_SEM.description = "SEM image"
+
+    dbu = topcell.layout().dbu
+    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerSEMN))
+    i = 0
+    while not(iter.at_end()):
+        if iter.shape().is_box():
+            box = iter.shape().box
+            i += 1
+            box2 = iter.shape().box.transformed(iter.itrans()).to_dtype(dbu)
+            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_SEM.rdb_id())
+            rdb_item.add_value(pya.RdbItemValue(box2))
+        iter.next()
+
+    # displays results in Marker Database Browser, using Results Database (rdb)
+    if rdb.num_items() > 0:
+        v = pya.MessageBox.warning(
+            "SEM images", "%s SEM images found.  \nPlease review SEM images using the 'Marker Database Browser'." % rdb.num_items(), pya.MessageBox.Ok)
+        lv.show_rdb(rdb_i, cv.cell_index)
+    else:
+        v = pya.MessageBox.warning("SEM images", "No SEM images found.", pya.MessageBox.Ok)
+    pya.Application.instance().main_window().redraw()    
 
 
 def calculate_area():
