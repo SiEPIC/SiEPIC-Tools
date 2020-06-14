@@ -5,21 +5,28 @@ import pya
 #WAVEGUIDE_extract_simple = 1
 SIMPLIFY_NETLIST_EXTRACTION = True
 
-# Create GUI's
-from .core import WaveguideGUI, MonteCarloGUI, Net, Component
-WG_GUI = WaveguideGUI()
-MC_GUI = MonteCarloGUI()
+# Commenting this out. by @tlima
+# Only usage of WG_GUI found in :
+#  - SiEPIC-Tools/klayout_dot_config/python/SiEPIC/scripts.py
+# Only usage of WG_GUI found in :
+#  - SiEPIC-Tools/klayout_dot_config/python/SiEPIC/lumerical/interconnect.py
+# # Create GUI's
+# from .core import WaveguideGUI, MonteCarloGUI
+# WG_GUI = WaveguideGUI()
+# MC_GUI = MonteCarloGUI()
 
 # ******** lukasc
 # don't use a global one.. based on cells
 # Define global Net object that implements netlists and pin searching/connecting
 # NET = Net()
 
+from .core import Net
 NET_DISCONNECTED = Net()
 
 # don't use a global one.. based on cells
 # Define global Component object
-#COMPONENT = Component()
+# from .core import Component
+# COMPONENT = Component()
 
 
 # Define an Enumeration type for Python
@@ -78,7 +85,7 @@ try:
 except:
     FDTD = None
     print('resetting Lumerical FDTD Python integration')
-    
+
 try:
     MODE
 except:

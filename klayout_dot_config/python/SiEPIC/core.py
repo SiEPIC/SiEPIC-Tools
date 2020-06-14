@@ -349,10 +349,11 @@ class WaveguideGUI():
                 if ((params['width'] < w) & (component['layer'] != 'DevRec')) and (w < 10):
                     params['width'] = w
                 # enable 2 new parameters: CML and model to support multiple WG models
-                if 'CML' in waveguide:
+                try: 
                     params['CML'] = waveguide['CML']
-                if 'model' in waveguide:
                     params['model'] = waveguide['model']
+                except:
+                    pass
             return params
         else:
             return None

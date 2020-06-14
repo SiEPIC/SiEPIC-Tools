@@ -36,9 +36,7 @@ translate_from_normal
 pt_intersects_segment
 layout_pgtext
 find_automated_measurement_labels
-find_SEM_labels
-etree_to_dict: XML parser
-xml_to_dict
+xml_to_dict: XML parser
 eng_str
 svg_from_component
 sample_function
@@ -129,30 +127,9 @@ def get_technology_by_name(tech_name, verbose=False):
         technology['INTC_CML_version'] = ''
 
     # Layers:
-    file = open(lyp_file, 'r')
-    layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
-    file.close()
-
-    for k in layer_dict:
-        layerInfo = k['source'].split('@')[0]
-        if 'group-members' in k:
-            # encoutered a layer group, look inside:
-            j = k['group-members']
-            if 'name' in j:
-                layerInfo_j = j['source'].split('@')[0]
-                technology[j['name']] = pya.LayerInfo(
-                    int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-            else:
-                for j in k['group-members']:
-                    layerInfo_j = j['source'].split('@')[0]
-                    technology[j['name']] = pya.LayerInfo(
-                        int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-            if k['source'] != '*/*@*':
-                technology[k['name']] = pya.LayerInfo(
-                    int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
-        else:
-            technology[k['name']] = pya.LayerInfo(
-                int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+    from siepic_tools.utils.tech import parse_layer_map
+    layer_map = parse_layer_map(lyp_file)
+    technology.update(layer_map)
 
     return technology
 # end of get_technology_by_name(tech_name)
@@ -644,15 +621,23 @@ def angle_trunc(a, trunc):
 
 # Calculate the recommended number of points in a circle, based on
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
-def points_per_circle(radius):
+def _points_per_circle(radius, dbu):
     # radius in microns
     from math import acos, pi, ceil
-    from . import get_technology
-    TECHNOLOGY = get_technology()
-    err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
-    return int(ceil(pi / acos(1 - err / radius))) # Lukas' derivation (same answer as below)
+    err = 1e3 * dbu / 2
+    err = dbu/ 2  # in nm  (there was an error here for a few years: a 1000X factor)
+    return int(ceil(pi / acos(1 - err / radius))) if radius > 0 else 1 # Lukas' derivation (same answer as below)
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1)))
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
+
+def points_per_circle(radius):
+    try:
+        from . import get_technology
+        TECHNOLOGY = get_technology()
+        dbu = TECHNOLOGY['dbu']
+        return _points_per_circle(radius, dbu)
+    except Exception:
+        return _points_per_circle(radius, dbu=0.001)
 
 
 def arc(r, theta_start, theta_stop):
@@ -922,8 +907,6 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
                                                               2], fields[3], fields[4], fields[5], params_txt)
         iter.next()
     text_out += "<br> Number of automated measurement labels: %s.<br>" % i
-    text_out += "<br> Number of sub-cells: %s<br>" % topcell.child_cells()
-    
     return text_out, opt_in
 
 
@@ -934,90 +917,7 @@ except NameError:
         return it.next()
 
 
-def find_SEM_labels(topcell=None, LayerSEMN=None):
-    # example usage:
-    # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
-    # LayerSEM = pya.LayerInfo(200, 0)
-    # LayerSEMN = topcell.layout().layer(LayerSEM)
-    # find_SEM_labels(topcell, LayerSEMN)
-    import string
-    if not LayerSEMN:
-        from . import get_technology, find_paths
-        TECHNOLOGY = get_technology()
-        dbu = TECHNOLOGY['dbu']
-        LayerSEMN = TECHNOLOGY['SEM']
-    if not topcell:
-        lv = pya.Application.instance().main_window().current_view()
-        if lv == None:
-            print("No view selected")
-            raise UserWarning("No view selected. Make sure you have an open layout.")
-        # Find the currently selected layout.
-        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
-        if ly == None:
-            raise UserWarning("No layout. Make sure you have an open layout.")
-        # find the currently selected cell:
-        cv = pya.Application.instance().main_window().current_view().active_cellview()
-        topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
-        if topcell == None:
-            raise UserWarning("No cell. Make sure you have an open layout.")
-
-    text_out = 'SEM image locations <br>'
-    dbu = topcell.layout().dbu
-    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerSEMN))
-    i = 0
-    texts = []  # pya Text, for Verification
-    while not(iter.at_end()):
-        if iter.shape().is_box():
-            box = iter.shape().box
-            i += 1
-            box2 = iter.shape().box.transformed(iter.itrans())
-            texts.append(box2)
-            text_out += "%s, %s<br>" % (int(box2.left * dbu), int(box2.bottom * dbu) )
-        iter.next()
-    text_out += "<br> Number of SEM boxes: %s.<br>" % i
-    
-    return text_out
-
-
-try:
-    advance_iterator = next
-except NameError:
-    def advance_iterator(it):
-        return it.next()
-
-
-
-# XML to Dict parser, from:
-# https://stackoverflow.com/questions/2148119/how-to-convert-an-xml-string-to-a-dictionary-in-python/10077069
-def etree_to_dict(t):
-    from collections import defaultdict
-    d = {t.tag: {} if t.attrib else None}
-    children = list(t)
-    if children:
-        dd = defaultdict(list)
-        for dc in map(etree_to_dict, children):
-            for k, v in dc.items():
-                dd[k].append(v)
-        d = {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
-    if t.attrib:
-        d[t.tag].update(('@' + k, v) for k, v in t.attrib.items())
-    if t.text:
-        text = t.text.strip()
-        if children or t.attrib:
-            if text:
-                d[t.tag]['#text'] = text
-        else:
-            d[t.tag] = text
-    return d
-
-
-def xml_to_dict(t):
-    from xml.etree import cElementTree as ET
-    try:
-        e = ET.XML(t)
-    except:
-        raise UserWarning("Error in the XML file.")
-    return etree_to_dict(e)
+from siepic_tools.utils.tech import xml_to_dict
 
 
 def eng_str(x):
@@ -1095,6 +995,4 @@ def svg_from_component(component, filename, verbose=False):
     dwg.save()
 
 
-from .._globals import MODULE_NUMPY
-if MODULE_NUMPY:
-    from .sampling import sample_function
+from siepic_tools.utils.sampling import sample_function  # noqa
