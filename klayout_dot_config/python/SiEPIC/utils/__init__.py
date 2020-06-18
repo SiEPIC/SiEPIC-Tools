@@ -140,7 +140,7 @@ def get_technology_by_name(tech_name, verbose=False):
 # Get the current Technology
 
 
-def get_technology(verbose=False, query_activecellview_technology=False):
+def get_technology(verbose=False, query_activecellview_technology=False,GUI_active=True,lv=None):
     if verbose:
         print("get_technology()")
     from .._globals import KLAYOUT_VERSION
@@ -155,7 +155,8 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
-    lv = pya.Application.instance().main_window().current_view()
+    if GUI_active: # KOM - testing functionality for cases without GUI
+        lv = pya.Application.instance().main_window().current_view()
     if lv == None:
         # no layout open; return a default technology
         print("No view selected")
@@ -418,22 +419,27 @@ def load_GC_settings():
         return None
 
 
-def get_layout_variables():
+def get_layout_variables(GUI_active=True,cell=None,lv=None):
     from . import get_technology
-    TECHNOLOGY = get_technology()
+    TECHNOLOGY = get_technology(GUI_active=GUI_active)
 
     # Configure variables to find in the presently selected cell:
-    lv = pya.Application.instance().main_window().current_view()
-    if lv == None:
-        print("No view selected")
-        raise UserWarning("No view selected. Make sure you have an open layout.")
-    # Find the currently selected layout.
-    ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+    if GUI_active == True: # KOM - testing functionality for cases without GUI
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            print("No view selected")
+            raise UserWarning("No view selected. Make sure you have an open layout.")
+        # Find the currently selected layout.
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        # find the currently selected cell:
+        cv = pya.Application.instance().main_window().current_view().active_cellview()
+        cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    else: # KOM - testing functionality for cases without GUI
+        if cell == None:
+            raise UserWarning("No cell. Make sure you have an open layout.")
+        ly = cell.layout()
     if ly == None:
         raise UserWarning("No layout. Make sure you have an open layout.")
-    # find the currently selected cell:
-    cv = pya.Application.instance().main_window().current_view().active_cellview()
-    cell = pya.Application.instance().main_window().current_view().active_cellview().cell
     if cell == None:
         raise UserWarning("No cell. Make sure you have an open layout.")
 

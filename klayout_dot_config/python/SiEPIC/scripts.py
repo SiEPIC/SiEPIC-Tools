@@ -847,7 +847,7 @@ def snap_component():
 
 
 # keep the selected top cell; delete everything else
-def delete_top_cells():
+def delete_top_cells(ly=None, cell=None, GUI_active=True):
 
     def delete_cells(ly, cell):
         if cell in ly.top_cells():
@@ -856,16 +856,18 @@ def delete_top_cells():
             delete_cells(ly, cell)
 
     from .utils import get_layout_variables
-    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    TECHNOLOGY, lv, ly, cell = get_layout_variables(GUI_active=GUI_active, cell=cell)
 
-    if cell in ly.top_cells():
-        lv.transaction("Delete extra top cells")
+    if GUI_active==True: # KOM - testing functionality for cases without GUI
+        if cell in ly.top_cells():
+            lv.transaction("Delete extra top cells")
+            delete_cells(ly, cell)
+            lv.commit()
+        else:
+            v = pya.MessageBox.warning(
+                "No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
+    else: # KOM - testing functionality for cases without GUI
         delete_cells(ly, cell)
-        lv.commit()
-    else:
-        v = pya.MessageBox.warning(
-            "No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
-
 
 def compute_area():
     print("compute_area")
