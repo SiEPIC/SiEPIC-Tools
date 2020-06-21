@@ -1095,10 +1095,10 @@ def eng_str(x):
             z = y / 10**engr_exponent
         sign = '-' if x < 0 else ''
         if EngExp_notation:
-            return sign + str(z) + 'E' + str(engr_exponent)
+            return sign + str(round(z,11)) + 'E' + str(engr_exponent)
 #      return sign+ '%3.3f' % z +str(str_engr_exponent)
         else:
-            return sign + str(z) + str(str_engr_exponent)
+            return sign + str(round(z,11)) + str(str_engr_exponent)
 
 
 # Save an SVG file for the component, for INTC icons
