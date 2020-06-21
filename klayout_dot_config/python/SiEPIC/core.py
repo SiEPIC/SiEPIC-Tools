@@ -202,6 +202,11 @@ class Component():
         print(text)
         return text
 
+    def params_dict(self):
+      if not(self.params):
+        return {}
+      return [{s.split('=')[0]:s.split('=')[1]} for s in self.params.split(' ')]
+
     def find_pins(self):
         return self.cell.find_pins_component(self)
 
