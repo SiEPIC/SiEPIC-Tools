@@ -37,6 +37,7 @@ pt_intersects_segment
 layout_pgtext
 find_automated_measurement_labels
 find_SEM_labels
+find_siepictools_debug_text
 etree_to_dict: XML parser
 xml_to_dict
 eng_str
@@ -986,11 +987,51 @@ def find_SEM_labels(topcell=None, LayerSEMN=None):
     return text_out
 
 
-try:
-    advance_iterator = next
-except NameError:
-    def advance_iterator(it):
-        return it.next()
+
+def find_siepictools_debug_text(topcell=None, LayerTextN=None):
+    # example usage:
+    # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    # LayerText = pya.LayerInfo(10, 0)
+    # LayerTextN = topcell.layout().layer(LayerText)
+    # find_siepictools_debug_text(topcell, LayerTextN)
+    import string
+    if not LayerTextN:
+        from . import get_technology, find_paths
+        TECHNOLOGY = get_technology()
+        dbu = TECHNOLOGY['dbu']
+        LayerTextN = TECHNOLOGY['Text']
+    if not topcell:
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            print("No view selected")
+            raise UserWarning("No view selected. Make sure you have an open layout.")
+        # Find the currently selected layout.
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        if ly == None:
+            raise UserWarning("No layout. Make sure you have an open layout.")
+        # find the currently selected cell:
+        cv = pya.Application.instance().main_window().current_view().active_cellview()
+        topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+        if topcell == None:
+            raise UserWarning("No cell. Make sure you have an open layout.")
+
+    text_out = 'Extracting SiEPIC-Tools verification debug text from layout:\n\n'
+    dbu = topcell.layout().dbu
+    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
+    i = 0
+    texts = []  # pya Text, for Verification
+    while not(iter.at_end()):
+        if iter.shape().is_text():
+            text = iter.shape().text
+            if text.string.find("SiEPIC-Tools verification") > -1:
+                i += 1
+                text2 = iter.shape().text.transformed(iter.itrans())
+                texts.append(text2)
+                text_out += "%s: in %s\n" % (text2.string, iter.shape().cell.name)
+        iter.next()
+    text_out += "Number of verification labels: %s.\n" % i
+    
+    return text_out
 
 
 
