@@ -164,8 +164,8 @@ class Component():
 
     def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, DevRec_polygon=None, cell=None, basic_name=None):
         self.idx = idx             # component index, should be unique, 0, 1, 2, ...
-        self.component = component  # which component (name) this pin belongs to
-        self.instance = instance   # which component (instance) this pin belongs to
+        self.component = component  # which component (name) this belongs to
+        self.instance = instance   # which component (instance) this belongs to
         # instance's location (.disp.x, y), mirror (.is_mirror), rotation (angle);
         # in a ICplxTrans class
         # http://www.klayout.de/doc-qt4/code/class_ICplxTrans.html
@@ -205,7 +205,15 @@ class Component():
     def params_dict(self):
       if not(self.params):
         return {}
-      return [{s.split('=')[0]:s.split('=')[1]} for s in self.params.split(' ')]
+      dicta=[s for s in self.params.split(' ')]  
+      dictb={}
+      for s in dicta:
+          try:
+              q=float(s.split('=')[1])*1e6  # in microns
+          except ValueError:
+              q=s.split('=')[1]
+          dictb[s.split('=')[0]]=q
+      return dictb
 
     def find_pins(self):
         return self.cell.find_pins_component(self)
