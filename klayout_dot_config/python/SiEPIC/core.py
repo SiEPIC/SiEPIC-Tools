@@ -190,7 +190,7 @@ class Component():
         from . import _globals
         c = self
         c.npins = len(c.pins)
-        text = ("- component: %s-%s / %s; transformation: %s; center position: %s; number of pins: %s; optical pins: %s; electrical pins: %s; optical IO pins: %s; has compact model: %s" %
+        text = ("- component: %s-%s / %s; transformation: %s; center position: %s; number of pins: %s; optical pins: %s; electrical pins: %s; optical IO pins: %s; has compact model: %s; params: %s." %
                 (c.component, c.idx, c.instance, c.trans, c.Dcenter, c.npins,
                  [[p.pin_name, p.center.to_s(), p.net.idx]
                   for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL],
@@ -198,7 +198,7 @@ class Component():
                      for p in c.pins if p.type == _globals.PIN_TYPES.ELECTRICAL],
                     [[p.pin_name, p.center.to_s(), p.net.idx]
                      for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO],
-                    c.has_model()))
+                    c.has_model(), c.params))
         print(text)
         return text
 
