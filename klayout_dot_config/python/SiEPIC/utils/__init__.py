@@ -654,7 +654,7 @@ def points_per_circle(radius):
     from . import get_technology
     TECHNOLOGY = get_technology()
     err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
-    return int(ceil(pi / acos(1 - err / radius))) # Lukas' derivation (same answer as below)
+    return int(ceil(pi / acos(1 - err / radius))) if radius > 1 else 10 # Lukas' derivation (same answer as below)
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1)))
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
