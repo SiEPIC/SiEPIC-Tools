@@ -43,6 +43,7 @@ xml_to_dict
 eng_str
 svg_from_component
 sample_function
+pointlist_to_path
 
 
 '''
@@ -1147,3 +1148,17 @@ def svg_from_component(component, filename, verbose=False):
 from .._globals import MODULE_NUMPY
 if MODULE_NUMPY:
     from .sampling import sample_function
+
+
+def pointlist_to_path(pointlist, dbu):
+    # convert [[230.175,169.18],[267.0,169.18],[267.0,252.0],[133.0,252.0],[133.0,221.82],[140.175,221.82]]
+    # to pya.Path
+    
+    points = []
+    for p in points:
+        points.append(pya.Point(p[0],p[1]))
+    path = pya.Path(points)
+    return path
+
+
+    
