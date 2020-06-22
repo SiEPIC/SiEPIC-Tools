@@ -162,10 +162,10 @@ Component defs:
 
 class Component():
 
-    def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, DevRec_polygon=None, cell=None, basic_name=None):
+    def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, DevRec_polygon=None, cell=None, basic_name=None, cellName=None):
         self.idx = idx             # component index, should be unique, 0, 1, 2, ...
-        self.component = component  # which component (name) this pin belongs to
-        self.instance = instance   # which component (instance) this pin belongs to
+        self.component = component  # which component (name) this belongs to
+        self.instance = instance   # which component (instance) this belongs to
         # instance's location (.disp.x, y), mirror (.is_mirror), rotation (angle);
         # in a ICplxTrans class
         # http://www.klayout.de/doc-qt4/code/class_ICplxTrans.html
@@ -182,6 +182,7 @@ class Component():
         self.center = polygon.bbox().center()  # Point
         self.cell = cell           # component's cell
         self.basic_name = basic_name  # component's basic_name (especially for PCells)
+        self.cellName = cellName  # component's Library Cell name
         from .utils import get_technology
         TECHNOLOGY = get_technology()
         self.Dcenter = self.center.to_dtype(TECHNOLOGY['dbu'])
@@ -190,17 +191,30 @@ class Component():
         from . import _globals
         c = self
         c.npins = len(c.pins)
-        text = ("- component: %s-%s / %s; transformation: %s; center position: %s; number of pins: %s; optical pins: %s; electrical pins: %s; optical IO pins: %s; has compact model: %s" %
-                (c.component, c.idx, c.instance, c.trans, c.Dcenter, c.npins,
+        text = ("- basic_name: %s, component: %s-%s / %s; transformation: %s; center position: %s; number of pins: %s; optical pins: %s; electrical pins: %s; optical IO pins: %s; has compact model: %s; params: %s." %
+                (c.basic_name, c.component, c.idx, c.instance, c.trans, c.Dcenter, c.npins,
                  [[p.pin_name, p.center.to_s(), p.net.idx]
                   for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL],
                     [[p.pin_name, p.center.to_s(), p.net.idx]
                      for p in c.pins if p.type == _globals.PIN_TYPES.ELECTRICAL],
                     [[p.pin_name, p.center.to_s(), p.net.idx]
                      for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO],
-                    c.has_model()))
+                    c.has_model(), c.params))
         print(text)
         return text
+
+    def params_dict(self):
+      if not(self.params):
+        return {}
+      dicta=[s for s in self.params.split(' ')]  
+      dictb={}
+      for s in dicta:
+          try:
+              q=float(s.split('=')[1])*1e6  # in microns
+          except ValueError:
+              q=s.split('=')[1]
+          dictb[s.split('=')[0]]=q
+      return dictb
 
     def find_pins(self):
         return self.cell.find_pins_component(self)

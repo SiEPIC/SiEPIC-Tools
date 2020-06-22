@@ -36,10 +36,14 @@ translate_from_normal
 pt_intersects_segment
 layout_pgtext
 find_automated_measurement_labels
-xml_to_dict: XML parser
+find_SEM_labels
+find_siepictools_debug_text
+etree_to_dict: XML parser
+xml_to_dict
 eng_str
 svg_from_component
 sample_function
+pointlist_to_path
 
 
 '''
@@ -624,9 +628,10 @@ def angle_trunc(a, trunc):
 def _points_per_circle(radius, dbu):
     # radius in microns
     from math import acos, pi, ceil
-    err = 1e3 * dbu / 2
-    err = dbu/ 2  # in nm  (there was an error here for a few years: a 1000X factor)
-    return int(ceil(pi / acos(1 - err / radius))) if radius > 0 else 1 # Lukas' derivation (same answer as below)
+    from . import get_technology
+    TECHNOLOGY = get_technology()
+    err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
+    return int(ceil(pi / acos(1 - err / radius))) if radius > 1 else 10 # Lukas' derivation (same answer as below)
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1)))
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
@@ -917,7 +922,130 @@ except NameError:
         return it.next()
 
 
-from siepic_tools.utils.tech import xml_to_dict
+def find_SEM_labels(topcell=None, LayerSEMN=None):
+    # example usage:
+    # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    # LayerSEM = pya.LayerInfo(200, 0)
+    # LayerSEMN = topcell.layout().layer(LayerSEM)
+    # find_SEM_labels(topcell, LayerSEMN)
+    import string
+    if not LayerSEMN:
+        from . import get_technology, find_paths
+        TECHNOLOGY = get_technology()
+        dbu = TECHNOLOGY['dbu']
+        LayerSEMN = TECHNOLOGY['SEM']
+    if not topcell:
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            print("No view selected")
+            raise UserWarning("No view selected. Make sure you have an open layout.")
+        # Find the currently selected layout.
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        if ly == None:
+            raise UserWarning("No layout. Make sure you have an open layout.")
+        # find the currently selected cell:
+        cv = pya.Application.instance().main_window().current_view().active_cellview()
+        topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+        if topcell == None:
+            raise UserWarning("No cell. Make sure you have an open layout.")
+
+    text_out = 'SEM image locations <br>'
+    dbu = topcell.layout().dbu
+    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerSEMN))
+    i = 0
+    texts = []  # pya Text, for Verification
+    while not(iter.at_end()):
+        if iter.shape().is_box():
+            box = iter.shape().box
+            i += 1
+            box2 = iter.shape().box.transformed(iter.itrans())
+            texts.append(box2)
+            text_out += "%s, %s<br>" % (int(box2.left * dbu), int(box2.bottom * dbu) )
+        iter.next()
+    text_out += "<br> Number of SEM boxes: %s.<br>" % i
+    
+    return text_out
+
+
+
+def find_siepictools_debug_text(topcell=None, LayerTextN=None):
+    # example usage:
+    # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    # LayerText = pya.LayerInfo(10, 0)
+    # LayerTextN = topcell.layout().layer(LayerText)
+    # find_siepictools_debug_text(topcell, LayerTextN)
+    import string
+    if not LayerTextN:
+        from . import get_technology, find_paths
+        TECHNOLOGY = get_technology()
+        dbu = TECHNOLOGY['dbu']
+        LayerTextN = TECHNOLOGY['Text']
+    if not topcell:
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            print("No view selected")
+            raise UserWarning("No view selected. Make sure you have an open layout.")
+        # Find the currently selected layout.
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        if ly == None:
+            raise UserWarning("No layout. Make sure you have an open layout.")
+        # find the currently selected cell:
+        cv = pya.Application.instance().main_window().current_view().active_cellview()
+        topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+        if topcell == None:
+            raise UserWarning("No cell. Make sure you have an open layout.")
+
+    text_out = 'Extracting SiEPIC-Tools verification debug text from layout:\n\n'
+    dbu = topcell.layout().dbu
+    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
+    i = 0
+    texts = []  # pya Text, for Verification
+    while not(iter.at_end()):
+        if iter.shape().is_text():
+            text = iter.shape().text
+            if text.string.find("SiEPIC-Tools verification") > -1:
+                i += 1
+                text2 = iter.shape().text.transformed(iter.itrans())
+                texts.append(text2)
+                text_out += "%s: in %s\n" % (text2.string, iter.shape().cell.name)
+        iter.next()
+    text_out += "Number of verification labels: %s.\n" % i
+    
+    return text_out
+
+
+
+# XML to Dict parser, from:
+# https://stackoverflow.com/questions/2148119/how-to-convert-an-xml-string-to-a-dictionary-in-python/10077069
+def etree_to_dict(t):
+    from collections import defaultdict
+    d = {t.tag: {} if t.attrib else None}
+    children = list(t)
+    if children:
+        dd = defaultdict(list)
+        for dc in map(etree_to_dict, children):
+            for k, v in dc.items():
+                dd[k].append(v)
+        d = {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
+    if t.attrib:
+        d[t.tag].update(('@' + k, v) for k, v in t.attrib.items())
+    if t.text:
+        text = t.text.strip()
+        if children or t.attrib:
+            if text:
+                d[t.tag]['#text'] = text
+        else:
+            d[t.tag] = text
+    return d
+
+
+def xml_to_dict(t):
+    from xml.etree import cElementTree as ET
+    try:
+        e = ET.XML(t)
+    except:
+        raise UserWarning("Error in the XML file.")
+    return etree_to_dict(e)
 
 
 def eng_str(x):
@@ -947,10 +1075,10 @@ def eng_str(x):
             z = y / 10**engr_exponent
         sign = '-' if x < 0 else ''
         if EngExp_notation:
-            return sign + str(z) + 'E' + str(engr_exponent)
+            return sign + str(round(z,11)) + 'E' + str(engr_exponent)
 #      return sign+ '%3.3f' % z +str(str_engr_exponent)
         else:
-            return sign + str(z) + str(str_engr_exponent)
+            return sign + str(round(z,11)) + str(str_engr_exponent)
 
 
 # Save an SVG file for the component, for INTC icons
@@ -995,4 +1123,20 @@ def svg_from_component(component, filename, verbose=False):
     dwg.save()
 
 
-from siepic_tools.utils.sampling import sample_function  # noqa
+from .._globals import MODULE_NUMPY
+if MODULE_NUMPY:
+    from .sampling import sample_function
+
+
+def pointlist_to_path(pointlist, dbu):
+    # convert [[230.175,169.18],[267.0,169.18],[267.0,252.0],[133.0,252.0],[133.0,221.82],[140.175,221.82]]
+    # to pya.Path
+    
+    points = []
+    for p in points:
+        points.append(pya.Point(p[0],p[1]))
+    path = pya.Path(points)
+    return path
+
+
+    

@@ -744,7 +744,7 @@ def find_components(self, verbose=False, cell_selected=None):
                 # for flat layout... check within the DevRec shape.
                 iter2 = subcell.begin_shapes_rec(LayerDevRecN)
                 spice_params = ""
-                library = None
+                library, cellName = None, None
                 while not(iter2.at_end()):
                     if iter2.shape().is_text():
                         text = iter2.shape().text
@@ -756,6 +756,8 @@ def find_components(self, verbose=False, cell_selected=None):
                             component = text.string[len("Lumerical_INTERCONNECT_component="):]
                         if text.string.find("Component=") > -1:
                             component = text.string[len("Component="):]
+                        if text.string.find("cellName=") > -1:
+                            cellName = text.string[len("cellName="):]
                         if text.string.find("Component_ID=") > -1:
                             cID = int(text.string[len("Component_ID="):])
                             if cID > 0:
@@ -766,10 +768,16 @@ def find_components(self, verbose=False, cell_selected=None):
                 if library == None:
                     if verbose:
                         print("Missing library information for component: %s" % component)
+                if cellName == None:
+                    cellName = component
 
                 # Save the component into the components list
                 components.append(Component(idx=component_ID,
-                                            component=component, instance=instance, trans=iter1.trans(), library=library, params=spice_params, polygon=polygon, DevRec_polygon=DevRec_polygon, cell=subcell, basic_name=subcell.basic_name()))
+                       component=component, instance=instance, 
+                       trans=iter1.trans(), library=library, 
+                       params=spice_params, polygon=polygon, 
+                       DevRec_polygon=DevRec_polygon, cell=subcell, 
+                       basic_name=subcell.basic_name(), cellName=cellName))
 
                 # find the component pins, and Sort by pin text labels
                 pins = sorted(subcell.find_pins_component(

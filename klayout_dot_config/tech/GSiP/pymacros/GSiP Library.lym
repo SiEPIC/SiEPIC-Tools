@@ -47,6 +47,10 @@ replace:
 with:
  self.cell.shapes(Layerm1N).insert(pya.Polygon(arc(w_m1_in, angle_min_doping, angle_max_doping) + [pya.Point(0, 0)]).transformed(t))
 
+Lukas Chrostowski 2020/06/21
+ - Waveguide update, cellName
+
+
 
 """
 
