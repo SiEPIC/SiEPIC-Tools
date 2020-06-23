@@ -68,7 +68,7 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 
-if 1:
+if 0:
   from SiEPIC.utils import find_siepictools_debug_text
   print(find_siepictools_debug_text())
 
@@ -173,6 +173,8 @@ if 0:
 #  filepath = "C:/Users/lukasc2/KLayout/tech/EBeam/libraries/klayout_Layers_EBeam.lyp"
   filepath = "/Users/lukasc/SiEPIC_EBeam_PDK/klayout_dot_config/tech/EBeam/libraries/klayout_Layers_EBeam.lyp"
 
+
+
 # test for finding Component based on selected object.
 if 0:
   from SiEPIC.utils import select_instances
@@ -237,6 +239,39 @@ if 0:
   import SiEPIC.lumerical as lumerical
   lumerical.interconnect.circuit_simulation(verbose=True)
   
+  
+# Components
+if 0:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  nets, components = cell.identify_nets(verbose=False)
+  print ("* Display list of components:" )
+  [c.display() for c in components]
+  print ("* Display list of nets:" )
+  [n.display() for n in nets]
+
+# Component connections
+if 1:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  # clean all cells within the present cell
+  top_cell = ly.top_cells()[0]
+  ly.prune_subcells(top_cell.cell_index(), 10)
+
+  cell_amf_Terminator_TE_1550 = ly.create_cell('ebeam_crossing4', 'EBeam')
+  t = pya.Trans.from_s('r270 230175,190500')
+  inst_amf_Terminator_TE_1550_3 = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+
+  cell_AMF_IRPH_MRR_0 = ly.create_cell('ebeam_bragg_te1550', 'EBeam',
+       {'r': 10.0, 'w': 0.35, 'g': 0.12, 'gmon': 0.5})
+
+  from SiEPIC.scripts import connect_cell
+  
+  connect_cell(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
+
 
 # Nets, Net trimming:
 if 0:

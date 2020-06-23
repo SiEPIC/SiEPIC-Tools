@@ -877,11 +877,28 @@ def find_components(self, verbose=False, cell_selected=None):
         # A component was found. record the instance info as a Component
         if found_component:
             # check if the component is flattened, or a hierarchical sub-cell
+            '''
             if self == subcell:
+                print(' * Warning: cell is the same as the component; flat layout? or intentionally looking at a specific cell.')
                 # Save the flattened component into the components list
                 components.append(Component(component="Flattened", basic_name="Flattened",
                                             idx=idx, polygon=polygon, trans=iter1.trans()))
             else:
+            '''
+            if 1:
+                '''
+                # the following doesn't work hierarchically... problem:
+                print('inst:')
+                instances = [i for i in self.each_overlapping_inst(polygon.bbox().enlarged(-200,-200))]
+                if len(instances)==1:
+                  instance = instances[0]
+                  print('  * Component Instance: %s, %s, %s' % (instance, instance.bbox(), polygon.bbox().enlarged(-200,-200)))
+                elif len(instances)>1:
+                  print('    more than one Instance overlapping')
+                  for instance in instances:
+                    print('    Instance: %s, %s' % (instance, polygon.bbox().enlarged(-200,-200)))
+                '''  
+            
                 # Find text label for DevRec, to get Library name
                 library = None
                 # *** use of subcell assumes that the shapes are hierarchical within the component

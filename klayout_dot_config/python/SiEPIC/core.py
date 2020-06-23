@@ -130,9 +130,12 @@ class Pin():
         return self
 
     def display(self):
+        p = self
+        print("- pin_name %s: component_idx %s, pin_type %s, rotation: %s, net: %s, (%s), path: %s" %
+              (p.pin_name, p.component.idx, p.type, p.rotation, p.net.idx, p.center, p.path))
         o = self
-        print("- pin #%s: component_idx %s, pin_name %s, pin_type %s, net: %s, (%s), path: %s" %
-              (o.idx, o.component_idx, o.pin_name, o.type, o.net.idx, o.center, o.path))
+#        print("- pin #%s: component_idx %s, pin_name %s, pin_type %s, net: %s, (%s), path: %s" %
+#              (o.idx, o.component_idx, o.pin_name, o.type, o.net.idx, o.center, o.path))
 
 
 def display_pins(pins):
@@ -165,7 +168,8 @@ class Component():
     def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, DevRec_polygon=None, cell=None, basic_name=None, cellName=None):
         self.idx = idx             # component index, should be unique, 0, 1, 2, ...
         self.component = component  # which component (name) this belongs to
-        self.instance = instance   # which component (instance) this belongs to
+        self.instance = instance   # which component (instance) this belongs to  # Needs to fixed to be pya.Instance
+          
         # instance's location (.disp.x, y), mirror (.is_mirror), rotation (angle);
         # in a ICplxTrans class
         # http://www.klayout.de/doc-qt4/code/class_ICplxTrans.html
