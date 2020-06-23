@@ -208,16 +208,21 @@ class Component():
         return text
 
     def params_dict(self):
+      from decimal import Decimal
       if not(self.params):
         return {}
       dicta=[s for s in self.params.split(' ')]  
       dictb={}
       for s in dicta:
-          try:
-              q=float(s.split('=')[1])*1e6  # in microns
-          except ValueError:
-              q=s.split('=')[1]
-          dictb[s.split('=')[0]]=q
+          if '.' not in s.split('=')[1] and 'e' not in s.split('=')[1].lower():
+            # integer
+            dictb[s.split('=')[0]]=int(s.split('=')[1])
+          else:
+            try:
+                q=float(Decimal(s.split('=')[1])*Decimal('1e6'))  # in microns
+            except ValueError:
+                q=s.split('=')[1]
+            dictb[s.split('=')[0]]=q
       return dictb
 
     def find_pins(self):
