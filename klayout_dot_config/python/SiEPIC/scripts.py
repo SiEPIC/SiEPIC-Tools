@@ -11,6 +11,7 @@ waveguide_length
 waveguide_length_diff
 waveguide_heal
 auto_route
+connect_cell
 snap_component
 delete_top_cells
 compute_area
@@ -729,6 +730,83 @@ Lukas Chrostowski           2017/12/17
 
 '''
 
+def connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
+  '''
+  Instantiate, Move & rotate cellB to connect to instanceA, 
+   such that their pins (pinB, pinA) match
+
+  Use SiEPIC-Tools find_components to determine the component size, pins, etc.
+  
+  
+  Example code:
+
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  # clean all cells within the present cell
+  top_cell = ly.top_cells()[0]
+  ly.prune_subcells(top_cell.cell_index(), 10)
+
+  cell_amf_Terminator_TE_1550 = ly.create_cell('ebeam_crossing4', 'EBeam')
+  t = pya.Trans.from_s('r270 230175,190500')
+  inst_amf_Terminator_TE_1550_3 = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+
+  cell_AMF_IRPH_MRR_0 = ly.create_cell('ebeam_bragg_te1550', 'EBeam',
+       {'r': 10.0, 'w': 0.35, 'g': 0.12, 'gmon': 0.5})
+
+  from SiEPIC.scripts import connect_cell
+  
+  connect_cell(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
+
+  
+  '''
+
+  # Find the two components:
+  componentA = instanceA.parent_cell.find_components(instanceA.cell)
+  componentB = cellB.find_components()
+  if componentA==[] or componentB==[]:
+    print ('Component not found')
+    return Null
+  componentA = componentA[0]
+  componentB = componentB[0]
+  if verbose:
+    componentA.display()
+    componentB.display()
+    
+  # Find pinA and pinB
+  cpinA = [p for p in componentA.pins if p.pin_name == pinA]
+  cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
+  if cpinA==[] or cpinB==[]:
+    print ('Pin not found')
+    return instanceA
+#    raise 'Pin not found'
+  cpinA=cpinA[0]
+  cpinB=cpinB[0]
+  if verbose:
+    cpinA.display()
+    cpinB.display()
+  
+  # Find pin angles, and necessary rotation for componentB
+  rotation = (cpinA.rotation - cpinB.rotation - 180) % 360
+  if verbose:
+    print (' cellB required rotation: %s' % (rotation) )
+  
+  # Calculate vector to move componentB
+  trans = pya.Trans(pya.Trans.R0, cpinA.center - cpinB.center * pya.Trans(rotation/90,False,0,0)) \
+      * pya.Trans(rotation/90,False,0,0)
+
+  vector = cpinA.center - componentA.trans.disp - componentB.trans.disp
+  if verbose:
+    print (' cellB required displacement: %s' % (trans) )
+
+  # Instantiate cellB
+  print(instanceA.parent_cell)
+  instanceB = instanceA.parent_cell.insert(pya.CellInstArray(cellB.cell_index(), trans))
+
+  
+  return instanceB
+  pass
 
 def snap_component():
     print("*** snap_component, move selected object to snap onto the transient: ")
