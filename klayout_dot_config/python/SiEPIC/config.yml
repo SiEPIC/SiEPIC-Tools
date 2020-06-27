@@ -2,3 +2,13 @@ GSiP:
  location: "CONFIG['repo_path']/../tech/GSiP"
  library: 'GSiP_Library'
  initialization_function: 'GSiP()'
+
+EBeam:
+ location: ''
+ library: 'SiEPIC_EBeam_Library'
+ initialization_function: 'SiEPIC_EBeam()'
+
+EBeam_Beta:
+ location: ''
+ library: 'SiEPIC_EBeam_Library_Beta'
+ initialization_function: 'SiEPIC_EBeam_dev()'

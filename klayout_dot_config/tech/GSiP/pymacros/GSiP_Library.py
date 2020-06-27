@@ -34,7 +34,7 @@ with:
 """
 
 import os
-import pcells
+import pcells_GSiP
 import pya
 
 class GSiP(pya.Library):
@@ -64,7 +64,7 @@ class GSiP(pya.Library):
     # If a library with that name already existed, it will be replaced then.
     self.register(library)
 
-    if(pcells.op_tag == "GUI"):
+    if(pcells_GSiP.op_tag == "GUI"):
       if int(pya.Application.instance().version().split('.')[1]) > 24:
         # KLayout v0.25 introduced technology variable:
         self.technology=tech_name
