@@ -52,9 +52,9 @@ class GSiP(pya.Library):
 
     self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP.gds"))
 
-    for attr, value in pcells.__dict__.items():
+    for attr, value in pcells_GSiP.__dict__.items():
       try:
-        if value.__module__.split('.')[0] == 'pcells':
+        if value.__module__.split('.')[0] == 'pcells_GSiP':
           print('Registered pcell: '+attr)
           self.layout().register_pcell(attr, value())
       except:
