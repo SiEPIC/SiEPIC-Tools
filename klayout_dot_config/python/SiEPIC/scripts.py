@@ -2,6 +2,8 @@
 #################################################################################
 #                SiEPIC Tools - scripts                                         #
 #################################################################################
+
+
 '''
 
 path_to_waveguide
@@ -30,17 +32,41 @@ replace_cell
 '''
 
 
-import pya
+try:
+    import pya
+    pya.Application
+except:
+    import klayout.db as pya
+    
+#import pya declarations
+import sys
+from pya import Box, Point, Polygon, Text, Trans, LayerInfo, \
+    PCellDeclarationHelper, DPoint, DPath, Path, ShapeProcessor, \
+    Library, CellInstArray
 
 
-def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
+from SiEPIC.utils import arc_xy
+
+print("done importing libraries")
+
+path_to_waveguide_params_default = {'radius': 5.0, 'width': 0.5, 'adiabatic': False, 'bezier': 0.45, 'wgs': [{'layer': 'Si', 'width': 0.5, 'offset': 0.0}, {'width': 2.5, 'layer': 'DevRec', 'offset': 0.0}]}
+
+
+def path_to_waveguide(params=path_to_waveguide_params_default, cell=None, lv_commit=True, GUI=False, verbose=False, select_waveguides=False, GUI_active=True,paths=[],tech_name='GSiP'):
 #    import time
 #    time0 = time.perf_counter()
 #    verbose=True
 
     from . import _globals
-    from .utils import select_paths, get_layout_variables
-    TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
+    from .utils import select_paths, get_layout_variables, get_technology_by_name
+    if GUI_active: # KOM - testing functionality for cases without GUI
+        TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
+    else:
+        # TECHNOLOGY, lv, ly, top_cell = get_layout_variables(GUI_active=GUI_active,cell=cell)
+        TECHNOLOGY = get_technology_by_name(tech_name=tech_name, GUI_active=GUI_active)
+        ly = cell.layout()
+        lv = None
+        top_cell = cell
     if not cell:
         cell = top_cell
 
@@ -48,36 +74,51 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
         print("SiEPIC.scripts path_to_waveguide(); start")
 #        print("SiEPIC.scripts path_to_waveguide(); start; time = %s" % (time.perf_counter()-time0))
 
-    if lv_commit:
-        lv.transaction("Path to Waveguide")
 
-    from .core import WaveguideGUI
-    WG_GUI = WaveguideGUI()
-
-    if params is None:
-        params = WG_GUI.get_parameters(GUI)
+    if GUI_active==True: # KOM - testing functionality for cases without GUI
+        from .core import WaveguideGUI
+        WG_GUI = WaveguideGUI()
+    
+        if params is None:
+            params = WG_GUI.get_parameters(GUI)
+    
     if params is None:
         print("SiEPIC.scripts path_to_waveguide(): no params; returning")
         return
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(): params = %s" % params)
-    selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell, verbose=verbose)
+    if GUI_active:
+        selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell, verbose=verbose)
+    else: # KOM - testing functionality for cases without GUI
+        class ObjectInstPath():
+            def __init__(self,shape=None):
+                self.layer = cell.layout().layer('Si')
+                self.shape = shape
+                self.top = cell
+                self.cv_index = 0
+        selected_paths = [ObjectInstPath(shape=path) for path in paths]  # KOM - testing functionality for cases without GUI
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(): selected_paths = %s" % (selected_paths))
 #        print("SiEPIC.scripts path_to_waveguide(): selected_paths = %s; time = %s" % (selected_paths, time.perf_counter()-time0))
     selection = []
+    if GUI_active == True: # KOM - testing functionality for cases without GUI
+        if lv_commit:
+            lv.transaction("Path to Waveguide")
 
-    warning = pya.QMessageBox()
-    warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
-    warning.setDefaultButton(pya.QMessageBox.Yes)
-    if not selected_paths:
-        warning.setText(
-            "Warning: Cannot make Waveguides - No Path objects selected or found in the layout.")
-        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
-            return
+        warning = pya.QMessageBox()
+        warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
+        warning.setDefaultButton(pya.QMessageBox.Yes)
+        if not selected_paths:
+            warning.setText(
+                "Warning: Cannot make Waveguides - No Path objects selected or found in the layout.")
+            if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+                return
+
+
             
     # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
-    p=cell.find_pins()            
+    p=cell.find_pins() if GUI_active else None # KOM - testing functionality for cases without GUI
+    
 
     for obj in selected_paths:
         path = obj.shape.path
@@ -105,8 +146,8 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
 #        p=cell.find_pins()
 #        if verbose:
 #          print("SiEPIC.scripts path_to_waveguide(); cell.find_pins(); time = %s" % (time.perf_counter()-time0))
-
-        path.snap(p)
+        if GUI_active:
+            path.snap(p)
 #        if verbose:
 #          print("SiEPIC.scripts path_to_waveguide(); path.snap(...); time = %s" % (time.perf_counter()-time0))
 
@@ -164,21 +205,37 @@ def path_to_waveguide(params=None, cell=None, lv_commit=True, GUI=False, verbose
                 print("SiEPIC.scripts.path_to_waveguide(): Waveguide from SiEPIC General, %s" % pcell)
             except:
                 pass
+        if not pcell: # KOM - scripted version
+            dbu = TECHNOLOGY['dbu']
+            pts = path.get_points()
+            path_pts = [Point(pt.x*dbu, pt.y*dbu) for pt in pts]
+            path = Path()
+            path.points = path_pts
+            print(path)
+            #insert wg path points into wg pcell component
+            pcell = top_cell.layout().create_cell("Waveguide", TECHNOLOGY['technology_name'], {"path":path, "radius":10, "width":0.5})
+            
+            
         if not pcell:
             raise Exception(
                 "'Waveguide' in 'SiEPIC General' library is not available. Check that the library was loaded successfully.")
-        selection.append(pya.ObjectInstPath())
-        selection[-1].top = obj.top
-        selection[-1].append_path(pya.InstElement.new(cell.insert(
-            pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
+        if GUI_active==True:
+            selection.append(pya.ObjectInstPath())
+            selection[-1].top = obj.top
+            selection[-1].append_path(pya.InstElement.new(cell.insert(
+                pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
+        else:
+            t = Trans(Trans.R0, 0, 0)
+            top_cell.insert_cell(pcell, Point(0,0), 0)
 
         obj.shape.delete()
 
-    lv.clear_object_selection()
-    if select_waveguides:
-        lv.object_selection = selection
-    if lv_commit:
-        lv.commit()
+    if GUI_active == True: # KOM - testing functionality for cases without GUI
+        lv.clear_object_selection()
+        if select_waveguides:
+            lv.object_selection = selection
+        if lv_commit:
+            lv.commit()
 
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(); done" )
@@ -925,7 +982,7 @@ def snap_component():
 
 
 # keep the selected top cell; delete everything else
-def delete_top_cells():
+def delete_top_cells(ly=None, cell=None, GUI_active=True):
 
     def delete_cells(ly, cell):
         if cell in ly.top_cells():
@@ -934,16 +991,18 @@ def delete_top_cells():
             delete_cells(ly, cell)
 
     from .utils import get_layout_variables
-    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    TECHNOLOGY, lv, ly, cell = get_layout_variables(GUI_active=GUI_active, cell=cell)
 
-    if cell in ly.top_cells():
-        lv.transaction("Delete extra top cells")
+    if GUI_active==True: # KOM - testing functionality for cases without GUI
+        if cell in ly.top_cells():
+            lv.transaction("Delete extra top cells")
+            delete_cells(ly, cell)
+            lv.commit()
+        else:
+            v = pya.MessageBox.warning(
+                "No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
+    else: # KOM - testing functionality for cases without GUI
         delete_cells(ly, cell)
-        lv.commit()
-    else:
-        v = pya.MessageBox.warning(
-            "No top cell selected", "No top cell selected.\nPlease select a top cell to keep\n(not a sub-cell).", pya.MessageBox.Ok)
-
 
 def compute_area():
     print("compute_area")

@@ -82,7 +82,7 @@ SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 
 
-def get_technology_by_name(tech_name, verbose=False):
+def get_technology_by_name(tech_name, verbose=False,GUI_active=True):
     if verbose:
         print("get_technology_by_name()")
 
@@ -94,15 +94,52 @@ def get_technology_by_name(tech_name, verbose=False):
     from .._globals import KLAYOUT_VERSION
     technology = {}
     technology['technology_name'] = tech_name
-    if KLAYOUT_VERSION > 24:
+    
+    if (KLAYOUT_VERSION > 24) and (GUI_active == True):
         technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
     else:
         technology['dbu'] = 0.001
 
     import os
     if KLAYOUT_VERSION > 24:
-        lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()
-        technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
+        if GUI_active == True:
+            lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()
+            technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
+        else:
+            # load path info
+            import sys
+            from ..config import CONFIG # import yml config
+            dir_path = CONFIG[tech_name]["location"]
+            dir_path = dir_path.replace("CONFIG['repo_path']",CONFIG['repo_path']).replace('\\','/')
+            
+            # import library pcells
+            sys.path.append(dir_path + "/pymacros")
+            import importlib
+            tech_lib = importlib.import_module(CONFIG[tech_name]['library'])
+            exec("tech_lib."+CONFIG[tech_name]['initialization_function'])
+            
+            import fnmatch
+            search_str_lyp = '*' + tech_name + '.lyp'
+            search_str_lyt = '*' + tech_name + '.lyt'
+            matches_lyp = []
+            matches_lyt = []
+            for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+                for filename in fnmatch.filter(filenames, search_str_lyp):
+                    matches_lyp.append(os.path.join(root, filename))
+                for filename in fnmatch.filter(filenames, search_str_lyt):
+                    matches_lyt.append(os.path.join(root, filename))
+            if matches_lyp:
+                lyp_file = matches_lyp[0].replace('\\','/')
+            else:
+                raise Exception('Cannot find technology layer properties file %s' % search_str_lyp)
+            if matches_lyt:
+                lyt_file = matches_lyt[0].replace('\\','/')
+            else:
+                raise Exception('Cannot find layout technology file %s' % search_str_lyt)
+            
+            from siepic_tools.utils.tech import _load_pya_tech
+            tech_lyt = _load_pya_tech(lyt_file)
+            technology['dbu'] = tech_lyt.dbu
     else:
         import fnmatch
         dir_path = pya.Application.instance().application_data_path()
@@ -132,6 +169,7 @@ def get_technology_by_name(tech_name, verbose=False):
 
     # Layers:
     from siepic_tools.utils.tech import parse_layer_map
+
     layer_map = parse_layer_map(lyp_file)
     technology.update(layer_map)
 
@@ -144,7 +182,7 @@ def get_technology_by_name(tech_name, verbose=False):
 # Get the current Technology
 
 
-def get_technology(verbose=False, query_activecellview_technology=False):
+def get_technology(verbose=False, query_activecellview_technology=False,GUI_active=True,lv=None):
     if verbose:
         print("get_technology()")
     from .._globals import KLAYOUT_VERSION
@@ -159,7 +197,8 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
-    lv = pya.Application.instance().main_window().current_view()
+    if GUI_active: # KOM - testing functionality for cases without GUI
+        lv = pya.Application.instance().main_window().current_view()
     if lv == None:
         # no layout open; return a default technology
         print("No view selected")
@@ -422,22 +461,27 @@ def load_GC_settings():
         return None
 
 
-def get_layout_variables():
+def get_layout_variables(GUI_active=True,cell=None,lv=None):
     from . import get_technology
-    TECHNOLOGY = get_technology()
+    TECHNOLOGY = get_technology(GUI_active=GUI_active)
 
     # Configure variables to find in the presently selected cell:
-    lv = pya.Application.instance().main_window().current_view()
-    if lv == None:
-        print("No view selected")
-        raise UserWarning("No view selected. Make sure you have an open layout.")
-    # Find the currently selected layout.
-    ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+    if GUI_active == True: # KOM - testing functionality for cases without GUI
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            print("No view selected")
+            raise UserWarning("No view selected. Make sure you have an open layout.")
+        # Find the currently selected layout.
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        # find the currently selected cell:
+        cv = pya.Application.instance().main_window().current_view().active_cellview()
+        cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    else: # KOM - testing functionality for cases without GUI
+        if cell == None:
+            raise UserWarning("No cell. Make sure you have an open layout.")
+        ly = cell.layout()
     if ly == None:
         raise UserWarning("No layout. Make sure you have an open layout.")
-    # find the currently selected cell:
-    cv = pya.Application.instance().main_window().current_view().active_cellview()
-    cell = pya.Application.instance().main_window().current_view().active_cellview().cell
     if cell == None:
         raise UserWarning("No cell. Make sure you have an open layout.")
 

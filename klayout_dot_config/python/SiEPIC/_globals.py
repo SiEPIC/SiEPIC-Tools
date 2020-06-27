@@ -53,8 +53,10 @@ except ImportError:
         print("Could not install numpy with pip. ERROR:", e)
 
 #ACTIONS = []
-
-KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
+try: # KOM - testing functionality for cases without GUI
+    KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
+except: # KOM - testing functionality for cases without GUI
+    KLAYOUT_VERSION = int(26) # KOM - testing functionality for cases without GUI
 
 # Waveguide DevRec: space between the waveguide and the DevRec polygon
 WG_DEVREC_SPACE = 1
@@ -64,15 +66,18 @@ PATH_SNAP_PIN_MAXDIST = 20
 
 
 # Load INTC element library details KLayout application data path
-import os
-path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
-path = os.path.join(path, "Lumerical_INTC_CMLs.txt")
-INTC_ELEMENTS = ''
-if os.path.exists(path):
-    print('loading Lumerical_INTC_CMLs.txt')
-    fh = open(path, "r")
-    INTC_ELEMENTS = fh.read()
-    fh.close()
+try: # KOM - testing functionality for cases without GUI
+    import os
+    path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
+    path = os.path.join(path, "Lumerical_INTC_CMLs.txt")
+    INTC_ELEMENTS = ''
+    if os.path.exists(path):
+        print('loading Lumerical_INTC_CMLs.txt')
+        fh = open(path, "r")
+        INTC_ELEMENTS = fh.read()
+        fh.close()
+except:  # KOM - testing functionality for cases without GUI
+    pass
 
 try:
     INTC
