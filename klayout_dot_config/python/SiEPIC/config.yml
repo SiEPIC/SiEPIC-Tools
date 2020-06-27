@@ -1,0 +1,4 @@
+GSiP:
+ location: "CONFIG['repo_path']/../tech/GSiP"
+ library: 'GSiP_Library'
+ initialization_function: 'GSiP()'
