@@ -33,6 +33,7 @@ with:
  self.cell.shapes(Layerm1N).insert(pya.Polygon(arc(w_m1_in, angle_min_doping, angle_max_doping) + [pya.Point(0, 0)]).transformed(t))
 """
 
+import os
 import pcells
 import pya
 
