@@ -926,6 +926,7 @@ class GSiP(pya.Library):
 #    self.description = "Generic Silicon Photonics"
 
     import os
+    # Import GDS Layouts for fixed (non-parameterized cells)
     self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP_gds.txt"))
 #    self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP.gds"))
 #    [self.layout().rename_cell(i, self.layout().cell_name(i).replace('_', ' ')) for i in range(0, self.layout().cells())]
@@ -941,12 +942,15 @@ class GSiP(pya.Library):
     # If a library with that name already existed, it will be replaced then.
     self.register(library)
 
+    # Associate the Library with a specific technology;
+    # Libraries are only visible with the matching technology
     if int(Application.instance().version().split('.')[1]) &gt; 24:
       # KLayout v0.25 introduced technology variable:
       self.technology=tech_name
 
+    # This allows a python function to know where the Library files are located
     self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(__file__)))
-   
+
 GSiP()
 
 </text>
