@@ -221,10 +221,13 @@ class Component():
             # integer
             dictb[s.split('=')[0]]=int(s.split('=')[1])
           else:
-            try:
-                q=float(Decimal(s.split('=')[1])*Decimal('1e6'))  # in microns
-            except ValueError:
+            string = s.split('=')[1]
+            if '[' in string:
                 q=s.split('=')[1]
+            else:            
+                string = string.replace('u','e-6').replace('n','e-9')
+                print (string)
+                q=float(Decimal(string)*Decimal('1e6'))  # in microns
             dictb[s.split('=')[0]]=q
       return dictb
 
