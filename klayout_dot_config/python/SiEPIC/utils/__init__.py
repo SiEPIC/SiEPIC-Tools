@@ -274,6 +274,11 @@ def load_Waveguides_by_Tech(tech_name):
             for waveguide in waveguides:
                 if not isinstance(waveguide['component'], list):
                     waveguide['component'] = [waveguide['component']]
+                if not 'bezier' in waveguide.keys():
+                    waveguide['adiabatic'] = False
+                    waveguide['bezier'] = ''
+                else:
+                    waveguide['adiabatic'] = True
     return waveguides if waveguides else None
 
 '''
