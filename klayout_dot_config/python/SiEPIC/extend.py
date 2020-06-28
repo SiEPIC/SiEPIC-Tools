@@ -141,7 +141,7 @@ def radius_check(self, radius):
       return True
 
 # remove all colinear points (only keep corners)
-def remove_colinear_points(self):
+def remove_colinear_points(self, verbose=False):
     from .utils import pt_intersects_segment, angle_b_vectors
     if self.__class__ == pya.Path:
         pts = self.get_points()
@@ -151,7 +151,8 @@ def remove_colinear_points(self):
     for i in range(1,len(pts)-1):
       turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
       angle = angle_vector(pts[i]-pts[i-1])/90
-      print('%s, %s' %(turn, angle))
+      if verbose:
+        print('%s, %s' %(turn, angle))
 
 
     # this version removed all colinear points, which doesn't make sense for a path
@@ -959,7 +960,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     if inst:
       for c in components:
         if c.trans==inst.trans:
-          print(inst.trans)
+          if verbose:
+            print(inst.trans)
           components=c
           continue
     

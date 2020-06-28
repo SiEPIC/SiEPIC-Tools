@@ -69,6 +69,49 @@ print ("*** SiEPIC test environment ***")
 
 
 if 0:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  # Waveguide type:
+  from SiEPIC.utils import load_Waveguides_by_Tech
+  technology = ly.meta_info_value('technology')
+  waveguides = load_Waveguides_by_Tech(technology)
+  print(waveguides)
+
+
+# connect_pins_with_waveguide test:
+if 1:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  from SiEPIC.scripts import connect_pins_with_waveguide
+  waveguide_type='Strip TE 1550 nm, w=500 nm'
+
+  # clean all cells within the present cell
+  top_cell = ly.top_cells()[0]
+  ly.prune_subcells(top_cell.cell_index(), 10)
+
+  cell_amf_Terminator_TE_1550 = ly.create_cell('ebeam_crossing4', 'EBeam')
+  t = pya.Trans.from_s('r270 0,0')
+  instA = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  t = pya.Trans.from_s('r270 30000,20000')
+  instB = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  connect_pins_with_waveguide(instA, 'opt3', instB, 'opt3', turtle_A=[5,-90,10,-90, 20, 90], waveguide_type=waveguide_type)
+  connect_pins_with_waveguide(instA, 'opt2', instB, 'opt4', waveguide_type=waveguide_type)
+
+  t = pya.Trans.from_s('r270 0,-50000')
+  instA = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  t = pya.Trans.from_s('r270 30000,-20000')
+  instB = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  connect_pins_with_waveguide(instA, 'opt2', instB, 'opt3', waveguide_type=waveguide_type)
+  connect_pins_with_waveguide(instA, 'opt4', instB, 'opt4', waveguide_type=waveguide_type)
+#  connect_pins_with_waveguide(instA, 'opt3', instB, 'opt2', turtle_A=[5,90, 20, 90], turtle_B=[5, -90, 50, -90], waveguide_type=waveguide_type, verbose=True)
+  connect_pins_with_waveguide(instA, 'opt3', instB, 'opt2', turtle_A=[5,90, 30, 90], turtle_B=[5, 90, 10, 90, 10, -90, 10, -90,  15, -90, 50, -90], waveguide_type=waveguide_type, verbose=True, debug_path=True)
+
+
+
+if 0:
   from SiEPIC.utils import find_siepictools_debug_text
   print(find_siepictools_debug_text())
 
@@ -252,7 +295,7 @@ if 0:
   [n.display() for n in nets]
 
 # Component connections
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
