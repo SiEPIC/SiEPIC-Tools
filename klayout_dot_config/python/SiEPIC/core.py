@@ -193,9 +193,12 @@ class Component():
 
     def display(self):
         from . import _globals
-        c = self
-        c.npins = len(c.pins)
-        text = ("- basic_name: %s, component: %s-%s / %s; transformation: %s; center position: %s; number of pins: %s; optical pins: %s; electrical pins: %s; optical IO pins: %s; has compact model: %s; params: %s." %
+        cc = self
+        if type(cc) != type([]):
+          cc=[cc]
+        for c in cc:
+          c.npins = len(c.pins)
+          text = ("- basic_name: %s, component: %s-%s / %s; transformation: %s; center position: %s; number of pins: %s; optical pins: %s; electrical pins: %s; optical IO pins: %s; has compact model: %s; params: %s." %
                 (c.basic_name, c.component, c.idx, c.instance, c.trans, c.Dcenter, c.npins,
                  [[p.pin_name, p.center.to_s(), p.net.idx]
                   for p in c.pins if p.type == _globals.PIN_TYPES.OPTICAL],
@@ -204,7 +207,7 @@ class Component():
                     [[p.pin_name, p.center.to_s(), p.net.idx]
                      for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO],
                     c.has_model(), c.params))
-        print(text)
+          print(text)
         return text
 
     def params_dict(self):
