@@ -833,7 +833,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     if verbose:
         print('*** Cell.find_components:')
 
-    if type(cell_selected) != type([]):
+    if cell_selected != None and type(cell_selected) != type([]):
           cell_selected=[cell_selected]
 
     components = []
