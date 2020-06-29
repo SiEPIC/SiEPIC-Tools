@@ -629,8 +629,6 @@ def angle_b_vectors(u, v):
     return (atan2(v.y, v.x) - atan2(u.y, u.x)) / pi * 180
 
 # Find the angle between two vectors (will always be the smaller angle)
-
-
 def inner_angle_b_vectors(u, v):
     from math import acos, pi
     if (u.abs() * v.abs()) > 0:
