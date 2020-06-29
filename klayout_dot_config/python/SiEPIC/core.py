@@ -53,7 +53,7 @@ class Net:
 
     def display(self):
         print('- net: %s, pins: %s' % (self.idx,
-                                       [[p.pin_name, p.center.to_s(), p.component.component, p.component.component] for p in self.pins]))
+                                       [[p.pin_name, p.center.to_s(), p.component.component, p.component.instance] for p in self.pins]))
 
 '''
 Pin:
