@@ -112,9 +112,18 @@ def is_manhattan(self):
         pts = self.get_dpoints()
     if len(pts) == 2:
         return True
+        
+    # check that each segment is horizontal or vertical:
     for i, pt in enumerate(pts[0:-1]):
         if not (pts[i].x == pts[i + 1].x or pts[i].y == pts[i + 1].y):
             return False
+
+    # check that all corners are 90 degrees (not 180):
+    from SiEPIC.utils import inner_angle_b_vectors
+    for i in range(1, len(pts)-1):
+        if ((inner_angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90) != 90:
+            return False
+ 
     return True
 
 
