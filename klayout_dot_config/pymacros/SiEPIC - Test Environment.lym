@@ -68,6 +68,61 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 
+# Find waveguides
+if 1:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  nets, components = cell.identify_nets(verbose=False)
+#  print ("* Display list of components:" )
+#  [c.display() for c in components]
+#  print ("* Display list of nets:" )
+#  [n.display() for n in nets]
+
+  waveguides=[c in components if 'Waveguide' in c.instance]
+  for w in waveguides:
+      for p in c.pins:
+        p.display()
+              
+
+
+# Find waveguides from Nets
+if 0:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  nets, components = cell.identify_nets(verbose=False)
+#  print ("* Display list of components:" )
+#  [c.display() for c in components]
+#  print ("* Display list of nets:" )
+#  [n.display() for n in nets]
+
+  waveguides=[]
+  for n in nets:
+    instances=[]
+    pins=[]
+    if [p.center.to_s() for p in n.pins if ('Waveguide' in p.component.instance and not(p.component in waveguides))]:
+      # Found a waveguide. Next find the two components
+      waveguides.append(p.component)
+      for p in n.pins:
+        if 'Waveguide' in p.component.instance:
+          print('Waveguide: %s' % p.center.to_s())
+          for p1 in p.component.pins:
+            p1.net.display()
+            for p2 in p1.net.pins:
+              if not('Waveguide' in p2.component.instance):
+                print('Component: %s' % p2.component.instance)
+                instances.append(p2.component.instance)
+                pins.append(p2)
+    print(instances)
+    print(pins)
+              
+        
+#    print(n.pins[0].component.instance)
+#    print(n.pins[1].component.instance)
+
+
+
 if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
@@ -80,7 +135,7 @@ if 0:
 
 
 # connect_pins_with_waveguide test:
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
