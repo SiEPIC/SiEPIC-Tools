@@ -668,9 +668,7 @@ def find_pins_component(self, component):
 '''
 Components:
 '''
-
-
-def find_components(self, verbose=False, cell_selected=None):
+def find_components(self, cell_selected=None, inst=None, verbose=False):
     '''
     Function to traverse the cell's hierarchy and find all the components
     returns list of components (class Component)
@@ -683,10 +681,15 @@ def find_components(self, verbose=False, cell_selected=None):
     Use the pin names on layer PinRec to sort the pins in alphabetical order
 
     cell_selected: only find components that match this specific cell.
+    
+    inst: return only the component that matches the instance inst
 
     '''
     if verbose:
         print('*** Cell.find_components:')
+
+    if cell_selected != None and type(cell_selected) != type([]):
+          cell_selected=[cell_selected]
 
     components = []
 
@@ -710,7 +713,6 @@ def find_components(self, verbose=False, cell_selected=None):
             continue
         component = subcell.basic_name().replace(' ', '_')   # name library component
         instance = subcell.name
-#    subcell.name                # name of the cell; for PCells, different from basic_name
 
         found_component = False
         # DevRec must be either a Box or a Polygon:
@@ -808,6 +810,16 @@ def find_components(self, verbose=False, cell_selected=None):
 
         iter1.next()
     # end while iter1
+    
+    # find the component that matches the given instance (the first one)
+    if inst:
+      for c in components:
+        if c.trans==inst.trans:
+          if verbose:
+            print(inst.trans)
+          components=c
+          continue
+    
     return components
 # end def find_components
 

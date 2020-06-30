@@ -292,6 +292,11 @@ def load_Waveguides_by_Tech(tech_name):
             for waveguide in waveguides:
                 if not isinstance(waveguide['component'], list):
                     waveguide['component'] = [waveguide['component']]
+                if not 'bezier' in waveguide.keys():
+                    waveguide['adiabatic'] = False
+                    waveguide['bezier'] = ''
+                else:
+                    waveguide['adiabatic'] = True
     return waveguides if waveguides else None
 
 '''
@@ -647,8 +652,6 @@ def angle_b_vectors(u, v):
     return (atan2(v.y, v.x) - atan2(u.y, u.x)) / pi * 180
 
 # Find the angle between two vectors (will always be the smaller angle)
-
-
 def inner_angle_b_vectors(u, v):
     from math import acos, pi
     return acos((u.x * v.x + u.y * v.y) / (u.abs() * v.abs())) / pi * 180

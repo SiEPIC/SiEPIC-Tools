@@ -71,6 +71,126 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 
+# pointlist_to_turtles
+if 0:
+    pointlist=[[230.175,169.18],[267.0,169.18],[267.0,252.0],[133.0,252.0],[133.0,221.82],[140.175,221.82]]
+    pointlist=[[-4.80000,-50.00000],[-9.80000, -50.00000],[-9.80000,-80.00000],[44.80000,-80.00000],[44.80000,0.00000],[29.80000,0.00000],[29.80000,-10.00000],[39.80000,-10.00000],[39.80000,-20.00000],[34.80000,-20.00000]]
+    from SiEPIC.scripts import pointlist_to_turtles
+    tA, tB =pointlist_to_turtles(pointlist)  
+    print('TurtleA: %s, TurtleB: %s'%(tA, tB) )
+
+# Find waveguides
+if 0:
+    from SiEPIC import scripts  
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    nets, components = cell.identify_nets(verbose=False)
+#  print ("* Display list of components:" )
+#  [c.display() for c in components]
+#  print ("* Display list of nets:" )
+#  [n.display() for n in nets]
+
+    # find all the waveguides
+    waveguides = [c for c in components if 'Waveguide' in c.instance]
+    for w in waveguides:
+        # go through both pins, and find the corresponding component
+        for p in w.pins:
+#            p.display()
+#            p.component.display()
+            # find the connected components' pin, using the net
+            p1 = [p1 for p1 in p.net.pins if p1 != p][0]
+            p1.display()
+            p1.component.display()
+            
+#            for p1 in p.component.pins:
+#                p1.net.display()
+#            for p2 in p1.net.pins:
+#              if not('Waveguide' in p2.component.instance):
+#                print('Component: %s' % p2.component.instance)
+#                instances.append(p2.component.instance)
+              
+
+
+# Find waveguides from Nets
+if 0:
+    from SiEPIC import scripts  
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    nets, components = cell.identify_nets(verbose=False)
+#  print ("* Display list of components:" )
+#  [c.display() for c in components]
+#  print ("* Display list of nets:" )
+#  [n.display() for n in nets]
+
+    waveguides=[]
+    for n in nets:
+        instances=[]
+        pins=[]
+        if [p.center.to_s() for p in n.pins if ('Waveguide' in p.component.instance and not(p.component in waveguides))]:
+        # Found a waveguide. Next find the two components
+            waveguides.append(p.component)
+            for p in n.pins:
+                if 'Waveguide' in p.component.instance:
+                    print('Waveguide: %s' % p.center.to_s())
+                    for p1 in p.component.pins:
+                        p1.net.display()
+                    for p2 in p1.net.pins:
+                        if not('Waveguide' in p2.component.instance):
+                            print('Component: %s' % p2.component.instance)
+                            instances.append(p2.component.instance)
+                            pins.append(p2)
+    print(instances)
+    print(pins)
+              
+        
+#    print(n.pins[0].component.instance)
+#    print(n.pins[1].component.instance)
+
+
+
+if 0:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  # Waveguide type:
+  from SiEPIC.utils import load_Waveguides_by_Tech
+  technology = ly.meta_info_value('technology')
+  waveguides = load_Waveguides_by_Tech(technology)
+  print(waveguides)
+
+
+# connect_pins_with_waveguide test:
+if 1:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  from SiEPIC.scripts import connect_pins_with_waveguide
+  waveguide_type='Strip TE 1550 nm, w=500 nm'
+
+  # clean all cells within the present cell
+  top_cell = ly.top_cells()[0]
+  ly.prune_subcells(top_cell.cell_index(), 10)
+
+  cell_amf_Terminator_TE_1550 = ly.create_cell('ebeam_crossing4', 'EBeam')
+  t = pya.Trans.from_s('r270 0,0')
+  instA = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  t = pya.Trans.from_s('r270 30000,20000')
+  instB = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  connect_pins_with_waveguide(instA, 'opt3', instB, 'opt3', turtle_A=[5,-90,10,-90, 20, 90], waveguide_type=waveguide_type)
+  connect_pins_with_waveguide(instA, 'opt2', instB, 'opt4', waveguide_type=waveguide_type)
+
+  t = pya.Trans.from_s('r270 0,-50000')
+  instA = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  t = pya.Trans.from_s('r270 30000,-20000')
+  instB = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  connect_pins_with_waveguide(instA, 'opt2', instB, 'opt3', waveguide_type=waveguide_type)
+  connect_pins_with_waveguide(instA, 'opt4', instB, 'opt4', waveguide_type=waveguide_type)
+  connect_pins_with_waveguide(instA, 'opt3', instB, 'opt2', turtle_A=[5,90, 20, 90], turtle_B=[5, -90, 50, -90], waveguide_type=waveguide_type, verbose=True)
+  connect_pins_with_waveguide(instA, 'opt3', instB, 'opt2', turtle_A=[5,90, 30, 90], turtle_B=[5, 90, 10, 90, 10, -90, 10, -90,  15, -90, 50, -90], waveguide_type=waveguide_type, verbose=True, debug_path=True)
+
+
+
 if 0:
   from SiEPIC.utils import find_siepictools_debug_text
   print(find_siepictools_debug_text())
@@ -255,7 +375,7 @@ if 0:
   [n.display() for n in nets]
 
 # Component connections
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()

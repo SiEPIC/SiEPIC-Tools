@@ -63,6 +63,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
 
 from GSiP_Library import *
+    # This allows a python function to know where the Library files are located
+    self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(__file__)))
+    self.layout().add_meta_info(LayoutMetaInfo("technology",tech_name))
 
 GSiP()
 
