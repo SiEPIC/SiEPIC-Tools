@@ -68,5 +68,9 @@ class GSiP(pya.Library):
       if int(pya.Application.instance().version().split('.')[1]) > 24:
         # KLayout v0.25 introduced technology variable:
         self.technology=tech_name
+
+    # This allows a python function to know where the Library files are located
+    self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(__file__)))
+    self.layout().add_meta_info(LayoutMetaInfo("technology",tech_name))
   
 GSiP()
