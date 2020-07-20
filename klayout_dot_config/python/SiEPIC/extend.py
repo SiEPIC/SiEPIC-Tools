@@ -788,7 +788,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                     if verbose:
                         print("Missing library information for component: %s" % component)
                 if cellName == None:
-                    cellName = component
+                    cellName = subcell.basic_name()
 
                 # Save the component into the components list
                 components.append(Component(idx=component_ID,

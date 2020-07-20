@@ -217,6 +217,9 @@ class Component():
       dicta=[s for s in self.params.split(' ')]  
       dictb={}
       for s in dicta:
+          # print('params_dict: %s, %s' % (dicta, s))
+          if s == '':
+            continue
           if '.' not in s.split('=')[1] and 'e' not in s.split('=')[1].lower():
             # integer
             dictb[s.split('=')[0]]=int(s.split('=')[1])
@@ -226,7 +229,7 @@ class Component():
                 q=s.split('=')[1]
             else:            
                 string = string.replace('u','e-6').replace('n','e-9')
-                print (string)
+                # print (string)
                 q=float(Decimal(string)*Decimal('1e6'))  # in microns
             dictb[s.split('=')[0]]=q
       return dictb

@@ -160,7 +160,7 @@ if 0:
 
 
 # connect_pins_with_waveguide test:
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
