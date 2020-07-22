@@ -459,6 +459,25 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
                 pass
         if not pcell:
             try:
+                for lib_name in TECHNOLOGY['libraries']:
+                    pcell = ly.create_cell("Waveguide", lib_name, { "path": Dpath,
+                                                                    "radius": params['radius'],
+                                                                    "width": params['width'],
+                                                                    "adiab": params['adiabatic'],
+                                                                    "bezier": params['bezier'],
+                                                                    "layers": [wg['layer'] for wg in params['wgs']],
+                                                                    "widths": [wg['width'] for wg in params['wgs']],
+                                                                    "offsets": [wg['offset'] for wg in params['wgs']]})
+                    print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
+                      (TECHNOLOGY['technology_name'], pcell))   
+                    if pcell:
+                        break
+#                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
+#                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
+            except:
+                pass
+        if not pcell:
+            try:
                 pcell = ly.create_cell("Waveguide", "SiEPIC General", {"path": Dpath,
                                                                        "radius": params['radius'],
                                                                        "width": params['width'],
