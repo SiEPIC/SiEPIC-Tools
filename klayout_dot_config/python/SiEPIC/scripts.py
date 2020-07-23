@@ -469,7 +469,7 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
                                                                     "widths": [wg['width'] for wg in params['wgs']],
                                                                     "offsets": [wg['offset'] for wg in params['wgs']]})
                     print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
-                      (TECHNOLOGY['technology_name'], pcell))   
+                      (lib_name, pcell))   
                     if pcell:
                         break
 #                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
