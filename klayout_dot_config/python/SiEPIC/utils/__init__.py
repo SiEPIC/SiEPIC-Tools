@@ -98,6 +98,9 @@ def get_library_names(tech_name, verbose=False):
     else:
         print("Cannot get library names since KLayout version is <= 22")
     
+    if not library_names:
+        print("No libraries associated to {} technology".format(tech_name))
+    
     return library_names
 
 def get_technology_by_name(tech_name, verbose=False):
