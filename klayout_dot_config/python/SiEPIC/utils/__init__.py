@@ -6,6 +6,7 @@ List of functions:
 
 
 advance_iterator
+get_library_names
 get_technology_by_name
 get_technology
 load_Waveguides
@@ -81,6 +82,26 @@ import SiEPIC.utils
 SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 
+# Returns a list of library names associated to the given technology name
+def get_library_names(tech_name, verbose=False):
+    if verbose:
+        print("get_library_names()")
+    
+    from .._globals import KLAYOUT_VERSION
+    
+    library_names = []
+    if KLAYOUT_VERSION > 22:
+        for lib_name in pya.Library.library_names():
+            library = pya.Library.library_by_name(lib_name)
+            if tech_name in library.technologies():
+                library_names.append(lib_name)
+    else:
+        print("Cannot get library names since KLayout version is <= 22")
+    
+    if not library_names:
+        print("No libraries associated to {} technology".format(tech_name))
+    
+    return library_names
 
 def get_technology_by_name(tech_name, verbose=False):
     if verbose:
@@ -155,7 +176,11 @@ def get_technology_by_name(tech_name, verbose=False):
         else:
             technology[k['name']] = pya.LayerInfo(
                 int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+    
+    # Get library names
+    technology['libraries'] = get_library_names(tech_name)
 
+    
     return technology
 # end of get_technology_by_name(tech_name)
 # test example: give it a name of a technology, e.g., GSiP
@@ -186,6 +211,10 @@ def get_technology(verbose=False, query_activecellview_technology=False):
         print("No view selected")
         technology['dbu'] = 0.001
         technology['technology_name'] = technology_name
+        
+        # Get library names
+        technology['libraries'] = get_library_names(technology_name)
+        
         return technology
 
     # "lv.active_cellview().technology" crashes in KLayout 0.24.10 when loading a GDS file (technology not defined yet?) but works otherwise
@@ -222,6 +251,10 @@ def get_technology(verbose=False, query_activecellview_technology=False):
                     int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
             technology[itr.current().name + '_color'] = itr.current().fill_color
             itr.next()
+            
+    # Get library names
+    technology['libraries'] = get_library_names(technology_name)
+    
     return technology
 
 
