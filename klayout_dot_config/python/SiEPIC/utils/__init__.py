@@ -90,7 +90,7 @@ def get_library_names(tech_name, verbose=False):
     from .._globals import KLAYOUT_VERSION
     
     library_names = []
-    if KLAYOUT_VERSION > 22:
+    if KLAYOUT_VERSION > 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
         for lib_name in pya.Library.library_names():
             library = pya.Library.library_by_name(lib_name)
             if tech_name in library.technologies():
@@ -312,6 +312,10 @@ def load_Waveguides_by_Tech(tech_name):
                     waveguide['bezier'] = ''
                 else:
                     waveguide['adiabatic'] = True
+                if not 'CML' in waveguide.keys():
+                    waveguide['CML'] = ''
+                if not 'model' in waveguide.keys():
+                    waveguide['model'] = ''
     return waveguides if waveguides else None
 
 '''
