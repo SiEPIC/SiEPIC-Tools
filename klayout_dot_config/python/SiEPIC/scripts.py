@@ -189,6 +189,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     width_um = waveguide_component[0]['width']
   else: # pick the first one:
     width_um = waveguide['component'][0]['width']
+  width_um=float(width_um)
   from SiEPIC.extend import to_itype
   width=to_itype(width_um,dbu)
 #  layer=waveguide['component'][0]['layer']  # pick the first layer in the waveguide definition, for the path.
