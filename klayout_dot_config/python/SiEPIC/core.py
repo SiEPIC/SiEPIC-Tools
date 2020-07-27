@@ -320,7 +320,10 @@ class WaveguideGUI():
         TECHNOLOGY, lv, ly, cell = get_layout_variables()
         self.window.findChild("configuration").clear()
         self.waveguides = load_Waveguides()
-        self.options = [waveguide['name'] for waveguide in self.waveguides]
+        try:
+            self.options = [waveguide['name'] for waveguide in self.waveguides]
+        except:
+            raise Exception("Problem with waveguide configuration. Error in SiEPIC.core.WaveguideGUI.update")
         self.window.findChild("configuration").addItems(self.options)
 
     def close(self, val):
