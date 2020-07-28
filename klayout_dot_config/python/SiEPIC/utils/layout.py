@@ -19,6 +19,27 @@ from .sampling import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 
+
+'''
+Create a waveguide, in a specific technology
+inputs
+- TECHNOLOGY, layout, cell:
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, layout, cell = get_layout_variables()
+- layers: list of text names, e.g., ['Waveguide']
+- widths: list of floats in units Microns, e.g., [0.50]
+- offsets: list of floats in units Microns, e.g., [0]
+- pts: a list of pya.Points, e.g. 
+    L=15/dbu
+    pts = [Point(0,0), Point(L,0), Point(L,L)]
+- radius: in Microns, e.g., 5
+- adiab: 1 = Bezier curve, 0 = radial bend (arc)
+- bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
+
+Note: bezier parameters need to be simulated and optimized, and will depend on 
+    wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
+    most useful for TE 
+'''
 def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier):
   from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
   from SiEPIC.extend import to_itype
