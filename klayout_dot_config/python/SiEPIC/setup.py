@@ -11,6 +11,8 @@ def registerMenuItems():
     menu = pya.Application.instance().main_window().menu()
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         "files", "INTERCONNECT_icon.png")
+    path_flv = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                        "files", "flv_icon.png")
 
     import sys
     if int(sys.version[0]) > 2 and sys.platform == 'darwin':
@@ -68,7 +70,7 @@ def registerMenuItems():
         menu.insert_item("@toolbar.end", "verification", ACTIONS[count])
     ACTIONS[count].title = "Functional\nVerification"
     ACTIONS[count].on_triggered(scripts.layout_check)
-#    ACTIONS[count].icon = path
+    ACTIONS[count].icon = path_flv
     count += 1
 
     if not(menu.is_menu("@toolbar.coordinates")):
