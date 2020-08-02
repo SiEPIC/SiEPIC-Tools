@@ -71,6 +71,13 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 
+if 0:
+        from .utils import get_layout_variables, load_Waveguides
+        TECHNOLOGY, lv, ly, cell = get_layout_variables()
+        self.window.findChild("configuration").clear()
+        self.waveguides = load_Waveguides()
+
+
 # pointlist_to_turtles
 if 0:
     pointlist=[[230.175,169.18],[267.0,169.18],[267.0,252.0],[133.0,252.0],[133.0,221.82],[140.175,221.82]]
@@ -167,7 +174,15 @@ if 0:
 
   from SiEPIC.scripts import connect_pins_with_waveguide
   waveguide_type='Strip TE 1550 nm, w=500 nm'
-
+  '''
+  #wg_types.append ( WaveguideTypes(name='Donald', w=500) )
+  # Load localized WAVEGUIDES.XML
+  Project folder, including
+   - GDS, OASIS
+   - WAVEGUIDES.XML
+   - Local library, *.py
+  '''
+  
   # clean all cells within the present cell
   top_cell = ly.top_cells()[0]
   ly.prune_subcells(top_cell.cell_index(), 10)
@@ -186,7 +201,6 @@ if 0:
   instB = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
   connect_pins_with_waveguide(instA, 'opt2', instB, 'opt3', waveguide_type=waveguide_type)
   connect_pins_with_waveguide(instA, 'opt4', instB, 'opt4', waveguide_type=waveguide_type)
-  connect_pins_with_waveguide(instA, 'opt3', instB, 'opt2', turtle_A=[5,90, 20, 90], turtle_B=[5, -90, 50, -90], waveguide_type=waveguide_type, verbose=True)
   connect_pins_with_waveguide(instA, 'opt3', instB, 'opt2', turtle_A=[5,90, 30, 90], turtle_B=[5, 90, 10, 90, 10, -90, 10, -90,  15, -90, 50, -90], waveguide_type=waveguide_type, verbose=True, debug_path=True)
 
 

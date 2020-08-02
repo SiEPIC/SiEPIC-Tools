@@ -4,7 +4,7 @@
  <description/>
  <dbu>0.001</dbu>
  <base-path/>
- <original-base-path>/Users/lukasc/.klayout/tech/GSiP</original-base-path>
+ <original-base-path>C:\Users\mustafa\KLayout\salt\siepic-tools\tech\GSiP</original-base-path>
  <layer-properties_file>klayout_Layers_GSiP.lyp</layer-properties_file>
  <add-other-layers>true</add-other-layers>
  <reader-options>

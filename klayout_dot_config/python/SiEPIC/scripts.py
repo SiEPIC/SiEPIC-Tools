@@ -188,14 +188,30 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
       TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
       technology_name = TECHNOLOGY['technology_name']
     waveguides = load_Waveguides_by_Tech(technology_name)    # this might be slow if done many times; need to cache
-    if waveguide_type:
-      waveguide = [w for w in waveguides if w['name']==waveguide_type][0]
+    print(waveguides)
     if waveguide==[] or not(waveguide_type):
       waveguide = waveguides[0]
-  from decimal import Decimal
-  width=float(Decimal(waveguide['width']))/dbu
+    if waveguide_type:
+#      print(waveguide_type)
+      waveguide1 = [w for w in waveguides if w['name']==waveguide_type]
+#      print(waveguide1)
+      if type(waveguide1) == type([]) and len(waveguide1)>0:
+        waveguide = waveguide1[0]
+      else:
+        waveguide = waveguides[0]
+        print('error: waveguide type not found in PDK waveguides')
+  print('waveguide type: %s' % waveguide )  
+  # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
+  waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
+  if len(waveguide_component) > 0:
+    width_um = waveguide_component[0]['width']
+  else: # pick the first one:
+    width_um = waveguide['component'][0]['width']
+  width_um=float(width_um)
+  from SiEPIC.extend import to_itype
+  width=to_itype(width_um,dbu)
 #  layer=waveguide['component'][0]['layer']  # pick the first layer in the waveguide definition, for the path.
-
+  print(width_um)
     
   # Create the path
   points_fromA = [cpinA.center] # first point A
@@ -203,7 +219,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 
   # if no turtles are specified, assume a forward movement to be the bend radius
   radius_um = float(waveguide['radius'])
-  radius = float(Decimal(waveguide['radius']))/dbu
+  radius = to_itype(waveguide['radius'],dbu)
   if turtle_A == None:
     turtle_A = [radius_um]
   if turtle_B == None:
@@ -337,8 +353,9 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   
   # generate the Waveguide PCell, and instantiate
   wg_pcell = ly.create_cell("Waveguide", technology_name, {"path": path,
-                                                           "radius": float(waveguide['radius']),
-                                                           "width": float(waveguide['width']),
+                                                           "radius": radius_um,
+                                                           "width": width_um,
+                                                           "wg_width": width_um,
                                                            "adiab": waveguide['adiabatic'],
                                                            "bezier": float(waveguide['bezier']),
                                                            "layers": [wg['layer'] for wg in waveguide['component']],
@@ -346,6 +363,9 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                                                            "offsets": [wg['offset'] for wg in waveguide['component']],
                                                            "CML": waveguide['CML'],
                                                            "model": waveguide['model']})
+  if wg_pcell==None:
+    print('problem! cannot create pcell')
+    print(' library: %s' % technology_name) 
   inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
 
   if debug_path:
@@ -494,6 +514,25 @@ def path_to_waveguide(params=path_to_waveguide_params_default, cell=None, lv_com
                                                                                     "offsets": [wg['offset'] for wg in params['wgs']]})
                 print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
                   (TECHNOLOGY['technology_name'], pcell))   
+#                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
+#                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
+            except:
+                pass
+        if not pcell:
+            try:
+                for lib_name in TECHNOLOGY['libraries']:
+                    pcell = ly.create_cell("Waveguide", lib_name, { "path": Dpath,
+                                                                    "radius": params['radius'],
+                                                                    "width": params['width'],
+                                                                    "adiab": params['adiabatic'],
+                                                                    "bezier": params['bezier'],
+                                                                    "layers": [wg['layer'] for wg in params['wgs']],
+                                                                    "widths": [wg['width'] for wg in params['wgs']],
+                                                                    "offsets": [wg['offset'] for wg in params['wgs']]})
+                    print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s" %
+                      (lib_name, pcell))   
+                    if pcell:
+                        break
 #                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
 #                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
             except:
