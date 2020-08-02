@@ -13,6 +13,8 @@ def registerMenuItems():
                         "files", "INTERCONNECT_icon.png")
     path_flv = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         "files", "flv_icon.png")
+    path_test = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                        "files", "test_icon.png")
 
     import sys
     if int(sys.version[0]) > 2 and sys.platform == 'darwin':
@@ -77,7 +79,7 @@ def registerMenuItems():
         menu.insert_item("@toolbar.end", "coordinates", ACTIONS[count])
     ACTIONS[count].title = "Test\nCoordinates"
     ACTIONS[count].on_triggered(scripts.auto_coord_extract)
-#    ACTIONS[count].icon = path
+    ACTIONS[count].icon = path_test
     count += 1
 
 
