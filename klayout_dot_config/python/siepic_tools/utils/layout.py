@@ -445,6 +445,76 @@ def layout_waveguide(cell, layer, points_list, width, smooth=False):
     return dpolygon
 
 
+def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier):
+  '''
+    Create a waveguide, in a specific technology
+    inputs
+    - TECHNOLOGY, layout, cell:
+        from SiEPIC.utils import get_layout_variables
+        TECHNOLOGY, lv, layout, cell = get_layout_variables()
+    - layers: list of text names, e.g., ['Waveguide']
+    - widths: list of floats in units Microns, e.g., [0.50]
+    - offsets: list of floats in units Microns, e.g., [0]
+    - pts: a list of pya.Points, e.g. 
+        L=15/dbu
+        pts = [Point(0,0), Point(L,0), Point(L,L)]
+    - radius: in Microns, e.g., 5
+    - adiab: 1 = Bezier curve, 0 = radial bend (arc)
+    - bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
+
+    Note: bezier parameters need to be simulated and optimized, and will depend on 
+    wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
+    most useful for TE 
+  '''
+  from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
+  from SiEPIC.extend import to_itype
+  from pya import Path, Polygon, Trans
+  dbu = layout.dbu
+
+  width=widths[0]
+  turn=0
+  waveguide_length = 0
+  for lr in range(0, len(layers)):
+    wg_pts = [pts[0]]
+    layer = layout.layer(TECHNOLOGY[layers[lr]])
+    width = to_itype(widths[lr],dbu)
+    offset = to_itype(offsets[lr],dbu)
+    for i in range(1,len(pts)-1):
+      turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
+      dis1 = pts[i].distance(pts[i-1])
+      dis2 = pts[i].distance(pts[i+1])
+      angle = angle_vector(pts[i]-pts[i-1])/90
+      pt_radius = to_itype(radius,dbu)
+      # determine the radius, based on how much space is available
+      if len(pts)==3:
+        pt_radius = min (dis1, dis2, pt_radius)
+      else:
+        if i==1:
+          if dis1 <= pt_radius:
+            pt_radius = dis1
+        elif dis1 < 2*pt_radius:
+          pt_radius = dis1/2
+        if i==len(pts)-2:
+          if dis2 <= pt_radius:
+            pt_radius = dis2
+        elif dis2 < 2*pt_radius:
+          pt_radius = dis2/2
+      # waveguide bends:
+      if abs(turn)==1:
+        if(adiab):
+          wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), bezier, DevRec='DevRec' in layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+        else:
+          wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]),DevRec='DevRec' in layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+        
+    wg_pts += [pts[-1]]
+    wg_pts = pya.Path(wg_pts, 0).unique_points().get_points()
+    wg_polygon = Polygon(translate_from_normal(wg_pts, width/2 + (offset if turn > 0 else - offset))+translate_from_normal(wg_pts, -width/2 + (offset if turn > 0 else - offset))[::-1])
+    cell.shapes(layer).insert(wg_polygon)
+  
+    if layout.layer(TECHNOLOGY['Waveguide']) == layer:
+      waveguide_length = wg_polygon.area() / width * dbu
+  return waveguide_length
+
 def layout_waveguide_angle(cell, layer, points_list, width, angle):
     """ Lays out a waveguide (or trace) with a certain width along
     given points and with fixed orientation at all points.
