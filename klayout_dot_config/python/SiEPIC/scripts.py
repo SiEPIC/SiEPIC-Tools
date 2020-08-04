@@ -127,7 +127,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 
   from SiEPIC.scripts import connect_cell
   
-  connect_cell(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
+  connect_pins_with_waveguide(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
 
   
   '''
@@ -140,6 +140,11 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   componentA = instanceA.parent_cell.find_components(instanceA.cell, instanceA)
   componentB = instanceB.parent_cell.find_components(instanceB.cell, instanceB)
   if componentA==[] or componentB==[]:
+    print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
+    print('componentA: %s, componentB: %s' % (componentA, componentB) )
+    print('parent_cell A: %s, parent_cell B: %s, cell A: %s, cell B: %s' % (instanceA.parent_cell, instanceB.parent_cell, instanceA.cell, instanceB.cell) )
+    print('all found components A: %s' %  instanceA.parent_cell.find_components() )
+    print('all found components B: %s' %  instanceB.parent_cell.find_components() )
     raise Exception("Component not found")
     return Null
   if verbose:
@@ -1195,7 +1200,9 @@ def snap_component():
     pya.Application.instance().main_window().redraw()    
 
 
-
+def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
+    return connect_cell(instanceA, pinA, cellB, pinB, verbose)
+    
 def connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
   '''
   Instantiate, Move & rotate cellB to connect to instanceA, 
@@ -1223,7 +1230,7 @@ def connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
 
   from SiEPIC.scripts import connect_cell
   
-  connect_cell(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
+  instanceB = connect_cell(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
 
   
   '''
