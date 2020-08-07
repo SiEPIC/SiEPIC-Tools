@@ -70,7 +70,10 @@ class GSiP(pya.Library):
         self.technology=tech_name
 
     # This allows a python function to know where the Library files are located
-    self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(__file__)))
-    self.layout().add_meta_info(LayoutMetaInfo("technology",tech_name))
+    try:
+      self.layout().add_meta_info(pya.LayoutMetaInfo("path",os.path.realpath(__file__)))
+      self.layout().add_meta_info(pya.LayoutMetaInfo("technology",tech_name))
+    except:
+      pass
   
 GSiP()
