@@ -137,8 +137,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   dbu=ly.dbu
   
   # Find the two components:
-  componentA = instanceA.parent_cell.find_components(instanceA.cell, instanceA)
-  componentB = instanceB.parent_cell.find_components(instanceB.cell, instanceB)
+  componentA = instanceA.parent_cell.find_components(inst=instanceA)
+  componentB = instanceB.parent_cell.find_components(inst=instanceB)
   if componentA==[] or componentB==[]:
     print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
     print('componentA: %s, componentB: %s' % (componentA, componentB) )
