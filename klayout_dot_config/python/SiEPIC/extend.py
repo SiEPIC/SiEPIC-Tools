@@ -4,6 +4,10 @@
 '''
 This module extends several pya classes that are useful for the library.
 
+pya.Layout:
+  - get_technology: get the technology for the specific layout
+  - load_Waveguide_types: load the waveguide types from WAVEGUIDES.XML
+
 dbu float-int extension:
   - to_dbu and to_itype, convert float (microns) to integer (nanometers) using dbu
   - from_dbu and to_dtype, convert integer (nanometers) to float (microns) using dbu
@@ -63,6 +67,33 @@ import pya
 warning = pya.QMessageBox()
 warning.setStandardButtons(pya.QMessageBox.Ok)
 warning.setDefaultButton(pya.QMessageBox.Ok)
+
+
+#################################################################################
+#                SiEPIC Class Extension of Layout Class                         #
+#################################################################################
+
+# Gets the technology information and stores it with the layout.
+# only loads XML files once, so it is fast
+def get_technology(self):
+    if 'TECHNOLOGY' not in dir(self):
+        from .utils import get_technology
+        self.TECHNOLOGY = get_technology()
+    return self.TECHNOLOGY
+
+pya.Layout.get_technology = get_technology
+
+# Gets the technology waveguide information and stores it with the layout.
+# only loads XML files once, so it is fast
+def load_Waveguide_types(self):
+    TECHNOLOGY = self.get_technology()
+    if 'WaveguideTypes' not in dir(self):
+        from .utils import load_Waveguides_by_Tech
+        self.WaveguideTypes = load_Waveguides_by_Tech(TECHNOLOGY['technology_name'])
+    return self.WaveguideTypes
+
+pya.Layout.load_Waveguide_types = load_Waveguide_types
+
 
 #################################################################################
 #                SiEPIC Class Extension of Path & DPath Class                   #
