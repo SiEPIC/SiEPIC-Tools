@@ -855,7 +855,13 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
 
     # Find all the DevRec shapes
     LayerDevRecN = self.layout().layer(TECHNOLOGY['DevRec'])
-    iter1 = self.begin_shapes_rec(LayerDevRecN)
+
+    # if we are requesting a specific instance, narrow down the search to the specific area
+    if inst:
+        iter1 = self.begin_shapes_rec_overlapping(LayerDevRecN, inst.bbox())
+    # otherwise search for all components in the cell:
+    else:
+        iter1 = self.begin_shapes_rec(LayerDevRecN)
 
     while not(iter1.at_end()):
         idx = len(components)  # component index value to be assigned to Component.idx
@@ -962,17 +968,17 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 # store the pins in the component
                 components[-1].pins = pins
 
+        # find the component that matches the requested instance (only the first one)
+        if inst:
+            if components[-1].trans==inst.trans:
+                if verbose:
+                    print('Found requested Inst: %s' % inst.trans)
+                return components[-1]
+
+
         iter1.next()
     # end while iter1
     
-    # find the component that matches the given instance (the first one)
-    if inst:
-      for c in components:
-        if c.trans==inst.trans:
-          if verbose:
-            print(inst.trans)
-          components=c
-          continue
     
     return components
 # end def find_components
