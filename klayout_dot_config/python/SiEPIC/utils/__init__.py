@@ -141,19 +141,62 @@ def get_technology_by_name(tech_name, verbose=False):
             raise Exception('Cannot find technology layer properties file %s' % search_str)
         # technology['base_path']
 
-    # Load CML file location
+    # Load CML file locations
     head, tail = os.path.split(lyp_file)
     technology['base_path'] = head
-    cml_files = [x for x in os.listdir(technology['base_path']) if x.lower().endswith(".cml")]
+    
+    cml_files = []
+    cml_paths = []
+    cml_versions = []
+    cml_names = []
+    
+    for file in os.listdir(technology['base_path']):
+        if file.lower().endswith(".cml"):
+            # Only store newest CMLs
+            cml_name, cml_version = file.split('_v', 1)
+            if not cml_name in cml_names:
+                cml_files.insert(0, file)
+                cml_paths.insert(0, os.path.join(technology['base_path'], file))
+                cml_names.insert(0, cml_name)
+                cml_versions.insert(0, 'v'+cml_version)
+            elif cml_name in cml_names:
+                cml_ind = cml_names.index(cml_name)
+                if ('v'+cml_version) > cml_versions[cml_ind]:
+                    cml_files[cml_ind] = file
+                    cml_paths[cml_ind] = os.path.join(technology['base_path'], file)
+                    cml_versions[cml_ind] = 'v'+cml_version
+    
+    if os.path.isdir(os.path.join(technology['base_path'], 'cml')):
+        for file in os.listdir(os.path.join(technology['base_path'], 'cml')):
+            if file.lower().endswith('.cml'):
+                # Only store newest CMLs
+                cml_name, cml_version = file.split('_v', 1)
+                if not cml_name in cml_names:
+                    cml_files.append(file)
+                    cml_paths.append(os.path.join(technology['base_path'], 'cml', file))
+                    cml_names.append(cml_name)
+                    cml_versions.append('v'+cml_version)
+                elif cml_name in cml_names:
+                    cml_ind = cml_names.index(cml_name)
+                    if ('v'+cml_version) > cml_versions[cml_ind]:
+                        cml_files[cml_ind] = file
+                        cml_paths[cml_ind] = os.path.join(technology['base_path'], 'cml', file)
+                        cml_versions[cml_ind] =  'v'+cml_version
+    
     if cml_files:
-        technology['INTC_CML'] = cml_files[-1]
-        technology['INTC_CML_path'] = os.path.join(technology['base_path'], cml_files[-1])
-        technology['INTC_CML_version'] = cml_files[-1].replace(tech_name + '_', '')
+        technology['INTC_CML'] = cml_files[0]
+        technology['INTC_CML_path'] = cml_paths[0]
+        technology['INTC_CML_version'] = cml_files[0].replace(tech_name + '_', '')
+        
+        technology['INTC_CMLs'] = cml_files
+        technology['INTC_CMLs_name'] = cml_names
+        technology['INTC_CMLs_path'] = cml_paths
+        technology['INTC_CMLs_version'] = ['v'+x.split('_v')[-1] for x in cml_files]
     else:
         technology['INTC_CML'] = ''
         technology['INTC_CML_path'] = ''
         technology['INTC_CML_version'] = ''
-
+    
     # Layers:
     file = open(lyp_file, 'r')
     layer_dict = xml_to_dict(file.read())['layer-properties']['properties']

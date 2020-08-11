@@ -92,7 +92,11 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   question.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.No)
   question.setDefaultButton(pya.QMessageBox.Yes)
   question.setText("SiEPIC-Tools will install the Compact Model Library (CML) in Lumerical INTERCONNECT for the currently active technology. \nThis includes the libraries %s.  \nProceed?" % libraries)
-  question.setInformativeText("\nTechnology: %s\nSource CML file: %s\nInstall location: %s" % (TECHNOLOGY['technology_name'], TECHNOLOGY['INTC_CML_path'], dir_path ))
+  informative_text = "\nTechnology: %s\n" % TECHNOLOGY['technology_name']
+  for i in range(0,len(TECHNOLOGY['INTC_CMLs_path'])):
+    informative_text += "Source CML file {}: {}\n".format(i+1, TECHNOLOGY['INTC_CMLs_path'][i])
+  informative_text += "Install location: %s" % dir_path
+  question.setInformativeText(informative_text)
   if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
     return
 
@@ -116,15 +120,21 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
     # install CML
     print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
-
     lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
-    # Re-Read INTC element library
-    lumapi.evalScript(_globals.INTC, "out=library;")
-    _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
-    # Close INTERCONNECT so that the library information is saved, then re-open
-    lumapi.close(_globals.INTC)
-    run_INTC()
- 
+    
+  # Install other CMLs within technology
+  for i in range(0,len(TECHNOLOGY['INTC_CMLs_name'])):
+    if not ("design kits::"+TECHNOLOGY['INTC_CMLs_name'][i].lower()+"::"+TECHNOLOGY['INTC_CMLs_version'][i].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
+        # install CML
+        print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CMLs_path'][i], dir_path ) )
+        lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CMLs_path'][i], dir_path ) )
+        
+  # Re-Read INTC element library
+  lumapi.evalScript(_globals.INTC, "out=library;")
+  _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
+  # Close INTERCONNECT so that the library information is saved, then re-open
+  lumapi.close(_globals.INTC)
+  run_INTC()
 
   # Save INTC element library to KLayout application data path
   if not os.path.exists(dir_path):
@@ -132,14 +142,18 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   fh = open(os.path.join(dir_path,"Lumerical_INTC_CMLs.txt"), "w")
   fh.writelines(_globals.INTC_ELEMENTS)
   fh.close()
-
-  lumapi.evalScript(_globals.INTC, "message('KLayout-Lumerical INTERCONNECT integration successful, CML library (%s) is available.');switchtodesign;\n" % ("design kits::"+TECHNOLOGY['technology_name'].lower()) )
+  
+  integration_success_message = "message('KLayout-Lumerical INTERCONNECT integration successful, CML library/libraries:\n"
+  for cml_name in TECHNOLOGY['INTC_CMLs_name']:
+    integration_success_message += "design kits::"+cml_name.lower()+"\n"
+  integration_success_message += "');switchtodesign;\n"
+  lumapi.evalScript(_globals.INTC, integration_success_message)
 
   # instantiate all library elements onto the canvas
   question = pya.QMessageBox()
   question.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.No)
   question.setDefaultButton(pya.QMessageBox.Yes)
-  question.setText("Do you wish to see all the components in the library?")
+  question.setText("Do you wish to see all the components in %s library?" % TECHNOLOGY['technology_name'])
 #  question.setInformativeText("Do you wish to see all the components in the library?")
   if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
     # lumapi.evalScript(_globals.INTC, "b=0:0.01:10; plot(b,sin(b),'Congratulations, Lumerical is now available from KLayout','','Congratulations, Lumerical is now available from KLayout');")
