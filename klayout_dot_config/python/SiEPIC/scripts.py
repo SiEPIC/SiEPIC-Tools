@@ -137,8 +137,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   dbu=ly.dbu
   
   # Find the two components:
-  componentA = instanceA.parent_cell.find_components(instanceA.cell, instanceA)
-  componentB = instanceB.parent_cell.find_components(instanceB.cell, instanceB)
+  componentA = instanceA.parent_cell.find_components(inst=instanceA)
+  componentB = instanceB.parent_cell.find_components(inst=instanceB)
   if componentA==[] or componentB==[]:
     print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
     print('componentA: %s, componentB: %s' % (componentA, componentB) )
@@ -164,17 +164,17 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     cpinA.display()
     cpinB.display()
   
+  TECHNOLOGY = ly.get_technology()
+  technology_name = TECHNOLOGY['technology_name']
   
   # Waveguide type:
   if not(waveguide):
-    from .utils import load_Waveguides_by_Tech
-    try:
-      technology_name = instanceA.layout().meta_info_value('technology')
-    except:
-      from .utils import get_layout_variables
-      TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
-      technology_name = TECHNOLOGY['technology_name']
-    waveguides = load_Waveguides_by_Tech(technology_name)    # this might be slow if done many times; need to cache
+#    from .utils import load_Waveguides_by_Tech
+#    try:
+#      technology_name = instanceA.layout().meta_info_value('technology')
+#    except:
+#    waveguides = load_Waveguides_by_Tech(technology_name)    # this might be slow if done many times; need to cache
+    waveguides = ly.load_Waveguide_types()
     print(waveguides)
     if waveguide==[] or not(waveguide_type):
       waveguide = waveguides[0]

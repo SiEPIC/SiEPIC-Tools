@@ -4,6 +4,10 @@
 '''
 This module extends several pya classes that are useful for the library.
 
+pya.Layout:
+  - get_technology: get the technology for the specific layout
+  - load_Waveguide_types: load the waveguide types from WAVEGUIDES.XML
+
 dbu float-int extension:
   - to_dbu and to_itype, convert float (microns) to integer (nanometers) using dbu
   - from_dbu and to_dtype, convert integer (nanometers) to float (microns) using dbu
@@ -63,6 +67,33 @@ import pya
 warning = pya.QMessageBox()
 warning.setStandardButtons(pya.QMessageBox.Ok)
 warning.setDefaultButton(pya.QMessageBox.Ok)
+
+
+#################################################################################
+#                SiEPIC Class Extension of Layout Class                         #
+#################################################################################
+
+# Gets the technology information and stores it with the layout.
+# only loads XML files once, so it is fast
+def get_technology(self):
+    if 'TECHNOLOGY' not in dir(self):
+        from .utils import get_technology
+        self.TECHNOLOGY = get_technology()
+    return self.TECHNOLOGY
+
+pya.Layout.get_technology = get_technology
+
+# Gets the technology waveguide information and stores it with the layout.
+# only loads XML files once, so it is fast
+def load_Waveguide_types(self):
+    TECHNOLOGY = self.get_technology()
+    if 'WaveguideTypes' not in dir(self):
+        from .utils import load_Waveguides_by_Tech
+        self.WaveguideTypes = load_Waveguides_by_Tech(TECHNOLOGY['technology_name'])
+    return self.WaveguideTypes
+
+pya.Layout.load_Waveguide_types = load_Waveguide_types
+
 
 #################################################################################
 #                SiEPIC Class Extension of Path & DPath Class                   #
@@ -855,7 +886,13 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
 
     # Find all the DevRec shapes
     LayerDevRecN = self.layout().layer(TECHNOLOGY['DevRec'])
-    iter1 = self.begin_shapes_rec(LayerDevRecN)
+
+    # if we are requesting a specific instance, narrow down the search to the specific area
+    if inst:
+        iter1 = self.begin_shapes_rec_overlapping(LayerDevRecN, inst.bbox())
+    # otherwise search for all components in the cell:
+    else:
+        iter1 = self.begin_shapes_rec(LayerDevRecN)
 
     while not(iter1.at_end()):
         idx = len(components)  # component index value to be assigned to Component.idx
@@ -962,17 +999,17 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 # store the pins in the component
                 components[-1].pins = pins
 
+        # find the component that matches the requested instance (only the first one)
+        if inst:
+            if components[-1].trans==inst.trans:
+                if verbose:
+                    print('Found requested Inst: %s' % inst.trans)
+                return components[-1]
+
+
         iter1.next()
     # end while iter1
     
-    # find the component that matches the given instance (the first one)
-    if inst:
-      for c in components:
-        if c.trans==inst.trans:
-          if verbose:
-            print(inst.trans)
-          components=c
-          continue
     
     return components
 # end def find_components
