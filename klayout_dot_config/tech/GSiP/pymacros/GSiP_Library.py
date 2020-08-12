@@ -50,7 +50,15 @@ class GSiP(pya.Library):
 # OSX does a resizing:
 #    self.description = "Generic Silicon Photonics"
 
-    self.layout().read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "SiEPIC-GSiP.gds"))
+    # Import all the GDS files from the tech folder "gds"
+    import os, fnmatch
+    dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../gds/building_blocks")
+    search_str = '*' + '.gds'
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter([f.lower() for f in filenames], search_str):
+            file1=os.path.join(root, filename)
+            print(" - reading %s" % file1 )
+            self.layout().read(file1)
 
     for attr, value in pcells_GSiP.__dict__.items():
       try:
