@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <salt-grain>
  <name>siepic_tools</name>
- <version>0.3.68</version>
+ <version>0.3.69</version>
  <api-version>0.25</api-version>
  <title>SiEPIC Tools</title>
  <doc>A library providing a range of tools for designing Silicon Electronic-Photonic Integrated Circuits</doc>
@@ -14,7 +14,7 @@
  <depends>
   <name>Python_packages_for_KLayout</name>
   <url/>
-  <version>1.0</version>
+  <version>1.2</version>
  </depends>
  <!-- <depends>
   <name>Windows_Python_packages_for_KLayout</name>
