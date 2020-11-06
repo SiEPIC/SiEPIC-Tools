@@ -1236,12 +1236,18 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
   '''
 
   # Find the two components:
-  componentA = instanceA.parent_cell.find_components(instanceA.cell)
+  componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
   componentB = cellB.find_components()
   if componentA==[] or componentB==[]:
     print ('Component not found')
     return Null
-  componentA = componentA[0]
+
+#  for c in componentA:
+#    if c.trans.s_trans() == instanceA.trans:
+#      componentA = c
+
+  if type(componentA) == type([]):
+    componentA = componentA[0]
   componentB = componentB[0]
   if verbose:
     componentA.display()
