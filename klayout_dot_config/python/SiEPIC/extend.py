@@ -1000,7 +1000,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 components[-1].pins = pins
 
         # find the component that matches the requested instance (only the first one)
-        if inst:
+        if inst and components:
             if components[-1].trans==inst.trans:
                 if verbose:
                     print('Found requested Inst: %s' % inst.trans)

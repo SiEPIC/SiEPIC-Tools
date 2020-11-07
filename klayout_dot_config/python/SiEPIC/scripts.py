@@ -1203,7 +1203,7 @@ def snap_component():
 def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
     return connect_cell(instanceA, pinA, cellB, pinB, verbose)
     
-def connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
+def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
   '''
   Instantiate, Move & rotate cellB to connect to instanceA, 
    such that their pins (pinB, pinA) match
@@ -1236,12 +1236,18 @@ def connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
   '''
 
   # Find the two components:
-  componentA = instanceA.parent_cell.find_components(instanceA.cell)
+  componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
   componentB = cellB.find_components()
   if componentA==[] or componentB==[]:
     print ('Component not found')
     return Null
-  componentA = componentA[0]
+
+#  for c in componentA:
+#    if c.trans.s_trans() == instanceA.trans:
+#      componentA = c
+
+  if type(componentA) == type([]):
+    componentA = componentA[0]
   componentB = componentB[0]
   if verbose:
     componentA.display()
@@ -1266,8 +1272,12 @@ def connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
     print (' cellB required rotation: %s' % (rotation) )
   
   # Calculate vector to move componentB
-  trans = pya.Trans(pya.Trans.R0, cpinA.center - cpinB.center * pya.Trans(rotation/90,False,0,0)) \
-      * pya.Trans(rotation/90,False,0,0)
+  if mirror:
+    trans = pya.Trans(pya.Trans.R0.M45, cpinA.center - cpinB.center * pya.Trans(rotation/90,False,0,0)) \
+        * pya.Trans(rotation/90,False,0,0)
+  else:
+    trans = pya.Trans(pya.Trans.R0, cpinA.center - cpinB.center * pya.Trans(rotation/90,False,0,0)) \
+        * pya.Trans(rotation/90,False,0,0)
 
   vector = cpinA.center - componentA.trans.disp - componentB.trans.disp
   if verbose:
