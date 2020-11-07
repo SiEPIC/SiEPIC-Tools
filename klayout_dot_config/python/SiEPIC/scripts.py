@@ -1221,16 +1221,16 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
   top_cell = ly.top_cells()[0]
   ly.prune_subcells(top_cell.cell_index(), 10)
 
-  cell_amf_Terminator_TE_1550 = ly.create_cell('ebeam_crossing4', 'EBeam')
+  cell_crossing = ly.create_cell('ebeam_crossing4', 'EBeam')
   t = pya.Trans.from_s('r270 230175,190500')
-  inst_amf_Terminator_TE_1550_3 = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+  inst_crossing = cell.insert(pya.CellInstArray(cell_crossing.cell_index(), t))
 
-  cell_AMF_IRPH_MRR_0 = ly.create_cell('ebeam_bragg_te1550', 'EBeam',
+  cell_bragg = ly.create_cell('ebeam_bragg_te1550', 'EBeam',
        {'r': 10.0, 'w': 0.35, 'g': 0.12, 'gmon': 0.5})
 
   from SiEPIC.scripts import connect_cell
   
-  instanceB = connect_cell(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
+  instanceB = connect_cell(inst_crossing, 'opt2', cell_bragg, 'pin1')
 
   
   '''
