@@ -164,10 +164,13 @@ if 0:
 
 
 # connect_pins_with_waveguide test, using "EBeam" PDK:
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  if TECHNOLOGY['technology_name'] not in 'EBeam':
+    raise Exception ('This example needs to be executed in a layout with Technology = EBeam')
 
   from SiEPIC.scripts import connect_pins_with_waveguide
   waveguide_type='Strip TE 1550 nm, w=500 nm'

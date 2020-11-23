@@ -355,7 +355,7 @@ def load_Waveguides_by_Tech(tech_name):
                     waveguide['component'] = [waveguide['component']]
                 if not 'bezier' in waveguide.keys():
                     waveguide['adiabatic'] = False
-                    waveguide['bezier'] = ''
+                    waveguide['bezier'] = 0
                 else:
                     waveguide['adiabatic'] = True
                 if not 'CML' in waveguide.keys():

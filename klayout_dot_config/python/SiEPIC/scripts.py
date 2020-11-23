@@ -190,6 +190,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
       else:
         waveguide = waveguides[0]
         print('error: waveguide type not found in PDK waveguides')
+        raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
   print('waveguide type: %s' % waveguide )  
   # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
   waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
@@ -338,8 +339,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
   
   if not path.radius_check(radius_um):
-    print('Turtle directions: %s, %s' % (directionB, directionA))
-    print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
+    print('Path: %s' % path)
     raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
   
   # generate the Waveguide PCell, and instantiate
