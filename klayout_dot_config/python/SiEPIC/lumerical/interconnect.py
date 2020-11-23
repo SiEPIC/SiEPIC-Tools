@@ -204,10 +204,13 @@ def INTC_commandline(filename2):
     #check Interconnect installation directory
     file_path_a = 'C:\\Program Files\\Lumerical\\INTERCONNECT\\bin\\interconnect.exe'
     file_path_b = 'C:\\Program Files (x86)\\Lumerical\\INTERCONNECT\\bin\\interconnect.exe'
+    file_path_c = 'C:\\Program Files\\Lumerical\\v202\\bin\\interconnect.exe'
     if(os.path.isfile(file_path_a)==True):
       subprocess.Popen(args=[file_path_a, '-run', filename2], shell=True)
     elif(os.path.isfile(file_path_b)==True):
       subprocess.Popen(args=[file_path_b, '-run', filename2], shell=True)
+    elif(os.path.isfile(file_path_c)==True):
+      subprocess.Popen(args=[file_path_c, '-run', filename2], shell=True)
     else:
       warning_window = pya.QMessageBox()
       warning_window.setText("Warning: The program could not find INTERCONNECT.")
