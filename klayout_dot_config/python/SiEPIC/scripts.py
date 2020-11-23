@@ -137,8 +137,12 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   dbu=ly.dbu
   
   # Find the two components:
+  from time import time
+  t = time()
+  # benchmarking: find_components here takes 0.015 s
   componentA = instanceA.parent_cell.find_components(inst=instanceA)
   componentB = instanceB.parent_cell.find_components(inst=instanceB)
+#  print('Time elapsed: %s' % (time() - t))  
   if componentA==[] or componentB==[]:
     print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
     print('componentA: %s, componentB: %s' % (componentA, componentB) )
@@ -146,7 +150,6 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     print('all found components A: %s' %  instanceA.parent_cell.find_components() )
     print('all found components B: %s' %  instanceB.parent_cell.find_components() )
     raise Exception("Component not found")
-    return Null
   if verbose:
     print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
     componentA.display()
@@ -157,7 +160,6 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
   if cpinA==[] or cpinB==[]:
     raise Exception("Pin not found")
-    return Null
   cpinA=cpinA[0]
   cpinB=cpinB[0]
   if verbose:
@@ -175,6 +177,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 #    except:
 #    waveguides = load_Waveguides_by_Tech(technology_name)    # this might be slow if done many times; need to cache
     waveguides = ly.load_Waveguide_types()
+    print('Time elapsed, waveguide types: %s' % (time() - t))  
     print(waveguides)
     if waveguide==[] or not(waveguide_type):
       waveguide = waveguides[0]
@@ -319,6 +322,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 #    print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
 #    raise Exception("Turtles are moving away from each other; can't automatically route the path.")
      
+  print('Time elapsed, make path: %s' % (time() - t))  
 
   # merge the points from the two ends, A and B
   points = points_fromA + points_fromB[::-1]
@@ -351,9 +355,10 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                                                            "CML": waveguide['CML'],
                                                            "model": waveguide['model']})
   if wg_pcell==None:
-    print('problem! cannot create pcell')
-    print(' library: %s' % technology_name) 
+    raise Exception("problem! cannot create pcelllibrary: %s" % technology_name)
   inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
+
+  print('Time elapsed, make waveguide: %s' % (time() - t))  
 
   if debug_path:
     instanceA.parent_cell.shapes(1).insert(path)
@@ -386,7 +391,7 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
     if params is None:
         params = _globals.WG_GUI.get_parameters(GUI)
     if params is None:
-        print("SiEPIC.scripts path_to_waveguide(): no params; returning")
+        raise Exception("SiEPIC.scripts path_to_waveguide(): no params; returning")
         return
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(): params = %s" % params)
@@ -1238,9 +1243,10 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
   # Find the two components:
   componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
   componentB = cellB.find_components()
-  if componentA==[] or componentB==[]:
-    print ('Component not found')
-    return Null
+  if componentA==[]:
+    raise Exception("Component instanceA not found")
+  if componentB==[]:
+    raise Exception("Component cellB not found")
 
 #  for c in componentA:
 #    if c.trans.s_trans() == instanceA.trans:
@@ -1257,9 +1263,9 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
   cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
   if cpinA==[] or cpinB==[]:
+    raise Exception("Pin not found")
     print ('Pin not found')
     return instanceA
-#    raise 'Pin not found'
   cpinA=cpinA[0]
   cpinB=cpinB[0]
   if verbose:
