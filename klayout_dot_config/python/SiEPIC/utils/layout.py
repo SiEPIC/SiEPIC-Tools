@@ -415,18 +415,17 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
     import pya
     
     theta = acos(float(r-abs(h/2))/r)*180/pi
-    x = 2*r*sin(theta/180.0*pi)
-    straight_l = (length - x)/2
+    x = int(2*r*sin(theta/180.0*pi))
+    straight_l = int( (length - x)/2 )
 
     if (straight_l < 0):
         # Problem: target length is too short. increase
         print('SBend, too short: straight_l = %s' % straight_l)
-        length += -straight_l + 1
-        straight_l = 1
+        length = x
+        straight_l = 0
 
-    waveguide_length = (2*pi*r*(2*theta/360.0)+straight_l*2)
+    # waveguide_length = (2*pi*r*(2*theta/360.0)+straight_l*2)
     
-    # print('SBend: theta %s, x %s, straight_l %s, r %s, h %s' % (theta, x, straight_l, r, h) )
 
     # define the cell origin as the left side of the waveguide sbend
 
@@ -481,7 +480,8 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
          pts.append(pya.Point.from_dpoint(pya.DPoint((x2+(r+w/2)*cos(i*da+th2))/1, (y2+(r+w/2)*sin(i*da+th2))/1)))
       cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
 
-    return waveguide_length
+    print('SBend: theta %s, x %s, straight_l %s, r %s, h %s, length %s' % (theta, x, straight_l, r, h, length) )
+    return length
 
 def append_relative(points, *relative_vectors):
     """ Appends to list of points in relative steps """
