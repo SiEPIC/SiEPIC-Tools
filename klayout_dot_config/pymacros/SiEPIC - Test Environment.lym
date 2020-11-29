@@ -164,7 +164,7 @@ if 0:
 
 
 # connect_pins_with_waveguide test, using "EBeam" PDK:
-if 0:
+if 1:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -197,9 +197,9 @@ if 0:
 
   t = pya.Trans.from_s('r270 0,-50000')
   instA = cell.insert(pya.CellInstArray(cell_ebeam_crossing4.cell_index(), t))
-  t = pya.Trans.from_s('r270 30000,-20000')
+  t = pya.Trans.from_s('r270 10000,-50000')
   instB = cell.insert(pya.CellInstArray(cell_ebeam_crossing4.cell_index(), t))
-  connect_pins_with_waveguide(instA, 'opt2', instB, 'opt3', waveguide_type=waveguide_type)
+  connect_pins_with_waveguide(instA, 'opt2', instB, 'opt3', waveguide_type=waveguide_type, verbose=True)
   connect_pins_with_waveguide(instA, 'opt4', instB, 'opt4', waveguide_type=waveguide_type)
   connect_pins_with_waveguide(instA, 'opt3', instB, 'opt2', turtle_A=[5,90, 30, 90], turtle_B=[5, 90, 10, 90, 10, -90, 10, -90,  15, -90, 50, -90], waveguide_type=waveguide_type, verbose=True, debug_path=True)
 
