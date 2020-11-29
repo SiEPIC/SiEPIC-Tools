@@ -466,7 +466,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       ?'FDTD mesh accuracy updated %s, Z boundary conditions: %s'; " % (FDTD_settings['mesh_accuracy'], FDTD_settings['Z-Boundary-Conditions'], FDTD_settings['Z-Boundary-Conditions'], FDTD_settings['mesh_accuracy'], FDTD_settings['Z-Boundary-Conditions']) )
     for p in pins:
       lumapi.evalScript(_globals.FDTD, " \
-        select('FDTD::ports::%s'); set('frequency points', %s); \
+        select('FDTD::ports::%s'); set('number of field profile samples', %s); \
         ?'updated pin: %s'; " % (p.pin_name, FDTD_settings['frequency_points_expansion'], p.pin_name)  )
 
     # Run full S-parameters
