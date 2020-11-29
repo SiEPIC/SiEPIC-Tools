@@ -165,7 +165,12 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   if verbose:
     cpinA.display()
     cpinB.display()
-  
+
+  # check if the pins are already connected
+  if cpinA.center == cpinB.center:
+    print('Pins are already connected; returning')
+    return
+      
   TECHNOLOGY = ly.get_technology()
   technology_name = TECHNOLOGY['technology_name']
   
@@ -260,11 +265,15 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         or (directionB==0   and points_fromB[-1].x<points_fromA[-1].x and points_fromB[-1].y<points_fromA[-1].y):
         points_fromA.append(pya.Point(points_fromA[-1].x,points_fromB[-1].y))
 
-  # check if the turtles are offset from each other, but going towards each other (180)
-  # then edit their points to match
+  
+  # check if the turtles going towards each other (180)
+  #  - check if the turtles are offset from each other, 
+  #    then edit their points to match
+  #  - check if they do not have an offset; 
+  #    then keep only end points
   if (directionB - directionA - 180) % 360 == 0:
     if verbose:
-      print('Turtles are offset, going towards each other, editing points')
+      print('Turtles are going towards each other ...')
     # horizontal
     if directionA in [0, 180]: 
       # check for y offset
@@ -273,6 +282,14 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         x = (points_fromA[-1].x + points_fromB[-1].x)/2
         points_fromA[-1].x = x
         points_fromB[-1].x = x
+        if verbose:
+          print('  Turtles are offset, editing points')
+      else:
+        points_fromA = [points_fromA[0]]
+        points_fromB = [points_fromB[0]]
+        if verbose:
+          print('  Turtles are not offset, keeping only endpoints')
+        # 
     # vertical
     else:
       # check for x offset
@@ -281,6 +298,13 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         y = (points_fromA[-1].y + points_fromB[-1].y)/2
         points_fromA[-1].y = y
         points_fromB[-1].y = y
+        if verbose:
+          print('  Turtles are offset, editing points')
+      else:
+        points_fromA = [points_fromA[0]]
+        points_fromB = [points_fromB[0]]
+        if verbose:
+          print('  Turtles are not offset, keeping only endpoints')
         
   # check if the turtles are offset from each other, but going the same way (0)
   # then edit their points to match
