@@ -272,9 +272,9 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       else:
         p.direction = 'Forward'
       lumapi.evalScript(_globals.FDTD, " \
-        set('name','%s'); set('direction', '%s'); set('frequency points', %s); updateportmodes(%s); \
+        set('name','%s'); set('direction', '%s'); set('number of field profile samples', %s); updateportmodes(%s); \
         select('FDTD'); set('%s','PML'); \
-        ?'Added pin: %s, set %s to PML'; " % (p.pin_name, p.direction, 1, mode_selection_index, \
+        ?'Added pin: %s, set %s to PML'; " % (p.pin_name, p.direction, FDTD_settings['frequency_points_expansion'], mode_selection_index, \
             port_dict[p.rotation], p.pin_name, port_dict[p.rotation] )  )
 
     # Calculate mode sources
