@@ -107,15 +107,19 @@ def layout_waveguide(cell, layer, points_list, width):
         raise NotImplemented("ERROR: points_list too short")
         return
 
-    try:
-        if len(width) == len(points_list):
-            width_iterator = iter(width)
-        else:
-            width_iterator = repeat(width[0])
-    except TypeError:
+    if type(width)==type(0.0):
         width_iterator = repeat(width)
-    finally:
         points_iterator = iter(points_list)
+    else:
+        try:
+            if len(width) == len(points_list):
+                width_iterator = iter(width)
+            else:
+                width_iterator = repeat(width[0])
+        except TypeError:
+            width_iterator = repeat(width)
+        finally:
+            points_iterator = iter(points_list)
 
     dbu = cell.layout().dbu
 
