@@ -132,9 +132,15 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   
   '''
 
+  # layout information
   ly=instanceA.parent_cell.layout()
-  cell=instanceA.parent_cell
   dbu=ly.dbu
+  
+  # check if the two instances share the same cell
+  if instanceA.parent_cell != instanceB.parent_cell:
+    raise Exception ('connect_pins_with_waveguide function only supports routing within the same cell. \nHierarchical routing is not supported.')
+
+  cell=instanceA.parent_cell
   
   # Find the two components:
   from time import time
@@ -154,6 +160,12 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
     componentA.display()
     componentB.display()
+
+  # if the instance had sub-cells, then there will be many components. Pick the first one.
+  if type(componentA) == type([]):
+    componentA = componentA[0]
+  if type(componentB) == type([]):
+    componentB = componentB[0]
     
   # Find pinA and pinB
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
@@ -207,7 +219,6 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   from SiEPIC.extend import to_itype
   width=to_itype(width_um,dbu)
 #  layer=waveguide['component'][0]['layer']  # pick the first layer in the waveguide definition, for the path.
-  print(width_um)
     
   # Create the path
   points_fromA = [cpinA.center] # first point A
