@@ -138,9 +138,53 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   
   # check if the two instances share the same cell
   if instanceA.parent_cell != instanceB.parent_cell:
-    raise Exception ('connect_pins_with_waveguide function only supports routing within the same cell. \nHierarchical routing is not supported.')
 
-  cell=instanceA.parent_cell
+    # check if they share a common parent-parent cell
+    # only works if the parent is instantiated once, otherwise we get really confused
+        
+    if instanceA.parent_cell.parent_cells() > 1 | instanceA.parent_cell.parent_cells() > 1: 
+        raise Exception ('connect_pins_with_waveguide function only supports routing where each instance only has only one parent cell.')
+
+#    if instanceA.parent_cell.parent_cell.child_instances() <= 1 & instanceA.parent_cell.parent_cell.child_instances() <= 1: 
+    if instanceA.parent_cell.parent_cells() == 1:
+        iterA=instanceA.parent_cell.each_parent_cell()
+        parentA=ly.cell(next(iterA))
+        # check if the parent is only instantiated once
+        each_parent_inst = instanceA.parent_cell.each_parent_inst()
+        try:
+            print(next(each_parent_inst).inst())
+            print(next(each_parent_inst).inst())
+            raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
+        except StopIteration:
+            pass        
+    else:
+        parentA=''
+    if instanceB.parent_cell.parent_cells() == 1:
+        # find parent parent cell
+        iterB=instanceB.parent_cell.each_parent_cell()
+        parentB=ly.cell(next(iterB))
+        # check if the parent is only instantiated once
+        each_parent_inst = instanceB.parent_cell.each_parent_inst()
+        try:
+            print(next(each_parent_inst).inst())
+            print(next(each_parent_inst).inst())
+            raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
+        except StopIteration:
+            pass        
+    else:
+        parentB=''
+    # find the common parent
+    parentsA = [instanceA.parent_cell, parentA]
+    parentsB = [instanceB.parent_cell, parentB]
+    common_cell = list(set(parentsA).intersection(parentsB))
+    print('%s, %s: %s' % (parentsA, parentsB, common_cell))
+    if len(common_cell)==0:
+        raise Exception ('connect_pins_with_waveguide function could not find a common parent for the two instances.')
+    cell=common_cell[0]
+        
+#    raise Exception ('connect_pins_with_waveguide function only supports routing within the same cell. \nHierarchical routing is not supported.')
+  else:
+    cell=instanceA.parent_cell
   
   # Find the two components:
   from time import time
@@ -156,16 +200,18 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     print('all found components A: %s' %  instanceA.parent_cell.find_components() )
     print('all found components B: %s' %  instanceB.parent_cell.find_components() )
     raise Exception("Component not found")
-  if verbose:
-    print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-    componentA.display()
-    componentB.display()
 
   # if the instance had sub-cells, then there will be many components. Pick the first one.
   if type(componentA) == type([]):
     componentA = componentA[0]
   if type(componentB) == type([]):
     componentB = componentB[0]
+
+  if verbose:
+    print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
+    print('componentA: %s, componentB: %s' % (componentA, componentB) )
+    componentA.display()
+    componentB.display()
     
   # Find pinA and pinB
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
@@ -178,6 +224,16 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     cpinA.display()
     cpinB.display()
 
+  # apply hierarchical transformation on the pins, if necessary
+  if cell != instanceA.parent_cell:
+    iterA=instanceA.parent_cell.each_parent_inst()
+    parentA=next(iterA).inst()
+    cpinA.transform(parentA.trans.inverted())
+  if cell != instanceB.parent_cell:
+    iterB=instanceB.parent_cell.each_parent_inst()
+    parentB=next(iterB).inst()
+    cpinB.transform(parentB.trans.inverted())
+    
   # check if the pins are already connected
   if cpinA.center == cpinB.center:
     print('Pins are already connected; returning')
@@ -370,7 +426,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   if not path.is_manhattan():
     print('Turtle directions: %s, %s' % (directionB, directionA))
     print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
-    instanceA.parent_cell.shapes(1).insert(path)
+    cell.shapes(1).insert(path)
     raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
   
   if not path.radius_check(radius_um):
@@ -396,7 +452,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   print('Time elapsed, make waveguide: %s' % (time() - t))  
 
   if debug_path:
-    instanceA.parent_cell.shapes(1).insert(path)
+    cell.shapes(1).insert(path)
 #  print (layer)
 #  print (ly.layer(layer))
 #  instanceA.parent_cell.shapes(ly.layer(layer)).insert(path)
