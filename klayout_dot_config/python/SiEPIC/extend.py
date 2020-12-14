@@ -1638,10 +1638,34 @@ def pinPoint(self, pin_name, verbose=False):
     else:
         return Point(0,0)
 
+
+
+def move_up_hierachy(self):
+    # move the instance up one hierarcy level
+    each_parent_inst = self.parent_cell.each_parent_inst()
+    parent_inst = next(each_parent_inst).inst()
+    try:
+        parent_inst = next(each_parent_inst).inst()
+        parent_inst = next(each_parent_inst).inst()
+        raise Exception ('move the cell up one hierarchy works only when the parent cell is instantiated only once.')
+    except StopIteration:
+        pass                
+    parent_trans = parent_inst.trans
+    t = pya.Trans(parent_trans*self.trans)
+
+    # new parent cell
+    each_parent_cell = self.parent_cell.each_parent_cell()
+    newparent_cell = next(each_parent_cell)    
+    self.parent_cell = self.layout().cell(newparent_cell)
+    # apply transformation from the original parent
+    self.transform(parent_trans.inverted())
+
+
 #################################################################################
 
 pya.Instance.find_pins = find_pins
 pya.Instance.pinPoint = pinPoint
+pya.Instance.move_up_hierachy = move_up_hierachy
 
 
 #################################################################################
