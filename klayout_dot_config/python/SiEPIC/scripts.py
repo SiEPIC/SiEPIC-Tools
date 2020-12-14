@@ -152,8 +152,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         # check if the parent is only instantiated once
         each_parent_inst = instanceA.parent_cell.each_parent_inst()
         try:
-            print(next(each_parent_inst).inst())
-            print(next(each_parent_inst).inst())
+            next(each_parent_inst).inst()
+            next(each_parent_inst).inst()
             raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
         except StopIteration:
             pass        
@@ -166,8 +166,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         # check if the parent is only instantiated once
         each_parent_inst = instanceB.parent_cell.each_parent_inst()
         try:
-            print(next(each_parent_inst).inst())
-            print(next(each_parent_inst).inst())
+            next(each_parent_inst).inst()
+            next(each_parent_inst).inst()
             raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
         except StopIteration:
             pass        
@@ -177,7 +177,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     parentsA = [instanceA.parent_cell, parentA]
     parentsB = [instanceB.parent_cell, parentB]
     common_cell = list(set(parentsA).intersection(parentsB))
-    print('%s, %s: %s' % (parentsA, parentsB, common_cell))
+    if verbose:
+      print('%s, %s: %s' % (parentsA, parentsB, common_cell))
     if len(common_cell)==0:
         raise Exception ('connect_pins_with_waveguide function could not find a common parent for the two instances.')
     cell=common_cell[0]
@@ -250,8 +251,9 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 #    except:
 #    waveguides = load_Waveguides_by_Tech(technology_name)    # this might be slow if done many times; need to cache
     waveguides = ly.load_Waveguide_types()
-    print('Time elapsed, waveguide types: %s' % (time() - t))  
-    print(waveguides)
+    if verbose:
+      print('Time elapsed, waveguide types: %s' % (time() - t))  
+      print(waveguides)
     if waveguide==[] or not(waveguide_type):
       waveguide = waveguides[0]
     if waveguide_type:
@@ -264,7 +266,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         waveguide = waveguides[0]
         print('error: waveguide type not found in PDK waveguides')
         raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
-  print('waveguide type: %s' % waveguide )  
+  if verbose:
+    print('waveguide type: %s' % waveguide )  
   # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
   waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
   if len(waveguide_component) > 0:
@@ -294,18 +297,18 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
   directionA = cpinA.rotation
   directionB = cpinB.rotation
   if turtle_A != None:
-    vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(turtle_A[0]/dbu,0))
+    vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(to_itype(turtle_A[0],dbu),0))
     points_fromA.append(points_fromA[-1]+vector)
     for i in range(floor(len(turtle_A)/2)-1):
       directionA = (directionA + turtle_A[i*2+1]) % 360
-      vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(turtle_A[i*2+2]/dbu,0))
+      vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(to_itype(turtle_A[i*2+2],dbu),0))
       points_fromA.append(points_fromA[-1]+vector)
   if turtle_B != None:
-    vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(turtle_B[0]/dbu,0))
+    vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(to_itype(turtle_B[0],dbu),0))
     points_fromB.append(points_fromB[-1]+vector)
     for i in range(floor(len(turtle_B)/2)-1):
       directionB = (directionB + turtle_B[i*2+1]) % 360
-      vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(turtle_B[i*2+2]/dbu,0))
+      vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(to_itype(turtle_B[i*2+2],dbu),0))
       points_fromB.append(points_fromB[-1]+vector)
   directionA = directionA % 360
   directionB = directionB % 360
@@ -414,7 +417,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 #    print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
 #    raise Exception("Turtles are moving away from each other; can't automatically route the path.")
      
-  print('Time elapsed, make path: %s' % (time() - t))  
+  if verbose:
+    print('Time elapsed, make path: %s' % (time() - t))  
 
   # merge the points from the two ends, A and B
   points = points_fromA + points_fromB[::-1]
@@ -449,7 +453,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     raise Exception("problem! cannot create pcelllibrary: %s" % technology_name)
   inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
 
-  print('Time elapsed, make waveguide: %s' % (time() - t))  
+  if verbose:
+    print('Time elapsed, make waveguide: %s' % (time() - t))  
 
   if debug_path:
     cell.shapes(1).insert(path)

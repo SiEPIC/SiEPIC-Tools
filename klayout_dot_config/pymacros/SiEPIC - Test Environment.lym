@@ -206,7 +206,7 @@ if 0:
  
 # connect_pins_with_waveguide test, using "EBeam" PDK:
 # hierarchy with 1 parent
-if 0:
+if 1:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -222,18 +222,18 @@ if 0:
   ly.prune_subcells(top_cell.cell_index(), 10)
 
   cell_ebeam_crossing4 = ly.create_cell('ebeam_crossing4', 'EBeam')
-  t = pya.Trans.from_s('r270 0,0')
+  t = pya.Trans.from_s('r0 0,0')
   instA = cell.insert(pya.CellInstArray(cell_ebeam_crossing4.cell_index(), t))
  
   test_cell = cell.layout().create_cell("test_cell")
-  t = Trans(pya.Trans.R0, 60000, 0)
+  t = Trans(pya.Trans.R0, 5000+4800, 5000+4800)
   cell.insert(CellInstArray(test_cell.cell_index(), t))
   t = Trans(pya.Trans.R0, 0, 0)
   instC = test_cell.insert(pya.CellInstArray(cell_ebeam_crossing4.cell_index(), t))
-  connect_pins_with_waveguide(instC, 'opt3', instA, 'opt4', waveguide_type=waveguide_type, verbose=True)
+  connect_pins_with_waveguide(instC, 'opt3', instA, 'opt4', waveguide_type=waveguide_type, verbose=False)
 
   test_cell2 = cell.layout().create_cell("test_cell2")
-  t = Trans(pya.Trans.R0, 60000, 50000)
+  t = Trans(pya.Trans.R0, 60000, 51000)
   cell.insert(CellInstArray(test_cell2.cell_index(), t))
   '''
   # if you instantiate the cell more than once, the connect_pins_with_waveguide should return an error.
@@ -242,7 +242,7 @@ if 0:
   '''
   t = Trans(pya.Trans.R90, 0, 0)
   instD = test_cell2.insert(pya.CellInstArray(cell_ebeam_crossing4.cell_index(), t))
-  connect_pins_with_waveguide(instC, 'opt4', instD, 'opt3', waveguide_type=waveguide_type, verbose=True)
+  connect_pins_with_waveguide(instC, 'opt4', instD, 'opt3', waveguide_type=waveguide_type, verbose=False)
 
 
 

@@ -188,14 +188,20 @@ def remove_colinear_points(self, verbose=False):
     else:
         pts = self.get_dpoints()
 
+    # only keep unique path points:
+    pts2 = []
+    for pt in pts:
+        if pt not in pts2:
+            pts2.append(pt)
+    pts = pts2
+
     for i in range(1,len(pts)-1):
       turn = ((angle_b_vectors(pts[i]-pts[i-1],pts[i+1]-pts[i])+90)%360-90)/90
       angle = angle_vector(pts[i]-pts[i-1])/90
       if verbose:
         print('%s, %s' %(turn, angle))
 
-
-    # this version removed all colinear points, which doesn't make sense for a path
+    # removed all colinear points
     self.points = [pts[0]] + [pts[i]
                               for i in range(1, len(pts) - 1) if not pt_intersects_segment(pts[i + 1], pts[i - 1], pts[i])] + [pts[-1]]
     return self
