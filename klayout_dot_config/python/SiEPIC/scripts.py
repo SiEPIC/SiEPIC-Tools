@@ -381,10 +381,10 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 # find the x position
                 if directionA == 180: 
                     x = min(points_fromA[-1].x, points_fromB[-1].x,
-                            points_fromA[-2].x-2*radius, points_fromB[-2].x-2*radius)
+                            points_fromA[-2].x-1*radius, points_fromB[-2].x-1*radius)
                 else:
                     x = max(points_fromA[-1].x, points_fromB[-1].x,
-                            points_fromA[-2].x+2*radius, points_fromB[-2].x+2*radius)
+                            points_fromA[-2].x+1*radius, points_fromB[-2].x+1*radius)
                 points_fromA[-1].x = x
                 points_fromB[-1].x = x
         # vertical:
@@ -394,10 +394,10 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 # find the y position
                 if directionA == 270: 
                     y = min(points_fromA[-1].y, points_fromB[-1].y, 
-                            points_fromA[-2].y-2*radius, points_fromB[-2].y-2*radius)
+                            points_fromA[-2].y-1*radius, points_fromB[-2].y-1*radius)
                 else:
                     y = max(points_fromA[-1].y, points_fromB[-1].y, 
-                            points_fromA[-2].y+2*radius, points_fromB[-2].y+2*radius)
+                            points_fromA[-2].y+1*radius, points_fromB[-2].y+1*radius)
                 points_fromA[-1].y = y
                 points_fromB[-1].y = y
 
@@ -427,6 +427,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     
     if not path.radius_check(radius_um):
         print('Path: %s' % path)
+        # draw a path for debugging purposes
+        cell.shapes(1).insert(path)
         raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
     
     # generate the Waveguide PCell, and instantiate

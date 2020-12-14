@@ -222,15 +222,16 @@ if 1:
   ly.prune_subcells(top_cell.cell_index(), 10)
 
   cell_ebeam_crossing4 = ly.create_cell('ebeam_crossing4', 'EBeam')
-  t = pya.Trans.from_s('r0 0,0')
+  t = pya.Trans.from_s('r270 0,0')
   instA = cell.insert(pya.CellInstArray(cell_ebeam_crossing4.cell_index(), t))
  
   test_cell = cell.layout().create_cell("test_cell")
   t = Trans(pya.Trans.R0, 5000+4800, 5000+4800)
+  t = Trans(pya.Trans.R0, 10000, 0)
   cell.insert(CellInstArray(test_cell.cell_index(), t))
   t = Trans(pya.Trans.R0, 0, 0)
   instC = test_cell.insert(pya.CellInstArray(cell_ebeam_crossing4.cell_index(), t))
-  connect_pins_with_waveguide(instC, 'opt3', instA, 'opt4', waveguide_type=waveguide_type, verbose=False)
+  connect_pins_with_waveguide(instC, 'opt3', instA, 'opt4', waveguide_type=waveguide_type, verbose=True)
 
   test_cell2 = cell.layout().create_cell("test_cell2")
   t = Trans(pya.Trans.R0, 60000, 51000)
