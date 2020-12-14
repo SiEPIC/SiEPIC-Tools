@@ -81,390 +81,379 @@ def pointlist_to_turtle(pointlist):
           
 
 def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False):
-  '''
-  Create a Path connecting instanceA:pinA to instanceB:pinB
-    where instance = pya.Instance; pin = string, e.g. 'pin1'
-  and convert to a Waveguide with waveguide_type = [string] name, from WAVEGUIDES.XML
-  using one of the following approaches:
-   - fewer than 4 vertices (including endpoints): automatic, no need to specify turtles
-   - turtle_A: list of Turtle (forward x microns, turn left -1 or right 1), starting from the pinA end, except for the first and last
-     e.g.  [5, -90, 10, 90]
-   - turtle_B: list of Turtle (forward x microns, turn left -1 or right 1), starting from the pinA end, except for the first and last
-     - both turtle_A and turtle_B: 
-          relative from both pinA and pinB sides
-   - the script automatically completes the path as long as the turtles are:
-      - going in the same direction, or
-      - having their paths crossing
-   - doesn't work if they are on diverging paths; in that case add vertices.
-   
-  originally thought about implementing the following, but perhaps not useful: 
-   - absolute_vertices: list of Points, except for the first and last
-   - relative_vertices_from_A: list of Points, starting from the pinA end, except for the first and last
-   - relative_vertices_from_B: list of Points, starting from the pinB end, except for the first and last
-     - both relative_vertices_from_A and relative_vertices_from_B: 
-        relative from both pinA and pinB sides
-   
-   
-  Uses SiEPIC-Tools find_components to determine the component size, pins, etc.
-  
-  
-  Example code:
-
-  from SiEPIC import scripts  
-  from SiEPIC.utils import get_layout_variables
-  TECHNOLOGY, lv, ly, cell = get_layout_variables()
-
-  # clean all cells within the present cell
-  top_cell = ly.top_cells()[0]
-  ly.prune_subcells(top_cell.cell_index(), 10)
-
-  cell_amf_Terminator_TE_1550 = ly.create_cell('ebeam_crossing4', 'EBeam')
-  t = pya.Trans.from_s('r270 230175,190500')
-  inst_amf_Terminator_TE_1550_3 = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
-
-  cell_AMF_IRPH_MRR_0 = ly.create_cell('ebeam_bragg_te1550', 'EBeam',
-       {'r': 10.0, 'w': 0.35, 'g': 0.12, 'gmon': 0.5})
-
-  from SiEPIC.scripts import connect_cell
-  
-  connect_pins_with_waveguide(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
-
-  
-  '''
-
-  # layout information
-  ly=instanceA.parent_cell.layout()
-  dbu=ly.dbu
-  
-  # check if the two instances share the same cell
-  if instanceA.parent_cell != instanceB.parent_cell:
-
-    # check if they share a common parent-parent cell
-    # only works if the parent is instantiated once, otherwise we get really confused
-        
-    if instanceA.parent_cell.parent_cells() > 1 | instanceA.parent_cell.parent_cells() > 1: 
-        raise Exception ('connect_pins_with_waveguide function only supports routing where each instance only has only one parent cell.')
-
-#    if instanceA.parent_cell.parent_cell.child_instances() <= 1 & instanceA.parent_cell.parent_cell.child_instances() <= 1: 
-    if instanceA.parent_cell.parent_cells() == 1:
-        iterA=instanceA.parent_cell.each_parent_cell()
-        parentA=ly.cell(next(iterA))
-        # check if the parent is only instantiated once
-        each_parent_inst = instanceA.parent_cell.each_parent_inst()
-        try:
-            next(each_parent_inst).inst()
-            next(each_parent_inst).inst()
-            raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
-        except StopIteration:
-            pass        
-    else:
-        parentA=''
-    if instanceB.parent_cell.parent_cells() == 1:
-        # find parent parent cell
-        iterB=instanceB.parent_cell.each_parent_cell()
-        parentB=ly.cell(next(iterB))
-        # check if the parent is only instantiated once
-        each_parent_inst = instanceB.parent_cell.each_parent_inst()
-        try:
-            next(each_parent_inst).inst()
-            next(each_parent_inst).inst()
-            raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
-        except StopIteration:
-            pass        
-    else:
-        parentB=''
-    # find the common parent
-    parentsA = [instanceA.parent_cell, parentA]
-    parentsB = [instanceB.parent_cell, parentB]
-    common_cell = list(set(parentsA).intersection(parentsB))
-    if verbose:
-      print('%s, %s: %s' % (parentsA, parentsB, common_cell))
-    if len(common_cell)==0:
-        raise Exception ('connect_pins_with_waveguide function could not find a common parent for the two instances.')
-    cell=common_cell[0]
-        
-#    raise Exception ('connect_pins_with_waveguide function only supports routing within the same cell. \nHierarchical routing is not supported.')
-  else:
-    cell=instanceA.parent_cell
-  
-  # Find the two components:
-  from time import time
-  t = time()
-  # benchmarking: find_components here takes 0.015 s
-  componentA = instanceA.parent_cell.find_components(inst=instanceA)
-  componentB = instanceB.parent_cell.find_components(inst=instanceB)
-#  print('Time elapsed: %s' % (time() - t))  
-  if componentA==[] or componentB==[]:
-    print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-    print('componentA: %s, componentB: %s' % (componentA, componentB) )
-    print('parent_cell A: %s, parent_cell B: %s, cell A: %s, cell B: %s' % (instanceA.parent_cell, instanceB.parent_cell, instanceA.cell, instanceB.cell) )
-    print('all found components A: %s' %  instanceA.parent_cell.find_components() )
-    print('all found components B: %s' %  instanceB.parent_cell.find_components() )
-    raise Exception("Component not found")
-
-  # if the instance had sub-cells, then there will be many components. Pick the first one.
-  if type(componentA) == type([]):
-    componentA = componentA[0]
-  if type(componentB) == type([]):
-    componentB = componentB[0]
-
-  if verbose:
-    print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-    print('componentA: %s, componentB: %s' % (componentA, componentB) )
-    componentA.display()
-    componentB.display()
-    
-  # Find pinA and pinB
-  cpinA = [p for p in componentA.pins if p.pin_name == pinA]
-  cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
-  if cpinA==[] or cpinB==[]:
-    raise Exception("Pin not found")
-  cpinA=cpinA[0]
-  cpinB=cpinB[0]
-  if verbose:
-    cpinA.display()
-    cpinB.display()
-
-  # apply hierarchical transformation on the pins, if necessary
-  if cell != instanceA.parent_cell:
-    iterA=instanceA.parent_cell.each_parent_inst()
-    parentA=next(iterA).inst()
-    cpinA.transform(parentA.trans.inverted())
-  if cell != instanceB.parent_cell:
-    iterB=instanceB.parent_cell.each_parent_inst()
-    parentB=next(iterB).inst()
-    cpinB.transform(parentB.trans.inverted())
-    
-  # check if the pins are already connected
-  if cpinA.center == cpinB.center:
-    print('Pins are already connected; returning')
-    return
-      
-  TECHNOLOGY = ly.get_technology()
-  technology_name = TECHNOLOGY['technology_name']
-  
-  # Waveguide type:
-  if not(waveguide):
-#    from .utils import load_Waveguides_by_Tech
-#    try:
-#      technology_name = instanceA.layout().meta_info_value('technology')
-#    except:
-#    waveguides = load_Waveguides_by_Tech(technology_name)    # this might be slow if done many times; need to cache
-    waveguides = ly.load_Waveguide_types()
-    if verbose:
-      print('Time elapsed, waveguide types: %s' % (time() - t))  
-      print(waveguides)
-    if waveguide==[] or not(waveguide_type):
-      waveguide = waveguides[0]
-    if waveguide_type:
-#      print(waveguide_type)
-      waveguide1 = [w for w in waveguides if w['name']==waveguide_type]
-#      print(waveguide1)
-      if type(waveguide1) == type([]) and len(waveguide1)>0:
-        waveguide = waveguide1[0]
-      else:
-        waveguide = waveguides[0]
-        print('error: waveguide type not found in PDK waveguides')
-        raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
-  if verbose:
-    print('waveguide type: %s' % waveguide )  
-  # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
-  waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
-  if len(waveguide_component) > 0:
-    width_um = waveguide_component[0]['width']
-  else: # pick the first one:
-    width_um = waveguide['component'][0]['width']
-  width_um=float(width_um)
-  from SiEPIC.extend import to_itype
-  width=to_itype(width_um,dbu)
-#  layer=waveguide['component'][0]['layer']  # pick the first layer in the waveguide definition, for the path.
-    
-  # Create the path
-  points_fromA = [cpinA.center] # first point A
-  points_fromB = [cpinB.center] # last  point B
-
-  # if no turtles are specified, assume a forward movement to be the bend radius
-  radius_um = float(waveguide['radius'])
-  radius = to_itype(waveguide['radius'],dbu)
-  if turtle_A == None:
-    turtle_A = [radius_um]
-  if turtle_B == None:
-    turtle_B = [radius_um]
-
-
-  # go through all the turtle instructions and build up the points
-  from math import floor
-  directionA = cpinA.rotation
-  directionB = cpinB.rotation
-  if turtle_A != None:
-    vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(to_itype(turtle_A[0],dbu),0))
-    points_fromA.append(points_fromA[-1]+vector)
-    for i in range(floor(len(turtle_A)/2)-1):
-      directionA = (directionA + turtle_A[i*2+1]) % 360
-      vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(to_itype(turtle_A[i*2+2],dbu),0))
-      points_fromA.append(points_fromA[-1]+vector)
-  if turtle_B != None:
-    vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(to_itype(turtle_B[0],dbu),0))
-    points_fromB.append(points_fromB[-1]+vector)
-    for i in range(floor(len(turtle_B)/2)-1):
-      directionB = (directionB + turtle_B[i*2+1]) % 360
-      vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(to_itype(turtle_B[i*2+2],dbu),0))
-      points_fromB.append(points_fromB[-1]+vector)
-  directionA = directionA % 360
-  directionB = directionB % 360
-  
-  # check if the turtles directions are coming together at 90 angle, 
-  # then add a vertex
-  if (directionB - directionA - 90) % 360 in [0,180]:
-    if verbose:
-      print('Turtles are coming together at 90 degree angle, adding point')
-    if directionA==0:
-      if   (directionB==270 and points_fromB[-1].y>points_fromA[-1].y and points_fromB[-1].x>points_fromA[-1].x) \
-        or (directionB==90  and points_fromB[-1].y<points_fromA[-1].y and points_fromB[-1].x>points_fromA[-1].x):
-        points_fromA.append(pya.Point(points_fromB[-1].x,points_fromA[-1].y))
-    if directionA==180:
-      if   (directionB==270 and points_fromB[-1].y>points_fromA[-1].y and points_fromB[-1].x<points_fromA[-1].x) \
-        or (directionB==90  and points_fromB[-1].y<points_fromA[-1].y and points_fromB[-1].x<points_fromA[-1].x):
-        points_fromA.append(pya.Point(points_fromB[-1].x,points_fromA[-1].y))
-    if directionA==90:
-      if   (directionB==180 and points_fromB[-1].x>points_fromA[-1].x and points_fromB[-1].y>points_fromA[-1].y) \
-        or (directionB==0   and points_fromB[-1].x<points_fromA[-1].x and points_fromB[-1].y>points_fromA[-1].y):
-        points_fromA.append(pya.Point(points_fromA[-1].x,points_fromB[-1].y))
-    if directionA==270:
-      if   (directionB==180 and points_fromB[-1].x>points_fromA[-1].x and points_fromB[-1].y<points_fromA[-1].y) \
-        or (directionB==0   and points_fromB[-1].x<points_fromA[-1].x and points_fromB[-1].y<points_fromA[-1].y):
-        points_fromA.append(pya.Point(points_fromA[-1].x,points_fromB[-1].y))
-
-  
-  # check if the turtles going towards each other (180)
-  #  - check if the turtles are offset from each other, 
-  #    then edit their points to match
-  #  - check if they do not have an offset; 
-  #    then keep only end points
-  if (directionB - directionA - 180) % 360 == 0:
-    if verbose:
-      print('Turtles are going towards each other ...')
-    # horizontal
-    if directionA in [0, 180]: 
-      # check for y offset
-      if points_fromA[-1].y != points_fromB[-1].y:
-        # average the x position
-        x = (points_fromA[-1].x + points_fromB[-1].x)/2
-        points_fromA[-1].x = x
-        points_fromB[-1].x = x
-        if verbose:
-          print('  Turtles are offset, editing points')
-      else:
-        points_fromA = [points_fromA[0]]
-        points_fromB = [points_fromB[0]]
-        if verbose:
-          print('  Turtles are not offset, keeping only endpoints')
-        # 
-    # vertical
-    else:
-      # check for x offset
-      if points_fromA[-1].x != points_fromB[-1].x:
-        # average the y position
-        y = (points_fromA[-1].y + points_fromB[-1].y)/2
-        points_fromA[-1].y = y
-        points_fromB[-1].y = y
-        if verbose:
-          print('  Turtles are offset, editing points')
-      else:
-        points_fromA = [points_fromA[0]]
-        points_fromB = [points_fromB[0]]
-        if verbose:
-          print('  Turtles are not offset, keeping only endpoints')
-        
-  # check if the turtles are offset from each other, but going the same way (0)
-  # then edit their points to match
-  # ensuring that there is enough space for 2 x bend radius (U turn)
-  if (directionB - directionA - 0) % 360 == 0:
-    if verbose:
-      print('Turtles are offset, going the same way, editing points')
-    # horizontal:
-    if directionA in [0, 180]: 
-      # check for y offset
-      if points_fromA[-1].y != points_fromB[-1].y:
-        # find the x position
-        if directionA == 180: 
-          x = min(points_fromA[-1].x, points_fromB[-1].x,
-                points_fromA[-2].x-2*radius, points_fromB[-2].x-2*radius)
-        else:
-          x = max(points_fromA[-1].x, points_fromB[-1].x,
-                points_fromA[-2].x+2*radius, points_fromB[-2].x+2*radius)
-        points_fromA[-1].x = x
-        points_fromB[-1].x = x
-    # vertical:
-    else:
-      # check for x offset
-      if points_fromA[-1].x != points_fromB[-1].x:
-        # find the y position
-        if directionA == 270: 
-          y = min(points_fromA[-1].y, points_fromB[-1].y, 
-                points_fromA[-2].y-2*radius, points_fromB[-2].y-2*radius)
-        else:
-          y = max(points_fromA[-1].y, points_fromB[-1].y, 
-                points_fromA[-2].y+2*radius, points_fromB[-2].y+2*radius)
-        points_fromA[-1].y = y
-        points_fromB[-1].y = y
-
-  # check if the turtle directions are 90, 
-  # and going away from facing each other, 
-  #  -> can't handle this case
-#  if (directionB - directionA + 90) % 360 in [0,180]:
-#    print('Turtle directions: %s, %s' % (directionB, directionA))
-#    print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
-#    raise Exception("Turtles are moving away from each other; can't automatically route the path.")
+    '''
+    Create a Path connecting instanceA:pinA to instanceB:pinB
+        where instance = pya.Instance; pin = string, e.g. 'pin1'
+    and convert to a Waveguide with waveguide_type = [string] name, from WAVEGUIDES.XML
+    using one of the following approaches:
+     - fewer than 4 vertices (including endpoints): automatic, no need to specify turtles
+     - turtle_A: list of Turtle (forward x microns, turn left -1 or right 1), starting from the pinA end, except for the first and last
+         e.g.    [5, -90, 10, 90]
+     - turtle_B: list of Turtle (forward x microns, turn left -1 or right 1), starting from the pinA end, except for the first and last
+         - both turtle_A and turtle_B: 
+                    relative from both pinA and pinB sides
+     - the script automatically completes the path as long as the turtles are:
+            - going in the same direction, or
+            - having their paths crossing
+     - doesn't work if they are on diverging paths; in that case add vertices.
      
-  if verbose:
-    print('Time elapsed, make path: %s' % (time() - t))  
-
-  # merge the points from the two ends, A and B
-  points = points_fromA + points_fromB[::-1]
-
-  # generate the path
-  path = pya.Path(points,width).to_dtype(dbu).remove_colinear_points()
-
-  # Check if the path is Manhattan (it should be)
-  if not path.is_manhattan():
-    print('Turtle directions: %s, %s' % (directionB, directionA))
-    print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
-    cell.shapes(1).insert(path)
-    raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
-  
-  if not path.radius_check(radius_um):
-    print('Path: %s' % path)
-    raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
-  
-  # generate the Waveguide PCell, and instantiate
-  wg_pcell = ly.create_cell("Waveguide", technology_name, {"path": path,
-                                                           "radius": radius_um,
-                                                           "width": width_um,
-                                                           "wg_width": width_um,
-                                                           "adiab": waveguide['adiabatic'],
-                                                           "bezier": float(waveguide['bezier']),
-                                                           "layers": [wg['layer'] for wg in waveguide['component']],
-                                                           "widths": [wg['width'] for wg in waveguide['component']],
-                                                           "offsets": [wg['offset'] for wg in waveguide['component']],
-                                                           "CML": waveguide['CML'],
-                                                           "model": waveguide['model']})
-  if wg_pcell==None:
-    raise Exception("problem! cannot create pcelllibrary: %s" % technology_name)
-  inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
-
-  if verbose:
-    print('Time elapsed, make waveguide: %s' % (time() - t))  
-
-  if debug_path:
-    cell.shapes(1).insert(path)
-#  print (layer)
-#  print (ly.layer(layer))
-#  instanceA.parent_cell.shapes(ly.layer(layer)).insert(path)
+    originally thought about implementing the following, but perhaps not useful: 
+     - absolute_vertices: list of Points, except for the first and last
+     - relative_vertices_from_A: list of Points, starting from the pinA end, except for the first and last
+     - relative_vertices_from_B: list of Points, starting from the pinB end, except for the first and last
+         - both relative_vertices_from_A and relative_vertices_from_B: 
+                relative from both pinA and pinB sides
+     
+     
+    Uses SiEPIC-Tools find_components to determine the component size, pins, etc.
     
-  return inst
-  # end of def connect_pins_with_waveguide
-  
+    
+    Example code:
+
+    from SiEPIC import scripts    
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+    # clean all cells within the present cell
+    top_cell = ly.top_cells()[0]
+    ly.prune_subcells(top_cell.cell_index(), 10)
+
+    cell_amf_Terminator_TE_1550 = ly.create_cell('ebeam_crossing4', 'EBeam')
+    t = pya.Trans.from_s('r270 230175,190500')
+    inst_amf_Terminator_TE_1550_3 = cell.insert(pya.CellInstArray(cell_amf_Terminator_TE_1550.cell_index(), t))
+
+    cell_AMF_IRPH_MRR_0 = ly.create_cell('ebeam_bragg_te1550', 'EBeam',
+             {'r': 10.0, 'w': 0.35, 'g': 0.12, 'gmon': 0.5})
+
+    from SiEPIC.scripts import connect_cell
+    
+    connect_pins_with_waveguide(inst_amf_Terminator_TE_1550_3, 'opt2', cell_AMF_IRPH_MRR_0, 'pin1')
+
+    
+    '''
+
+    # layout information
+    ly=instanceA.parent_cell.layout()
+    dbu=ly.dbu
+    
+    # check if the two instances share the same cell
+    if instanceA.parent_cell != instanceB.parent_cell:
+
+        # check if they share a common parent-parent cell
+        # only works if the parent is instantiated once, otherwise we get really confused
+                
+        if instanceA.parent_cell.parent_cells() > 1 | instanceA.parent_cell.parent_cells() > 1: 
+                raise Exception ('connect_pins_with_waveguide function only supports routing where each instance only has only one parent cell.')
+
+#        if instanceA.parent_cell.parent_cell.child_instances() <= 1 & instanceA.parent_cell.parent_cell.child_instances() <= 1: 
+        if instanceA.parent_cell.parent_cells() == 1:
+                iterA=instanceA.parent_cell.each_parent_cell()
+                parentA=ly.cell(next(iterA))
+                # check if the parent is only instantiated once
+                each_parent_inst = instanceA.parent_cell.each_parent_inst()
+                try:
+                        next(each_parent_inst).inst()
+                        next(each_parent_inst).inst()
+                        raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
+                except StopIteration:
+                        pass                
+        else:
+                parentA=''
+        if instanceB.parent_cell.parent_cells() == 1:
+                # find parent parent cell
+                iterB=instanceB.parent_cell.each_parent_cell()
+                parentB=ly.cell(next(iterB))
+                # check if the parent is only instantiated once
+                each_parent_inst = instanceB.parent_cell.each_parent_inst()
+                try:
+                        next(each_parent_inst).inst()
+                        next(each_parent_inst).inst()
+                        raise Exception ('connect_pins_with_waveguide function only supports routing where each instance is only instantiated once.')
+                except StopIteration:
+                        pass                
+        else:
+                parentB=''
+        # find the common parent
+        parentsA = [instanceA.parent_cell, parentA]
+        parentsB = [instanceB.parent_cell, parentB]
+        common_cell = list(set(parentsA).intersection(parentsB))
+        if verbose:
+            print('%s, %s: %s' % (parentsA, parentsB, common_cell))
+        if len(common_cell)==0:
+                raise Exception ('connect_pins_with_waveguide function could not find a common parent for the two instances.')
+        cell=common_cell[0]
+                
+    else:
+        cell=instanceA.parent_cell
+    
+    # Find the two components:
+    from time import time
+    t = time()
+    # benchmarking: find_components here takes 0.015 s
+    componentA = instanceA.parent_cell.find_components(inst=instanceA)
+    componentB = instanceB.parent_cell.find_components(inst=instanceB)
+#    print('Time elapsed: %s' % (time() - t))    
+    if componentA==[] or componentB==[]:
+        print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
+        print('componentA: %s, componentB: %s' % (componentA, componentB) )
+        print('parent_cell A: %s, parent_cell B: %s, cell A: %s, cell B: %s' % (instanceA.parent_cell, instanceB.parent_cell, instanceA.cell, instanceB.cell) )
+        print('all found components A: %s' %    instanceA.parent_cell.find_components() )
+        print('all found components B: %s' %    instanceB.parent_cell.find_components() )
+        raise Exception("Component not found")
+
+    # if the instance had sub-cells, then there will be many components. Pick the first one.
+    if type(componentA) == type([]):
+        componentA = componentA[0]
+    if type(componentB) == type([]):
+        componentB = componentB[0]
+
+    if verbose:
+        print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
+        print('componentA: %s, componentB: %s' % (componentA, componentB) )
+        componentA.display()
+        componentB.display()
+        
+    # Find pinA and pinB
+    cpinA = [p for p in componentA.pins if p.pin_name == pinA]
+    cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
+    if cpinA==[] or cpinB==[]:
+        raise Exception("Pin not found")
+    cpinA=cpinA[0]
+    cpinB=cpinB[0]
+    if verbose:
+        cpinA.display()
+        cpinB.display()
+
+    # apply hierarchical transformation on the pins, if necessary
+    if cell != instanceA.parent_cell:
+        iterA=instanceA.parent_cell.each_parent_inst()
+        parentA=next(iterA).inst()
+        cpinA.transform(parentA.trans.inverted())
+    if cell != instanceB.parent_cell:
+        iterB=instanceB.parent_cell.each_parent_inst()
+        parentB=next(iterB).inst()
+        cpinB.transform(parentB.trans.inverted())
+        
+    # check if the pins are already connected
+    if cpinA.center == cpinB.center:
+        print('Pins are already connected; returning')
+        return
+            
+    TECHNOLOGY = ly.get_technology()
+    technology_name = TECHNOLOGY['technology_name']
+    
+    # Waveguide type:
+    if not(waveguide):
+        waveguides = ly.load_Waveguide_types()
+        if verbose:
+            print('Time elapsed, waveguide types: %s' % (time() - t))    
+            print(waveguides)
+        if waveguide==[] or not(waveguide_type):
+            waveguide = waveguides[0]
+        if waveguide_type:
+            waveguide1 = [w for w in waveguides if w['name']==waveguide_type]
+            if type(waveguide1) == type([]) and len(waveguide1)>0:
+                waveguide = waveguide1[0]
+            else:
+                waveguide = waveguides[0]
+                print('error: waveguide type not found in PDK waveguides')
+                raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
+    if verbose:
+        print('waveguide type: %s' % waveguide )    
+    # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
+    waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
+    if len(waveguide_component) > 0:
+        width_um = waveguide_component[0]['width']
+    else: # pick the first one:
+        width_um = waveguide['component'][0]['width']
+    width_um=float(width_um)
+    from SiEPIC.extend import to_itype
+    width=to_itype(width_um,dbu)
+#    layer=waveguide['component'][0]['layer']    # pick the first layer in the waveguide definition, for the path.
+        
+    # Create the path
+    points_fromA = [cpinA.center] # first point A
+    points_fromB = [cpinB.center] # last    point B
+
+    # if no turtles are specified, assume a forward movement to be the bend radius
+    radius_um = float(waveguide['radius'])
+    radius = to_itype(waveguide['radius'],dbu)
+    if turtle_A == None:
+        turtle_A = [radius_um]
+    if turtle_B == None:
+        turtle_B = [radius_um]
+
+
+    # go through all the turtle instructions and build up the points
+    from math import floor
+    directionA = cpinA.rotation
+    directionB = cpinB.rotation
+    if turtle_A != None:
+        vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(to_itype(turtle_A[0],dbu),0))
+        points_fromA.append(points_fromA[-1]+vector)
+        for i in range(floor(len(turtle_A)/2)-1):
+            directionA = (directionA + turtle_A[i*2+1]) % 360
+            vector=pya.CplxTrans(1,directionA,False,0,0).trans(pya.Vector(to_itype(turtle_A[i*2+2],dbu),0))
+            points_fromA.append(points_fromA[-1]+vector)
+    if turtle_B != None:
+        vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(to_itype(turtle_B[0],dbu),0))
+        points_fromB.append(points_fromB[-1]+vector)
+        for i in range(floor(len(turtle_B)/2)-1):
+            directionB = (directionB + turtle_B[i*2+1]) % 360
+            vector=pya.CplxTrans(1,directionB,False,0,0).trans(pya.Vector(to_itype(turtle_B[i*2+2],dbu),0))
+            points_fromB.append(points_fromB[-1]+vector)
+    directionA = directionA % 360
+    directionB = directionB % 360
+    
+    # check if the turtles directions are coming together at 90 angle, 
+    # then add a vertex
+    if (directionB - directionA - 90) % 360 in [0,180]:
+        if verbose:
+            print('Turtles are coming together at 90 degree angle, adding point')
+        if directionA==0:
+            if     (directionB==270 and points_fromB[-1].y>points_fromA[-1].y and points_fromB[-1].x>points_fromA[-1].x) \
+                or (directionB==90    and points_fromB[-1].y<points_fromA[-1].y and points_fromB[-1].x>points_fromA[-1].x):
+                points_fromA.append(pya.Point(points_fromB[-1].x,points_fromA[-1].y))
+        if directionA==180:
+            if     (directionB==270 and points_fromB[-1].y>points_fromA[-1].y and points_fromB[-1].x<points_fromA[-1].x) \
+                or (directionB==90    and points_fromB[-1].y<points_fromA[-1].y and points_fromB[-1].x<points_fromA[-1].x):
+                points_fromA.append(pya.Point(points_fromB[-1].x,points_fromA[-1].y))
+        if directionA==90:
+            if     (directionB==180 and points_fromB[-1].x>points_fromA[-1].x and points_fromB[-1].y>points_fromA[-1].y) \
+                or (directionB==0     and points_fromB[-1].x<points_fromA[-1].x and points_fromB[-1].y>points_fromA[-1].y):
+                points_fromA.append(pya.Point(points_fromA[-1].x,points_fromB[-1].y))
+        if directionA==270:
+            if     (directionB==180 and points_fromB[-1].x>points_fromA[-1].x and points_fromB[-1].y<points_fromA[-1].y) \
+                or (directionB==0     and points_fromB[-1].x<points_fromA[-1].x and points_fromB[-1].y<points_fromA[-1].y):
+                points_fromA.append(pya.Point(points_fromA[-1].x,points_fromB[-1].y))
+
+    
+    # check if the turtles going towards each other (180)
+    #    - check if the turtles are offset from each other, 
+    #        then edit their points to match
+    #    - check if they do not have an offset; 
+    #        then keep only end points
+    if (directionB - directionA - 180) % 360 == 0:
+        if verbose:
+            print('Turtles are going towards each other ...')
+        # horizontal
+        if directionA in [0, 180]: 
+            # check for y offset
+            if points_fromA[-1].y != points_fromB[-1].y:
+                # average the x position
+                x = (points_fromA[-1].x + points_fromB[-1].x)/2
+                points_fromA[-1].x = x
+                points_fromB[-1].x = x
+                if verbose:
+                    print('    Turtles are offset, editing points')
+            else:
+                points_fromA = [points_fromA[0]]
+                points_fromB = [points_fromB[0]]
+                if verbose:
+                    print('    Turtles are not offset, keeping only endpoints')
+                # 
+        # vertical
+        else:
+            # check for x offset
+            if points_fromA[-1].x != points_fromB[-1].x:
+                # average the y position
+                y = (points_fromA[-1].y + points_fromB[-1].y)/2
+                points_fromA[-1].y = y
+                points_fromB[-1].y = y
+                if verbose:
+                    print('    Turtles are offset, editing points')
+            else:
+                points_fromA = [points_fromA[0]]
+                points_fromB = [points_fromB[0]]
+                if verbose:
+                    print('    Turtles are not offset, keeping only endpoints')
+                
+    # check if the turtles are offset from each other, but going the same way (0)
+    # then edit their points to match
+    # ensuring that there is enough space for 2 x bend radius (U turn)
+    if (directionB - directionA - 0) % 360 == 0:
+        if verbose:
+            print('Turtles are offset, going the same way, editing points')
+        # horizontal:
+        if directionA in [0, 180]: 
+            # check for y offset
+            if points_fromA[-1].y != points_fromB[-1].y:
+                # find the x position
+                if directionA == 180: 
+                    x = min(points_fromA[-1].x, points_fromB[-1].x,
+                            points_fromA[-2].x-2*radius, points_fromB[-2].x-2*radius)
+                else:
+                    x = max(points_fromA[-1].x, points_fromB[-1].x,
+                            points_fromA[-2].x+2*radius, points_fromB[-2].x+2*radius)
+                points_fromA[-1].x = x
+                points_fromB[-1].x = x
+        # vertical:
+        else:
+            # check for x offset
+            if points_fromA[-1].x != points_fromB[-1].x:
+                # find the y position
+                if directionA == 270: 
+                    y = min(points_fromA[-1].y, points_fromB[-1].y, 
+                            points_fromA[-2].y-2*radius, points_fromB[-2].y-2*radius)
+                else:
+                    y = max(points_fromA[-1].y, points_fromB[-1].y, 
+                            points_fromA[-2].y+2*radius, points_fromB[-2].y+2*radius)
+                points_fromA[-1].y = y
+                points_fromB[-1].y = y
+
+    # check if the turtle directions are 90, 
+    # and going away from facing each other, 
+    #    -> can't handle this case
+#    if (directionB - directionA + 90) % 360 in [0,180]:
+#        print('Turtle directions: %s, %s' % (directionB, directionA))
+#        print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
+#        raise Exception("Turtles are moving away from each other; can't automatically route the path.")
+         
+    if verbose:
+        print('Time elapsed, make path: %s' % (time() - t))    
+
+    # merge the points from the two ends, A and B
+    points = points_fromA + points_fromB[::-1]
+
+    # generate the path
+    path = pya.Path(points,width).to_dtype(dbu).remove_colinear_points()
+
+    # Check if the path is Manhattan (it should be)
+    if not path.is_manhattan():
+        print('Turtle directions: %s, %s' % (directionB, directionA))
+        print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
+        cell.shapes(1).insert(path)
+        raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
+    
+    if not path.radius_check(radius_um):
+        print('Path: %s' % path)
+        raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
+    
+    # generate the Waveguide PCell, and instantiate
+    wg_pcell = ly.create_cell("Waveguide", technology_name, {"path": path,
+                                                             "radius": radius_um,
+                                                             "width": width_um,
+                                                             "wg_width": width_um,
+                                                             "adiab": waveguide['adiabatic'],
+                                                             "bezier": float(waveguide['bezier']),
+                                                             "layers": [wg['layer'] for wg in waveguide['component']],
+                                                             "widths": [wg['width'] for wg in waveguide['component']],
+                                                             "offsets": [wg['offset'] for wg in waveguide['component']],
+                                                             "CML": waveguide['CML'],
+                                                             "model": waveguide['model']})
+    if wg_pcell==None:
+        raise Exception("problem! cannot create pcelllibrary: %s" % technology_name)
+    inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
+
+    if verbose:
+        print('Time elapsed, make waveguide: %s' % (time() - t))    
+
+    if debug_path:
+        cell.shapes(1).insert(path)
+        
+    return inst
+    # end of def connect_pins_with_waveguide
+    
 
 def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
 #    import time
