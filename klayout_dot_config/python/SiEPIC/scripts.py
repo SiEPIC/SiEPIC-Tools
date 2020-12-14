@@ -1335,7 +1335,9 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
   componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
   componentB = cellB.find_components()
   if componentA==[]:
-    raise Exception("Component instanceA not found")
+    componentA = instanceA.parent_cell.find_components(inst=instanceA)
+    if componentA==[]:
+      raise Exception("Component instanceA not found")
   if componentB==[]:
     raise Exception("Component cellB not found")
 
