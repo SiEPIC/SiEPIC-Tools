@@ -423,7 +423,9 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         print('Turtle directions: %s, %s' % (directionB, directionA))
         print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
         cell.shapes(1).insert(path)
-        raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
+        print("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
+#        raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
+        return
     
     if not path.radius_check(radius_um):
         print('Path: %s' % path)
