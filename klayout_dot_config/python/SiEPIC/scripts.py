@@ -1295,10 +1295,17 @@ def snap_component():
 def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
     return connect_cell(instanceA, pinA, cellB, pinB, verbose)
     
-def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
+def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True, translation=pya.Trans.R0):
   '''
   Instantiate, Move & rotate cellB to connect to instanceA, 
    such that their pins (pinB, pinA) match
+   
+  Input:
+  - instanceA, pinA: the fixed component
+  - cellB, pinB: the cell to instantiate and place
+  - mirror: optionally mirror cellB
+  - translation: translate cellB, e.g., Trans(Trans.R90, 5000, 5000)
+     useful for subsequent waveguide routing
 
   Use SiEPIC-Tools find_components to determine the component size, pins, etc.
   
@@ -1374,13 +1381,14 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True):
     trans = pya.Trans(pya.Trans.R0, cpinA.center - cpinB.center * pya.Trans(rotation/90,False,0,0)) \
         * pya.Trans(rotation/90,False,0,0)
 
-  vector = cpinA.center - componentA.trans.disp - componentB.trans.disp
+#  vector = cpinA.center - componentA.trans.disp - componentB.trans.disp
   if verbose:
-    print (' cellB required displacement: %s' % (trans) )
+    print (' cellB required displacement: %s' % (trans*translation) )
 
   # Instantiate cellB
-  print(instanceA.parent_cell)
-  instanceB = instanceA.parent_cell.insert(pya.CellInstArray(cellB.cell_index(), trans))
+  if verbose:
+    print(instanceA.parent_cell)
+  instanceB = instanceA.parent_cell.insert(pya.CellInstArray(cellB.cell_index(), trans*translation))
 
   
   return instanceB
