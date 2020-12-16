@@ -1298,7 +1298,7 @@ def snap_component():
 def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=False):
     return connect_cell(instanceA, pinA, cellB, pinB, verbose)
     
-def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True, translation=pya.Trans.R0):
+def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, translation=pya.Trans.R0):
   '''
   Instantiate, Move & rotate cellB to connect to instanceA, 
    such that their pins (pinB, pinA) match
