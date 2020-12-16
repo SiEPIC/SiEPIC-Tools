@@ -80,7 +80,7 @@ def pointlist_to_turtle(pointlist):
   #  return pointlist
           
 
-def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False):
+def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, error_min_bend_radius=True):
     '''
     Create a Path connecting instanceA:pinA to instanceB:pinB
         where instance = pya.Instance; pin = string, e.g. 'pin1'
@@ -431,7 +431,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         print('Path: %s' % path)
         # draw a path for debugging purposes
         cell.shapes(1).insert(path)
-        raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
+        if error_min_bend_radius:
+            raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
     
     # generate the Waveguide PCell, and instantiate
     wg_pcell = ly.create_cell("Waveguide", technology_name, {"path": path,
@@ -1294,7 +1295,7 @@ def snap_component():
     pya.Application.instance().main_window().redraw()    
 
 
-def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=True):
+def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=False):
     return connect_cell(instanceA, pinA, cellB, pinB, verbose)
     
 def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=True, translation=pya.Trans.R0):
