@@ -237,7 +237,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # check if the pins are already connected
     if cpinA.center == cpinB.center:
         print('Pins are already connected; returning')
-        return
+        return True
             
     TECHNOLOGY = ly.get_technology()
     technology_name = TECHNOLOGY['technology_name']
@@ -425,7 +425,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         cell.shapes(1).insert(path)
         print("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
 #        raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
-        return
+        return False
     
     if not path.radius_check(radius_um):
         print('Path: %s' % path)
@@ -433,6 +433,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         cell.shapes(1).insert(path)
         if error_min_bend_radius:
             raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
+        else:
+            return False
     
     # generate the Waveguide PCell, and instantiate
     wg_pcell = ly.create_cell("Waveguide", technology_name, {"path": path,
