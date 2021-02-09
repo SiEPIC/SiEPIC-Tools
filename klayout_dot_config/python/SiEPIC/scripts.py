@@ -1097,7 +1097,7 @@ def waveguide_length_diff():
           match = [each for each in pathsdata if (len(each)==3) and (filename in each[-1]) ]
           filedir = match[0][0]
           import os
-          geovsneff_data = np.load(os.path.join(filedir, filename)).flatten()[0]
+          geovsneff_data = np.load(os.path.join(filedir, filename), allow_pickle=True).flatten()[0]
           neff_data = geovsneff_data['neff']
           width_data = geovsneff_data['width']
           thickness_data = geovsneff_data['thickness']
