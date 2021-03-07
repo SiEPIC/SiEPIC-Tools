@@ -402,7 +402,7 @@ def layout_taper(cell, layer, trans, w1, w2, length):
     cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
     
 
-def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000):
+def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000, insert = True):
     """ Lays out an s-bend
 
     Args:
@@ -411,6 +411,7 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
         r: radius, float
         h: height, float
         length: length, float
+        insert: flag to insert drawn waveguide or return shape, boolean
 
     """
 
@@ -482,7 +483,12 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
           pts.append(pya.Point.from_dpoint(pya.DPoint((x1+(r-w/2)*cos(i*da+th1))/1, (y1+(r-w/2)*sin(i*da+th1))/1)))
         for i in range(0, npoints+1): # lower right
          pts.append(pya.Point.from_dpoint(pya.DPoint((x2+(r+w/2)*cos(i*da+th2))/1, (y2+(r+w/2)*sin(i*da+th2))/1)))
-      cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
+      
+      shape_bend = pya.Polygon(pts).transformed(trans)
+      if insert == True:
+        cell.shapes(layer).insert(shape_bend)
+      else:
+        return shape_bend
 
     print('SBend: theta %s, x %s, straight_l %s, r %s, h %s, length %s' % (theta, x, straight_l, r, h, length) )
     return length
