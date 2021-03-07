@@ -387,7 +387,7 @@ def layout_square(cell, layer, center, width, ex=None):
     square = square_dpolygon(center, width, ex)
     cell.shapes(layer).insert(square)
 
-def layout_taper(cell, layer, trans, w1, w2, length):
+def layout_taper(cell, layer, trans, w1, w2, length, insert = True):
     """ Lays out a taper
 
     Args:
@@ -395,11 +395,17 @@ def layout_taper(cell, layer, trans, w1, w2, length):
         w1: width of waveguide, float
         w2: width of waveguide, float
         length: length, float
+        insert: flag to insert drawn waveguide or return shape, boolean
 
     """
     import pya
     pts = [pya.Point(0,-w1/2), pya.Point(0,w1/2), pya.Point(length,w2/2), pya.Point(length,-w2/2)]
-    cell.shapes(layer).insert(pya.Polygon(pts).transformed(trans))
+    
+    shape_taper = pya.Polygon(pts).transformed(trans)
+    if insert == True:
+        cell.shapes(layer).insert(shape_taper)
+    else:
+        return shape_taper
     
 
 def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000, insert = True):
