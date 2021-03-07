@@ -165,7 +165,10 @@ def radius_check(self, radius):
                 return False
         return True
 
-    points = self.get_points()
+    if type(self) == type (pya.DPoint):
+        points = self.get_points()
+    else:
+        points = self.get_dpoints()
     
     if len(points) > 2:
     
