@@ -344,7 +344,7 @@ def load_Waveguides_by_Tech(tech_name):
     paths = []
     for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
         [paths.append(os.path.join(root, filename))
-         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name in root]
+         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name == os.path.split(root)[1]]
 
     waveguides = []
     if paths:
