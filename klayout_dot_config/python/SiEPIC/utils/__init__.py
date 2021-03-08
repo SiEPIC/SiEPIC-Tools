@@ -96,7 +96,7 @@ def get_library_names(tech_name, verbose=False):
             if tech_name in library.technologies():
                 library_names.append(lib_name)
         else:
-            if tech_name in library.technology:
+            if tech_name == library.technology:
                 library_names.append(lib_name)
 #            print("Cannot get library names since KLayout version is <= 27")
     if verbose:
