@@ -158,17 +158,18 @@ def is_manhattan(self):
     return True
 
 
-def radius_check(self, radius):
+def radius_check(self, radius, dbu=0.001):
     def all2(iterable):
         for element in iterable:
             if not element:
                 return False
         return True
 
-    if type(self) == type (pya.DPoint):
-        points = self.get_points()
+    if type(self) == pya.DPath:
+        points = [p.to_itype(dbu) for p in self.get_dpoints() ]
+        radius = to_itype(radius,dbu)
     else:
-        points = self.get_dpoints()
+        points = self.get_points()
     
     if len(points) > 2:
     
@@ -179,6 +180,8 @@ def radius_check(self, radius):
       check2 = (lengths[-1] >= radius)
       # middle segments must accommodate two bends, hence >= 2 radius
       check3 = [length >= 2 * radius for length in lengths[1:-1]]
+      if not(check1 and check2 and all(check3)):
+        print('radius check failed')
       return check1 and check2 and all(check3)
     else:
       return True
