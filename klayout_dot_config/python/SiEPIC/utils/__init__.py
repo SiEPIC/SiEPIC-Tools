@@ -335,6 +335,7 @@ def load_Waveguides():
 '''
 Load Waveguide configuration for specific technology
 These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
+Look for this file for folders that contain 'tech_name'.lyt
 '''
 
 def load_Waveguides_by_Tech(tech_name):
@@ -344,7 +345,8 @@ def load_Waveguides_by_Tech(tech_name):
     paths = []
     for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
         [paths.append(os.path.join(root, filename))
-         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name == os.path.split(root)[1]]
+         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
+#         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name == os.path.split(root)[1]]  # this version requires the folder name to match the tech_name
 
     waveguides = []
     if paths:
