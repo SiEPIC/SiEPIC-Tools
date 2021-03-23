@@ -7,7 +7,8 @@ This module extends several pya classes that are useful for the library.
 pya.Layout:
   - get_technology: get the technology for the specific layout
   - load_Waveguide_types: load the waveguide types from WAVEGUIDES.XML
-
+  - cell_character_replacement: replace forbidden characters
+  
 dbu float-int extension:
   - to_dbu and to_itype, convert float (microns) to integer (nanometers) using dbu
   - from_dbu and to_dtype, convert integer (nanometers) to float (microns) using dbu
@@ -93,6 +94,20 @@ def load_Waveguide_types(self):
     return self.WaveguideTypes
 
 pya.Layout.load_Waveguide_types = load_Waveguide_types
+
+
+def cell_character_replacement(self, forbidden_cell_characters = '=', replacement_cell_character = '_'):
+    # scan through all cells
+    for i in range(0,self.cells()):
+        cell = self.cell(i)
+        if True in [c in cell.name for c in forbidden_cell_characters]:
+            oldname = cell.name
+            for ch in forbidden_cell_characters:
+                if ch in cell.name:
+                    cell.name = cell.name.replace(ch,replacement_cell_character)
+            print(" - cell name: %s, replaced with: %s" % (oldname, cell.name)) 
+
+pya.Layout.cell_character_replacement = cell_character_replacement
 
 
 #################################################################################
