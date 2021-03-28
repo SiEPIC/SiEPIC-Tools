@@ -563,6 +563,83 @@ def circuit_simulation_update_netlist():
   print('update netlist')
   
   
+def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True):
+  print ('*** circuit_simulation(), opt_in: %s' % opt_in_selection_text)
+  if verbose:
+    print('*** circuit_simulation()')
+  
+  # check for supported operating system, tested on:
+  # Windows 7, 10
+  # OSX Sierra, High Sierra
+  # Linux
+  import sys
+  if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
+    raise Exception("Unsupported operating system: %s" % sys.platform)
+  
+  from .. import _globals
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, layout, topcell = get_layout_variables()
+  
+  # Save the layout prior to running simulations, if there are changes.
+  mw = pya.Application.instance().main_window()
+  if mw.manager().has_undo():
+    mw.cm_save()
+  layout_filename = mw.current_view().active_cellview().filename()
+  if len(layout_filename) == 0:
+    raise Exception("Please save your layout before running the simulation")
+    
+  # *** todo    
+  #   Add the "disconnected" component to all disconnected pins
+  #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
+
+  # Output the Spice netlist:
+  text_Spice, text_Spice_main, num_detectors, detector_list = \
+    topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
+  if not text_Spice:
+    raise Exception("No netlist available. Cannot run simulation.")
+    return
+  if verbose:   
+    print(text_Spice)
+
+  circuit_name = topcell.name.replace('.','') # remove "."
+  if '_' in circuit_name[0]:
+    circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
+  
+  from .. import _globals
+  tmp_folder = _globals.TEMP_FOLDER
+  import os
+  filename = os.path.join(tmp_folder, '%s_main.spi' % circuit_name)
+  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % circuit_name)
+  filename2 = os.path.join(tmp_folder, '%s.lsf' % circuit_name)
+  filename_icp = os.path.join(tmp_folder, '%s.icp' % circuit_name)
+  
+  text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
+  
+  # Write the Spice netlist to file
+  file = open(filename, 'w')
+  file.write (text_Spice)
+  file.write (text_Spice_main)
+  file.close()
+
+
+  if simulate:
+    # Run using OS systems module
+    try:
+        from pathlib import Path
+        opics_script_path = Path(__file__).parent.absolute()/"opics_netlist_sim.py"
+
+        os.system(f'python {opics_script_path} {filename} & pause')
+    except:
+        print('SiEPIC.lumerical.OPICS: circuit_simulation: error')
+        pass
+  else:
+    from .. import scripts
+    scripts.open_folder(tmp_folder)
+    
+  if verbose:
+    print('Done OPICS circuit simulation.')
+
+  
 def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, opt_in_selection_text=[], matlab_data_files=[], simulate=True):
   print('*** circuit_simulation_monte_carlo()')
   from .. import _globals
