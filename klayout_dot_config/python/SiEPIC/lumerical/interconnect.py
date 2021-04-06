@@ -625,8 +625,8 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], matlab_data
   if simulate:
     # Run using OS systems module
     try:
-        from pathlib import Path
-        opics_script_path = Path(__file__).parent.absolute()/"opics_netlist_sim.py"
+        import pathlib
+        opics_script_path = pathlib.Path(__file__).parent.absolute()/"opics_netlist_sim.py"
 
         os.system(f'python {opics_script_path} {filename} & pause')
     except:

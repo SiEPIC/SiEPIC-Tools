@@ -1,6 +1,6 @@
 import time
 import os, sys
-from pathlib import Path
+import pathlib
 from opics import libraries
 from opics.network import Network
 from opics.utils import netlistParser, NetlistProcessor
@@ -12,7 +12,7 @@ sim_start = time.time()
 
 print(sys.argv[1])
 # read netlist
-spice_filepath = sys.argv[1]#Path(os.path.dirname(__file__) + r"\\test_mzi.spi")
+spice_filepath = sys.argv[1] #pathlib.Path(os.path.dirname(__file__) + r"\\test_mzi.spi")
 
 print(spice_filepath)
 
