@@ -1545,14 +1545,11 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
             params1 = c.params
             
         # Remove "$N" from component's name for cell instance arrays of the same name     
-        component2 = ""
-        for char_ in component1:
-            if char_ == "$":
-                break
-            component2+=char_
+        if "$" in component1:
+            component1 = component1[:component1.find("$")]
 
-        text_subckt += ' %s %s %s ' % (component2.replace(' ', '_') +
-                                       "_" + str(c.idx), nets_str, component2.replace(' ', '_'))
+        text_subckt += ' %s %s %s ' % (component1.replace(' ', '_') +
+                                       "_" + str(c.idx), nets_str, component1.replace(' ', '_'))
         if c.library != None:
             text_subckt += 'library="%s" ' % c.library
         x, y = c.Dcenter.x, c.Dcenter.y
