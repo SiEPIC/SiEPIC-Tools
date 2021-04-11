@@ -1543,6 +1543,10 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
         else:
             component1 = c.component
             params1 = c.params
+            
+        # Remove "$N" from component's name for cell instance arrays of the same name     
+        if "$" in component1:
+            component1 = component1[:component1.find("$")]
 
         text_subckt += ' %s %s %s ' % (component1.replace(' ', '_') +
                                        "_" + str(c.idx), nets_str, component1.replace(' ', '_'))
