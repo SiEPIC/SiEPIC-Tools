@@ -1,4 +1,5 @@
-from . import *
+import pya
+from pya import *
 
 class Waveguide(pya.PCellDeclarationHelper):
 
@@ -6,6 +7,7 @@ class Waveguide(pya.PCellDeclarationHelper):
     # Important: initialize the super class
     super(Waveguide, self).__init__()
     # declare the parameters
+    from SiEPIC.utils import get_technology_by_name
     TECHNOLOGY = get_technology_by_name('GSiP')
     self.param("path", self.TypeShape, "Path", default = DPath([DPoint(0,0), DPoint(10,0), DPoint(10,10)], 0.5))
     self.param("radius", self.TypeDouble, "Radius", default = 5)
@@ -60,6 +62,9 @@ class Waveguide(pya.PCellDeclarationHelper):
     import pya
     from SiEPIC.extend import to_itype
     
+    # print("GSiP.Waveguide")
+    
+    from SiEPIC.utils import get_technology_by_name
     TECHNOLOGY = get_technology_by_name('GSiP')
     
     dbu = self.layout.dbu

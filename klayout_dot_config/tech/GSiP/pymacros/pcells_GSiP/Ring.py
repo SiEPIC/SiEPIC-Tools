@@ -1,4 +1,5 @@
-from . import *
+import pya
+from pya import *
 
 class Ring(pya.PCellDeclarationHelper):
   def __init__(self):
@@ -6,7 +7,8 @@ class Ring(pya.PCellDeclarationHelper):
     super(Ring, self).__init__()
 
     # declare the parameters
-    TECHNOLOGY = get_technology_by_name('GSiP') if op_tag=="GUI" else Tech.load_from_xml(lyp_filepath).layers
+    from SiEPIC.utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name('GSiP')
     self.param("width", self.TypeDouble, "Width", default = 0.5)
     self.param("radius", self.TypeDouble, "Radius", default = 5)
     self.param("layer", self.TypeLayer, "Layer", default = TECHNOLOGY['Si'])

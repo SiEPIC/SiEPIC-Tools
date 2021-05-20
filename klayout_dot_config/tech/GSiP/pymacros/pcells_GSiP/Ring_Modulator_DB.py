@@ -1,4 +1,5 @@
-from . import *
+import pya
+from pya import *
 
 class Ring_Modulator_DB(pya.PCellDeclarationHelper):
   """
@@ -10,7 +11,8 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
   def __init__(self):
     super(Ring_Modulator_DB, self).__init__()
     # declare the parameters
-    TECHNOLOGY = get_technology_by_name('GSiP') if op_tag=="GUI" else Tech.load_from_xml(lyp_filepath).layers
+    from SiEPIC.utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name('GSiP')
 
     self.param("silayer", self.TypeLayer, "Si Layer", default = TECHNOLOGY['Si'])
     self.param("s", self.TypeShape, "", default = pya.DPoint(0, 0))

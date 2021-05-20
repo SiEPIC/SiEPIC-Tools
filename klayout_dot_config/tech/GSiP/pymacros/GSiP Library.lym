@@ -32,6 +32,18 @@ Crash warning:
 
 Version history:
 
+Lukas Chrostowski 2021/05/19
+ - updating the library loading script
+
+Mustafa Hammood 2020/6/25
+- Refactored PCells out of library files into individual files in a subdirectory
+
+Lukas Chrostowski 2020/06/21
+ - Waveguide update, cellName
+
+Jaspreet Jhoja 2020/5/23
+- Refactored PCells to make them compatible with both, GUI and script-based layout operations
+
 Lukas Chrostowski
  - GDS cells (detector, etc) and PCells (ring modulator, filter)
 
@@ -47,25 +59,90 @@ replace:
 with:
  self.cell.shapes(Layerm1N).insert(pya.Polygon(arc(w_m1_in, angle_min_doping, angle_max_doping) + [pya.Point(0, 0)]).transformed(t))
 
-Lukas Chrostowski 2020/06/21
- - Waveguide update, cellName
-
 
 
 """
 
-import os, sys
 
+print('SiEPIC_GSiP_PDK')
+
+import pya
 from pya import *
+from SiEPIC.utils import get_technology_by_name
+import os
+from pathlib import Path
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+if dir_path not in sys.path:
+    sys.path.append(dir_path)
 
-sys.path.append(dir_path)
+files = [f for f in os.listdir(os.path.join(os.path.dirname(
+    os.path.realpath(__file__)),'pcells_GSiP')) if '.py' in Path(f).suffixes  and '__init__' not in f]
+import pcells_GSiP ### folder name ###
+import importlib
+importlib.invalidate_caches()
+pcells_=[]
+for f in files:
+    module = 'pcells_GSiP.%s' % f.replace('.py','')  ### folder name ###
+    print(' - found module: %s' % module)
+    m = importlib.import_module(module) 
+    print(m)
+    pcells_.append(importlib.reload(m))
+    print(pcells_[-1])
 
-from GSiP_Library import *
+class GSiP(Library):
+  """
+  The library where we will put the PCells and GDS into 
+  """
 
+  def __init__(self):
+  
+    tech_name = 'GSiP'
+    library = tech_name
 
+    print("Initializing '%s' Library." % library)
+
+    # Set the description
+    self.description = "SiEPIC Generic SiP, v1.0.1"
+                
+                
+    # Import all the GDS files from the tech folder
+    import os, fnmatch
+    dir_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../gds"))
+    search_str = '*' + '.oas'
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter([f.lower() for f in filenames], search_str):
+            file1=os.path.join(root, filename)
+            print(" - reading %s" % file1 )
+            self.layout().read(file1)
+    search_str = '*' + '.gds'
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter([f.lower() for f in filenames], search_str):
+            file1=os.path.join(root, filename)
+            print(" - reading %s" % file1 )
+            self.layout().read(file1)
+        
+    # Create the PCell declarations
+    for m in pcells_:
+        mm = m.__name__.replace('pcells_GSiP.','')
+        mm2 = m.__name__+'.'+mm+'()'
+        print(' - register_pcell %s, %s' % (mm,mm2))
+        self.layout().register_pcell(mm, eval(mm2))
+                
+    print(' done with pcells')
+    
+    # Register us the library with the technology name
+    # If a library with that name already existed, it will be replaced then.
+    self.register(library)
+
+    self.technology=tech_name
+
+    self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(__file__)))
+    self.layout().add_meta_info(LayoutMetaInfo("technology",tech_name))
+ 
+# Instantiate and register the library
 GSiP()
+
 
 </text>
 </klayout-macro>

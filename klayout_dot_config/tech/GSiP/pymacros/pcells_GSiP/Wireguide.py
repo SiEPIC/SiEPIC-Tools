@@ -1,4 +1,5 @@
-from . import *
+import pya
+from pya import *
 
 class Wireguide(pya.PCellDeclarationHelper):
     # RIT Integrated Photonics Group (Karl McNulty) 
