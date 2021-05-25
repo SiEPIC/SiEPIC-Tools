@@ -1073,8 +1073,8 @@ def identify_nets(self, verbose=False):
             if c1.polygon.bbox().overlaps(c2.polygon.bbox()) or c1.polygon.bbox().touches(c2.polygon.bbox()):
                 # Loop through all the pins (p1) in c1
                 # - Compare to all other pins, find other overlapping pins (p2) in c2
-                for p1 in c1.pins:
-                    for p2 in c2.pins:
+                for p1 in [p for p in c1.pins if p.type == _globals.PIN_TYPES.OPTICAL]:
+                    for p2 in [p for p in c2.pins if p.type == _globals.PIN_TYPES.OPTICAL]:
                         if verbose:
                             print(" - Components, pins: [%s-%s, %s, %s, %s], [%s-%s, %s, %s, %s]; difference: %s"
                                   % (c1.component, c1.idx, p1.pin_name, p1.center, p1.rotation, c2.component, c2.idx, p2.pin_name, p2.center, p2.rotation, p1.center - p2.center))

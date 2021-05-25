@@ -504,7 +504,7 @@ if 0:
   print(matches)
   
 
-if 0:
+if 1:
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
@@ -517,7 +517,7 @@ if 0:
     print ("* Display list of components:" )
     [c.display() for c in components]
 
-  if 0:
+  if 1:
     print ("* identify_nets():" )
     nets, components = cell.identify_nets (verbose=True)
     print ("* Display list of components:" )
@@ -525,7 +525,7 @@ if 0:
     print ("* Display list of nets:" )
     [n.display() for n in nets]
 
-  if 1:
+  if 0:
     text_subckt, text_main, detector_nets = cell.spice_netlist_export(verbose=True)
     print(text_main)
     print(text_subckt)
