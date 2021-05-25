@@ -1009,7 +1009,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                     cellName = subcell.basic_name()
 
                 # Save the component into the components list
-                components.append(Component(idx=component_ID,
+                components.append(Component(idx=idx,
                        component=component, instance=instance, 
                        trans=iter1.trans(), library=library, 
                        params=spice_params, polygon=polygon, 

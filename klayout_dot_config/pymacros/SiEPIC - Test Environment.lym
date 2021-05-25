@@ -511,7 +511,7 @@ if 1:
   #pins = cell.find_pins()
   #print (pins)
 
-  if 0:
+  if 1:
     print ("* find_components():" )
     components = cell.find_components (verbose=True)
     print ("* Display list of components:" )
