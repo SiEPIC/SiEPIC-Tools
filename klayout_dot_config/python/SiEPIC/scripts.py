@@ -1950,10 +1950,12 @@ def layout_check(cell=None, verbose=False):
     rdb_cat_id_mismatchedpin.description = "Mismatched pin widths"
 
     # Simulation checking
-    rdb_cell = next(rdb.each_cell())
-    rdb_cat_id = rdb.create_category("Simulation")
-    rdb_cat_id_sim_nomodel = rdb.create_category(rdb_cat_id, "Missing compact model")
-    rdb_cat_id_sim_nomodel.description = "A compact model for this component was not found. Possible reasons: 1) Please run SiEPIC | Simulation | Setup Lumerical INTERCONNECT and CML, to make sure that the Compact Model Library is installed in INTERCONNECT, and that KLayout has a list of all component models. 2) the library does not have a compact model for this component. "
+    # disabled by lukasc, 2021/05
+    if 0:
+        rdb_cell = next(rdb.each_cell())
+        rdb_cat_id = rdb.create_category("Simulation")
+        rdb_cat_id_sim_nomodel = rdb.create_category(rdb_cat_id, "Missing compact model")
+        rdb_cat_id_sim_nomodel.description = "A compact model for this component was not found. Possible reasons: 1) Please run SiEPIC | Simulation | Setup Lumerical INTERCONNECT and CML, to make sure that the Compact Model Library is installed in INTERCONNECT, and that KLayout has a list of all component models. 2) the library does not have a compact model for this component. "
 
     # Design for Test checking
     from SiEPIC.utils import load_DFT
@@ -2081,7 +2083,8 @@ def layout_check(cell=None, verbose=False):
                     rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
 
         # Pre-simulation check: do components have models?
-        if not c.has_model():
+        # disabled by lukasc, 2021/05
+        if not c.has_model() and 0:
             if verbose:
                 print(" - Missing compact model, for component: %s" % (c.component))
             rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_sim_nomodel.rdb_id())
