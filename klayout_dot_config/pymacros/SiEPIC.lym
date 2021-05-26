@@ -42,9 +42,18 @@ elif sys.version_info[0] == 2:
     question.setText("SiEPIC-Tools requires Python version 3. ")
     KLayout_link0='https://www.klayout.de/build.html'
     KLayout_link1='https://github.com/KLayout/klayout/issues/231'
-    KLayout_link2='https://github.com/KLayout/klayout/issues/381#issuecomment-546781403'
-    question.setInformativeText("\nPlease download an install from %s\nIf it is not available, please ask here: %s\nYou can also download it from here: %s" % (KLayout_link0, KLayout_link1, KLayout_link2 ))
+    question.setInformativeText("\nPlease download an install from %s\nIf it is not available, please ask here: %s" % (KLayout_link0, KLayout_link1))
     pya.QMessageBox_StandardButton(question.exec_())
+
+from SiEPIC._globals import KLAYOUT_VERSION
+if KLAYOUT_VERSION == 27:
+    question = pya.QMessageBox()
+    question.setStandardButtons(pya.QMessageBox.Ok)
+    question.setText("SiEPIC-Tools is not compatible with KLayout 0.27. ")
+    KLayout_link0='https://www.klayout.de/build.html'
+    question.setInformativeText("\nSiEPIC-Tools is not compatible with KLayout 0.27.\nPlease download an install the highest version 0.26 from %s" % (KLayout_link0))
+    pya.QMessageBox_StandardButton(question.exec_())
+
 
 try:
     builtins.ACTIONS

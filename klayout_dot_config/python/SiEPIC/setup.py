@@ -15,7 +15,7 @@ def registerMenuItems():
                         "files", "flv_icon.png")
 
     import sys
-    if int(sys.version[0]) > 2 and sys.platform == 'darwin':
+    if int(sys.version[0]) > 2:
         extra = " Py3"
     else:
         extra = " Py2"

@@ -72,12 +72,17 @@ from SiEPIC.utils import get_technology_by_name
 import os
 from pathlib import Path
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+
+script_file = __file__
+if script_file[0]=="'":
+  script_file = script_file[1:-2]
+
+dir_path = os.path.dirname(os.path.realpath(script_file))
 if dir_path not in sys.path:
     sys.path.append(dir_path)
 
 files = [f for f in os.listdir(os.path.join(os.path.dirname(
-    os.path.realpath(__file__)),'pcells_GSiP')) if '.py' in Path(f).suffixes  and '__init__' not in f]
+    os.path.realpath(script_file)),'pcells_GSiP')) if '.py' in Path(f).suffixes  and '__init__' not in f]
 import pcells_GSiP ### folder name ###
 import importlib
 importlib.invalidate_caches()
@@ -108,7 +113,7 @@ class GSiP(Library):
                 
     # Import all the GDS files from the tech folder
     import os, fnmatch
-    dir_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../gds"))
+    dir_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(script_file)), "../gds"))
     search_str = '*' + '.oas'
     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
         for filename in fnmatch.filter([f.lower() for f in filenames], search_str):
@@ -137,8 +142,8 @@ class GSiP(Library):
 
     self.technology=tech_name
 
-    self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(__file__)))
-    self.layout().add_meta_info(LayoutMetaInfo("technology",tech_name))
+#    self.layout().add_meta_info(LayoutMetaInfo("path",os.path.realpath(script_file)))
+#    self.layout().add_meta_info(LayoutMetaInfo("technology",tech_name))
  
 # Instantiate and register the library
 GSiP()

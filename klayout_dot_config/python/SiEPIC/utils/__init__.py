@@ -92,13 +92,14 @@ def get_library_names(tech_name, verbose=False):
     library_names = []
     for lib_name in pya.Library.library_names():
         library = pya.Library.library_by_name(lib_name)
-        if KLAYOUT_VERSION > 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-            if tech_name in library.technologies():
-                library_names.append(lib_name)
-        else:
-            if tech_name == library.technology:
-                library_names.append(lib_name)
-#            print("Cannot get library names since KLayout version is <= 27")
+        if library:
+            if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+                if tech_name in library.technologies():
+                    library_names.append(lib_name)
+            else:
+                if tech_name == library.technology:
+                    library_names.append(lib_name)
+#            print("Cannot get library names since KLayout version is < 27")
     if verbose:
         print("get_library_names: tech=%s, lib: %s" % (tech_name, library_names))
     
