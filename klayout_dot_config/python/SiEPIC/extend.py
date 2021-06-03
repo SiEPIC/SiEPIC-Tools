@@ -884,7 +884,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     '''
     Function to traverse the cell's hierarchy and find all the components
     returns list of components (class Component)
-    Use the DevRec shapes.  Assumption: One DevRec shape per component.
+    Use the DevRec shapes.  
+    Assumption: One DevRec shape per component.  We return a component "Flattened" if more than one DevRec is found
 
     Find all the DevRec shapes; identify the component it belongs; record the info as a Component
     for each component instance, also find the Pins and Fibre ports.
@@ -953,15 +954,19 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
         # A component was found. record the instance info as a Component
         if found_component:
             # check if the component is flattened, or a hierarchical sub-cell
-            '''
-            if self == subcell:
-                print(' * Warning: cell is the same as the component; flat layout? or intentionally looking at a specific cell.')
+            iter3 = subcell.begin_shapes_rec_overlapping(LayerDevRecN, subcell.bbox())
+            num_devrec = 0
+            while not(iter3.at_end()):
+                if iter3.shape().is_box() or iter3.shape().is_polygon():
+                    num_devrec += 1
+                iter3.next()
+                
+            if num_devrec > 1:
+                print(' * Warning: cell contains multiple (%s) DevRec layers, suggesting that a cell was flattened.' %num_devrec)
                 # Save the flattened component into the components list
                 components.append(Component(component="Flattened", basic_name="Flattened",
                                             idx=idx, polygon=polygon, trans=iter1.trans()))
             else:
-            '''
-            if 1:
                 '''
                 # the following doesn't work hierarchically... problem:
                 print('inst:')
