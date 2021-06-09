@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>'''
+SiEPIC Tools
+- Replace cells with different cells (IP replacement)
+- by Lukas Chrostowski, 2021
+
+Steps:
+1) edit the script cell_replace below
+2) place input GDS in the same folder as the layout
+3) run this script
+
+cell_replace:
+list of cells to replace, with new cell GDS.
+fields:
+ 0: cell replacement is for all cells that begin with the cell name, i.e., xxx* is matched
+ 1: GDS file to read
+ 2: top cell name from the GDS file
+ 3: pya.Cell object for imported cell
+'''
+cell_replace = [ ['TE1550_SubGC_neg31_oxide', 'ANT_Optimal_Design_TE_oxide_8deg_v5_LC.GDS','Optimal_Design_TE',-1] ]
+
+
+import pya
+from SiEPIC.utils import get_layout_variables
+TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+# present file:
+mw = pya.Application.instance().main_window()
+layout_filename = mw.current_view().active_cellview().filename()
+path = os.path.dirname(layout_filename)
+
+for i in range(0, len(cell_replace)):
+    in_gds = cell_replace[i][1]
+    print("gds_input: %s" % in_gds)
+
+    layout2 = pya.Layout()
+    layout2.read(os.path.join(path,in_gds))
+
+    for cell in layout2.top_cells():
+    
+        if cell.name == cell_replace[i][2]:
+            print(" replacement cell: %s" % cell.name)
+        
+            # copy cell
+            if ly.cell(cell.name):
+                # exists already
+                cell_replace[i][3] = ly.cell(cell.name)
+                # clear shapes
+                print('*** Warning *** found same cell name in layout; deleting contents')
+                cell_replace[i][3].clear_shapes()
+                cell_replace[i][3].prune_subcells(-1)
+            else:
+                # new cell
+                cell_replace[i][3] = ly.create_cell(cell.name)
+            cell_replace[i][3].copy_tree(cell)    
+    
+  
+for i in range(0, len(cell_replace)):
+    cells = [cell for cell in ly.each_cell() if cell.name.find(cell_replace[i][0]) == 0]
+    for c in cells:
+        print(c.name)
+        # delete the contents of the old cell        
+        c.clear_shapes()
+        c.prune_subcells(-1)
+        # instantiate the new cell into the old cell
+        c.insert(pya.CellInstArray(cell_replace[i][3].cell_index(), pya.Trans(0,0)))
+        </text>
+</klayout-macro>
