@@ -5,7 +5,7 @@
  <group/>
  <dbu>0.001</dbu>
  <base-path/>
- <original-base-path>C:\Users\mustafa\KLayout\salt\siepic-tools\tech\GSiP</original-base-path>
+ <original-base-path>/Users/lukasc/Documents/GitHub/SiEPIC-Tools/klayout_dot_config/tech/GSiP</original-base-path>
  <layer-properties_file>klayout_Layers_GSiP.lyp</layer-properties_file>
  <add-other-layers>true</add-other-layers>
  <reader-options>
@@ -37,11 +37,17 @@
    <produce-regions>true</produce-regions>
    <region-layer>REGIONS</region-layer>
    <produce-via-geometry>true</produce-via-geometry>
-   <via-geometry-suffix/>
-   <via-geometry-datatype>0</via-geometry-datatype>
+   <special-via_geometry-suffix-string/>
+   <special-via_geometry-datatype-string>0</special-via_geometry-datatype-string>
    <produce-pins>true</produce-pins>
-   <pins-suffix>.PIN</pins-suffix>
-   <pins-datatype>2</pins-datatype>
+   <special-pins-suffix-string>.PIN</special-pins-suffix-string>
+   <special-pins-datatype-string>2</special-pins-datatype-string>
+   <produce-lef-pins>true</produce-lef-pins>
+   <special-lef_pins-suffix-string>.PIN</special-lef_pins-suffix-string>
+   <special-lef_pins-datatype-string>2</special-lef_pins-datatype-string>
+   <produce-fills>true</produce-fills>
+   <special-fills-suffix-string>.FILL</special-fills-suffix-string>
+   <special-fills-datatype-string>5</special-fills-datatype-string>
    <produce-obstructions>true</produce-obstructions>
    <obstructions-suffix>.OBS</obstructions-suffix>
    <obstructions-datatype>3</obstructions-datatype>
@@ -52,8 +58,16 @@
    <labels-suffix>.LABEL</labels-suffix>
    <labels-datatype>1</labels-datatype>
    <produce-routing>true</produce-routing>
-   <routing-suffix/>
-   <routing-datatype>0</routing-datatype>
+   <special-routing-suffix-string/>
+   <special-routing-datatype-string>0</special-routing-datatype-string>
+   <produce-special-routing>true</produce-special-routing>
+   <special-routing-suffix-string/>
+   <special-routing-datatype-string>0</special-routing-datatype-string>
+   <via-cellname-prefix>VIA_</via-cellname-prefix>
+   <read-lef-with-def>true</read-lef-with-def>
+   <macro-resolution-mode>default</macro-resolution-mode>
+   <separate-groups>false</separate-groups>
+   <map-file/>
   </lefdef>
   <dxf>
    <dbu>0.001</dbu>
@@ -94,6 +108,7 @@
    <write-file-properties>false</write-file-properties>
    <no-zero-length-paths>false</no-zero-length-paths>
    <multi-xy-records>false</multi-xy-records>
+   <resolve-skew-arrays>false</resolve-skew-arrays>
    <max-vertex-count>8000</max-vertex-count>
    <max-cellname-length>32000</max-cellname-length>
    <libname>GSiP</libname>
@@ -119,6 +134,55 @@
    <write-timestamp>true</write-timestamp>
   </mag>
  </writer-options>
+ <d25>
+  <src># Provide z stack information here
+#
+# Each line is one layer. The specification consists of a layer specification, a colon and arguments.
+# The arguments are named (like "x=...") or in serial. Parameters are separated by comma or blanks.
+# Named arguments are:
+#
+#   zstart   The lower z position of the extruded layer in µm
+#   zstop    The upper z position of the extruded layer in µm
+#   height   The height of the extruded layer in µm
+#
+# 'height', 'zstart' and 'zstop' can be used in any combination. If no value is given for 'zstart',
+# the upper level of the previous layer will be used.
+#
+# If a single unnamed parameter is given, it corresponds to 'height'. Two parameters correspond to
+# 'zstart' and 'zstop'.
+#
+# Examples:
+#   1: 0.5 1.5                    # extrude layer 1/0 from 0.5 to 1.5 vertically
+#   1/0: 0.5 1.5                  # same with explicit datatype
+#   1: zstop=1.5, zstart=0.5      # same with named parameters
+#   1: height=1.0, zstop=1.5      # same with z stop minus height
+#   1: 1.0 zstop=1.5              # same with height as unnamed parameter
+#
+# VARIABLES
+#
+# You can declare variables with:
+#   var name = value
+#
+# You can use variables inside numeric expressions.
+# Example:
+#   var hmetal = 0.48
+#   7/0: 0.5 0.5+hmetal*2        # 2x thick metal
+#
+# You cannot use variables inside layer specifications currently.
+#
+# CONDITIONALS
+#
+# You can enable or disable branches of the table using 'if', 'else', 'elseif' and 'end':
+# Example:
+#   var thick_m1 = true
+#   if thickm1
+#     1: 0.5 1.5
+#   else
+#     1: 0.5 1.2
+#   end
+
+</src>
+ </d25>
  <connectivity>
  </connectivity>
 </technology>

@@ -46,12 +46,12 @@ elif sys.version_info[0] == 2:
     pya.QMessageBox_StandardButton(question.exec_())
 
 from SiEPIC._globals import KLAYOUT_VERSION
-if KLAYOUT_VERSION == 27:
+if KLAYOUT_VERSION == 27 and KLAYOUT_VERSION_3 == 0:
     question = pya.QMessageBox()
     question.setStandardButtons(pya.QMessageBox.Ok)
-    question.setText("SiEPIC-Tools is not compatible with KLayout 0.27. ")
+    question.setText("SiEPIC-Tools is not compatible with KLayout 0.27.0")
     KLayout_link0='https://www.klayout.de/build.html'
-    question.setInformativeText("\nSiEPIC-Tools is not compatible with KLayout 0.27.\nPlease download an install the highest version 0.26 from %s" % (KLayout_link0))
+    question.setInformativeText("\nSiEPIC-Tools is not compatible with KLayout 0.27.0.\nPlease download an install the highest version 0.26, or 0.27.1 or greater, from %s" % (KLayout_link0))
     pya.QMessageBox_StandardButton(question.exec_())
 
 
