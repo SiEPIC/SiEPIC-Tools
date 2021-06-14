@@ -483,7 +483,9 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
     if params is None:
         params = _globals.WG_GUI.get_parameters(GUI)
     if params is None:
-        raise Exception("SiEPIC.scripts path_to_waveguide(): no params; returning")
+        if verbose:
+            print("SiEPIC.scripts path_to_waveguide(): No parameters returned (user pressed Cancel); returning")
+#        raise Exception("SiEPIC.scripts path_to_waveguide(): no params; returning")
         return
     if verbose:
         print("SiEPIC.scripts path_to_waveguide(): params = %s" % params)
@@ -498,9 +500,10 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
     warning.setDefaultButton(pya.QMessageBox.Yes)
     if not selected_paths:
         warning.setText(
-            "Warning: Cannot make Waveguides - No Path objects selected or found in the layout.")
-        if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
-            return
+            "Error: No 'Waveguide' Paths found - Cannot make waveguides.")
+        warning.setInformativeText("Path objects on layer 'Waveguide' are required to create a waveguide pcell. \nAlternatively,  object selection can be used to convert selected paths from any layer.  If nothing is selected,  all 'Waveguide' Paths in the present cell will be converted to waveguides.")
+        pya.QMessageBox_StandardButton(warning.exec_())
+        return
             
     # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
     if snap:

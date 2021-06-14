@@ -284,6 +284,7 @@ class Component():
 
 
 class WaveguideGUI():
+    # waveguide types are read from WAVEGUIDES.xml in the PDK
 
     def __init__(self):
         import os
@@ -293,12 +294,6 @@ class WaveguideGUI():
         ui_file.open(pya.QIODevice().ReadOnly)
         self.window = pya.QFormBuilder().load(ui_file, pya.Application.instance().main_window())
         ui_file.close
-
-        # *** lukasc comment:
-        # waveguide types shouldn't be hardcoded, but rather read from WAVEGUIDES.xml.
-        # I'm don't see the advantage of the waveguide_gui.ui approach, rather than coding the GUI generation within
-        # Python like I did for the FDTD settings GUI in file:
-        # Keybindings: GUI_FDTD_component_simulation
 
         # Button Bindings
         self.window.findChild('ok').clicked(self.ok)
@@ -343,18 +338,22 @@ class WaveguideGUI():
                 self.window.findChild('width').text = waveguide['width']
             else:
                 self.window.findChild('width').text = '0.5'
-            if 'width' in waveguide:
+            if 'radius' in waveguide:
                 self.window.findChild('radius').text = waveguide['radius']
             else:
                 self.window.findChild('radius').text = '5'
             if 'bezier' in waveguide:
                 self.window.findChild('adiabatic').setChecked(True)
-#                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Checked
                 self.window.findChild('bezier').text = waveguide['bezier']
             else:
                 self.window.findChild('adiabatic').setChecked(False)
-#                self.window.findChild('adiabatic').checkState = pya.Qt_CheckState.Unchecked
                 self.window.findChild('bezier').text = '0.45'
+        self.window.findChild('bezier').setEnabled(False)
+        self.window.findChild('adiabatic').setEnabled(False)
+        self.window.findChild('radius').setEnabled(False)
+        self.window.findChild('width').setEnabled(False)
+        self.window.findChild('bezier').setEnabled(False)
+
 
     def get_parameters(self, show):
         from .utils import get_technology
@@ -385,8 +384,6 @@ class WaveguideGUI():
                 params['wgs'].append({'layer': component['layer'], 'width': float(
                     component['width']), 'offset': float(component['offset'])})
                 w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
-#                if ((params['width'] < w) & (component['layer'] != 'DevRec')) and (w < 10):
-#                    params['width'] = w
                 # enable 2 new parameters: CML and model to support multiple WG models
                 if 'CML' in waveguide:
                     params['CML'] = waveguide['CML']
