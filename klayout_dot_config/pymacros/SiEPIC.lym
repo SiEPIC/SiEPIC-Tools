@@ -45,7 +45,7 @@ elif sys.version_info[0] == 2:
     question.setInformativeText("\nPlease download an install from %s\nIf it is not available, please ask here: %s" % (KLayout_link0, KLayout_link1))
     pya.QMessageBox_StandardButton(question.exec_())
 
-from SiEPIC._globals import KLAYOUT_VERSION
+from SiEPIC._globals import KLAYOUT_VERSION, KLAYOUT_VERSION_3
 if KLAYOUT_VERSION == 27 and KLAYOUT_VERSION_3 == 0:
     question = pya.QMessageBox()
     question.setStandardButtons(pya.QMessageBox.Ok)
