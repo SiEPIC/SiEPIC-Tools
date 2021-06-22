@@ -29,6 +29,7 @@ fetch_measurement_data_from_github
 measurement_vs_simulation
 resize waveguide
 replace_cell
+svg_from_cell
 '''
 
 
@@ -2899,3 +2900,44 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file):
         except:
             pass
     cell_x.prune_cell()
+
+
+def svg_from_cell(verbose=True):
+  if verbose:
+    print('SiEPIC.scripts: svg_from_cell()')
+
+  # Get technology and layout details
+  from .utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
+
+  # get selected instances; only one
+  from .utils import select_instances
+  selected_instances = select_instances()
+  error = pya.QMessageBox()
+  error.setStandardButtons(pya.QMessageBox.Ok )
+  if len(selected_instances) != 1:
+    error.setText("Error: Need to have one component selected.")
+    response = error.exec_()
+    return
+
+  # get selected component
+  if verbose:
+    print(" selected component: %s" % selected_instances[0].inst().cell )
+  component = cell.find_components(cell_selected=[selected_instances[0].inst().cell])[0]
+
+  # create an SVG icon for the component, for INTC compact model icon
+  from . import _globals
+  import os
+  from .utils import svg_from_component
+  svg_filename = os.path.join(_globals.TEMP_FOLDER, '%s.svg' % component.instance)
+  if verbose:
+    print(" SVG filename: %s" %svg_filename)
+  svg_from_component(component, svg_filename)
+
+  message = pya.QMessageBox()
+  message.setStandardButtons(pya.QMessageBox.Ok )
+  message.setText("Exported SVG file for selected component. File in location: %s." %svg_filename )
+  response = message.exec_()
+  
+
