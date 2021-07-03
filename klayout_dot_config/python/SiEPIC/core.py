@@ -318,7 +318,9 @@ class WaveguideGUI():
         try:
             self.options = [waveguide['name'] for waveguide in self.waveguides]
         except:
-            raise Exception("Problem with waveguide configuration. Error in SiEPIC.core.WaveguideGUI.update")
+            tech_name = TECHNOLOGY('technology_name')
+            raise Exception('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and a WAVEGUIDES.xml file in the PDK folder.' % (tech_name, tech_name) )
+#            raise Exception("Problem with waveguide configuration. Error in SiEPIC.core.WaveguideGUI.update")
         self.window.findChild("configuration").addItems(self.options)
 
     def close(self, val):
@@ -336,23 +338,28 @@ class WaveguideGUI():
             waveguide = options[0]
             if 'width' in waveguide:
                 self.window.findChild('width').text = waveguide['width']
+            elif 'wg_width' in waveguide:
+                self.window.findChild('width').text = waveguide['wg_width']
             else:
                 self.window.findChild('width').text = '0.5'
             if 'radius' in waveguide:
                 self.window.findChild('radius').text = waveguide['radius']
             else:
                 self.window.findChild('radius').text = '5'
-            if 'bezier' in waveguide:
+            if waveguide['adiabatic']:
                 self.window.findChild('adiabatic').setChecked(True)
-                self.window.findChild('bezier').text = waveguide['bezier']
+                self.window.findChild('bezier').text = str(waveguide['bezier'])
             else:
                 self.window.findChild('adiabatic').setChecked(False)
-                self.window.findChild('bezier').text = '0.45'
-        self.window.findChild('bezier').setEnabled(False)
-        self.window.findChild('adiabatic').setEnabled(False)
-        self.window.findChild('radius').setEnabled(False)
-        self.window.findChild('width').setEnabled(False)
-        self.window.findChild('bezier').setEnabled(False)
+#                self.window.findChild('bezier').text = '0.45'  # 0.45 makes a radial bend
+                self.window.findChild('bezier').text = ''
+                
+# in 0.3.77, made the GUI read-only; returning back to editable in 0.3.79 based on user request
+#        self.window.findChild('bezier').setEnabled(False)
+#        self.window.findChild('adiabatic').setEnabled(False)
+#        self.window.findChild('radius').setEnabled(False)
+#        self.window.findChild('width').setEnabled(False)
+#        self.window.findChild('bezier').setEnabled(False)
 
 
     def get_parameters(self, show):
@@ -370,11 +377,12 @@ class WaveguideGUI():
             return None
 
         self.loaded_technology = TECHNOLOGY['technology_name']
-
+        
+        bezier = self.window.findChild('bezier').text
         params = {'radius': float(self.window.findChild('radius').text),
                   'width': float(self.window.findChild('width').text),
                   'adiabatic': self.window.findChild('adiabatic').isChecked(),
-                  'bezier': float(self.window.findChild('bezier').text),
+                  'bezier': 0 if bezier=='' else float(bezier),
                   'wgs': []}
 
         if not self.window.findChild('configuration').currentText == '':

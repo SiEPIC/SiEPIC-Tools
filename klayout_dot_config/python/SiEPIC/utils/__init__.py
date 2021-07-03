@@ -308,29 +308,18 @@ def get_technology(verbose=False, query_activecellview_technology=False):
 
 '''
 Load Waveguide configuration
+determine the technology from the layout
 These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
 '''
-
-
 def load_Waveguides():
     import os
     import fnmatch
     from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
-    paths = []
-    for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
-        [paths.append(os.path.join(root, filename))
-         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
 
-    waveguides = []
-    if paths:
-        with open(paths[0], 'r') as file:
-            waveguides = xml_to_dict(file.read())
-            waveguides = waveguides['waveguides']['waveguide']
-            for waveguide in waveguides:
-                if not isinstance(waveguide['component'], list):
-                    waveguide['component'] = [waveguide['component']]
+    waveguides = load_Waveguides_by_Tech(tech_name, debug=False)
+
     return waveguides if waveguides else None
 
 '''
@@ -339,16 +328,20 @@ These are technology specific, and located in the tech folder, named WAVEGUIDES.
 Look for this file for folders that contain 'tech_name'.lyt
 '''
 
-def load_Waveguides_by_Tech(tech_name):
+def load_Waveguides_by_Tech(tech_name, debug=False):
     import os
     import fnmatch
 
     paths = []
     for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
+        if debug:
+            print(' - %s, %s, %s' % (root, dirnames, filenames))
         [paths.append(os.path.join(root, filename))
          for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
 #         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name == os.path.split(root)[1]]  # this version requires the folder name to match the tech_name
-
+    if debug:
+        print(paths)
+        
     waveguides = []
     if paths:
         with open(paths[0], 'r') as file:
@@ -359,13 +352,16 @@ def load_Waveguides_by_Tech(tech_name):
                     waveguide['component'] = [waveguide['component']]
                 if not 'bezier' in waveguide.keys():
                     waveguide['adiabatic'] = False
-                    waveguide['bezier'] = 0
+                    waveguide['bezier'] = ''
                 else:
                     waveguide['adiabatic'] = True
                 if not 'CML' in waveguide.keys():
                     waveguide['CML'] = ''
                 if not 'model' in waveguide.keys():
                     waveguide['model'] = ''
+    if not(waveguides):
+        print('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and WAVEGUIDES.xml file' % (tech_name, tech_name) )
+                    
     return waveguides if waveguides else None
 
 '''

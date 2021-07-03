@@ -68,11 +68,6 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 
-if 0:
-        from .utils import get_layout_variables, load_Waveguides
-        TECHNOLOGY, lv, ly, cell = get_layout_variables()
-        self.window.findChild("configuration").clear()
-        self.waveguides = load_Waveguides()
 
 
 # pointlist_to_turtles
@@ -152,14 +147,16 @@ if 0:
 
 
 
-if 0:
+if 1:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   # Waveguide type:
   from SiEPIC.utils import load_Waveguides_by_Tech
   technology = ly.meta_info_value('technology')
-  waveguides = load_Waveguides_by_Tech(technology)
+  technology = get_technology_by_name('AIMPhotonics_PDK')['technology_name']
+  print(technology)
+  waveguides = load_Waveguides_by_Tech(technology, debug=True)
   print(waveguides)
 
 
@@ -453,7 +450,7 @@ if 0:
 
 
 # Nets, Net trimming:
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
