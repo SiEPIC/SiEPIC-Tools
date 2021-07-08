@@ -1711,7 +1711,7 @@ def auto_coord_extract():
     wtext.insertHtml(text_out)
     pya.Application.instance().main_window().redraw()    
 
-def find_SEM_labels_gui(topcell=None, LayerSEMN=None):
+def find_SEM_labels_gui(topcell=None, LayerSEMN=None, MarkersInTopCell=False):
     from .utils import get_technology
     TECHNOLOGY = get_technology()
 
@@ -1723,8 +1723,12 @@ def find_SEM_labels_gui(topcell=None, LayerSEMN=None):
         if 'SEM' in TECHNOLOGY:
             LayerSEMN = TECHNOLOGY['SEM']
         else:
-            v = pya.MessageBox.warning("SEM images", "No 'SEM' layer found in the Technology.", pya.MessageBox.Ok)
-            return
+            layers = [d for d in TECHNOLOGY.keys() if 'SEM' in d and '_color' not in d]
+            if layers != []:
+                LayerSEMN = TECHNOLOGY[layers[0]]
+            else:
+                v = pya.MessageBox.warning("SEM images", "No 'SEM' layer found in the Technology.", pya.MessageBox.Ok)
+                return
     if not topcell:
         lv = pya.Application.instance().main_window().current_view()
         if lv == None:
@@ -1759,8 +1763,19 @@ def find_SEM_labels_gui(topcell=None, LayerSEMN=None):
     while not(iter.at_end()):
         if iter.shape().is_box():
             box = iter.shape().box
+            if not(MarkersInTopCell):
+                cc = [c for c in rdb.each_cell() if c.name()==iter.shape().cell.name]
+                if cc==[]:
+                    rdb_cell = rdb.create_cell(iter.shape().cell.name)
+                else:
+                    rdb_cell = cc[0]
+            
             i += 1
-            box2 = iter.shape().box.transformed(iter.itrans()).to_dtype(dbu)
+            if MarkersInTopCell:
+                box2 = iter.shape().box.transformed(iter.itrans()).to_dtype(dbu)  # when added to the top cell
+            else:
+                box2 = iter.shape().box.to_dtype(dbu)  # coordinates within the cell
+            
             rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_SEM.rdb_id())
             rdb_item.add_value(pya.RdbItemValue(box2))
         iter.next()
