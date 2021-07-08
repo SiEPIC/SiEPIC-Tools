@@ -77,7 +77,7 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
       # waveguide bends:
       if abs(turn)==1:
         if(adiab):
-          wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), bezier, DevRec='DevRec' in layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+          wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), float(bezier), DevRec='DevRec' in layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
         else:
           wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]),DevRec='DevRec' in layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
         

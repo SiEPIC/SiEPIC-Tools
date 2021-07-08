@@ -443,7 +443,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                                                              "width": width_um,
                                                              "wg_width": width_um,
                                                              "adiab": waveguide['adiabatic'],
-                                                             "bezier": float(waveguide['bezier']),
+                                                             "bezier": waveguide['bezier'],
                                                              "layers": [wg['layer'] for wg in waveguide['component']],
                                                              "widths": [wg['width'] for wg in waveguide['component']],
                                                              "offsets": [wg['offset'] for wg in waveguide['component']],
