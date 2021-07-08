@@ -335,30 +335,34 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
     paths = []
     for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
         if debug:
-            print(' - %s, %s, %s' % (root, dirnames, filenames))
+            print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
         [paths.append(os.path.join(root, filename))
-         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
+         for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
 #         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name == os.path.split(root)[1]]  # this version requires the folder name to match the tech_name
     if debug:
         print(paths)
         
     waveguides = []
     if paths:
-        with open(paths[0], 'r') as file:
-            waveguides = xml_to_dict(file.read())
-            waveguides = waveguides['waveguides']['waveguide']
-            for waveguide in waveguides:
-                if not isinstance(waveguide['component'], list):
-                    waveguide['component'] = [waveguide['component']]
-                if not 'bezier' in waveguide.keys():
-                    waveguide['adiabatic'] = False
-                    waveguide['bezier'] = ''
-                else:
-                    waveguide['adiabatic'] = True
-                if not 'CML' in waveguide.keys():
-                    waveguide['CML'] = ''
-                if not 'model' in waveguide.keys():
-                    waveguide['model'] = ''
+        for path1 in paths:
+            with open(path1, 'r') as file:
+                waveguides1 = xml_to_dict(file.read())
+                try:
+                    waveguides += waveguides1['waveguides']['waveguide']
+                except:
+                    pass
+        for waveguide in waveguides:
+            if not isinstance(waveguide['component'], list):
+                waveguide['component'] = [waveguide['component']]
+            if not 'bezier' in waveguide.keys():
+                waveguide['adiabatic'] = False
+                waveguide['bezier'] = ''
+            else:
+                waveguide['adiabatic'] = True
+            if not 'CML' in waveguide.keys():
+                waveguide['CML'] = ''
+            if not 'model' in waveguide.keys():
+                waveguide['model'] = ''
     if not(waveguides):
         print('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and WAVEGUIDES.xml file' % (tech_name, tech_name) )
                     
