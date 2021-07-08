@@ -867,6 +867,7 @@ def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
     N = points_per_circle(radius/1000)/4
+    bezier=float(bezier) # in case the input was a string
     if DevRec:
         N = int(N / 3)
     else:
