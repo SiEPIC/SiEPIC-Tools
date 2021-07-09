@@ -431,7 +431,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     if not path.radius_check(radius_um):
         print('Path: %s' % path)
         # draw a path for debugging purposes
-        cell.shapes(1).insert(path)
+        cell.shapes(ly.layer(TECHNOLOGY['Errors'])).insert(path)
         if error_min_bend_radius:
             raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
         else:
