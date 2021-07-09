@@ -71,7 +71,7 @@ from pya import *
 from SiEPIC.utils import get_technology_by_name
 import os
 import sys
-from pathlib import Path
+import pathlib
 
 
 script_file = __file__
@@ -83,7 +83,7 @@ if dir_path not in sys.path:
     sys.path.append(dir_path)
 
 files = [f for f in os.listdir(os.path.join(os.path.dirname(
-    os.path.realpath(script_file)),'pcells_GSiP')) if '.py' in Path(f).suffixes  and '__init__' not in f]
+    os.path.realpath(script_file)),'pcells_GSiP')) if '.py' in pathlib.Path(f).suffixes  and '__init__' not in f]
 import pcells_GSiP ### folder name ###
 import importlib
 importlib.invalidate_caches()
