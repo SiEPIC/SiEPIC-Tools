@@ -435,7 +435,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         if error_min_bend_radius:
             raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
         else:
-            return False
+            pass
     
     # generate the Waveguide PCell, and instantiate
     wg_pcell = ly.create_cell("Waveguide", technology_name, {"path": path,
@@ -450,7 +450,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                                                              "CML": waveguide['CML'],
                                                              "model": waveguide['model']})
     if wg_pcell==None:
-        raise Exception("problem! cannot create pcelllibrary: %s" % technology_name)
+        raise Exception("problem! cannot create Waveguide PCell from library: %s" % technology_name)
     inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
 
     if verbose:
@@ -1380,7 +1380,7 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   # Find pin angles, and necessary rotation for componentB
   rotation = (cpinA.rotation - cpinB.rotation - 180) % 360
   if verbose:
-    print (' cellB required rotation: %s' % (rotation) )
+    print (' cellB required rotation to connect: %s' % (rotation) )
   
   # Calculate vector to move componentB
   if mirror:
@@ -1390,9 +1390,24 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
     trans = pya.Trans(pya.Trans.R0, cpinA.center - cpinB.center * pya.Trans(rotation/90,False,0,0)) \
         * pya.Trans(rotation/90,False,0,0)
 
+  '''
+  # adjust the desired translation so that it is relative to pinB
+  # this needs more work as the behaviour is not consistent for different cell orientations
+  if translation.rot == 1:  # R90
+    translation = translation * pya.Trans(0,False, -cpinB.center.x+cpinB.center.y, -cpinB.center.x-cpinB.center.y) 
+  if translation.rot == 2:  # R180
+    translation = pya.Trans(translation.rot, False, translation.disp.x, -translation.disp.y)
+    translation *= pya.Trans(0,False, -2*cpinB.center.x, -2*cpinB.center.y) 
+  if translation.rot == 3:  # R270
+    translation = pya.Trans(translation.rot, False, translation.disp.x, -translation.disp.y) * pya.Trans(
+        0,False, -cpinB.center.x-cpinB.center.y, cpinB.center.x-cpinB.center.y) 
+  if translation.rot == 0:  # R0
+    pass
+  '''
+  
 #  vector = cpinA.center - componentA.trans.disp - componentB.trans.disp
   if verbose:
-    print (' cellB required displacement: %s' % (trans*translation) )
+    print (' cellB with translation: %s' % (trans*translation) )
 
   # Instantiate cellB
   if verbose:

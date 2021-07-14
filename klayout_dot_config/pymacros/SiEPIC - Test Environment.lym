@@ -243,6 +243,40 @@ if 0:
   connect_pins_with_waveguide(instC, 'opt4', instD, 'opt3', waveguide_type=waveguide_type, verbose=False)
 
 
+# connect_cell tests
+if 1:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+
+  if TECHNOLOGY['technology_name'] not in 'EBeam':
+    raise Exception ('This example needs to be executed in a layout with Technology = EBeam')
+
+  from SiEPIC.scripts import connect_pins_with_waveguide
+  waveguide_type='Strip TE 1550 nm, w=500 nm'
+    
+  # clean all cells within the present cell
+  top_cell = ly.top_cells()[0]
+  ly.prune_subcells(top_cell.cell_index(), 10)
+
+  cell_ebeam = ly.create_cell('ebeam_dc_halfring_arc', 'EBeam_Beta', {})
+
+  t = pya.Trans.from_s('r270 0,0')
+  instA = cell.insert(pya.CellInstArray(cell_ebeam.cell_index(), t))
+  instB = scripts.connect_cell(instA, 'pin3', cell_ebeam, 'pin3', translation=Trans(Trans.R90, 2000, 1000), verbose=True) 
+ 
+  t = pya.Trans.from_s('r270 30000,30000')
+  instA = cell.insert(pya.CellInstArray(cell_ebeam.cell_index(), t))
+  instB = scripts.connect_cell(instA, 'pin3', cell_ebeam, 'pin3', translation=Trans(Trans.R180, 2000, 1000), verbose=True) 
+
+  t = pya.Trans.from_s('r270 -30000,30000')
+  instA = cell.insert(pya.CellInstArray(cell_ebeam.cell_index(), t))
+  instB = scripts.connect_cell(instA, 'pin3', cell_ebeam, 'pin3', translation=Trans(Trans.R270, 2000, 1000), verbose=True) 
+
+  t = pya.Trans.from_s('r270 30000,-30000')
+  instA = cell.insert(pya.CellInstArray(cell_ebeam.cell_index(), t))
+  instB = scripts.connect_cell(instA, 'pin3', cell_ebeam, 'pin3', translation=Trans(Trans.R0, 2000, 1000), verbose=True) 
+
 
 if 0:
   from SiEPIC.utils import find_siepictools_debug_text
