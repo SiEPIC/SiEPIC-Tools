@@ -347,7 +347,6 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
         for path1 in paths:
             with open(path1, 'r') as file:
                 waveguides1 = xml_to_dict(file.read())
-                print(waveguides1)
                 try:
                     waveguides.append(waveguides1['waveguides']['waveguide'])
                 except:
