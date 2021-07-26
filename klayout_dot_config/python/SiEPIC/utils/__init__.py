@@ -83,6 +83,8 @@ SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 
 # Returns a list of library names associated to the given technology name
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def get_library_names(tech_name, verbose=False):
     if verbose:
         print("get_library_names()")
@@ -117,6 +119,8 @@ def get_library_names(tech_name, verbose=False):
     
     return library_names
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def get_technology_by_name(tech_name, verbose=False):
     if verbose:
         print("get_technology_by_name()")
@@ -336,7 +340,8 @@ Load Waveguide configuration for specific technology
 These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
 Look for this file for folders that contain 'tech_name'.lyt
 '''
-
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     import os
     import fnmatch
@@ -748,6 +753,8 @@ def angle_trunc(a, trunc):
 
 # Calculate the recommended number of points in a circle, based on
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def points_per_circle(radius):
     # radius in microns
     from math import acos, pi, ceil
@@ -759,6 +766,8 @@ def points_per_circle(radius):
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc(r, theta_start, theta_stop):
     # function to draw an arc of waveguide
     # radius: radius
@@ -782,7 +791,8 @@ def arc(r, theta_start, theta_stop):
             (r * cos(i * da + th)) / 1, (r * sin(i * da + th)) / 1)))
     return pts
 
-
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # radius: radius
@@ -809,6 +819,8 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     return pts
 
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # radius: radius
@@ -839,6 +851,8 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     return pya.Polygon(pts)
 
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # x, y: location of the origin
@@ -872,6 +886,8 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 # Create a bezier curve. While there are parameters for start and stop in
 # degrees, this is currently only implemented for 90 degree bends
 # Radius in Database units (dbu)
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
