@@ -88,18 +88,27 @@ def get_library_names(tech_name, verbose=False):
         print("get_library_names()")
     
     from .._globals import KLAYOUT_VERSION
-    
+
     library_names = []
-    for lib_name in pya.Library.library_names():
-        library = pya.Library.library_by_name(lib_name)
-        if library:
-            if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-                if tech_name in library.technologies():
-                    library_names.append(lib_name)
-            else:
+    if KLAYOUT_VERSION < 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        for lib_name in pya.Library.library_names():
+            library = pya.Library.library_by_name(lib_name)
+            if library:
                 if tech_name == library.technology:
                     library_names.append(lib_name)
-#            print("Cannot get library names since KLayout version is < 27")
+            else:
+                print(' - library %s not working' % (lib_name) )
+
+    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        libs = pya.Library.library_ids()
+        for lib in libs:
+            library = pya.Library.library_by_id(lib)
+            if library:
+                if tech_name in library.technologies():
+                    library_names.append(library.name())
+            else:
+                print(' - library id %s not working' % (lib) )
+
     if verbose:
         print("get_library_names: tech=%s, lib: %s" % (tech_name, library_names))
     
@@ -896,14 +905,10 @@ def arc_bezier(radius, start, stop, bezier, DevRec=None):
     return pts
 
 # Take a list of points and create a polygon of width 'width'
-
-
 def arc_to_waveguide(pts, width):
     return pya.Polygon(translate_from_normal(pts, -width / 2.) + translate_from_normal(pts, width / 2.)[::-1])
 
 # Translate each point by its normal a distance 'trans'
-
-
 def translate_from_normal(pts, trans):
     #  pts = [pya.DPoint(pt) for pt in pts]
     pts = [pt.to_dtype(1) for pt in pts]
@@ -934,7 +939,6 @@ def translate_from_normal(pts, trans):
     return [pt.to_itype(1) for pt in tpts]
 
 # Check if point c intersects the segment defined by pts a and b
-
 
 def pt_intersects_segment(a, b, c):
     """ How can you determine a point is between two other points on a line segment?
