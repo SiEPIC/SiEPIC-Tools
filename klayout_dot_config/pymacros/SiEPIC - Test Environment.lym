@@ -146,8 +146,26 @@ if 0:
 #    print(n.pins[1].component.instance)
 
 
-
 if 1:
+  from SiEPIC import scripts  
+  from SiEPIC.utils import get_layout_variables
+  TECHNOLOGY, lv, ly, cell = get_layout_variables()
+  
+  tech_name = TECHNOLOGY['technology_name']
+  # print(ly.technology_name)
+  
+
+  from SiEPIC.utils import get_library_names
+  get_library_names(tech_name, verbose=True)
+  
+if 0:   # in KLayout 0.27
+  libs = pya.Library.library_ids()
+  for lib in libs:
+    l = pya.Library.library_by_id(lib)
+    print("%s: %s" % (lib,l))
+  
+
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -244,7 +262,7 @@ if 0:
 
 
 # connect_cell tests
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()

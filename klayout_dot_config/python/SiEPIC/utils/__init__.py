@@ -83,23 +83,34 @@ SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 
 # Returns a list of library names associated to the given technology name
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def get_library_names(tech_name, verbose=False):
     if verbose:
         print("get_library_names()")
     
     from .._globals import KLAYOUT_VERSION
-    
+
     library_names = []
-    for lib_name in pya.Library.library_names():
-        library = pya.Library.library_by_name(lib_name)
-        if library:
-            if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-                if tech_name in library.technologies():
-                    library_names.append(lib_name)
-            else:
+    if KLAYOUT_VERSION < 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        for lib_name in pya.Library.library_names():
+            library = pya.Library.library_by_name(lib_name)
+            if library:
                 if tech_name == library.technology:
                     library_names.append(lib_name)
-#            print("Cannot get library names since KLayout version is < 27")
+            else:
+                print(' - library %s not working' % (lib_name) )
+
+    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        libs = pya.Library.library_ids()
+        for lib in libs:
+            library = pya.Library.library_by_id(lib)
+            if library:
+                if tech_name in library.technologies():
+                    library_names.append(library.name())
+            else:
+                print(' - library id %s not working' % (lib) )
+
     if verbose:
         print("get_library_names: tech=%s, lib: %s" % (tech_name, library_names))
     
@@ -108,6 +119,8 @@ def get_library_names(tech_name, verbose=False):
     
     return library_names
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def get_technology_by_name(tech_name, verbose=False):
     if verbose:
         print("get_technology_by_name()")
@@ -327,7 +340,8 @@ Load Waveguide configuration for specific technology
 These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
 Look for this file for folders that contain 'tech_name'.lyt
 '''
-
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     import os
     import fnmatch
@@ -739,6 +753,8 @@ def angle_trunc(a, trunc):
 
 # Calculate the recommended number of points in a circle, based on
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def points_per_circle(radius):
     # radius in microns
     from math import acos, pi, ceil
@@ -750,6 +766,8 @@ def points_per_circle(radius):
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100
 
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc(r, theta_start, theta_stop):
     # function to draw an arc of waveguide
     # radius: radius
@@ -773,7 +791,8 @@ def arc(r, theta_start, theta_stop):
             (r * cos(i * da + th)) / 1, (r * sin(i * da + th)) / 1)))
     return pts
 
-
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # radius: radius
@@ -800,6 +819,8 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     return pts
 
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # radius: radius
@@ -830,6 +851,8 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     return pya.Polygon(pts)
 
 
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # x, y: location of the origin
@@ -863,6 +886,8 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 # Create a bezier curve. While there are parameters for start and stop in
 # degrees, this is currently only implemented for 90 degree bends
 # Radius in Database units (dbu)
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
@@ -896,14 +921,10 @@ def arc_bezier(radius, start, stop, bezier, DevRec=None):
     return pts
 
 # Take a list of points and create a polygon of width 'width'
-
-
 def arc_to_waveguide(pts, width):
     return pya.Polygon(translate_from_normal(pts, -width / 2.) + translate_from_normal(pts, width / 2.)[::-1])
 
 # Translate each point by its normal a distance 'trans'
-
-
 def translate_from_normal(pts, trans):
     #  pts = [pya.DPoint(pt) for pt in pts]
     pts = [pt.to_dtype(1) for pt in pts]
@@ -934,7 +955,6 @@ def translate_from_normal(pts, trans):
     return [pt.to_itype(1) for pt in tpts]
 
 # Check if point c intersects the segment defined by pts a and b
-
 
 def pt_intersects_segment(a, b, c):
     """ How can you determine a point is between two other points on a line segment?

@@ -31,7 +31,7 @@ def enum(*sequential, **named):
 
 # Define enumeration for pins
 PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
-PIN_LENGTH = 100  # 0.1 micron
+PIN_LENGTH = 20  # 10 nm on each side. Previous was 2x50 nm, but shorter works well for Waveguide DRC checking
 
 
 MODULE_NUMPY = False
