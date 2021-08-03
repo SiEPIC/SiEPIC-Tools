@@ -631,7 +631,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
         location = (p.center.x-component.DevRec_polygon.bbox().left+0.)/component.DevRec_polygon.bbox().width()
         print(location)
       t+= 'addport(component, "%s", "Bidirectional", "Optical Signal", "%s",%s);\n' %(p.pin_name,port_dict2[p.rotation],location)
-      t+= 'connect(component+"::RELAY_%s", "port", component+"::SPAR_1", "port %s");\n' % (count, count)
+      t+= 'connect(component+"::RELAY_%s", "port", component+"::SPAR_1", "opt%s");\n' % (count, count)
     lumapi.evalScript(_globals.INTC, t)
 
 
