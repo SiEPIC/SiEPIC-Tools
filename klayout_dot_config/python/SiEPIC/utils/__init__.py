@@ -83,8 +83,8 @@ SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 
 # Returns a list of library names associated to the given technology name
-from functools import lru_cache
-@lru_cache(maxsize=32)
+#from functools import lru_cache
+#@lru_cache(maxsize=32)
 def get_library_names(tech_name, verbose=False):
     if verbose:
         print("get_library_names()")
@@ -362,7 +362,11 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
             with open(path1, 'r') as file:
                 waveguides1 = xml_to_dict(file.read())
                 try:
-                    waveguides.append(waveguides1['waveguides']['waveguide'])
+                    if type(waveguides1['waveguides']['waveguide']) == list:
+                        for waveguide in waveguides1['waveguides']['waveguide']:
+                            waveguides.append(waveguide)
+                    else:
+                        waveguides.append(waveguides1['waveguides']['waveguide'])
                 except:
                     pass
         for waveguide in waveguides:
