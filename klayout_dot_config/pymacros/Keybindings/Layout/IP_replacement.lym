@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>IP replacement</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.layout.begin</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+from SiEPIC.utils import select_waveguides, get_layout_variables
+TECHNOLOGY, lv, ly, topcell = get_layout_variables()
+
+cell_A = "GC_1550_220_Blackbox" #exact name or prefix of the cell to replace
+cell_B = "ebeam_gc_te1550" #name of the cell to replace the cell_A with
+
+
+cell_B_inst = ly.cell_by_name(cell_B)
+
+
+def replace_cell(current_cell_idx, cell_A, cell_B_inst):
+  current_cell = ly.cell(current_cell_idx)
+  for each_inst in current_cell.each_inst():
+    #print(each_inst.cell.name)
+    #check if the cell instance name matches; if it does, then replace the cell instance
+    if (cell_A in each_inst.cell.name):
+        inst_trans = each_inst.trans
+        if(each_inst.is_regular_array()):
+          current_cell.replace(each_inst, CellInstArray.new(cell_B_inst, inst_trans, each_inst.a, each_inst.b, each_inst.na, each_inst.nb))
+        else:
+          current_cell.replace(each_inst, CellInstArray.new(cell_B_inst, inst_trans))
+    else:
+    #if the cell instance name does not match, then check if it has any subcells. recursively repeat the step until reach the branch end.
+      if(each_inst.cell.child_cells()==0):
+        pass
+      else:
+        replace_cell(each_inst.cell.cell_index(), cell_A, cell_B_inst)
+        
+
+replace_cell(topcell.cell_index(), cell_A, cell_B_inst)
+
+print("done..")</text>
+</klayout-macro>
