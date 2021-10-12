@@ -217,8 +217,11 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # Find pinA and pinB
     cpinA = [p for p in componentA.pins if p.pin_name == pinA]
     cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
-    if cpinA==[] or cpinB==[]:
-        raise Exception("Pin not found")
+    if cpinA==[]:
+        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
+    if cpinB==[]:
+        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinB,componentB.component))
+
     cpinA=cpinA[0]
     cpinB=cpinB[0]
     if verbose:
@@ -240,7 +243,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         print('Pins are already connected; returning')
         return True
             
-    TECHNOLOGY = ly.get_technology()
+    from .utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(ly.technology().name)
     technology_name = TECHNOLOGY['technology_name']
     
     # Waveguide type:
@@ -1367,8 +1371,12 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   # Find pinA and pinB
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
   cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
-  if cpinA==[] or cpinB==[]:
-    raise Exception("Pin not found")
+  if cpinA==[]:
+    raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
+    print ('Pin not found')
+    return instanceA
+  if cpinB==[]:
+    raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinB,componentB.component))
     print ('Pin not found')
     return instanceA
   cpinA=cpinA[0]

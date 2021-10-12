@@ -340,8 +340,8 @@ Load Waveguide configuration for specific technology
 These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
 Look for this file for folders that contain 'tech_name'.lyt
 '''
-from functools import lru_cache
-@lru_cache(maxsize=32)
+#from functools import lru_cache
+#@lru_cache(maxsize=32)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     import os
     import fnmatch
@@ -383,7 +383,8 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
                 waveguide['model'] = ''
     if not(waveguides):
         print('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and WAVEGUIDES.xml file' % (tech_name, tech_name) )
-                    
+    
+    print('- done: load_Waveguides_by_Tech.  Technology: %s' %(tech_name) )
     return waveguides if waveguides else None
 
 '''

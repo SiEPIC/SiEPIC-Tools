@@ -78,8 +78,8 @@ warning.setDefaultButton(pya.QMessageBox.Ok)
 # only loads XML files once, so it is fast
 def get_technology(self):
     if 'TECHNOLOGY' not in dir(self):
-        from .utils import get_technology
-        self.TECHNOLOGY = get_technology()
+        from .utils import get_technology_by_name
+        self.TECHNOLOGY = get_technology_by_name(self.technology().name)
     return self.TECHNOLOGY
 
 pya.Layout.get_technology = get_technology
@@ -684,8 +684,8 @@ def find_pins(self, verbose=False, polygon_devrec=None):
 
     from .core import Pin
     from . import _globals
-    from .utils import get_technology
-    TECHNOLOGY = get_technology()
+    from .utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
 
     # array to store Pin objects
     pins = []
@@ -693,7 +693,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
     # Pin Recognition layer
     if not 'PinRec' in TECHNOLOGY:
         pya.MessageBox.warning(
-            "Problem with Technology", "Problem with active Technology: missing layer PinRec", pya.MessageBox.Ok)
+            "Problem with Technology", "Problem with active Technology %s: missing layer PinRec" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
         return
     LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
 
@@ -759,7 +759,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
     # Optical IO (Fibre) Recognition layer
     if not 'FbrTgt' in TECHNOLOGY:
         pya.MessageBox.warning(
-            "Problem with Technology", "Problem with active Technology: missing layer FbrTgt", pya.MessageBox.Ok)
+            "Problem with Technology", "Problem with active Technology %s: missing layer FbrTgt"% (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
         return
 
     LayerFbrTgtN = self.layout().layer(TECHNOLOGY['FbrTgt'])
@@ -796,7 +796,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
     # Metal Pin Recognition layer 
     if not 'PinRec' in TECHNOLOGY:
         pya.MessageBox.warning(
-            "Problem with Technology", "Problem with active Technology: missing layer PinRec", pya.MessageBox.Ok)
+            "Problem with Technology", "Problem with active Technology %s: missing layer PinRec" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
         return
 
     try:    
@@ -908,8 +908,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
 
     from .core import Component
     from . import _globals
-    from .utils import get_technology
-    TECHNOLOGY = get_technology()
+    from .utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
     dbu = TECHNOLOGY['dbu']
 
     # Find all the DevRec shapes
