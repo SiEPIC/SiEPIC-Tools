@@ -82,23 +82,26 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
 
   try:
-    libraries = [n for n in pya.Library.library_names() if (pya.Library.library_by_name(n).technology == TECHNOLOGY['technology_name'])]
-    for n in [pya.Library.library_by_name(l) for l in libraries]:
+    libraries = []
+    library_ids = [n for n in pya.Library.library_ids() if (pya.Library.library_by_id(n).technology == TECHNOLOGY['technology_name'])]
+    for n in [pya.Library.library_by_id(l) for l in library_ids]:
       print(n.layout().meta_info_value("path"))
+      libraries.append ( n.name() )
   except:
     pass
 
-  question = pya.QMessageBox()
-  question.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.No)
-  question.setDefaultButton(pya.QMessageBox.Yes)
-  question.setText("SiEPIC-Tools will install the Compact Model Library (CML) in Lumerical INTERCONNECT for the currently active technology. \nThis includes the libraries %s.  \nProceed?" % libraries)
-  informative_text = "\nTechnology: %s\n" % TECHNOLOGY['technology_name']
-  for i in range(0,len(TECHNOLOGY['INTC_CMLs_path'])):
-    informative_text += "Source CML file {}: {}\n".format(i+1, TECHNOLOGY['INTC_CMLs_path'][i])
-  informative_text += "Install location: %s" % dir_path
-  question.setInformativeText(informative_text)
-  if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
-    return
+  if 'INTC_CMLs_path' in TECHNOLOGY:
+    question = pya.QMessageBox()
+    question.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.No)
+    question.setDefaultButton(pya.QMessageBox.Yes)
+    question.setText("SiEPIC-Tools will install the Compact Model Library (CML) in Lumerical INTERCONNECT for the currently active technology. \nThis includes the libraries %s.  \nProceed?" % libraries)
+    informative_text = "\nTechnology: %s\n" % TECHNOLOGY['technology_name']
+    for i in range(0,len(TECHNOLOGY['INTC_CMLs_path'])):
+      informative_text += "Source CML file {}: {}\n".format(i+1, TECHNOLOGY['INTC_CMLs_path'][i])
+    informative_text += "Install location: %s" % dir_path
+    question.setInformativeText(informative_text)
+    if(pya.QMessageBox_StandardButton(question.exec_()) == pya.QMessageBox.No):
+      return
 
   
   ##################################################################
@@ -115,16 +118,32 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
   lumapi.evalScript(_globals.INTC, "out=library;")
   _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
 
+  # Install other CMLs for each library that has a path folder
+  for i in range(0,len(library_ids)):
+    print(' - checking for library: %s' % (pya.Library.library_by_id(library_ids[i]).name()) )
+    if 'path' in dir(pya.Library.library_by_id(library_ids[i])):
+        path = pya.Library.library_by_id(library_ids[i]).path
+        # look for CML files
+        print(' - checking for CMLs: %s' % (path) )
+        for f in os.listdir(path):
+            if f.lower().endswith(".cml"):
+                ff = os.path.join(path,f)
+                print(' - CML file: %s' % (ff) )
+                # install CML
+                print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (ff, dir_path ) )
+                lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (ff, dir_path ) )
+
   # Install technology CML if missing in INTC
   # check if the latest version of the CML is in KLayout's tech
-  if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
-    # install CML
-    print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
-    lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
+  if 'INTC_CMLs_path' in TECHNOLOGY and TECHNOLOGY['INTC_CML_path']:
+    if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
+      # install CML
+      print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
+      lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
     
-  # Install other CMLs within technology
-  for i in range(0,len(TECHNOLOGY['INTC_CMLs_name'])):
-    if not ("design kits::"+TECHNOLOGY['INTC_CMLs_name'][i].lower()+"::"+TECHNOLOGY['INTC_CMLs_version'][i].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
+    # Install other CMLs within technology
+    for i in range(0,len(TECHNOLOGY['INTC_CMLs_name'])):
+      if not ("design kits::"+TECHNOLOGY['INTC_CMLs_name'][i].lower()+"::"+TECHNOLOGY['INTC_CMLs_version'][i].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
         # install CML
         print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CMLs_path'][i], dir_path ) )
         lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CMLs_path'][i], dir_path ) )
