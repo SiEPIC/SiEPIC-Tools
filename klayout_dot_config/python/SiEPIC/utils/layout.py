@@ -547,3 +547,23 @@ def layout_connect_ports(cell, layer, port_from, port_to):
     curve = bezier_optimal(P0, P3, angle_from, angle_to)
     layout_waveguide(cell, layer, curve, [port_from.width, port_to.width])
     return curve_length(curve)
+
+
+
+
+
+def make_pin(cell, name, center, w, pin_length, layer, vertical = 0):
+    if vertical == 0:
+      p1 = pya.Point(center[0]+pin_length/2, center[1])
+      p2 = pya.Point(center[0]-pin_length/2, center[1])
+    elif vertical == 1:
+      p1 = pya.Point(center[0], center[1]+pin_length/2)
+      p2 = pya.Point(center[0], center[1]-pin_length/2)
+      
+    pin = pya.Path([p1,p2],w)
+    t = pya.Trans(pya.Trans.R0, center[0],center[1])
+    text = pya.Text (name, t)
+    shape = cell.shapes(layer).insert(text)
+    shape.text_size = 0.1
+    cell.shapes(layer).insert(pin)
+
