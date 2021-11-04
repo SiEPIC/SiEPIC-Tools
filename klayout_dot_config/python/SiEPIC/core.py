@@ -318,7 +318,7 @@ class WaveguideGUI():
         try:
             self.options = [waveguide['name'] for waveguide in self.waveguides]
         except:
-            tech_name = TECHNOLOGY('technology_name')
+            tech_name = TECHNOLOGY['technology_name']
             raise Exception('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and a WAVEGUIDES.xml file in the PDK folder.' % (tech_name, tech_name) )
 #            raise Exception("Problem with waveguide configuration. Error in SiEPIC.core.WaveguideGUI.update")
         self.window.findChild("configuration").addItems(self.options)
