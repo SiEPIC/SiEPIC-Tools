@@ -495,20 +495,34 @@ These are technology specific, and located in the tech folder, named DFT.xml
 
 
 def load_DFT():
+    from .._globals import KLAYOUT_VERSION
     from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
     import os
     import fnmatch
-    dir_path = pya.Application.instance().application_data_path()
+    
+    debug=True
+    
     search_str = 'DFT.xml'
+    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        # Find the path for the technology
+        # and find DFT.xml file
+        tech=pya.Technology.technology_by_name(tech_name)
+        dir_path = tech.base_path()
+    else:
+        dir_path = pya.Application.instance().application_data_path()
+    if debug:
+        print(' - load_DFT, path: %s' %dir_path ) 
     matches = []
     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
         for filename in fnmatch.filter(filenames, search_str):
             if tech_name in root:
                 matches.append(os.path.join(root, filename))
     if matches:
+        if debug:
+            print(' - load_DFT, matces: %s' %matches ) 
         DFT_file = matches[0]
         file = open(DFT_file, 'r')
         DFT = xml_to_dict(file.read())

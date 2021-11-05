@@ -1283,10 +1283,15 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     if verbose:
         print(" - pin_name: %s" % (p[0].pin_name))
 
-    if DFT['design-for-test']['tunable-laser']['wavelength'] == opt_in_dict[0]['wavelength']:
-        wavelength_start, wavelength_stop, wavelength_points = float(DFT['design-for-test']['tunable-laser']['wavelength-start']), float(
-            DFT['design-for-test']['tunable-laser']['wavelength-stop']), int(DFT['design-for-test']['tunable-laser']['wavelength-points'])
-    else:
+    tunable_lasers = DFT['design-for-test']['tunable-laser']
+    if type(tunable_lasers) == type({}):
+        # single tunable laser
+        tunable_lasers = [tunable_lasers]
+    for i in range(len(tunable_lasers)):
+        if tunable_lasers[i]['wavelength'] == opt_in_dict[0]['wavelength']:
+            wavelength_start, wavelength_stop, wavelength_points = float(tunable_lasers[i]['wavelength-start']), float(
+                tunable_lasers[i]['wavelength-stop']), int(tunable_lasers[i]['wavelength-points'])
+    if not('wavelength_start' in locals()):
         warning = pya.QMessageBox()
         warning.setStandardButtons(pya.QMessageBox.Ok)
         warning.setText("No laser at %s nm is available. Tunable laser definition is in the technology's DFT.xml file." %
