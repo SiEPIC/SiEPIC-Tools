@@ -338,7 +338,8 @@ def load_Waveguides():
 '''
 Load Waveguide configuration for specific technology
 These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
-Look for this file for folders that contain 'tech_name'.lyt
+For KLayout <0.27, Look for this file for folders that contain 'tech_name'.lyt
+For KLayout 0.27+, Look in the technology folder, plus each library's folder.
 '''
 #from functools import lru_cache
 #@lru_cache(maxsize=32)
@@ -347,12 +348,49 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
     import fnmatch
 
     paths = []
-    for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
-        if debug:
-            print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
-        [paths.append(os.path.join(root, filename))
-         for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
-#         for filename in fnmatch.filter(filenames, 'WAVEGUIDES.xml') if tech_name == os.path.split(root)[1]]  # this version requires the folder name to match the tech_name
+    debug = True
+
+    from .._globals import KLAYOUT_VERSION
+
+    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        # Find the path for the technology
+        # and find WAVEGUIDE.xml and WAVEGUIDE_*.xml files
+        tech=pya.Technology.technology_by_name(tech_name)
+        folder = tech.base_path()
+        for root, dirnames, filenames in os.walk(folder, followlinks=True):
+            if debug:
+                print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
+            [paths.append(os.path.join(root, filename))
+             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
+
+        # Find the paths for each Library that matches technology
+        # and find WAVEGUIDE.xml and WAVEGUIDE_*.xml files
+        libs = [pya.Library.library_by_id(lib) for lib in pya.Library.library_ids() if tech_name in pya.Library.library_by_id(lib).technologies()]
+        libs = [lib for lib in libs if 'path' in dir(lib)]
+        for lib in libs:
+            for root, dirnames, filenames in os.walk(lib.path, followlinks=True):
+                if debug:
+                    print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
+                [paths.append(os.path.join(root, filename))
+                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))  ] 
+             
+
+    if KLAYOUT_VERSION < 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        # Search all the sub-folders in KLayout
+        # look for WAVEGUIDE xml files to find tech_name.lyt file
+        # not very efficient.
+        for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
+            if debug:
+                print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
+            [paths.append(os.path.join(root, filename))
+             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
+
+    if debug:
+        print(paths)
+
+    # remove duplicates; keep unique paths
+    paths = list(set(paths))
+
     if debug:
         print(paths)
         

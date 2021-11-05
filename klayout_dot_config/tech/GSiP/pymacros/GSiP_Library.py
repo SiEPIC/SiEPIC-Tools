@@ -40,15 +40,16 @@ import pya
 class GSiP(pya.Library):
   def __init__(self):
     tech_name = "GSiP"
- #   library = 'SiEPIC '+tech_name
     library = tech_name
+    self.technology=tech_name
     
     print("Initializing '%s' Library." % library)
 
-# windows only allows for a fixed width, short description 
     self.description = "SiEPIC Generic SiP"
-# OSX does a resizing:
-#    self.description = "Generic Silicon Photonics"
+
+    # Save the path, used for loading WAVEGUIDES.XML
+    import os
+    self.path = os.path.dirname(os.path.realpath(__file__))
 
     # Import all the GDS files from the tech folder "gds"
     import os, fnmatch
@@ -72,16 +73,5 @@ class GSiP(pya.Library):
     # If a library with that name already existed, it will be replaced then.
     self.register(library)
 
-    if(pcells_GSiP.op_tag == "GUI"):
-      if int(pya.Application.instance().version().split('.')[1]) > 24:
-        # KLayout v0.25 introduced technology variable:
-        self.technology=tech_name
-
-    # This allows a python function to know where the Library files are located
-    try:
-      self.layout().add_meta_info(pya.LayoutMetaInfo("path",os.path.realpath(__file__)))
-      self.layout().add_meta_info(pya.LayoutMetaInfo("technology",tech_name))
-    except:
-      pass
   
 GSiP()
