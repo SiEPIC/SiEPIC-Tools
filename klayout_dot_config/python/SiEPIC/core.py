@@ -311,15 +311,15 @@ class WaveguideGUI():
             self.window.findChild('bezier').setEnabled(False)
 
     def update(self):
-        from .utils import get_layout_variables, load_Waveguides
+        from .utils import get_layout_variables, load_Waveguides_by_Tech
         TECHNOLOGY, lv, ly, cell = get_layout_variables()
+        tech_name = TECHNOLOGY['technology_name']
         self.window.findChild("configuration").clear()
-        self.waveguides = load_Waveguides()
+        self.waveguides = load_Waveguides_by_Tech(tech_name)
         try:
             self.options = [waveguide['name'] for waveguide in self.waveguides]
         except:
-            tech_name = TECHNOLOGY['technology_name']
-            raise Exception('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and a WAVEGUIDES.xml file in the PDK folder.' % (tech_name, tech_name) )
+            raise Exception('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and a WAVEGUIDES.xml file in the PDK folder. \n(Error in SiEPIC.core.WaveguideGUI.update)' % (tech_name, tech_name) )
 #            raise Exception("Problem with waveguide configuration. Error in SiEPIC.core.WaveguideGUI.update")
         self.window.findChild("configuration").addItems(self.options)
 
