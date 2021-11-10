@@ -442,7 +442,7 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
 
     if (straight_l >= 0):
       circle_fraction = abs(theta) / 360.0
-      npoints = int(points_per_circle(r) * circle_fraction)
+      npoints = int(points_per_circle(r*cell.layout().dbu) * circle_fraction)
       if npoints == 0:
         npoints = 1
       da = 2 * pi / npoints * circle_fraction # increment, in radians
