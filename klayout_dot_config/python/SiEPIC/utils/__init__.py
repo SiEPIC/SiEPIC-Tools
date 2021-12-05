@@ -282,41 +282,7 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     if KLAYOUT_VERSION > 24 or query_activecellview_technology or lv.title != '<empty>':
         technology_name = lv.active_cellview().technology
 
-    technology['technology_name'] = technology_name
-
-    if KLAYOUT_VERSION > 24:
-        technology['dbu'] = pya.Technology.technology_by_name(technology_name).dbu
-    else:
-        if pya.Application.instance().main_window().current_view().active_cellview().is_valid():
-            technology['dbu'] = pya.Application.instance().main_window(
-            ).current_view().active_cellview().layout().dbu
-        else:
-            technology['dbu'] = 0.001
-
-    itr = lv.begin_layers()
-    while True:
-        if itr == lv.end_layers():
-            break
-        else:
-            layerInfo = itr.current().source.split('@')[0]
-            if layerInfo == '*/*':
-                # likely encoutered a layer group, skip it
-                pass
-            elif layerInfo == 'GUIDING_SHAPES':
-                # Perhaps someone copy and pasted from a PCell
-                pass
-            else:
-                if ' ' in layerInfo:
-                    layerInfo = layerInfo.split(' ')[1]
-                technology[itr.current().name] = pya.LayerInfo(
-                    int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
-            technology[itr.current().name + '_color'] = itr.current().fill_color
-            itr.next()
-            
-    # Get library names
-    technology['libraries'] = get_library_names(technology_name)
-    
-    return technology
+    return get_technology_by_name(technology_name)
 
 
 '''
@@ -812,12 +778,16 @@ def angle_trunc(a, trunc):
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
 from functools import lru_cache
 @lru_cache(maxsize=32)
-def points_per_circle(radius):
+def points_per_circle(radius, dbu=None):
     # radius in microns
     from math import acos, pi, ceil
-    from . import get_technology
-    TECHNOLOGY = get_technology()
-    err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
+    if dbu == None:
+        from . import get_technology
+        TECHNOLOGY = get_technology()
+        err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
+    else:
+        err = dbu / 2  # in nm 
+        
     return int(ceil(pi / acos(1 - err / radius))) if radius > 1 else 10 # Lukas' derivation (same answer as below)
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1)))
 #    return int(ceil(2 * pi / acos(2 * (1 - err / radius)**2 - 1))) if radius > 100 else 100

@@ -1,10 +1,16 @@
 """ Layout helper functions.
 
-Author: Thomas Ferreira de Lima @thomaslima
-and Lukas Chrostowski @lukasc-ubc
+Authors: Thomas Ferreira de Lima @thomaslima
+         Lukas Chrostowski @lukasc-ubc
 
 The following functions are useful for scripted layout, or making
 PDK Pcells.
+
+Functions:
+
+layout_waveguide2
+layout_waveguide
+layout_waveguide_sbend_bezier
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -406,6 +412,41 @@ def layout_taper(cell, layer, trans, w1, w2, length, insert = True):
         cell.shapes(layer).insert(shape_taper)
     else:
         return shape_taper
+
+def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert = True):
+    """ Creates a waveguide s-bend using a bezier curve
+    Author: Lukas Chrostowski
+    Args:
+        trans: pya.Trans: location and rotation
+        w: width of input waveguide, float
+        wo (optional): width of output waveguide, float
+        h: height, float
+        length: length, float
+        insert: flag to insert drawn waveguide or return shape, boolean
+    Usage:
+        from SiEPIC.utils import get_layout_variables
+        TECHNOLOGY, lv, ly, cell = get_layout_variables()
+        layer = cell.layout().layer(TECHNOLOGY['Waveguide'])
+        layout_waveguide_sbend_bezier(cell, layer, pya.Trans(), w=0.5, h=2.0, length=15.0, insert = True)
+    """
+    if wo==None:
+        wo = w
+        
+    from SiEPIC.utils.geometry import bezier_parallel, translate_from_normal2
+    from pya import DPoint, DPolygon
+
+    p = bezier_parallel(DPoint(0,0), DPoint(length,h), 0)
+    pt1 = translate_from_normal2(p,w/2,wo/2)
+    pt2 = translate_from_normal2(p,-w/2, -wo/2)
+    pt = pt1+pt2[::-1]
+    
+    poly = pya.DPolygon(pt)
+    poly_t = poly.transformed(trans)
+    if insert == True:
+        cell.shapes(layer).insert(poly_t)
+        return poly_t.area()/((w+wo)/2)
+    else:
+        return poly_t
     
 
 def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000, insert = True):
@@ -413,10 +454,10 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
 
     Args:
         trans: pya.Trans: location and rotation
-        w: width of waveguide, float
-        r: radius, float
-        h: height, float
-        length: length, float
+        w: width of waveguide, int
+        r: radius, int
+        h: height, int
+        length: length, int
         insert: flag to insert drawn waveguide or return shape, boolean
 
     """

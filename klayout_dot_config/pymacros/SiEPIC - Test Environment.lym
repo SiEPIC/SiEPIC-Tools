@@ -60,6 +60,7 @@ if 1:
     SiEPIC.scripts = reload(SiEPIC.scripts)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.utils.layout = reload(SiEPIC.utils.layout)
+    SiEPIC.utils.geometry = reload(SiEPIC.utils.geometry)
     SiEPIC.setup = reload(SiEPIC.setup)
 #    SiEPIC.lumerical.contraDirectionalCoupler = reload(lumerical.contraDirectionalCoupler)
     print('Reloaded SiEPIC')

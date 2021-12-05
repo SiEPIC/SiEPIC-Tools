@@ -1,8 +1,11 @@
-"""Geometry module
+"""Geometry modules
 
-Right now it contains helper functions for the bezier curves.
+Contains helper functions for the bezier curves.
+  Author: Thomas Ferreira de Lima @thomaslima
 
-Author: Thomas Ferreira de Lima @thomaslima
+translate_from_normal2: curve translation
+  Author: Lukas Chrostowski
+
 
 """
 import numpy as np
@@ -350,7 +353,7 @@ try:
         bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
 
         _, bezier_point_coordinates_sampled = \
-            sample_function(bezier_point_coordinates, [0, 1], tol=0.005 / scale)  # tol about 5 nm
+            sample_function(bezier_point_coordinates, [0, 1], tol=0.001 / scale)  # tol about 1 nm
 
         # # This yields a better polygon
         bezier_point_coordinates_sampled = \
@@ -379,3 +382,86 @@ class Port(object):
         self.position = position
         self.direction = direction
         self.width = width
+
+
+
+
+# Curve translation:
+def translate_from_normal2(pts, trans, trans2=None):
+    '''
+    Translate each point in the array pts, by its local normal by a distance that 
+     varies linearly starting at 'trans' and ending 'trans2' 
+    Useful for making an S-bend with different waveguide widths at the ends
+    
+    Author: Lukas Chrostowski
+    
+    Inputs:
+     pts: DPoint array, length at least 3
+     trans: float
+     trans2: float
+     
+    Output:
+     tpts: DPoint array
+     
+    Example, SBend Waveguide with variable width:
+    
+    from SiEPIC.utils.geometry import bezier_parallel
+    
+    w1 = 0.15 # input waveguide width
+    wo = 0.35 # output waveguide width
+    l = 5     # horizontal length
+    offset = 2# vertical offset
+    
+    p = bezier_parallel(DPoint(0,0), DPoint(l,offset), 0)
+    pt1 = translate_from_normal2(p,w1/2,wo/2)
+    pt2 = translate_from_normal2(p,-w1/2, -wo/2)
+    pt = pt1+pt2[::-1]
+    
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    layer = cell.layout().layer(TECHNOLOGY['Waveguide'])
+    poly = pya.DPolygon(pt)
+    cell.shapes(layer).insert(poly)
+    '''
+
+    if trans2 == None:
+        trans2 = trans
+    if len(pts) < 2:
+        return pts    
+
+    length = 0    # total length
+    for i in range(1, len(pts) - 1):
+        length+=(pts[i + 1] - pts[i - 1]).length()
+
+    transv = [] # translation vector, linearly varying along the length
+    lengthc = 0 # cumulative length
+    for i in range(1, len(pts) - 1):
+        lengthc+=(pts[i + 1] - pts[i - 1]).length()
+        transv.append( (lengthc/length)*trans2 + (1-lengthc/length)*trans )
+        
+    from math import cos, sin, pi
+    from SiEPIC.utils import angle_vector
+    
+    d = 1. / (len(pts) - 1)
+    a = angle_vector(pts[1] - pts[0]) * pi / 180 + (pi / 2 if trans > 0 else -pi / 2)
+    tpts = [pts[0] + pya.DPoint(abs(trans) * cos(a), abs(trans) * sin(a))]
+
+    for i in range(1, len(pts) - 1):
+        dpt = (pts[i + 1] - pts[i - 1]) * (2 / d)
+        tpts.append(pts[i] + pya.DPoint(-dpt.y, dpt.x) * (transv[i-1] / 1 / dpt.abs()))
+
+    a = angle_vector(pts[-1] - pts[-2]) * pi / 180 + (pi / 2 if trans > 0 else -pi / 2)
+    tpts.append(pts[-1] + pya.DPoint(abs(trans2) * cos(a), abs(trans2) * sin(a)))
+
+    # Make ends manhattan
+    if abs(tpts[0].x - pts[0].x) > abs(tpts[0].y - pts[0].y):
+        tpts[0].y = pts[0].y
+    else:
+        tpts[0].x = pts[0].x
+    if abs(tpts[-1].x - pts[-1].x) > abs(tpts[-1].y - pts[-1].y):
+        tpts[-1].y = pts[-1].y
+    else:
+        tpts[-1].x = pts[-1].x
+    return tpts
+
+
