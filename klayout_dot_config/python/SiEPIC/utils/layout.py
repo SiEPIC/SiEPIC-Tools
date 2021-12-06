@@ -11,6 +11,7 @@ Functions:
 layout_waveguide2
 layout_waveguide
 layout_waveguide_sbend_bezier
+make_pin
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -424,8 +425,8 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
         trans: pya.Trans: location and rotation
         w: width of input waveguide, float for DPoint type (microns); int for Point type (nm)
         wo (optional): width of output waveguide, float
-        h: height, float
-        length: length, float
+        h: height
+        length: length
         insert: flag to insert drawn waveguide or return shape, boolean
     Usage:
         from SiEPIC.utils import get_layout_variables
@@ -608,18 +609,63 @@ def layout_connect_ports(cell, layer, port_from, port_to):
 
 
 
-def make_pin(cell, name, center, w, pin_length, layer, vertical = 0):
-    if vertical == 0:
-      p1 = pya.Point(center[0]+pin_length/2, center[1])
-      p2 = pya.Point(center[0]-pin_length/2, center[1])
-    elif vertical == 1:
-      p1 = pya.Point(center[0], center[1]+pin_length/2)
-      p2 = pya.Point(center[0], center[1]-pin_length/2)
-      
-    pin = pya.Path([p1,p2],w)
+def make_pin(cell, name, center, w, layer, direction):
+
+    '''
+    Makes a pin that SiEPIC-Tools will recognize
+    cell: which cell to draw it in
+    name: text label for the pin
+    center: location, int [x,y]
+    w: pin width
+    layer: layout.layer() type
+    direction = 
+        0: right
+        90: up
+        180: left
+        270: down
+
+    Units: intput can be float for microns, or int for nm
+    '''
+    
+    from SiEPIC.extend import to_itype
+    dbu = cell.layout().dbu
+    if type(w)==type(float()):
+        w = to_itype(w,dbu)
+    if type(center[0])==type(float()):
+        center[0] = to_itype(center[0],dbu)
+        center[1] = to_itype(center[1],dbu)
+
+    from SiEPIC._globals import PIN_LENGTH as pin_length
+
+    if direction not in [0, 90, 180, 270]:
+        raise('error in make_pin: direction must be one of [0, 90, 180, 270]')
+
+    # text label
     t = pya.Trans(pya.Trans.R0, center[0],center[1])
     text = pya.Text (name, t)
     shape = cell.shapes(layer).insert(text)
-    shape.text_size = 0.1
+    shape.text_dsize = float(w*dbu)
+    shape.text_valign=1
+
+    if direction == 0:
+        p1 = pya.Point(center[0]-pin_length/2, center[1])
+        p2 = pya.Point(center[0]+pin_length/2, center[1])
+        shape.text_halign=2
+    if direction == 90:
+        p1 = pya.Point(center[0], center[1]-pin_length/2)
+        p2 = pya.Point(center[0], center[1]+pin_length/2)
+        shape.text_halign=2
+        shape.text_rot=1
+    if direction == 180:
+        p1 = pya.Point(center[0]+pin_length/2, center[1])
+        p2 = pya.Point(center[0]-pin_length/2, center[1])
+        shape.text_halign=3
+    if direction == 270:
+        p1 = pya.Point(center[0], center[1]+pin_length/2)
+        p2 = pya.Point(center[0], center[1]-pin_length/2)
+        shape.text_halign=3
+        shape.text_rot=1
+      
+    pin = pya.Path([p1,p2],w)
     cell.shapes(layer).insert(pin)
 
