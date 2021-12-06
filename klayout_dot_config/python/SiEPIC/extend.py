@@ -962,7 +962,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 iter3.next()
                 
             if num_devrec > 1:
-                print(' * Warning: cell contains multiple (%s) DevRec layers, suggesting that a cell was flattened.' %num_devrec)
+                print(' * Warning: cell (%s) contains multiple (%s) DevRec layers, suggesting that a cell was flattened or contains subcells with DevRec layers.' % (instance, num_devrec))
                 # Save the flattened component into the components list
                 components.append(Component(component="Flattened", basic_name="Flattened",
                                             idx=idx, polygon=polygon, trans=iter1.trans()))
