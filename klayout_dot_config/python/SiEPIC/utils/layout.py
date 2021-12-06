@@ -398,16 +398,20 @@ def layout_taper(cell, layer, trans, w1, w2, length, insert = True):
 
     Args:
         trans: pya.Trans: location and rotation
-        w1: width of waveguide, float
-        w2: width of waveguide, float
+        w1: width of waveguide, float for DPoint type (microns); int for Point type (nm)
+        w2: width of waveguide, float for DPoint type (microns); int for Point type (nm)
         length: length, float
         insert: flag to insert drawn waveguide or return shape, boolean
 
     """
     import pya
-    pts = [pya.Point(0,-w1/2), pya.Point(0,w1/2), pya.Point(length,w2/2), pya.Point(length,-w2/2)]
+    if type(w1)==type(float()):
+        pts = [pya.DPoint(0,-w1/2), pya.DPoint(0,w1/2), pya.DPoint(length,w2/2), pya.DPoint(length,-w2/2)]
+        shape_taper = pya.DPolygon(pts).transformed(trans)
+    else:
+        pts = [pya.Point(0,-w1/2), pya.Point(0,w1/2), pya.Point(length,w2/2), pya.Point(length,-w2/2)]
+        shape_taper = pya.Polygon(pts).transformed(trans)
     
-    shape_taper = pya.Polygon(pts).transformed(trans)
     if insert == True:
         cell.shapes(layer).insert(shape_taper)
     else:
@@ -418,7 +422,7 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
     Author: Lukas Chrostowski
     Args:
         trans: pya.Trans: location and rotation
-        w: width of input waveguide, float
+        w: width of input waveguide, float for DPoint type (microns); int for Point type (nm)
         wo (optional): width of output waveguide, float
         h: height, float
         length: length, float
@@ -429,18 +433,29 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
         layer = cell.layout().layer(TECHNOLOGY['Waveguide'])
         layout_waveguide_sbend_bezier(cell, layer, pya.Trans(), w=0.5, h=2.0, length=15.0, insert = True)
     """
+    
     if wo==None:
         wo = w
         
     from SiEPIC.utils.geometry import bezier_parallel, translate_from_normal2
-    from pya import DPoint, DPolygon
+    from pya import DPoint, DPolygon, Point, Polygon
 
+    if type(w)==type(int()):
+        dbu = cell.layout().dbu
+        w=w*dbu
+        wo=wo*dbu
+        h=h*dbu
+        length=length*dbu
+        trans=trans.to_dtype(dbu)
+        
     p = bezier_parallel(DPoint(0,0), DPoint(length,h), 0)
+
     pt1 = translate_from_normal2(p,w/2,wo/2)
     pt2 = translate_from_normal2(p,-w/2, -wo/2)
     pt = pt1+pt2[::-1]
     
     poly = pya.DPolygon(pt)
+    print(poly)
     poly_t = poly.transformed(trans)
     if insert == True:
         cell.shapes(layer).insert(poly_t)
