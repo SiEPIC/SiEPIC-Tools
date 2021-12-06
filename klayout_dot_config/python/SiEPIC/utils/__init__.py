@@ -1270,7 +1270,7 @@ def svg_from_component(component, filename, verbose=False):
         print(" SiEPIC.utils.svg_from_component: could not generate svg")
         return
 
-    if TECHNOLOGY['Waveguide_color'] > 0:
+    if 'Waveguide_color' in TECHNOLOGY:
         c = bytearray.fromhex(hex(TECHNOLOGY['Waveguide_color'])[4:10])
     else:
         c = [150, 50, 50]
