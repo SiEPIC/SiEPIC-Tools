@@ -97,6 +97,9 @@ definitions:
 ################################################################################
 '''
 def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = False, FDTD_settings = None):
+  fdtd_extra_ = True
+  fdtd_addpin_ = True
+  fdtd_part1_only = False
   if verbose:
     print('SiEPIC.lumerical.fdtd: generate_component_sparam()')
 
@@ -187,13 +190,18 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
 
     # create FDTD simulation region (extra large)
     FDTDzspan=FDTD_settings['Initial_FDTD_Z_span']
-    if mode_selection_index==1:
+    if 1 in mode_selection_index:
       Z_symmetry = 'Symmetric'
-    elif mode_selection_index==2:
+    elif 2 in mode_selection_index:
       Z_symmetry ='Anti-Symmetric'
     else:
       Z_symmetry = FDTD_settings['Initial_Z-Boundary-Conditions']
-    FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = (devrec_box.left)*dbum-200e-9, (devrec_box.right)*dbum+200e-9, (devrec_box.bottom)*dbum-200e-9, (devrec_box.top)*dbum+200e-9
+    print('mode_selection_index %s, symmetry: %s' % (mode_selection_index, Z_symmetry))
+    if fdtd_extra_ == True:
+        fdtd_extra = 200e-9
+    else:
+        fdtd_extra = 0  # 200e-9
+    FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = (devrec_box.left)*dbum-fdtd_extra, (devrec_box.right)*dbum+fdtd_extra, (devrec_box.bottom)*dbum-fdtd_extra, (devrec_box.top)*dbum+fdtd_extra
     sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5;
     lumapi.evalScript(_globals.FDTD, " \
       newproject; closeall; \
@@ -201,12 +209,14 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       set('force symmetric z mesh', 1); set('mesh accuracy',1); \
       set('x min bc','Metal'); set('x max bc','Metal'); \
       set('y min bc','Metal'); set('y max bc','Metal'); \
-      set('z min bc','%s'); set('z max bc','%s'); \
+      set('z min bc','%s'); set('z max bc','%s'); " % (
+        FDTDxmin,FDTDxmax,FDTDymin,FDTDymax,FDTDzspan, \
+        Z_symmetry, FDTD_settings['Initial_Z-Boundary-Conditions'] ) )
+    lumapi.evalScript(_globals.FDTD, " \
       setglobalsource('wavelength start',%s); setglobalsource('wavelength stop', %s); \
       setglobalmonitor('frequency points',%s); set('simulation time', %s/c+1500e-15); \
       addmesh; set('override x mesh',0); set('override y mesh',0); set('override z mesh',1); set('z span', 0); set('dz', %s); set('z', %s); \
-      ?'FDTD solver with mesh override added'; " % ( FDTDxmin,FDTDxmax,FDTDymin,FDTDymax,FDTDzspan, \
-         Z_symmetry, FDTD_settings['Initial_Z-Boundary-Conditions'], \
+      ?'FDTD solver with mesh override added'; " % (
          wavelength_start,wavelength_stop, \
          FDTD_settings['frequency_points_monitor'], sim_time, \
          FDTD_settings['thickness_Si']/4, FDTD_settings['thickness_Si']/2) )
@@ -226,7 +236,10 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
         FDTD_settings['material_Clad'] ) )
 
     # get polygons from component
-    polygons = component.get_polygons()
+    if fdtd_addpin_ == True:
+        polygons = component.get_polygons(include_pins=True)
+    else:
+        polygons = component.get_polygons(include_pins=False)
 
     def send_polygons_to_FDTD(polygons):
         if verbose:
@@ -258,6 +271,10 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     # configure boundary conditions to be PML where we have ports
   #  FDTD_bc = {'y max bc': 'Metal', 'y min bc': 'Metal', 'x max bc': 'Metal', 'x min bc': 'Metal'}
     port_dict = {0.0: 'x max bc', 90.0: 'y max bc', 180.0: 'x min bc', -90.0: 'y min bc'}
+    if 1 in mode_selection_index:
+        mode_selection = 'fundamental TE mode'
+    else:
+        mode_selection = 'fundamental TM mode'
     for p in pins:
       if p.rotation in [180.0, 0.0]:
         lumapi.evalScript(_globals.FDTD, " \
@@ -272,9 +289,9 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
       else:
         p.direction = 'Forward'
       lumapi.evalScript(_globals.FDTD, " \
-        set('name','%s'); set('direction', '%s'); set('number of field profile samples', %s); updateportmodes(%s); \
+        set('name','%s'); set('direction', '%s'); set('number of field profile samples', %s); set('mode selection', '%s'); updateportmodes; \
         select('FDTD'); set('%s','PML'); \
-        ?'Added pin: %s, set %s to PML'; " % (p.pin_name, p.direction, FDTD_settings['frequency_points_expansion'], mode_selection_index, \
+        ?'Added pin: %s, set %s to PML'; " % (p.pin_name, p.direction, FDTD_settings['frequency_points_expansion'], mode_selection, \
             port_dict[p.rotation], p.pin_name, port_dict[p.rotation] )  )
 
     # Calculate mode sources
@@ -378,6 +395,9 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     # Run the first FDTD simulation
     in_pin = pins[0]
     Sparams, Sparams_modes = FDTD_run_Sparam_simple(pins, in_pin=in_pin, modes = mode_selection_index, plots = True)
+
+    if fdtd_part1_only:
+        return
 
     # find the pin that has the highest Sparam (max over 1-wavelength and 2-modes)
     # use this Sparam for convergence testing
