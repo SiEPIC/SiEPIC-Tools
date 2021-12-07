@@ -632,12 +632,16 @@ def make_pin(cell, name, center, w, layer, direction):
     dbu = cell.layout().dbu
     if type(w)==type(float()):
         w = to_itype(w,dbu)
-        # print('SiEPIC.utils.layout.make_pin: w converted to %s' %w )
-    print(type(center[0]))
+        print('SiEPIC.utils.layout.make_pin: w converted to %s' %w )
+    else:
+        print('SiEPIC.utils.layout.make_pin: w %s' %w )
+#    print(type(center[0]))
     if type(center[0])==type(float()) or type(center[0])==type(numpy.float64()):
         center[0] = to_itype(center[0],dbu)
         center[1] = to_itype(center[1],dbu)
-        # print('SiEPIC.utils.layout.make_pin: center converted to %s' % (center)  )
+        print('SiEPIC.utils.layout.make_pin: center converted to %s' % (center)  )
+    else:
+        print('SiEPIC.utils.layout.make_pin: center %s' % (center)  )
 
     from SiEPIC._globals import PIN_LENGTH as pin_length
 
