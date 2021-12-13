@@ -93,7 +93,7 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
     wg_polygon = Polygon(translate_from_normal(wg_pts, width/2 + (offset if turn > 0 else - offset))+translate_from_normal(wg_pts, -width/2 + (offset if turn > 0 else - offset))[::-1])
     cell.shapes(layer).insert(wg_polygon)
   
-    if layout.layer(TECHNOLOGY['Waveguide']) == layer:
+    if layout.layer(TECHNOLOGY[layers[lr]]) == layer:
       waveguide_length = wg_polygon.area() / width * dbu
   return waveguide_length
 
