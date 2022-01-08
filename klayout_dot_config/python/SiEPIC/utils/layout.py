@@ -677,3 +677,86 @@ def make_pin(cell, name, center, w, layer, direction):
     pin = pya.Path([p1,p2],w)
     cell.shapes(layer).insert(pin)
 
+
+
+
+def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", library="SiEPICfab_Shuksan_PDK", wg_type='Strip TE 1310 nm, w=350 nm', draw_waveguides=True):
+    '''
+    Create a tree of splitters
+    - cell: layout cell to create the structures in
+    - tree_depth: Tree depth (2^N outputs)
+    - y_splitter_cell: name of the y-splitter cell
+    - library: the library containing the y_splitter_cell
+    - wg_type: waveguide type from WAVEGUIDES.XML
+    - draw_waveguides: True draws the waveguides, False is faster for debugging
+    
+    Returns
+    - inst_in: instance of the input cell
+    - inst_out[]: array of instances of the output cells
+    - cell_tree: new cell created
+    This is useful for subsequent routing
+    
+    Limitations:
+    - the design uses regular 90 degree bends, rather than S-bends.
+      hence it could be made more compact
+    '''
+    
+    from SiEPIC.scripts import connect_pins_with_waveguide
+    from SiEPIC.extend import to_itype
+    from math import floor
+
+    # create a new sub-cell where the tree will go
+    ly = cell.layout()
+    tech = ly.technology().name
+    cell_tree = ly.create_cell("y_splitter_tree")
+
+    # load the y-splitter from the library
+    y_splitter = ly.create_cell(y_splitter_cell, library)
+    if not y_splitter:
+        raise Exception ('Cannot import cell %s:%s' % (library,y_splitter_cell))
+
+    # Load waveguide information
+    from SiEPIC.utils import load_Waveguides_by_Tech
+    waveguides = load_Waveguides_by_Tech(tech)
+    wg = [w for w in waveguides if wg_type in w['name'] ][0]
+    if not wg:
+        raise Exception("Waveguide type not defined in WAVEGUIDES.XML: %s" %wg_type )
+        return
+    wg_width = to_itype(float(wg['width']), ly.dbu)
+    wg_radius = to_itype(float(wg['radius']), ly.dbu)
+
+    # build the tree, using measurements from the cell and waveguide parameters
+    x = 0
+    dx = y_splitter.bbox().width() + wg_radius*2
+    # calculate the spacing for the y-splitters based on waveguide radius and 90 degree bends
+    y_wg_offset = (y_splitter.pinPoint("opt2").y-y_splitter.pinPoint("opt3").y)
+    dy = max(y_splitter.bbox().height(), wg_radius*4 + y_wg_offset)
+    # intialize loop
+    inst_out = []
+    y0 = 0
+    for i in range(0,tree_depth):
+        inst = []
+        y = y0
+        for j in range(0, int(2**(tree_depth-i-1))):
+            t = pya.Trans(pya.Trans.R0, x, y)
+            inst.append(cell_tree.insert(pya.CellInstArray(y_splitter.cell_index(), t)))
+            # perform waveguide routing
+            if (i > 0) and draw_waveguides:        
+                connect_pins_with_waveguide(
+                    inst[j], 'opt2',
+                    inst_higher[j*2+1], 'opt1', waveguide_type=wg_type)
+                connect_pins_with_waveguide(
+                    inst[j], 'opt3',
+                    inst_higher[j*2], 'opt1', waveguide_type=wg_type)
+            y += dy
+        inst_higher = inst
+        if i == 0:
+            inst_out = inst
+        if i == tree_depth-1:
+            inst_in = inst[0]
+        x += -dx
+        y0 = y0 + dy/2
+        dy = dy * 2
+        
+           
+    return inst_in, inst_out, cell_tree

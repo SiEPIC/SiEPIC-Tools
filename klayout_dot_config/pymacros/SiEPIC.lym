@@ -54,6 +54,13 @@ if KLAYOUT_VERSION == 27 and KLAYOUT_VERSION_3 == 0:
     question.setInformativeText("\nSiEPIC-Tools is not compatible with KLayout 0.27.0.\nPlease download an install the highest version 0.26, or 0.27.1 or greater, from %s" % (KLayout_link0))
     pya.QMessageBox_StandardButton(question.exec_())
 
+if KLAYOUT_VERSION == 26:
+    question = pya.QMessageBox()
+    question.setStandardButtons(pya.QMessageBox.Ok)
+    question.setText("SiEPIC-Tools is no longer compatible with older versions (0.26) of KLayout.")
+    KLayout_link0='https://www.klayout.de/build.html'
+    question.setInformativeText("\nSiEPIC-Tools is no longer compatible with older versions (0.26) of KLayout.\nPlease download an install the highest version of 0.27.x, from %s" % (KLayout_link0))
+    pya.QMessageBox_StandardButton(question.exec_())
 
 try:
     builtins.ACTIONS
