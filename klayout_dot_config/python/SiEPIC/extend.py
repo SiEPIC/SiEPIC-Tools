@@ -921,6 +921,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     # otherwise search for all components in the cell:
     else:
         iter1 = self.begin_shapes_rec(LayerDevRecN)
+        
+    component_matched = []
 
     while not(iter1.at_end()):
         idx = len(components)  # component index value to be assigned to Component.idx
@@ -1031,17 +1033,23 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 # store the pins in the component
                 components[-1].pins = pins
 
-        # find the component that matches the requested instance (only the first one)
+        # find the component that matches the requested instance
         if inst and components:
+            if components[-1].basic_name == inst.cell.basic_name() and components[-1].trans==inst.trans:
+                if verbose:
+                    print('Found requested Inst (exact name and origin match): %s' % inst.trans)
+                return components[-1]
+        
             if components[-1].trans==inst.trans:
                 if verbose:
-                    print('Found requested Inst: %s' % inst.trans)
-                return components[-1]
-
+                    print('Found requested Inst (origin match only, could be the right one): %s' % inst.trans)
+                component_matched = components[-1]
 
         iter1.next()
     # end while iter1
     
+    if component_matched:
+        return component_matched
     
     return components
 # end def find_components
