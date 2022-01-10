@@ -12,6 +12,7 @@ layout_waveguide2
 layout_waveguide
 layout_waveguide_sbend_bezier
 make_pin
+y_splitter_tree
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.

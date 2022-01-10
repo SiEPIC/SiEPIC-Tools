@@ -97,6 +97,9 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             - going in the same direction, or
             - having their paths crossing
      - doesn't work if they are on diverging paths; in that case add vertices.
+
+    * works for instances that are individual components
+    * works for instances that are sub-circuits with many components, but one unique pin name
      
     originally thought about implementing the following, but perhaps not useful: 
      - absolute_vertices: list of Points, except for the first and last
@@ -218,9 +221,19 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     cpinA = [p for p in componentA.pins if p.pin_name == pinA]
     cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
     if cpinA==[]:
-        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
+        try:  
+            # this checks if the cell (which could contain multiple components) 
+            # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
+            cpinA = [instanceA.find_pin(pinA)]
+        except:
+            raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
     if cpinB==[]:
-        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinB,componentB.component))
+        try:  
+            # this checks if the cell (which could contain multiple components) 
+            # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
+            cpinB = [instanceB.find_pin(pinB)]
+        except:
+            raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinB,componentB.component))
 
     cpinA=cpinA[0]
     cpinB=cpinB[0]
@@ -242,6 +255,11 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     if cpinA.center == cpinB.center:
         print('Pins are already connected; returning')
         return True
+
+    # split this into separate function
+    # connect_Pins_with_waveguide
+    # input would be two Pins.
+    # Instance.find_pins
             
     from .utils import get_technology_by_name
     TECHNOLOGY = get_technology_by_name(ly.technology().name)
