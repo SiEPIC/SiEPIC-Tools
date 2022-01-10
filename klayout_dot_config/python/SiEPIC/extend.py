@@ -1674,13 +1674,25 @@ def pinPoint(self, pin_name, verbose=False):
     if pins:
         p = [ p for p in pins if (p.pin_name==pin_name)]
         if p:
-          return p[0].center
+            return p[0].center
         else:
-          print("pinPoint, not found: %s, other pins: %s" % (pin_name, [p.pin_name for p in pins]))
-          return Point(0,0)
+            print("pinPoint, not found: %s, other pins: %s" % (pin_name, [p.pin_name for p in pins]))
+            return Point(0,0)
     else:
         return Point(0,0)
 
+def find_pin(self, pin_name, verbose=False):
+    pins = self.find_pins()
+    if pins:
+        p = [ p for p in pins if (p.pin_name==pin_name)]
+        if p:
+            if len(p)>1:
+                raise Exception ('Multiple Pins with name "%s" found in cell "%s"' % (pin_name, self.cell.basic_name()) )
+            return p[0]
+        else:
+            raise Exception ('Pin with name "%s" not found in cell "%s"' % (pin_name, self.cell.basic_name()) )
+    else:
+        raise Exception ('No Pins found in cell "%s"' % (self.cell.basic_name()) )
 
 
 def move_up_hierachy(self):
@@ -1707,6 +1719,7 @@ def move_up_hierachy(self):
 #################################################################################
 
 pya.Instance.find_pins = find_pins
+pya.Instance.find_pin = find_pin
 pya.Instance.pinPoint = pinPoint
 pya.Instance.move_up_hierachy = move_up_hierachy
 
