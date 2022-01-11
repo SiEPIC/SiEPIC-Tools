@@ -1389,6 +1389,24 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   # Find pinA and pinB
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
   cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
+
+  # for cells with hierarchy
+  if cpinA==[]:
+    try:  
+        # this checks if the cell (which could contain multiple components) 
+        # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
+        cpinA = [instanceA.find_pin(pinA)]
+    except:
+        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
+  if cpinB==[]:
+    try:  
+        # this checks if the cell (which could contain multiple components) 
+        # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
+        cpinB = [cellB.find_pin(pinB)]
+    except:
+        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinB,componentB.component))
+
+
   if cpinA==[]:
     raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
     print ('Pin not found')

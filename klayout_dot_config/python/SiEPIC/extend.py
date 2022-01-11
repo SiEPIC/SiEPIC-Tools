@@ -848,7 +848,9 @@ def find_pin(self, name):
     from .core import Pin
     pins = []
     label = None
-    it = self.begin_shapes_rec(self.layout().layer(_globals.TECHNOLOGY['PinRec']))
+    from .utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
+    it = self.begin_shapes_rec(self.layout().layer(TECHNOLOGY['PinRec']))
     while not(it.at_end()):
         if it.shape().is_path():
             pins.append(it.shape().path.transformed(it.itrans()))
