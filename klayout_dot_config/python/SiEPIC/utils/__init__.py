@@ -460,7 +460,7 @@ These are technology specific, and located in the tech folder, named DFT.xml
 '''
 
 
-def load_DFT():
+def load_DFT(debug=True):
     from .._globals import KLAYOUT_VERSION
     from . import get_technology
     TECHNOLOGY = get_technology()
@@ -468,27 +468,35 @@ def load_DFT():
 
     import os
     import fnmatch
-    
-    debug=True
-    
-    search_str = 'DFT.xml'
-    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-        # Find the path for the technology
-        # and find DFT.xml file
-        tech=pya.Technology.technology_by_name(tech_name)
-        dir_path = tech.base_path()
+
+    # first check for filename_DFT.xml file in local directory
+    mw = pya.Application.instance().main_window()
+    layout_filename = mw.current_view().active_cellview().filename()
+    filename = os.path.splitext(os.path.basename(layout_filename))[0]
+    local_DFT_path = os.path.join(os.path.dirname(os.path.realpath(layout_filename)), filename+'_DFT.xml')
+    print(' - checking local DFT path: %s' %local_DFT_path ) 
+    if os.path.exists(local_DFT_path):
+        matches = [local_DFT_path]
     else:
-        dir_path = pya.Application.instance().application_data_path()
-    if debug:
-        print(' - load_DFT, path: %s' %dir_path ) 
-    matches = []
-    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
-        for filename in fnmatch.filter(filenames, search_str):
-            if tech_name in root:
-                matches.append(os.path.join(root, filename))
+    # then check for DFT.xml in the PDK Technology folder
+        search_str = 'DFT.xml'
+        if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+            # Find the path for the technology
+            # and find DFT.xml file
+            tech=pya.Technology.technology_by_name(tech_name)
+            dir_path = tech.base_path()
+        else:
+            dir_path = pya.Application.instance().application_data_path()
+        if debug:
+            print(' - load_DFT, path: %s' %dir_path ) 
+        matches = []
+        for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+            for filename in fnmatch.filter(filenames, search_str):
+                if tech_name in root:
+                    matches.append(os.path.join(root, filename))
     if matches:
         if debug:
-            print(' - load_DFT, matces: %s' %matches ) 
+            print(' - load_DFT, matches: %s' %matches ) 
         DFT_file = matches[0]
         file = open(DFT_file, 'r')
         DFT = xml_to_dict(file.read())
