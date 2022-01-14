@@ -1,7 +1,7 @@
 # SiEPIC-Tools
 
 - <a href="http://www.siepic.ubc.ca">SiEPIC</a>-Tools - for silicon photonics layout, design, verification and circuit simulation
-- by <a href="https://ca.linkedin.com/in/chrostowski">Lukas Chrostowski</a>, (c) 2015-2020, with contributions by: <a href="https://ca.linkedin.com/in/zeqin-lu-13a52394">Zeqin Lu</a>, <a href="https://uk.linkedin.com/in/jaspreet-jhoja-00a56b64">Jaspreet Jhoja</a>, <a href="https://www.linkedin.com/in/xu-photonics/">Xu Wang</a>, <a href="https://ca.linkedin.com/in/jonas-flückiger-92a4831">Jonas Flueckiger</a>.
+- by <a href="https://ca.linkedin.com/in/chrostowski">Lukas Chrostowski</a>, (c) 2015-2022, with contributions by: <a href="https://ca.linkedin.com/in/zeqin-lu-13a52394">Zeqin Lu</a>, <a href="https://uk.linkedin.com/in/jaspreet-jhoja-00a56b64">Jaspreet Jhoja</a>, <a href="https://www.linkedin.com/in/xu-photonics/">Xu Wang</a>, <a href="https://ca.linkedin.com/in/jonas-flückiger-92a4831">Jonas Flueckiger</a>.
 - Package for <a href="http://www.klayout.de">KLayout</a>.
 - Instruction on design, layout, fabrication, test, data analysis for silicon photonics provided in the edX course: <a href="http://edx.org/course/silicon-photonics-design-fabrication-ubcx-phot1x">Silicon Photonics Design, Fabrication and Data Analysis</a> and textbook <a href="http://www.cambridge.org/ca/academic/subjects/engineering/electronic-optoelectronic-devices-and-nanotechnology/silicon-photonics-design-devices-systems">Silicon Photonics Design: From Devices to Systems</a> by Lukas Chrostowski and Michael Hochberg.
 - Fabrication runs via Electron Beam Lithography are available, including <a href="https://www.linkedin.com/pulse/openebl-fabrication-test-passive-silicon-photonic-lukas-chrostowski">openEBL</a> fabrication.
@@ -11,14 +11,14 @@
   - Lukas Chrostowski, Hossam Shoman, Mustafa Hammood, Han Yun,  Jaspreet Jhoja, Enxiao Luan,  Stephen Lin, Ajay Mistry, Donald Witt, Nicolas A. F. Jaeger, Sudip Shekhar,  Hasitha Jayatilleka, Philippe Jean, Simon B.-de Villers, Jonathan Cauchon, Wei Shi,  Cameron Horvath, Jocelyn N. Westwood-Bachman, Kevin Setzer, Mirwais Aktary, N. Shane Patrick, Richard Bojko, Amin Khavasi, Xu Wang, Thomas Ferreira de Lima,  Alexander N. Tait, Paul R. Prucnal, David E. Hagan, Doris Stevanovic, Andy P. Knights, "<a href="https://doi.org/10.1109/JSTQE.2019.2917501">Silicon Photonic Circuit Design Using Rapid Prototyping Foundry Process Design Kits</a>" IEEE Journal of Selected Topics in Quantum Electronics, Volume: 25, Issue: 5, Sept.-Oct. 2019. (<a href="https://www.dropbox.com/s/i1z4ackr3q7fz1l/2019_JSTQE_foundry.pdf?dl=1">PDF</a>)
 
 ## Download and Installation instructions:
- - in KLayout v0.25, use Tools | Package Manager, and find SiEPIC-Tools there
- - install PDK, e.g., <a href="https://github.com/lukasc-ubc/SiEPIC_EBeam_PDK/wiki/Installation-instructions">SiEPIC_EBeam_PDK download and installation instructions</a> on the wiki page.  
+ - in KLayout v0.27, use Tools | Package Manager, and find SiEPIC-Tools there
+ - install PDK, e.g., <a href="https://github.com/siepic/SiEPIC_EBeam_PDK/wiki/Installation-instructions">SiEPIC_EBeam_PDK download and installation instructions</a> on the wiki page.  
 
  
 ## Objectives:
  - Use an open-source layout tool (KLayout) to implement a sophisticated layout design environment for silicon photonics
- - Support for both GUI and script-based layout, or combinations of both.
- - KLayout-INTERCONNECT integration offers a layout-first design methodology. Inspired by Layout Versus Schematic tools, this PDK includes netlist extraction routines to generate a schematic from the layout. This allows the user to directly simulate from the layout, without needing to create the schematic first. This approach is possibly more appealing to photonics designers who are accustomed to designing physical layouts, rather than schematics. A library of components (layout and compact models) is included in the Process Design Kit, specifically for silicon photonics fabrication via Electron Beam Lithography.
+ - Support for both GUI and Python script-based layout, or combinations of both.
+ - KLayout-INTERCONNECT integration offers a layout-first design methodology. Inspired by Layout Versus Schematic tools, this includes netlist extraction routines to generate a schematic from the layout. This allows the user to directly simulate from the layout, without needing to create the schematic first. This approach is appealing to photonics designers who are accustomed to designing physical layouts, rather than schematics. A library of components (layout and compact models) is included in the SiEPIC-EBeam-PDK Process Design Kit, specifically for silicon photonics fabrication via Electron Beam Lithography.
  - Whereas a typical schematic-driven design flow includes a schematic, circuit simulation, layout, and verification (see Chapter 10 of the <a href="http://www.cambridge.org/ca/academic/subjects/engineering/electronic-optoelectronic-devices-and-nanotechnology/silicon-photonics-design-devices-systems">textbook</a>), the approach taken here is <b>Layout-driven</b>, followed by verification, then a schematic (via a netlist extraction) and simulations.
 
 
@@ -77,13 +77,17 @@
   - Hot Key "Ctrl-Shift-R": resize the waveguides, for a given target length.
 - Layout object snapping
 - Hot Key "Shift-O": Snaps the selected object to the one where the mouse is hovering over.
+- Helper functions from Python-scripted layouts
+  - snapping components
+  - adding waveguides between components
+  - layout primitives (arcs, bezier curves, waveguides, tapers, rings, etc)
 
 
 
 
 ## Contributing to this project:
 
-You can download the latest development version (master) of the PDK: <a href="https://github.com/lukasc-ubc/SiEPIC-Tools/archive/master.zip">Zip file download of the PDK</a>
+You can download the latest development version (master) of the PDK: <a href="https://github.com/siepic/SiEPIC-Tools/archive/master.zip">Zip file download of the PDK</a>
 
 It is posted on GitHub for 1) revision control, 2) so that others can contribute to it, find bugs, 3) easy download of the latest version.
 
@@ -94,7 +98,7 @@ To contribute to the PDK:
  - "Commit to master" (your own master)
  - Create a <a href="https://help.github.com/articles/using-pull-requests/">Pull Request</a> -- this will notify me of your contribution, which I can merge into the main project
 
-I am personally using <a href="https://desktop.github.com/">GitHub desktop</a> to synchronize my files. [Then I created symbolic links in my .klayout folder to point to the local copy of this repository](https://www.youtube.com/watch?v=Y5a9kZVgZns). This is useful to automatically update my local KLayout installation (e.g., multiple computers), as changes are made in GitHub.
+You can use <a href="https://desktop.github.com/">GitHub desktop</a> to synchronize  files. [Then create symbolic links to your .klayout folder to point to the local copy of this repository](https://www.youtube.com/watch?v=Y5a9kZVgZns). This is useful to automatically update the local KLayout installation (e.g., multiple computers), as changes are made in GitHub by others.
 
 ## Screenshots:
 
