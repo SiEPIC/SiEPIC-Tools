@@ -237,7 +237,7 @@ def INTC_commandline(filename2):
       warning_window.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel);
       warning_window.setDefaultButton(pya.QMessageBox.Yes)
       response = warning_window.exec_()        
-      if(response == pya.QMessageBox.Yes):
+      if(pya.QMessageBox_StandardButton(response) == pya.QMessageBox.Yes):
         dialog = pya.QFileDialog()
         path = str(dialog.getOpenFileName())
         path = path.replace('/', '\\')
