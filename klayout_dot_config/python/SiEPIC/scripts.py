@@ -522,11 +522,21 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
     warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
     warning.setDefaultButton(pya.QMessageBox.Yes)
     if not selected_paths:
-        warning.setText(
-            "Error: No 'Waveguide' Paths found - Cannot make waveguides.")
-        warning.setInformativeText("Path objects on layer 'Waveguide' are required to create a waveguide pcell. \nAlternatively,  object selection can be used to convert selected paths from any layer.  If nothing is selected,  all 'Waveguide' Paths in the present cell will be converted to waveguides.")
-        pya.QMessageBox_StandardButton(warning.exec_())
-        return
+        # check if the Combine Mode in the tool bar is accidentally set to something that converts
+        #  Paths to Polygons
+        mw = pya.Application.instance().main_window()
+        if mw.instance().get_config("combine-mode") != 'add':
+            warning.setText(
+                "Error: No 'Waveguide' Paths found - Cannot make waveguides.")
+            warning.setInformativeText("Path objects on layer 'Waveguide' are required to create a waveguide pcell. \nAlternatively, object selection can be used to convert selected Paths from any layer.  If nothing is selected,  all 'Waveguide' Paths in the present cell will be converted to waveguides.\nFinally, the Toolbar Combine Mode is not set to Add, so possibly a Path was added and converted to a Polygon; do not use the modes Merge, Erase, etc, to create the Path for the waveguide.")
+            pya.QMessageBox_StandardButton(warning.exec_())
+            return
+        else:
+            warning.setText(
+                "Error: No 'Waveguide' Paths found - Cannot make waveguides.")
+            warning.setInformativeText("Path objects on layer 'Waveguide' are required to create a waveguide pcell. \nAlternatively, object selection can be used to convert selected paths from any layer.  If nothing is selected,  all 'Waveguide' Paths in the present cell will be converted to waveguides.")
+            pya.QMessageBox_StandardButton(warning.exec_())
+            return
             
     # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
     if snap:
