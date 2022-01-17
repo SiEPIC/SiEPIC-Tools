@@ -12,7 +12,7 @@
   - Lukas Chrostowski, Hossam Shoman, Mustafa Hammood, Han Yun,  Jaspreet Jhoja, Enxiao Luan,  Stephen Lin, Ajay Mistry, Donald Witt, Nicolas A. F. Jaeger, Sudip Shekhar,  Hasitha Jayatilleka, Philippe Jean, Simon B.-de Villers, Jonathan Cauchon, Wei Shi,  Cameron Horvath, Jocelyn N. Westwood-Bachman, Kevin Setzer, Mirwais Aktary, N. Shane Patrick, Richard Bojko, Amin Khavasi, Xu Wang, Thomas Ferreira de Lima,  Alexander N. Tait, Paul R. Prucnal, David E. Hagan, Doris Stevanovic, Andy P. Knights, "<a href="https://doi.org/10.1109/JSTQE.2019.2917501">Silicon Photonic Circuit Design Using Rapid Prototyping Foundry Process Design Kits</a>" IEEE Journal of Selected Topics in Quantum Electronics, Volume: 25, Issue: 5, Sept.-Oct. 2019. (<a href="https://www.dropbox.com/s/i1z4ackr3q7fz1l/2019_JSTQE_foundry.pdf?dl=1">PDF</a>)
 
 ## Download and Installation instructions:
- - in KLayout v0.27, use Tools | Package Manager, and find SiEPIC-Tools there
+ - in KLayout v0.27, use Tools | Package Manager, and find SiEPIC-Tools there (more details in the [Wiki Instructions](https://github.com/SiEPIC/SiEPIC-Tools/wiki/Installation))
  - install PDK, e.g., <a href="https://github.com/siepic/SiEPIC_EBeam_PDK/wiki/Installation-instructions">SiEPIC_EBeam_PDK download and installation instructions</a> on the wiki page.  
 
  
