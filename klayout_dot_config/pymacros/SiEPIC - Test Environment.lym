@@ -69,7 +69,17 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 
+# Find # of waveguides and components
+if 1:
+    from SiEPIC import scripts  
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    nets, components = cell.identify_nets(verbose=False)
 
+    # find all the waveguides
+    waveguides = [c for c in components if 'Waveguide' in c.instance]
+    print ('Total number of components: %s. Number of Waveguides: %s and Components: %s' % (len(components), len(waveguides), len(components)- len(waveguides) ) )
+    
 
 # pointlist_to_turtles
 if 0:
