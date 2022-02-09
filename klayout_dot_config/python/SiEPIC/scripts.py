@@ -2666,116 +2666,110 @@ def measurement_vs_simulation(verbose=None):
 
 """
     SiEPIC-Tools: Resize Waveguide
-    Author: Jaspreet Jhoja(2016 - 2018)
+    Author: Jaspreet Jhoja(2016 - 2022)
 
     This Python file implements a waveguide resizing tool.
     Version history:
+       Jaspreet Jhoja 2022/02/09
+       - Fixed incorrect waveguide length calculations
+       - Revised code format to be in-line with flake8 recommendations
+       
        Jaspreet Jhoja 2018/02/13
         - Resizes Waveguides with selection
         - Users are required to press Ctrl + Shift + R
 """
 
-
 def resize_waveguide():
     import pya
     import sys
-    import copy
-    from pya import QFont, QWidget, Qt, QVBoxLayout, QFrame, QLabel, QComboBox, QLineEdit, QPushButton, QGridLayout, QSplitter, QTextEdit
+    from pya import (
+        QFont,
+        QWidget,
+        Qt,
+        QVBoxLayout,
+        QFrame,
+        QLabel,
+        QComboBox,
+        QLineEdit,
+        QPushButton,
+        QGridLayout,
+        QSplitter,
+    )
     from SiEPIC import utils
+
     TECHNOLOGY, lv, ly, cell = utils.get_layout_variables()
-    from SiEPIC.scripts import path_to_waveguide
 
-    net, comp = cell.identify_nets()
-    global points, copy_pts, diff
-    objlist = []  # list of data objects
-    clear = []  # 12 clears should be there
-    topcell = None
-    layout = None
-    dbu = None
-    topcell = cell
+    global points, path_edges, edges_orientations
 
-    # fetch the database parameters
-    dbu = ly.dbu
+    # Get the waveguide layer
+    LayerSiN = ly.layer(TECHNOLOGY["Waveguide"])
 
-    # Define layers based on PDK_functions:
-    LayerSiN = ly.layer(TECHNOLOGY['Waveguide'])
-    LayerPinRecN = ly.layer(TECHNOLOGY['PinRec'])
-    LayerDevRecN = ly.layer(TECHNOLOGY['DevRec'])
+    # get the selected waveguide instance
+    selection = utils.select_waveguides(cell)
 
-    # delete instances
-    to_delete = []
-
-    # extract the circuit netlist from the physical layout:
-    optical_selection = utils.select_waveguides(cell)
-    if(len(optical_selection) > 1 or len(optical_selection) == 0):
+    # if multiple cells or no cells are selected
+    if len(selection) > 1 or len(selection) == 0:
         pya.MessageBox.warning("Message", "No waveguide is selected", pya.MessageBox.Ok)
     else:
-        wg_obj = optical_selection[0]
+        wg_obj = selection[0]
         if wg_obj.is_cell_inst():
             oinst = wg_obj.inst()
             if oinst.is_pcell():
                 c = oinst.cell
-                trans = oinst.trans
 
-        path_obj = c.pcell_parameters_by_name()['path']
+        path_obj = c.pcell_parameters_by_name()["path"]
 
-        if(path_obj.points <= 3):
-            v = pya.MessageBox.warning(
-                "Message", "Cannot perform this operation on the selected cell/path.\n Hint: Select a cell/path with more than 2 vertices.", pya.MessageBox.Ok)
+        if path_obj.points <= 3:
+            pya.MessageBox.warning(
+                "Message",
+                "Cannot perform this operation on the selected cell/path.\n Hint: Select a cell/path with more than 2 vertices.",
+                pya.MessageBox.Ok,
+            )
 
         else:
-
-            # PCell_get_parameters ( c ) #This line causes syntax error Do not uncomment this line.
-
-            #  path_length
-            wg_width = path_obj.width  # in microns
             # calculate the length of the waveguide using the area / width
+            wg_width = c.pcell_parameters_by_name()["width"] / c.layout().dbu
             iter2 = c.begin_shapes_rec(LayerSiN)
+
             if iter2.shape().is_polygon():
-                area = iter2.shape().polygon.area()
-                path_length = area / wg_width * dbu * dbu
-            else:
-                print("## ROUND_PATH waveguide, not polygon; bug in code? ##")
-                path_length = 0  # or path_obj.length()
+                area = utils.advance_iterator(
+                    c.each_shape(c.layout().layer(TECHNOLOGY["Waveguide"]))
+                ).polygon.area()
+                path_length = area / wg_width * c.layout().dbu
 
-            escape = 0
+            # get path points
+            points_obj = path_obj.get_dpoints()
+            points = [[each.x, each.y] for each in points_obj]
 
-            points_obj = path_obj.to_dtype(1 / dbu).get_dpoints()
-            points = [[each.x * dbu, each.y * dbu] for each in points_obj]
-
-            # Separate the segments of the waveguide
-            segments_all = []
+            # Separate the path_edges of the waveguide
+            path_edges_all = []
             for i in range(len(points)):
-                if(i > 0):
+                if i > 0:
                     pair = [points[i - 1], points[i]]
-                    segments_all.append(pair)
+                    path_edges_all.append(pair)
 
-            # don't allow any modifications to first and last segment
-            global segments
-            segments = segments_all[1:-1]
+            # Ignore the first and the last segment from being edited
+            path_edges = path_edges_all[1:-1]
 
             # Check segment orientation
-            global seg_orientation
-            seg_orientation = []
-            for each in segments:
-                if(each[0][0] == each[1][0]):
-                    seg_orientation.append("vertical")
-                elif(each[0][1] == each[1][1]):
-                    seg_orientation.append("horizontal")
+            edges_orientations = []
+            for each in path_edges:
+                if each[0][0] == each[1][0]:
+                    edges_orientations.append("vertical")
+                elif each[0][1] == each[1][1]:
+                    edges_orientations.append("horizontal")
 
-            # prop variable which determines the segment propagation
+            # prop variable which determines the segment propagation, i.e. which directions this segment can move in, +x, -x, +y, -y
             prop_points = points
-            seg_propagation = []
-            #+x, -x , +y , -y
-            for each in segments:
-                print(each[0])
+            edge_propagations = []
+            # +x, -x , +y , -y
+            for each in path_edges:
                 index = prop_points.index(each[0])
                 prop = ""
 
-                if(index == 0):
+                if index == 0:
                     index = index + 1
                     element_idx = index + 1
-                   # look at the second index
                 else:
                     element_idx = index - 1
 
@@ -2784,127 +2778,136 @@ def resize_waveguide():
                 x2 = prop_points[element_idx][0]
                 y2 = prop_points[element_idx][1]
 
-                if(x1 == x2):
-                    if(y1 < y2):
+                # the edge propagates along y axis if their x coordinates are equal
+                if x1 == x2:
+                    if y1 < y2:
                         prop = "+y"
-                    elif(y1 > y2):
+                    elif y1 > y2:
                         prop = "-y"
-                        # their x have same value means they are propagating along y axis
-                elif(y1 == y2):
-                    if(x1 < x2):
+
+                elif y1 == y2:
+                    if x1 < x2:
                         prop = "-x"
-                    elif(x1 > x2):
+                    elif x1 > x2:
                         prop = "+x"
-                print(index)
-                print(element_idx)
-                print(prop)
-                seg_propagation.append(prop)
-                # y have same values along x axis
+
+                edge_propagations.append(prop)
 
             global wdg, hbox, lframe1, titlefont, lf1title, parameters, lf1label1, lf1label2, lf1label3, lf1title2, lf1text3, lf1form, lframe1, leftsplitter, splitter1, container, ok
             wdg = QWidget()
-            #wdg = QDialog(pya.Application.instance().main_window())
-#            wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
-            wdg.setAttribute=pya.Qt.WA_DeleteOnClose
+            wdg.setAttribute = pya.Qt.WA_DeleteOnClose
             wdg.setWindowTitle("Waveguide resizer")
 
-            if sys.platform.startswith('linux'):
-                    # Linux-specific code here...
+            if sys.platform.startswith("linux"):
+                # Linux-specific code here...
                 titlefont = QFont("Arial", 11, QFont.Bold, False)
 
-            elif sys.platform.startswith('darwin'):
-                    # OSX specific
+            elif sys.platform.startswith("darwin"):
+                # OSX specific
                 titlefont = QFont("Arial", 9, QFont.Bold, False)
 
-            elif sys.platform.startswith('win'):
+            elif sys.platform.startswith("win"):
                 titlefont = QFont("Arial", 9, QFont.Bold, False)
 
-            #titlefont = QFont("Arial", 9, QFont.Bold, False)
             hbox = QVBoxLayout(wdg)
-
             wdg.setFixedSize(650, 250)
 
             def selection(self):
-                # make a list of these to show them
-                global segments, seg_orientation, lf1label1, lf1label2
-        #    lf1text1.setText(str(abs(segments[parameters.currentIndex][0][0] - segments[parameters.currentIndex][1][0])*dbu + abs(segments[parameters.currentIndex][0][1] - segments[parameters.currentIndex][1][1])*dbu))
-                lf1label1.setText('     Segment length: %s microns' % str((abs(segments[parameters.currentIndex][0][
-                                  0] - segments[parameters.currentIndex][1][0]) + abs(segments[parameters.currentIndex][0][1] - segments[parameters.currentIndex][1][1]))))
-        #    lf1text2.setText(str(seg_orientation[parameters.currentIndex]))
-                lf1label2.setText('     Segment orientation: %s' %
-                                  str(seg_orientation[parameters.currentIndex]))
+                global path_edges, edges_orientations, lf1label1, lf1label2
+
+                lf1label1.setText(
+                    "     Segment length: %s microns"
+                    % str(
+                        (
+                            abs(
+                                path_edges[parameters.currentIndex][0][0]
+                                - path_edges[parameters.currentIndex][1][0]
+                            )
+                            + abs(
+                                path_edges[parameters.currentIndex][0][1]
+                                - path_edges[parameters.currentIndex][1][1]
+                            )
+                        )
+                    )
+                )
+
+                lf1label2.setText(
+                    "     Segment orientation: %s"
+                    % str(edges_orientations[parameters.currentIndex])
+                )
 
             # Left Frame top section
             lframe1 = QFrame()
             lframe1.setFrameShape(QFrame.StyledPanel)
             lframe1.setStyleSheet("background-color: white;")
-            lf1title = QLabel('Current waveguide length (microns): %s' % str(path_length))
+            lf1title = QLabel(
+                "Current waveguide length (microns): %s" % str(path_length)
+            )
             parameters = QComboBox()
             # add vertices as params
             params = []
-            for each in range(len(segments)):
-                #    params.append("segment %s  points:  %s  - %s" %(str(each), str(tuple(segments[each][0])), str(tuple(segments[each][1]))))
-                params.append("segment %s, points: (%s, %s) - (%s, %s)" % (str(each), segments[each][
-                              0][0], segments[each][0][1], segments[each][1][0], segments[each][1][1]))
+            for each in range(len(path_edges)):
+
+                params.append(
+                    "segment %s, points: (%s, %s) - (%s, %s)"
+                    % (
+                        str(each),
+                        path_edges[each][0][0],
+                        path_edges[each][0][1],
+                        path_edges[each][1][0],
+                        path_edges[each][1][1],
+                    )
+                )
 
             parameters.addItems(params)
             parameters.currentIndexChanged(selection)
             parameters.setFixedWidth(400)
             parameters.setStyleSheet("background-color: white;")
-            lf1label1 = QLabel('Segment length: ')
-            lf1label2 = QLabel('Segment orientation: ')
-            lf1label3 = QLabel('New target waveguide length (microns): ')
-            lf1title2 = QLabel('Chose the segment you wish to be moved:')
+            lf1label1 = QLabel("Segment length: ")
+            lf1label2 = QLabel("Segment orientation: ")
+            lf1label3 = QLabel("New target waveguide length (microns): ")
+            lf1title2 =  QLabel("Select the segment you wish to move:")
             lf1text3 = QLineEdit()
-            lf1text3.setAccessibleName('lf1text3')
+            lf1text3.setAccessibleName("lf1text3")
             lf1text3.setText(str(path_length))
 
             def button(self):
-                # don't want to change the layout while the GUI is open; leads to view problems.
+                # Close GUI while changing the layout to avoid view problems.
                 wdg.close()
 
-                global points, copy_pts, diff
-
                 if lf1text3.text == "":
-                    return
+                    return 0
 
-                # Record a transaction, to enable "undo"
+                # Record the layout state, to enable "undo"
                 lv.transaction("Waveguide resizing")
 
-                # get current index and segment propagation
+                # get the index of selected segment/edge and the axis of propagation
                 index = parameters.currentIndex
-                copy_pts = copy.deepcopy(points)
-                p1 = copy_pts[copy_pts.index(segments[index][0])]
-                p2 = copy_pts[copy_pts.index(segments[index][1])]
                 diff = float(lf1text3.text) - path_length
-        #    diff = diff/dbu
-                prop = seg_propagation[index]
-                if(prop == "+x" or prop == "-x"):
-                    if(prop == "-x"):
-                        diff = diff * -1
-                    print("moving x")
-                    # perform the action based on diff value
-                    copy_pts[copy_pts.index(segments[index][0])][0] = copy_pts[
-                        copy_pts.index(segments[index][0])][0] + diff / 2
-                    copy_pts[copy_pts.index(segments[index][1])][0] = copy_pts[
-                        copy_pts.index(segments[index][1])][0] + diff / 2
-                elif(prop == "+y" or prop == "-y"):
-                    if(prop == "+y"):
-                        diff = diff * -1
-                    print("moving y")
-                    copy_pts[copy_pts.index(segments[index][0])][1] = copy_pts[
-                        copy_pts.index(segments[index][0])][1] + diff / 2
-                    copy_pts[copy_pts.index(segments[index][1])][1] = copy_pts[
-                        copy_pts.index(segments[index][1])][1] + diff / 2
-                print("pushed", p1, p2)
-        #    path_obj = cell.pcell_parameters_by_name()['path']
 
-                dpoints = [pya.DPoint(each[0], each[1]) for each in copy_pts]
-                dpath = pya.DPath(dpoints, wg_width)
-                # replace old path with the new one
+                prop = edge_propagations[index]
+                if prop == "+x" or prop == "-x":
+                    if prop == "-x":
+                        diff = diff * -1
+
+                    path_edges[index][0][0] = path_edges[index][0][0] + diff / 2
+                    path_edges[index][1][0] = path_edges[index][1][0] + diff / 2
+
+                elif prop == "+y" or prop == "-y":
+                    if prop == "+y":
+                        diff = diff * -1
+
+                    path_edges[index][0][1] = path_edges[index][0][1] + diff / 2
+                    path_edges[index][1][1] = path_edges[index][1][1] + diff / 2
+
+                dpoints = [pya.DPoint(each[0], each[1]) for each in points]
+                dpath = pya.DPath(dpoints, wg_width * c.layout().dbu)
+
+                # replace the old waveguide path points with the new path points
                 oinst.change_pcell_parameter("path", dpath)
                 lv.commit()
-                wdg.destroy()  # destroy GUI when we are completely done.
+                # destroy GUI
+                wdg.destroy()
 
             ok = QPushButton("OK")
             ok.clicked(button)
@@ -2916,26 +2919,21 @@ def resize_waveguide():
             lf1form.addWidget(lf1title2, 2, 0)
             lf1form.addWidget(parameters, 3, 0)
             lf1form.addWidget(lf1label1, 4, 0)
-        #  lf1form.addWidget(lf1text1, 4,1)
             lf1form.addWidget(lf1label2, 5, 0)
-        #  lf1form.addWidget(lf1text2, 5,1)
             lf1form.addWidget(ok, 7, 1)
             lframe1.setLayout(lf1form)
             leftsplitter = QSplitter()
-            leftsplitter.setOrientation=Qt.Vertical
+            leftsplitter.setOrientation = Qt.Vertical
             leftsplitter.addWidget(lframe1)
             leftsplitter.setSizes([500, 400, 10])
             splitter1 = QSplitter()
-            splitter1.setOrientation=Qt.Horizontal
-            textedit = QTextEdit()
+            splitter1.setOrientation = Qt.Horizontal
             splitter1.addWidget(leftsplitter)
             splitter1.setSizes([400, 500])
             container = QWidget()
             hbox.addWidget(splitter1)
-            objlist.append(lf1text3)
             selection(None)
             wdg.show()
-
 
 
 '''
