@@ -882,19 +882,19 @@ def waveguide_length():
     pya.Application.instance().main_window().redraw()    
 
 def waveguide_length_diff():
-    from .utils import get_layout_variables, select_waveguides
-    TECHNOLOGY, lv, ly, cell = get_layout_variables()
-    import pya
-    import numpy as np
+    import SiEPIC
+    TECHNOLOGY, lv, ly, cell = SiEPIC.utils.get_layout_variables()
     from math import exp, sqrt, pi
     from copy import deepcopy
-    from SiEPIC import utils, _globals
-    import SiEPIC
-    import time, os, fnmatch
-    from SiEPIC.utils import get_technology, xml_to_dict
+    import numpy as np
+    import fnmatch
+    import pathlib
+    import pya
+    import os
 
     # calculate length difference
-    selection = select_waveguides(cell)
+    selection = SiEPIC.utils.select_waveguides(cell)
+
     if len(selection) == 2:
         cell = selection[0].inst().cell
         area1 = SiEPIC.utils.advance_iterator(cell.each_shape(
@@ -905,8 +905,8 @@ def waveguide_length_diff():
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
         width2 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
         dbu = cell.layout().dbu
-        length1 = (area1 / width1)*dbu
-        length2 = (area2 / width2)*dbu
+        length1 = (area1 / width1) * dbu
+        length2 = (area2 / width2) * dbu
 
         # function to find the nearest value in aa 2d array
         def find_nearest(array, value):
@@ -914,36 +914,34 @@ def waveguide_length_diff():
             idx = (np.abs(array - value)).argmin()
             return array[idx]
 
-        def distance(a,b):
-                return np.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
-        
-        def is_between(a,c,b):
-                return distance(a,c) + distance(c,b) == distance(a,b)
+        def distance(a, b):
+            return np.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
-        #location function to get correlation values
+        def is_between(a, c, b):
+            return distance(a, c) + distance(c, b) == distance(a, b)
+
+        # location function to get correlation values
         def get_local_correlation_matrix(corr_length, resolution, temp_comp):
 
-                  #correlation function
-                  def get_corr(x1, y1, x2, y2, l):
-                    sigma = l/4
-                    correlation = exp(-(((x1-x2)**2 + (y1-y2)**2)/(l**2/2)))
-                    #correlation = exp((-(x1-x2)**2 - (y1-y2)**2)/((l**2)/2))/(sqrt(pi)*(l/2)) # gaussian function in 2d space
-                    return correlation
+            # correlation function
+            def get_corr(x1, y1, x2, y2, l):
+                sigma = l / 4
+                correlation = exp(-(((x1 - x2)**2 + (y1 - y2)**2) / (l**2 / 2)))
+                # correlation = exp((-(x1-x2)**2 - (y1-y2)**2)/((l**2)/2))/(sqrt(pi)*(l/2)) # gaussian function in 2d space
+                return correlation
 
+            # function to calculate distance between two points
+            def distance(x1, y1, x2, y2):
+                return sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
-                  #function to calculate distance between two points
-                  def distance(x1,y1, x2,y2):
-                    return sqrt((x2-x1)**2 + (y2-y1)**2)
-
-                  #split a line into a number of chunks based on length
-                  def split_line(line_pts, length):
-                    #splits a line into a number of pieces based on the length given in params
-                    #dice waveguide into pieces using the resolution
-                    length = abs(length)
-                    temp_pts = []
-                    for i in range(len(line_pts)):
-                      if(i>0):
-                        pt_a = line_pts[i-1]
+            # split a line into a number of chunks based on length
+            def split_line(line_pts, length):
+                # dice waveguide into segments of "length"
+                length = abs(length)
+                temp_pts = []
+                for i in range(len(line_pts)):
+                    if(i > 0):
+                        pt_a = line_pts[i - 1]
                         pt_b = line_pts[i]
                         diff_x = sqrt((pt_a[0] - pt_b[0])**2)
                         diff_y = sqrt((pt_a[1] - pt_b[1])**2)
@@ -951,228 +949,260 @@ def waveguide_length_diff():
                         temp_pts.append(pt_a)
                         while distance(curr_pt[0], curr_pt[1], pt_b[0], pt_b[1]) > length:
 
-                          #if diff is along x axis
-                          if(diff_x > 0):
-                            curr_pt[0] = [curr_pt[0]-length if(distance(curr_pt[0]-length,curr_pt[1], pt_b[0],pt_b[1])< distance(temp_pts[-1][0],temp_pts[-1][1], pt_b[0],pt_b[1])) else curr_pt[0]+length][0]
-                          #else diff is along y axis
-                          else:
-                            curr_pt[1] = [curr_pt[1]-length if(distance(curr_pt[0],curr_pt[1]-length, pt_b[0],pt_b[1])< distance(temp_pts[-1][0],temp_pts[-1][1], pt_b[0],pt_b[1])) else curr_pt[1]+length][0]
+                            # if diff is along x axis
+                            if(diff_x > 0):
+                                curr_pt[0] = [curr_pt[0] - length if(distance(curr_pt[0] - length, curr_pt[1], pt_b[0], pt_b[1]) < distance(
+                                    temp_pts[-1][0], temp_pts[-1][1], pt_b[0], pt_b[1])) else curr_pt[0] + length][0]
+                            # else diff is along y axis
+                            else:
+                                curr_pt[1] = [curr_pt[1] - length if(distance(curr_pt[0], curr_pt[1] - length, pt_b[0], pt_b[1]) < distance(
+                                    temp_pts[-1][0], temp_pts[-1][1], pt_b[0], pt_b[1])) else curr_pt[1] + length][0]
 
-                          temp_pts.append(deepcopy(curr_pt))
+                            temp_pts.append(deepcopy(curr_pt))
                         temp_pts.append(pt_b)
-                    return temp_pts
+                return temp_pts
 
+            # extract layout information
+            TECH, lv, ly, cell = SiEPIC.utils.get_layout_variables()
+            net, components_list = cell.identify_nets()
+            dbu = ly.dbu
 
-                  #extract layout information
-                  TECH, lv, ly, cell = utils.get_layout_variables()
-                  net, components_list = cell.identify_nets()
-                  dbu = ly.dbu
-
-                  #comp has all the components
-                  comp = []
-                  for each_temp_comp in temp_comp:
-                    for check_comp in components_list:
-                      if(each_temp_comp.cell.cell_index() == check_comp.cell.cell_index()):
+            # comp has all the components
+            comp = []
+            for each_temp_comp in temp_comp:
+                for check_comp in components_list:
+                    if(each_temp_comp.cell.cell_index() == check_comp.cell.cell_index()):
                         comp.append(check_comp)
 
-                  #initialise correlation matrix
-                  corr_matrix = np.zeros(shape=(len(comp),len(comp)))
-                  full_matrix_data = []
-                  #copy of correlation matrix that can be modified independently and exported
-                  exported_matrix = np.zeros(shape=(len(comp),len(comp)))
+            # initialise correlation matrix
+            corr_matrix = np.zeros(shape=(len(comp), len(comp)))
+            full_matrix_data = []
+            # copy of correlation matrix that can be modified independently and exported
+            exported_matrix = np.zeros(shape=(len(comp), len(comp)))
 
-                  corr_matrix_name = []
-                  for i in comp:
-                    corr_matrix_name.append([])
+            corr_matrix_name = []
+            for i in comp:
+                corr_matrix_name.append([])
 
-
-                  for idx1 in range(len(comp)):
-                    for idx2 in range(len(comp)):
-                      if(corr_matrix[idx1, idx2] == 0 and corr_matrix[idx2,idx1] == 0): #optimisation to remove redundant iterations
-                        #if you are not comparing the same element with itself
-                        #get name of either component for same element comparison(i.e. next condition)
-                        testname = comp[idx1].basic_name
-                        if(idx1 == idx2 ): #if it is the same element
-                          corr_value = 1
+            for idx1 in range(len(comp)):
+                for idx2 in range(len(comp)):
+                    # optimisation to remove redundant iterations
+                    if(corr_matrix[idx1, idx2] == 0 and corr_matrix[idx2, idx1] == 0):
+                        # if you are not comparing the same element with itself
+                        # get name of either component for same element comparison(i.e. next condition)
+                        if(idx1 == idx2):  # if it is the same element
+                            corr_value = 1
 
                         else:
                             first = comp[idx1]
                             second = comp[idx2]
                             corr_value = 0
 
-                            if(first.basic_name == 'Waveguide' or second.basic_name == 'Waveguide'): #if any of the components are waveguides
-                              wgs = [first, second]
-                              #wgs = [each.cell.pcell_parameters_by_name()['path'] for each in wgs if each.basic_name == 'Waveguide' else each] #get path obj for each waveguide
-                              wg_pts = []
-                              for each in wgs:
-                                if(each.basic_name =='Waveguide'):
-                                    each_path = each.cell.pcell_parameters_by_name()['path']
-                                    each_path = each.trans.to_vtrans(TECH['dbu']).trans(each_path)
-                                    pts_itr = each_path.each_point()
-                                    #print([each for each in pts_itr])
-                                    wg_pts.append([[each.x, each.y] for each in pts_itr])
+                            # if any of the components are waveguides
+                            if(first.basic_name == 'Waveguide' or second.basic_name == 'Waveguide'):
+                                wgs = [first, second]
+                                # wgs = [each.cell.pcell_parameters_by_name()['path'] for each in wgs if each.basic_name == 'Waveguide' else each] #get path obj for each waveguide
+                                wg_pts = []
+                                for each in wgs:
+                                    if(each.basic_name == 'Waveguide'):
+                                        each_path = each.cell.pcell_parameters_by_name()[
+                                            'path']
+                                        each_path = each.trans.to_vtrans(
+                                            TECH['dbu']).trans(each_path)
+                                        pts_itr = each_path.each_point()
+                                        #print([each for each in pts_itr])
+                                        wg_pts.append([[each.x, each.y]
+                                                       for each in pts_itr])
 
+                                    else:
+                                        wg_pts.append(
+                                            [[each.center.x * dbu, each.center.y * dbu]])
+
+                                # check if coincidental
+                                coincidental = []
+
+                                if(second.basic_name == 'Waveguide'):
+                                    for pt_idx1 in range(len(wg_pts[0])):
+                                        for pt_idx2 in range(1, len(wg_pts[1])):
+                                            if(is_between(wg_pts[1][pt_idx2 - 1], wg_pts[0][pt_idx1], wg_pts[1][pt_idx2])):
+                                                coincidental.append(1)
+                                            else:
+                                                coincidental.append(0)
+                                else:
+                                    for pt_idx2 in range(len(wg_pts[1])):
+                                        for pt_idx1 in range(1, len(wg_pts[0])):
+                                            if(is_between(wg_pts[0][pt_idx1 - 1], wg_pts[1][pt_idx2], wg_pts[0][pt_idx1])):
+                                                coincidental.append(1)
+                                            else:
+                                                coincidental.append(0)
+                                if(min(coincidental) == 1):
+                                    corr_value = (1 - 1e-15)
 
                                 else:
-                                  wg_pts.append([[each.center.x*dbu, each.center.y*dbu]])
+                                    new_wg_pts = []
+                                    for each in wg_pts:
+                                        if(len(each) > 1):
+                                            new_wg_pts.append(
+                                                split_line(each, resolution))
+                                        else:
+                                            new_wg_pts.append(each)
+                                    #print('new wg points', len(new_wg_pts))
+                                    inner_corr_matrix = np.zeros(
+                                        shape=(len(new_wg_pts[0]), len(new_wg_pts[1])))
+                                    #print('inner corr matrix', inner_corr_matrix.shape)
+                                    for i in range(len(new_wg_pts[0])):
+                                        for j in range(len(new_wg_pts[1])):
+                                            inner_corr_value = get_corr(
+                                                new_wg_pts[0][i][0], new_wg_pts[0][i][1], new_wg_pts[1][j][0], new_wg_pts[1][j][1], corr_length)
 
+                                            inner_corr_matrix[i, j] = inner_corr_value
+                                    #np.savetxt('test.txt', inner_corr_matrix)
+                                    corr_value = inner_corr_matrix.mean()
+                                    full_matrix_data.append(
+                                        [idx1, idx2, inner_corr_matrix])
 
-                              #check if coincidental
-                              coincidental = []
-                              
-                              if(second.basic_name == 'Waveguide'):
-                                for pt_idx1 in range(len(wg_pts[0])):
-                                  for pt_idx2 in range(1,len(wg_pts[1])):
-                                    if(is_between(wg_pts[1][pt_idx2-1], wg_pts[0][pt_idx1], wg_pts[1][pt_idx2])):
-                                          coincidental.append(1)
-                                    else:
-                                      coincidental.append(0)
-                              else:
-                                for pt_idx2 in range(len(wg_pts[1])):
-                                  for pt_idx1 in range(1,len(wg_pts[0])):
-                                    if(is_between(wg_pts[0][pt_idx1-1], wg_pts[1][pt_idx2], wg_pts[0][pt_idx1])):
-                                          coincidental.append(1)
-                                    else:
-                                      coincidental.append(0)                              
-                              if(min(coincidental)==1):
-                                corr_value = (1-1e-15)
-                                
-                              else:
-                                new_wg_pts = []
-                                for each in wg_pts:
-                                  if(len(each)>1):
-                                     new_wg_pts.append(split_line(each, resolution))
-                                  else:
-                                     new_wg_pts.append(each)
-                                #print('new wg points', len(new_wg_pts))
-                                inner_corr_matrix = np.zeros(shape=(len(new_wg_pts[0]),len(new_wg_pts[1])))
-                                #print('inner corr matrix', inner_corr_matrix.shape)
-                                for i in range(len(new_wg_pts[0])):
-                                  for j in range(len(new_wg_pts[1])):
-                                    inner_corr_value = get_corr(new_wg_pts[0][i][0], new_wg_pts[0][i][1], new_wg_pts[1][j][0],new_wg_pts[1][j][1], corr_length)
-  
-                                    inner_corr_matrix[i,j] = inner_corr_value
-                                #np.savetxt('test.txt', inner_corr_matrix)
-                                corr_value = inner_corr_matrix.mean()
-                                full_matrix_data.append([idx1, idx2, inner_corr_matrix])
-  
                             else:
-                                corr_value = get_corr(first.center.x*dbu, first.center.y*dbu, second.center.x*dbu, second.center.y*dbu, corr_length)
+                                corr_value = get_corr(
+                                    first.center.x * dbu, first.center.y * dbu, second.center.x * dbu, second.center.y * dbu, corr_length)
                                 full_matrix_data.append([idx1, idx2, corr_value])
 
                         corr_matrix[idx1, idx2] = corr_matrix[idx2, idx1] = corr_value
-                        s2i = comp[idx1].basic_name+"_" +str(idx1)+ " & " + comp[idx2].basic_name+"_"+str(idx2)
+                        s2i = comp[idx1].basic_name + "_" + \
+                            str(idx1) + " & " + comp[idx2].basic_name + "_" + str(idx2)
 
-                        corr_matrix_name[idx1].insert(idx2,s2i)
-                        corr_matrix_name[idx2].insert(idx1,s2i)
+                        corr_matrix_name[idx1].insert(idx2, s2i)
+                        corr_matrix_name[idx2].insert(idx1, s2i)
 
+            def find_val(val):
+                for i in range(len(corr_matrix)):
+                    for j in range(len(corr_matrix)):
+                        if(corr_matrix[i][j] == val):
+                            print(corr_matrix_name[i][j])
 
-                  def find_val(val):
-                    for i in range(len(corr_matrix)):
-                      for j in range(len(corr_matrix)):
-                        if(corr_matrix[i][j]==val):
-                          print(corr_matrix_name[i][j])
+            return(corr_matrix)
 
-                  return(corr_matrix)
-        #get MC parameters
-        if True:
-            TECHNOLOGY = get_technology()
-            tech_name = TECHNOLOGY['technology_name']
-            paths = []
-            for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
-                [paths.append(os.path.join(root, filename))
-                 for filename in fnmatch.filter(filenames, 'MONTECARLO.xml') if tech_name in root]
-            if paths:
-                print(paths[0])
-                with open(paths[0], 'r') as file:
-                    montecarlo = xml_to_dict(file.read())
-                    montecarlo = montecarlo['technologies']['technology']
-                    if len(montecarlo) >1:
-                      montecarlo = montecarlo[0]
+        # get MC parameters from the MONTECARLO.xml file
+        mc_exists = False
 
+        TECHNOLOGY = SiEPIC.utils.get_technology()
+        tech_name = TECHNOLOGY['technology_name']
+        paths = []
+        
+        for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
+            [paths.append(os.path.join(root, filename))
+                for filename in fnmatch.filter(filenames, 'MONTECARLO.xml') if tech_name in root]
+        if paths:
+            print(paths[0])
+            with open(paths[0], 'r') as file:
+                montecarlo = SiEPIC.utils.xml_to_dict(file.read())
+                montecarlo = montecarlo['technologies']['technology']
+                if len(montecarlo) > 1:
+                    montecarlo = montecarlo[0]
 
+                mc_exists = True
 
         nsamples = 10000
-        lambda_not  = 1.55
-        wcl = float(montecarlo['wafer']['width']['corr_length'])*1e6
-        tcl = float(montecarlo['wafer']['height']['corr_length'])*1e6
-        wsigma = float(montecarlo['wafer']['width']['std_dev'])
-        tsigma =  float(montecarlo['wafer']['height']['std_dev'])
+        lambda_not = 1.55
+        phase_arr = np.ones((nsamples)) * np.nan
 
+        if mc_exists:
 
-        if True:
-          #generate correlation matrix
-          correlation_matrix_w = get_local_correlation_matrix(wcl, 5, [selection[0].inst(), selection[1].inst()])
-          correlation_matrix_h =  get_local_correlation_matrix(tcl,  5, [selection[0].inst(), selection[1].inst()])
+            wcl = float(montecarlo['wafer']['width']['corr_length']) * 1e6
+            tcl = float(montecarlo['wafer']['height']['corr_length']) * 1e6
+            wsigma = float(montecarlo['wafer']['width']['std_dev'])
+            tsigma = float(montecarlo['wafer']['height']['std_dev'])
 
-          #generate width covariance matrix (sigma1 * correlation * sigma2)
-          wcovariance_matrix = np.zeros((2,2))
-          tcovariance_matrix = np.zeros((2,2))
-          for i in range(2):
-            for j in range(2):
-              wcovariance_matrix[i][j] =  wsigma*correlation_matrix_w[i][j]*wsigma
-              tcovariance_matrix[i][j] =     tsigma*correlation_matrix_h[i][j]*tsigma
+            # generate correlation matrix
+            correlation_matrix_w = get_local_correlation_matrix(
+                wcl, 5, [selection[0].inst(), selection[1].inst()])
+            correlation_matrix_h = get_local_correlation_matrix(
+                tcl, 5, [selection[0].inst(), selection[1].inst()])
 
-          #process cholesky decompositions
-          wchol = np.linalg.cholesky(wcovariance_matrix)
-          tchol = np.linalg.cholesky(tcovariance_matrix)
+            # generate width covariance matrix (sigma1 * correlation * sigma2)
+            wcovariance_matrix = np.zeros((2, 2))
+            tcovariance_matrix = np.zeros((2, 2))
+            for i in range(2):
+                for j in range(2):
+                    wcovariance_matrix[i][j] = wsigma * \
+                        correlation_matrix_w[i][j] * wsigma
+                    tcovariance_matrix[i][j] = tsigma * \
+                        correlation_matrix_h[i][j] * tsigma
 
-          #generate random uncorrelated unit distributions
+            # process cholesky decompositions
+            wchol = np.linalg.cholesky(wcovariance_matrix)
+            tchol = np.linalg.cholesky(tcovariance_matrix)
 
-          dwidth_uncorr = np.random.multivariate_normal([0,0], [[1,0],[0,1]], nsamples).T
-          twidth_uncorr = np.random.multivariate_normal([0,0], [[1,0],[0,1]], nsamples).T
+            # generate random uncorrelated unit distributions
 
-          #correlate distributions
-          dwidth_corr = np.dot(wchol, dwidth_uncorr)
-          dthick_corr = np.dot(tchol, twidth_uncorr)
+            dwidth_uncorr = np.random.multivariate_normal(
+                [0, 0], [[1, 0], [0, 1]], nsamples).T
+            twidth_uncorr = np.random.multivariate_normal(
+                [0, 0], [[1, 0], [0, 1]], nsamples).T
 
+            # correlate distributions
+            dwidth_corr = np.dot(wchol, dwidth_uncorr)
+            dthick_corr = np.dot(tchol, twidth_uncorr)
 
-          #load neff data
-          filename = 'geo_vs_neff.npy'
-          pathsdata = [each for each in os.walk(pya.Application.instance().application_data_path(), followlinks=True)]
-          match = [each for each in pathsdata if (len(each)==3) and (filename in each[-1]) ]
-          filedir = match[0][0]
-          import os
-          geovsneff_data = np.load(os.path.join(filedir, filename), allow_pickle=True).flatten()[0]
-          neff_data = geovsneff_data['neff']
-          width_data = geovsneff_data['width']
-          thickness_data = geovsneff_data['thickness']
+            # load neff data
+            filename = 'geo_vs_neff.npy'
+            print(pya.Application.instance().application_data_path())
+            print(os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), "Simulation")))
+            pathsdata = [each for each in os.walk(
+                os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), "Simulation")), followlinks=True)]
+            match = [each for each in pathsdata if (
+                len(each) == 3) and (filename in each[-1])]
 
-          #create arrays for delta propagation constants
-          delta_beta = np.zeros((nsamples))
-          phase_arr = np.zeros((nsamples))
+            if(len(match)>0):
+                filedir = match[0][0]
+                import os
+                geovsneff_data = np.load(os.path.join(
+                    filedir, filename), allow_pickle=True).flatten()[0]
+                neff_data = geovsneff_data['neff']
+                width_data = geovsneff_data['width']
+                thickness_data = geovsneff_data['thickness']
 
-          nom_width = 500
-          nom_thick = 220
+                # create arrays for delta propagation constants
+                delta_beta = np.zeros((nsamples))
+                phase_arr = np.zeros((nsamples))
 
-          for each_sample in range(nsamples):
-            #wg1
-            temp_thick1 = nom_thick + dthick_corr[0][each_sample]
-            temp_width1 = nom_width + dwidth_corr[0][each_sample]
-            idxx, idxy = np.where(thickness_data == find_nearest(thickness_data, temp_thick1)), np.where(width_data == find_nearest(width_data, temp_width1))
-            neff1 = neff_data[idxy, idxx].flatten()[0]
-            beta1 = (2*np.pi* neff1)/lambda_not
+                if("nom_width" in geovsneff_data):
+                    nom_width = geovsneff_data['nom_width']
+                else:
+                    nom_width = 500
 
-            #wg2
-            temp_thick = nom_thick + dthick_corr[1][each_sample]
-            temp_width = nom_width + dwidth_corr[1][each_sample]
-            idxx, idxy = np.where(thickness_data == find_nearest(thickness_data, temp_thick)), np.where(width_data == find_nearest(width_data, temp_width))
-            neff2 = neff_data[idxy, idxx].flatten()[0]
-            beta2 = (2*np.pi* neff2)/lambda_not
+                if("nom_thickness" in geovsneff_data):
+                    nom_thick = geovsneff_data['nom_thickness']
+                else:
+                    nom_thick = 220
 
-            delta_beta[each_sample] = np.abs(beta1 - beta2)
-            phase_arr[each_sample]  = ((beta1*length1)-(beta2*length2))/np.pi
+                for each_sample in range(nsamples):
+                    # wg1
+                    temp_thick1 = nom_thick + dthick_corr[0][each_sample]
+                    temp_width1 = nom_width + dwidth_corr[0][each_sample]
+                    idxx, idxy = np.where(thickness_data == find_nearest(thickness_data, temp_thick1)), np.where(
+                        width_data == find_nearest(width_data, temp_width1))
+                    neff1 = neff_data[idxy, idxx].flatten()[0]
+                    beta1 = (2 * np.pi * neff1) / lambda_not
 
-        #
+                    # wg2
+                    temp_thick = nom_thick + dthick_corr[1][each_sample]
+                    temp_width = nom_width + dwidth_corr[1][each_sample]
+                    idxx, idxy = np.where(thickness_data == find_nearest(thickness_data, temp_thick)), np.where(
+                        width_data == find_nearest(width_data, temp_width))
+                    neff2 = neff_data[idxy, idxx].flatten()[0]
+                    beta2 = (2 * np.pi * neff2) / lambda_not
+
+                    delta_beta[each_sample] = np.abs(beta1 - beta2)
+                    phase_arr[each_sample] = ((beta1 * length1) - (beta2 * length2)) / np.pi
 
         pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(
-            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: '+ str(round(np.std(phase_arr),3))+' pi radians', pya.MessageBox.Ok)
+            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: ' + str(round(np.std(phase_arr), 3)) + ' pi radians', pya.MessageBox.Ok)
 
     else:
         pya.MessageBox.warning("Selection are not a waveguides",
                                "Select two waveguides you wish to measure.", pya.MessageBox.Ok)
 
-    pya.Application.instance().main_window().redraw()    
+    pya.Application.instance().main_window().redraw()
 
 def waveguide_heal():
     print("waveguide_heal")
