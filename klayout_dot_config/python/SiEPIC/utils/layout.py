@@ -26,7 +26,191 @@ from functools import reduce
 from .sampling import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
+'''
+Create a waveguide, in a specific technology
+inputs
+- cell: into which Cell we add the waveguide
+- dpath: DPath type
+- waveguide_type: a name from Waveguides.XML
+    can be a <compound_waveguide>
+    or a primitive waveguide type containing <component> info
+output
+- compound waveguide, or regular waveguide
+'''
+def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
 
+    if debug:
+        print ('SiEPIC.utils.layout.layout_waveguide4: ' )
+        print (' - waveguide_type: %s' % (waveguide_type) )
+
+    # Load the technology and all waveguide types
+    from SiEPIC.utils import load_Waveguides_by_Tech
+    layout = cell.layout()
+    technology_name = layout.technology_name
+    waveguide_types = load_Waveguides_by_Tech(technology_name)   
+    if debug:
+        print (' - technology_name: %s' % (technology_name) )
+        print (' - waveguide_types: %s' % (waveguide_types) )
+
+    # Load parameters for the chosen waveguide type
+    params = [t for t in waveguide_types if t['name'] == waveguide_type]
+    if type(params) == type([]) and len(params)>0:
+        params = params[0]
+    else:
+        print('error: waveguide type not found in PDK waveguides')
+        raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
+
+    # compound waveguide types:
+    if 'compound_waveguide' in params:
+        # find the singlemode and multimode waveguides:
+        if 'singlemode' in params['compound_waveguide']:
+            singlemode = params['compound_waveguide']['singlemode']
+        else:
+            raise Exception('error: waveguide type (%s) does not have singlemode defined' % waveguide_type)
+        if 'multimode' in params['compound_waveguide']:
+            multimode = params['compound_waveguide']['multimode']
+        else:
+            raise Exception('error: waveguide type (%s) does not have multimode defined' % waveguide_type)
+        params_singlemode = [t for t in waveguide_types if t['name'] == singlemode]
+        params_multimode = [t for t in waveguide_types if t['name'] == multimode]
+        if type(params_singlemode) == type([]) and len(params_singlemode)>0:
+            params_singlemode = params_singlemode[0]
+        else:
+            raise Exception('error: waveguide type (%s) not found in PDK waveguides' % singlemode)
+        if type(params_multimode) == type([]) and len(params_multimode)>0:
+            params_multimode = params_multimode[0]
+        else:
+            raise Exception('error: waveguide type (%s) not found in PDK waveguides' % multimode)
+        
+        if 'taper_library' in params['compound_waveguide'] and 'taper_cell' in params['compound_waveguide']:
+            taper = layout.create_cell(params['compound_waveguide']['taper_cell'], params['compound_waveguide']['taper_library'])
+            if not taper:
+                raise Exception ('Cannot import cell %s : %s' % (params['compound_waveguide']['taper_cell'], params['compound_waveguide']['taper_library']))
+        else:
+            raise Exception('error: waveguide type (%s) does not have taper cell and library defined' % waveguide_type)
+        from pya import Trans, CellInstArray
+        t = Trans(Trans.R0, 0, 0)
+        inst_taper = cell.insert(CellInstArray(taper.cell_index(), t))
+        
+        layout_waveguide3(cell, dpath, params_singlemode, debug=True)
+
+    else:
+        # primitive waveguide type
+        layout_waveguide3(cell, dpath, params, debug=True)
+
+'''
+Create a waveguide, in a specific technology
+inputs
+- cell: into which Cell we add the waveguide
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, layout, cell = get_layout_variables()
+- dpath: DPath type
+- params, obtained from load_Waveguides_by_Tech and Waveguides.XML
+    must be a primitive waveguide type containing <component> info
+output:
+- waveguide
+- DevRec, PinRec
+'''
+def layout_waveguide3(cell, dpath, params, debug=True):
+
+    if debug:
+        print ('SiEPIC.utils.layout.layout_waveguide3: ' )
+
+    layout = cell.layout()
+    dbu = layout.dbu
+    technology_name = layout.technology_name
+    from SiEPIC.utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(technology_name)
+
+    from SiEPIC.extend import to_itype
+    wg_width = to_itype(params['width'],dbu)
+    radius = to_itype(params['radius'],dbu)
+    model = params['model']
+    cellName = 'Waveguide2'
+    CML = params['CML']
+    
+    if debug:
+        print (' - waveguide params: %s' % (params) )
+
+    if 'compound_waveguide' in params:    
+        print('error: this function cannot handle compound waveguides')
+        raise Exception('error: this function cannot handle compound waveguides (%s)' % waveguide_type)
+
+    # get the path and clean it up
+    dpath = dpath.to_itype(dbu)
+    dpath.unique_points()
+    pts = dpath.get_points()
+    
+    # draw the waveguide
+    waveguide_length = layout_waveguide2(TECHNOLOGY, layout, cell, [wg['layer'] for wg in params['component']], [wg['width'] for wg in params['component']], [wg['offset'] for wg in params['component']], pts, radius, params['adiabatic'], params['bezier'])
+
+    # Draw the marking layers
+    from SiEPIC.utils import angle_vector
+    LayerPinRecN = layout.layer(TECHNOLOGY['PinRec'])
+
+    from pya import Trans, Text, Path, Point   
+    t1 = Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
+    cell.shapes(LayerPinRecN).insert(Path([Point(-10, 0), Point(10, 0)], wg_width).transformed(t1))
+    cell.shapes(LayerPinRecN).insert(Text("opt1", t1, 0.3/dbu, -1))
+    
+    t = Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
+    cell.shapes(LayerPinRecN).insert(Path([Point(-10, 0), Point(10, 0)], wg_width).transformed(t))
+    cell.shapes(LayerPinRecN).insert(Text("opt2", t, 0.3/dbu, -1))
+	
+    LayerDevRecN = layout.layer(TECHNOLOGY['DevRec'])
+    
+    # Compact model information
+    angle_vec = angle_vector(pts[0]-pts[1])/90
+    halign = 0 # left
+    angle=0
+    if angle_vec == 0: # horizontal
+      halign = 2 # right
+      angle=0
+      dpt = Point(0, 0.2*wg_width)
+    if angle_vec == 2: # horizontal
+      halign = 0 # left
+      angle = 0
+      dpt=Point(0, 0.2*wg_width)
+    if angle_vec == 1: # vertical
+      halign = 2 # right
+      angle = 1
+      dpt=Point(0.2*wg_width,0)
+    if angle_vec == -1: # vertical
+      halign = 0 # left
+      angle = 1
+      dpt=Point(0.2*wg_width,0)
+    pt2=pts[0] + dpt
+    pt3=pts[0] - dpt
+    pt4=pts[0] - 2*dpt
+    pt5=pts[0] + 2*dpt
+
+    t = Trans(angle, False, pt3) 
+    text = Text ('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
+    text.halign=halign
+    shape = cell.shapes(LayerDevRecN).insert(text)
+    t = Trans(angle, False, pt2)
+    text = Text ('Component=%s' % model, t, 0.1*wg_width, -1)
+    text.halign=halign
+    shape = cell.shapes(LayerDevRecN).insert(text)
+    t = Trans(angle, False, pt5)
+    text = Text ('cellName=%s' % cellName, t, 0.1*wg_width, -1)
+    text.halign=halign
+    shape = cell.shapes(LayerDevRecN).insert(text)
+    t = Trans(angle, False, pts[0])
+    pts_txt = str([ [round(p.to_dtype(dbu).x,3), round(p.to_dtype(dbu).y,3)] for p in pts ]).replace(', ',',')
+    text = Text ( \
+      'Spice_param:wg_length=%.3g wg_width=%.3g points="%s" radius=%.3g' %\
+        (waveguide_length*1e-6, wg_width*1e-6, pts_txt,radius*1e-6 ), t, 0.1*wg_width, -1  )
+    text.halign=halign
+    shape = cell.shapes(LayerDevRecN).insert(text)
+    t = Trans(angle, False, pt4)
+    text = Text ( \
+      'Length=%.3g' %(waveguide_length*1e-6), t, 0.5*wg_width, -1  )
+    text.halign=halign
+    shape = cell.shapes(LayerDevRecN).insert(text)
+    
+
+    return
 
 '''
 Create a waveguide, in a specific technology
