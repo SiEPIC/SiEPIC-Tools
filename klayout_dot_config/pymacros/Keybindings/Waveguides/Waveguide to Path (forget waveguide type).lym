@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Path to Waveguide, GUI</description>
+ <description>Waveguide to Path (forget waveguide type)</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -8,16 +8,16 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
- <shortcut>2</shortcut>
+ <shortcut>Shift+2</shortcut>
  <show-in-menu>true</show-in-menu>
  <group-name/>
- <menu-path>siepic_menu.waveguides.begin</menu-path>
+ <menu-path>siepic_menu.waveguides.end</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function
-# SiEPIC Path to Waveguide
+# SiEPIC Waveguide to Path
 import pya
 from SiEPIC import scripts
-scripts.path_to_waveguide2(GUI = True, select_waveguides=True)
+scripts.waveguide_to_path(save_waveguide_type=False)
 </text>
 </klayout-macro>

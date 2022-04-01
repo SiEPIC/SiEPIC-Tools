@@ -187,3 +187,25 @@ def registerKeyBindings():
         pya.Application.instance().set_config('edit-mode', 'true')
         pya.MessageBox.warning(
             "Restart", "Please restart KLayout. SiEPIC settings have been applied.", pya.MessageBox.Ok)
+
+
+'''
+When loading a layout with PCells, and they get recalculated, often this results
+in orphan PCell variants.
+e.g., Waveguide cell introduced in 0.3.90
+Solution is to trigger the cleanup function
+https://www.klayout.de/forum/discussion/1185/setting-properties-for-pcells
+https://www.klayout.de/forum/discussion/1733/changing-layoutview-title
+'''
+def register_on_view_created(index):
+    def on_file_open(view):
+        print('*** SiEPIC.setup: automatic layout.cleanup() after loading.')
+        ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
+        ly.cleanup()            
+    view = pya.Application.instance().main_window().view(index)
+    view.on_file_open = lambda __view=view: on_file_open(__view)
+    on_file_open(view)    
+def register_auto_cleanup():
+    main_window = pya.MainWindow.instance()
+    main_window.on_view_created(register_on_view_created)
+

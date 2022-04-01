@@ -97,8 +97,8 @@ definitions:
 ################################################################################
 '''
 def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = False, FDTD_settings = None):
-  fdtd_extra_ = True
-  fdtd_addpin_ = True
+  fdtd_extra_ = False
+  fdtd_addpin_ = False
   fdtd_part1_only = False
   if verbose:
     print('SiEPIC.lumerical.fdtd: generate_component_sparam()')

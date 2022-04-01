@@ -96,6 +96,7 @@ else:
 
 SiEPIC.setup.registerMenuItems()
 SiEPIC.setup.registerKeyBindings()
+SiEPIC.setup.register_auto_cleanup()
 pya.Application.instance().main_window().message('SiEPIC - Initialization complete.',5000)
 </text>
 </klayout-macro>

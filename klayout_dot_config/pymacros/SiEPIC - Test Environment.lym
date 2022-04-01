@@ -69,7 +69,7 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 # find pins from a component
-if 1:
+if 0:
     from SiEPIC.utils import get_layout_variables, load_Waveguides_by_Tech
     TECHNOLOGY, lv, layout, cell = get_layout_variables()
     taper = layout.create_cell('taper_si_simm_1550','SiEPIC_AMF_Beta')

@@ -6,6 +6,7 @@
 
 connect_pins_with_waveguide
 path_to_waveguide
+path_to_waveguide2
 roundpath_to_waveguide
 waveguide_to_path
 waveguide_length
@@ -485,6 +486,211 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # end of def connect_pins_with_waveguide
     
 
+
+def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
+#    import time
+#    time0 = time.perf_counter()
+#    verbose=True
+
+    from . import _globals
+    from .utils import select_paths, get_layout_variables
+    TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
+    if not cell:
+        cell = top_cell
+
+    if verbose:
+        print("SiEPIC.scripts path_to_waveguide2(); start")
+#        print("SiEPIC.scripts path_to_waveguide(); start; time = %s" % (time.perf_counter()-time0))
+
+    if lv_commit:
+        lv.transaction("Path to Waveguide2")
+
+    if params is None:
+        params = _globals.WG_GUI.get_parameters(GUI)
+    if params is None:
+        if verbose:
+            print("SiEPIC.scripts path_to_waveguide2(): No parameters returned (user pressed Cancel); returning")
+        return
+    if verbose:
+        print("SiEPIC.scripts path_to_waveguide2(): params = %s" % params)
+    selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell, verbose=verbose)
+    if verbose:
+        print("SiEPIC.scripts path_to_waveguide2(): selected_paths = %s" % (selected_paths))
+#        print("SiEPIC.scripts path_to_waveguide(): selected_paths = %s; time = %s" % (selected_paths, time.perf_counter()-time0))
+    selection = []
+
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
+    warning.setDefaultButton(pya.QMessageBox.Yes)
+    if not selected_paths:
+        # check if the Combine Mode in the tool bar is accidentally set to something that converts
+        #  Paths to Polygons
+        mw = pya.Application.instance().main_window()
+        if mw.instance().get_config("combine-mode") != 'add':
+            warning.setText(
+                "Error: No 'Waveguide' Paths found - Cannot make waveguides.")
+            warning.setInformativeText("Path objects on layer 'Waveguide' are required to create a waveguide pcell. \nAlternatively, object selection can be used to convert selected Paths from any layer.  If nothing is selected,  all 'Waveguide' Paths in the present cell will be converted to waveguides.\nFinally, the Toolbar Combine Mode is not set to Add, so possibly a Path was added and converted to a Polygon; do not use the modes Merge, Erase, etc, to create the Path for the waveguide.")
+            pya.QMessageBox_StandardButton(warning.exec_())
+            return
+        else:
+            warning.setText(
+                "Error: No 'Waveguide' Paths found - Cannot make waveguides.")
+            warning.setInformativeText("Path objects on layer 'Waveguide' are required to create a waveguide pcell. \nAlternatively, object selection can be used to convert selected paths from any layer.  If nothing is selected,  all 'Waveguide' Paths in the present cell will be converted to waveguides.")
+            pya.QMessageBox_StandardButton(warning.exec_())
+            return
+            
+    # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
+    if snap:
+        p=cell.find_pins()            
+
+    for obj in selected_paths:
+        path = obj.shape.path
+        path.unique_points()
+        if not path.is_manhattan_endsegments():
+            warning.setText(
+                "Warning: Waveguide segments (first, last) are not Manhattan (vertical, horizontal).")
+            warning.setInformativeText("Do you want to Proceed?")
+            if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+                return
+        if not path.is_manhattan():
+            warning.setText(
+                "Error: Waveguide segments are not Manhattan (vertical, horizontal). This is not supported in SiEPIC-Tools.")
+            warning.setInformativeText("Do you want to Proceed?")
+            if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+                return
+        if not path.radius_check(params['radius'] / TECHNOLOGY['dbu']):
+            warning.setText(
+                "Warning: One of the waveguide segments has insufficient length to accommodate the desired bend radius.")
+            warning.setInformativeText("Do you want to Proceed?")
+            if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
+                return
+
+        if snap:
+            path.snap(p)
+#        if verbose:
+#          print("SiEPIC.scripts path_to_waveguide(); path.snap(...); time = %s" % (time.perf_counter()-time0))
+
+
+        # get path info
+        Dpath = path.to_dtype(TECHNOLOGY['dbu'])
+        
+        # Get user property #1: the waveguide type        
+        prop1 = obj.shape.property(1)
+        if prop1:
+            print(' - user property: waveguide_type - %s' % (prop1) )
+            waveguide_type = prop1
+        else:
+            waveguide_type = params['waveguide_type']
+        '''
+        instantiate Waveguide using "waveguide_type" approach
+        '''
+        pcell = 0
+        try:
+            pcell = ly.create_cell("Waveguide", TECHNOLOGY['technology_name'], {"path": Dpath,
+                                                                                "waveguide_type": waveguide_type})
+            if 'waveguide_type' not in pcell.pcell_parameters_by_name():
+                pcell.delete()
+                pcell=0
+                print("SiEPIC.scripts.path_to_waveguide2(): legacy waveguide PCell does not have 'waveguide_type' parameter")
+            else:
+                print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
+                  (TECHNOLOGY['technology_name'], pcell))   
+        except:
+            pass
+        if not pcell:
+            try:
+                for lib_name in TECHNOLOGY['libraries']:
+                    pcell = ly.create_cell("Waveguide", lib_name,{"path": Dpath,
+                                                                   "waveguide_type": waveguide_type})
+                    if 'waveguide_type' not in pcell.pcell_parameters_by_name():
+                        pcell.delete()
+                        pcell=0
+                        print("SiEPIC.scripts.path_to_waveguide2(): legacy waveguide PCell does not have 'waveguide_type' parameter")
+                    else:
+                        print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
+                          (lib_name, pcell))   
+            except:
+                pass
+
+        '''
+        instantiate Waveguide using "params" approach
+        '''
+        if not pcell:
+            if ('DevRec' not in [wg['layer'] for wg in params['wgs']]):
+                width_devrec = max([wg['width'] for wg in params['wgs']]) + _globals.WG_DEVREC_SPACE * 2
+                params['wgs'].append({'width': width_devrec, 'layer': 'DevRec', 'offset': 0.0})
+            
+            try:
+                pcell = ly.create_cell("Waveguide", TECHNOLOGY['technology_name'], {"path": Dpath,
+                                                                                "radius": params['radius'],
+                                                                                "width": params['width'],
+                                                                                "adiab": params['adiabatic'],
+                                                                                "bezier": params['bezier'],
+                                                                                "layers": [wg['layer'] for wg in params['wgs']],
+                                                                                "widths": [wg['width'] for wg in params['wgs']],
+                                                                                "offsets": [wg['offset'] for wg in params['wgs']],
+                                                                                "CML": params['CML'],
+                                                                                "model": params['model']})
+                print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" % (TECHNOLOGY['technology_name'], pcell))   
+#            print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
+#                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
+            except:
+                pass
+        if not pcell:
+            try:
+                for lib_name in TECHNOLOGY['libraries']:
+                    pcell = ly.create_cell("Waveguide", lib_name, { "path": Dpath,
+                                                                    "radius": params['radius'],
+                                                                    "width": params['width'],
+                                                                    "adiab": params['adiabatic'],
+                                                                    "bezier": params['bezier'],
+                                                                    "layers": [wg['layer'] for wg in params['wgs']],
+                                                                    "widths": [wg['width'] for wg in params['wgs']],
+                                                                    "offsets": [wg['offset'] for wg in params['wgs']],
+                                                                    "CML": params['CML'],
+                                                                    "model": params['model']})
+                    print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" % (lib_name, pcell))   
+                    if pcell:
+                        break
+#                print("SiEPIC.scripts.path_to_waveguide(): Waveguide from %s, %s; time = %s" %
+#                  (TECHNOLOGY['technology_name'], pcell, time.perf_counter()-time0))   
+            except:
+                pass
+        if not pcell:
+            try:
+                pcell = ly.create_cell("Waveguide", "SiEPIC General", {"path": Dpath,
+                                                                       "radius": params['radius'],
+                                                                       "width": params['width'],
+                                                                       "adiab": params['adiabatic'],
+                                                                       "bezier": params['bezier'],
+                                                                       "layers": [wg['layer'] for wg in params['wgs']],
+                                                                       "widths": [wg['width'] for wg in params['wgs']],
+                                                                       "offsets": [wg['offset'] for wg in params['wgs']]})
+                print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from SiEPIC General, %s" % pcell)
+            except:
+                pass
+        if not pcell:
+            raise Exception(
+                "'Waveguide' is not available. Check that the library was loaded successfully.")
+        selection.append(pya.ObjectInstPath())
+        selection[-1].top = obj.top
+        selection[-1].append_path(pya.InstElement.new(cell.insert(
+            pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))))
+
+        obj.shape.delete()
+
+    lv.clear_object_selection()
+    if select_waveguides:
+        lv.object_selection = selection
+    if lv_commit:
+        lv.commit()
+    pya.Application.instance().main_window().redraw()  
+    ly.cleanup([])  
+    
+    if verbose:
+        print("SiEPIC.scripts path_to_waveguide2(); done" )
+
+
 def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=False, verbose=False, select_waveguides=False):
 #    import time
 #    time0 = time.perf_counter()
@@ -788,8 +994,10 @@ def roundpath_to_waveguide(verbose=False):
         v = pya.MessageBox.warning(
             "No ROUND_PATH selected", "No ROUND_PATH selected.\nPlease select a ROUND_PATH. \nIt will get converted to a path.", pya.MessageBox.Ok)
 
-
-def waveguide_to_path(cell=None):
+'''
+Find all Waveguide cells, extract the path and add it to the layout, delete the Waveguide
+'''
+def waveguide_to_path(cell=None, save_waveguide_type=True):
     from . import _globals
     from .utils import select_waveguides, get_layout_variables
 
@@ -798,7 +1006,8 @@ def waveguide_to_path(cell=None):
     else:
         TECHNOLOGY, lv, _, _ = get_layout_variables()
         ly = cell.layout()
-
+    dbu = TECHNOLOGY['dbu']
+    
     lv.transaction("waveguide to path")
 
     # record objects to delete:
@@ -818,7 +1027,7 @@ def waveguide_to_path(cell=None):
             # waveguide path and width from Waveguide PCell
             path1 = waveguide.cell.pcell_parameters_by_name()['path']
             path = pya.Path()
-            path.width = waveguide.cell.pcell_parameters_by_name()['width'] / TECHNOLOGY['dbu']
+            path.width = waveguide.cell.pcell_parameters_by_name()['width'] / dbu
             pts = []
             for pt in [pt1 for pt1 in (path1).each_point()]:
                 if type(pt) == pya.Point:
@@ -826,7 +1035,7 @@ def waveguide_to_path(cell=None):
                     pts.append(pya.Point())
                 else:
                     # for waveguide from path
-                    pts.append(pya.Point().from_dpoint(pt * (1 / TECHNOLOGY['dbu'])))
+                    pts.append(pya.Point().from_dpoint(pt * (1 / dbu )))
             path.points = pts
 
         selection.append(pya.ObjectInstPath())
@@ -834,11 +1043,17 @@ def waveguide_to_path(cell=None):
         # DPath.transformed requires DTrans. waveguide.trans is a Trans object
         if KLAYOUT_VERSION > 24:
             selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(
-                path.transformed(waveguide.trans.to_dtype(TECHNOLOGY['dbu'])))
+                path.transformed(waveguide.trans.to_dtype(dbu)))
         else:
             selection[-1].shape = cell.shapes(ly.layer(TECHNOLOGY['Waveguide'])).insert(
                 path.transformed(pya.Trans(waveguide.trans.disp.x, waveguide.trans.disp.y)))
 
+        # Store the waveguide_type information in the path's user property
+        # this method invalidates the shape, https://www.klayout.de/doc/code/class_Shape.html#method152
+        # so you can't use the object selection
+        if save_waveguide_type:
+            selection[-1].shape.set_property(1, waveguide.cell.pcell_parameters_by_name()['waveguide_type'])
+        
         selection[-1].top = obj.top
         selection[-1].cv_index = obj.cv_index
 
@@ -855,11 +1070,13 @@ def waveguide_to_path(cell=None):
     # others may still be selected):
     lv.clear_object_selection()
     # Select the newly added objects
-    lv.object_selection = selection
+    if not save_waveguide_type:
+        lv.object_selection = selection
     # Record a transaction, to enable "undo"
     lv.commit()
 
     pya.Application.instance().main_window().redraw()
+    ly.cleanup([])  
 
 def waveguide_length():
 
@@ -2134,8 +2351,12 @@ def layout_check(cell=None, verbose=False):
         # if the layout is flattened, we don't have an easy way to get the path
         # it could be done perhaps as a parameter (points)
         if c.basic_name == "Waveguide" and c.cell.is_pcell_variant():
-            Dpath = c.cell.pcell_parameters_by_name()['path']
-            radius = c.cell.pcell_parameters_by_name()['radius']
+            pcell_params = c.cell.pcell_parameters_by_name()
+            Dpath = pcell_params['path']
+            if 'radius' in pcell_params:
+                radius = pcell_params['radius']
+            else:
+                radius = 5
             if verbose:
                 print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius))
 

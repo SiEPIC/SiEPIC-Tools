@@ -98,8 +98,9 @@ pya.Layout.load_Waveguide_types = load_Waveguide_types
 
 def cell_character_replacement(self, forbidden_cell_characters = '=', replacement_cell_character = '_'):
     # scan through all cells
-    for i in range(0,self.cells()):
-        cell = self.cell(i)
+#    for i in range(0,self.cells()):
+#        cell = self.cell(i)
+    for cell in self.cells('*'):
         if True in [c in cell.name for c in forbidden_cell_characters]:
             oldname = cell.name
             for ch in forbidden_cell_characters:
