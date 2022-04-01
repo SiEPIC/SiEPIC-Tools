@@ -315,7 +315,10 @@ class WaveguideGUI():
         TECHNOLOGY, lv, ly, cell = get_layout_variables()
         tech_name = TECHNOLOGY['technology_name']
         self.window.findChild("configuration").clear()
-        self.waveguides = load_Waveguides_by_Tech(tech_name)
+        # keep only simple waveguides (not compound ones)
+        waveguide_types = load_Waveguides_by_Tech(tech_name)
+        waveguide_types_simple = [t for t in waveguide_types if not 'compound_waveguide' in t.keys()]
+        self.waveguides = waveguide_types_simple
         try:
             self.options = [waveguide['name'] for waveguide in self.waveguides]
         except:

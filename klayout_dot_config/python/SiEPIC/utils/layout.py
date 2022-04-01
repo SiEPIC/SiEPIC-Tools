@@ -36,16 +36,25 @@ inputs
     or a primitive waveguide type containing <component> info
 output
 - compound waveguide, or regular waveguide
+acknowledgements: Diedrik Vermeulen for the code to place the taper
 '''
 def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
 
+    
     if debug:
         print ('SiEPIC.utils.layout.layout_waveguide4: ' )
         print (' - waveguide_type: %s' % (waveguide_type) )
 
+    # get the path and clean it up
+    layout = cell.layout()
+    dbu = layout.dbu
+    dpath = dpath.to_itype(dbu)
+    dpath.unique_points()
+    pts = dpath.get_points()
+    dpts = dpath.get_dpoints()
+
     # Load the technology and all waveguide types
     from SiEPIC.utils import load_Waveguides_by_Tech
-    layout = cell.layout()
     technology_name = layout.technology_name
     waveguide_types = load_Waveguides_by_Tech(technology_name)   
     if debug:
@@ -81,7 +90,7 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
             params_multimode = params_multimode[0]
         else:
             raise Exception('error: waveguide type (%s) not found in PDK waveguides' % multimode)
-        
+        # find the taper
         if 'taper_library' in params['compound_waveguide'] and 'taper_cell' in params['compound_waveguide']:
             taper = layout.create_cell(params['compound_waveguide']['taper_cell'], params['compound_waveguide']['taper_library'])
             if not taper:
@@ -91,12 +100,78 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
         from pya import Trans, CellInstArray
         t = Trans(Trans.R0, 0, 0)
         inst_taper = cell.insert(CellInstArray(taper.cell_index(), t))
+
+        '''
+        find sections of waveguides that are smaller than (2 x radius + 2 x taper_length)
+         - break up the singlemode waveguide
+         - insert two tapers
+         - insert multimode
+        '''
+        import math
+        from SiEPIC.extend import to_itype
+        from pya import Point
+        radius = to_itype(params_singlemode['radius'],dbu)
+        taper_length = taper.find_pins()[0].center.distance(taper.find_pins()[1].center)
+        min_length = 2*radius + 2*taper_length
+        offset = radius
+        wg_sm_segment_pts = []
+        wg_last=0
+        for ii in range(1,len(dpts)):
+            start_point = dpts[ii-1]
+            end_point = dpts[ii]
+            distance_points = end_point.distance(start_point)
+            if distance_points < min_length:
+                # single mode segment, keep track
+                if ii==1:
+                    wg_sm_segment_pts.append(pts[ii-1])
+                wg_sm_segment_pts.append(pts[ii])
+                if ii==len(pts)-1:
+                    layout_waveguide3(cell, wg_sm_segment_pts, params_singlemode, debug=True)
+            else:
+                # insert two tapers and multimode waveguide
+                angle = math.atan2((end_point.y-start_point.y),(end_point.x-start_point.x))/math.pi*180
+                if ii==len(pts)-1:
+                    wg_last=offset
+                if round(angle)%360 == 270.0:
+                    t = Trans(Trans.R270, start_point.x, start_point.y-offset)
+                    t2 = Trans(Trans.R90, end_point.x, end_point.y+offset-wg_last)
+                    wg_start_pt = Point(start_point.x, start_point.y-offset-taper_length)
+                    wg_end_pt = Point(end_point.x, end_point.y+offset+taper_length-wg_last)
+                if round(angle)%360 == 90.0:
+                    t = Trans(Trans.R90, start_point.x, start_point.y+offset)
+                    t2 = Trans(Trans.R270, end_point.x, end_point.y-offset+wg_last)
+                    wg_start_pt = Point(start_point.x, start_point.y+offset+taper_length)
+                    wg_end_pt = Point(end_point.x, end_point.y-offset-taper_length+wg_last)
+                if round(angle)%360 == 180.0:
+                    t = Trans(Trans.R180, start_point.x-offset, start_point.y)
+                    t2 = Trans(Trans.R0, end_point.x+offset-wg_last, end_point.y)
+                    wg_start_pt = Point(start_point.x-offset-taper_length, start_point.y)
+                    wg_end_pt = Point(end_point.x+offset+taper_length-wg_last, end_point.y)
+                if round(angle)%360 == 0.0:
+                    t = Trans(Trans.R0, start_point.x+offset, start_point.y)
+                    t2 = Trans(Trans.R180, end_point.x-offset+wg_last, end_point.y)
+                    wg_start_pt = Point(start_point.x+offset+taper_length, start_point.y)
+                    wg_end_pt = Point(end_point.x-offset-taper_length+wg_last, end_point.y)
+                inst_taper = cell.insert(CellInstArray(taper.cell_index(), t))
+                inst_taper = cell.insert(CellInstArray(taper.cell_index(), t2))
+                layout_waveguide3(cell, [wg_start_pt, wg_end_pt], params_multimode, debug=True)
+                # compound segment
+                if ii>1:
+                    wg_sm_segment_pts.append(pts[ii])
+                    wg_sm_segment_pts.append(t.disp.to_p())
+                    layout_waveguide3(cell, wg_sm_segment_pts, params_singlemode, debug=True)
+                    wg_sm_segment_pts = [t2.disp.to_p(), pts[ii]]
+                else:
+                    wg_sm_segment_pts = [t2.disp.to_p(), pts[ii]]
+                
         
-        layout_waveguide3(cell, dpath, params_singlemode, debug=True)
+        
+#        layout_waveguide3(cell, pts, params_singlemode, debug=True)
+#        layout_waveguide3(cell, pts[2:], params_multimode, debug=True)
 
     else:
         # primitive waveguide type
-        layout_waveguide3(cell, dpath, params, debug=True)
+        layout_waveguide3(cell, pts, params, debug=True)
 
 '''
 Create a waveguide, in a specific technology
@@ -104,14 +179,14 @@ inputs
 - cell: into which Cell we add the waveguide
     from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, layout, cell = get_layout_variables()
-- dpath: DPath type
+- pts
 - params, obtained from load_Waveguides_by_Tech and Waveguides.XML
     must be a primitive waveguide type containing <component> info
 output:
 - waveguide
 - DevRec, PinRec
 '''
-def layout_waveguide3(cell, dpath, params, debug=True):
+def layout_waveguide3(cell, pts, params, debug=True):
 
     if debug:
         print ('SiEPIC.utils.layout.layout_waveguide3: ' )
@@ -124,7 +199,7 @@ def layout_waveguide3(cell, dpath, params, debug=True):
 
     from SiEPIC.extend import to_itype
     wg_width = to_itype(params['width'],dbu)
-    radius = to_itype(params['radius'],dbu)
+    radius = float(params['radius'])
     model = params['model']
     cellName = 'Waveguide2'
     CML = params['CML']
@@ -135,11 +210,6 @@ def layout_waveguide3(cell, dpath, params, debug=True):
     if 'compound_waveguide' in params:    
         print('error: this function cannot handle compound waveguides')
         raise Exception('error: this function cannot handle compound waveguides (%s)' % waveguide_type)
-
-    # get the path and clean it up
-    dpath = dpath.to_itype(dbu)
-    dpath.unique_points()
-    pts = dpath.get_points()
     
     # draw the waveguide
     waveguide_length = layout_waveguide2(TECHNOLOGY, layout, cell, [wg['layer'] for wg in params['component']], [wg['width'] for wg in params['component']], [wg['offset'] for wg in params['component']], pts, radius, params['adiabatic'], params['bezier'])
