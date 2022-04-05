@@ -3191,6 +3191,7 @@ def resize_waveguide():
 Search and replace: cell_x with cell_y
 - load layout containing cell_y_name from cell_y_file or cell_y_library
 - replace all cell_x_name instances with cell_y
+useful for blackbox IP cell replacement
 '''
 def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True):
 
@@ -3204,11 +3205,14 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
 
     if cells_x == []:
         # raise Exception("No cell '%s' found in layout." % cell_x_name)
-        print (' - layout %s does not contain cell %s' % (cell_y_file, cell_x_name) )
+        print (' - replace_cell: layout does not contain cell %s' % (cell_x_name) )
         return
-    print(" - found cells to be replaced:")
     for cell_x in cells_x:
+        if cell_x == None:
+            print (' - replace_cell: layout does not contain cell %s' % (cell_x_name) )
+            return
         print("   - %s" % cell_x.name)
+    print(" - replace_cell: found cells to be replaced: %s"  % (cell_x_name))
 
     if cell_y_file:
         # Load cell_y_name:
