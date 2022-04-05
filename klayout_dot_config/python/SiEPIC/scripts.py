@@ -3189,21 +3189,18 @@ def resize_waveguide():
 
 '''
 Search and replace: cell_x with cell_y
-- load layout containing cell_y_name from cell_y_file
+- load layout containing cell_y_name from cell_y_file or cell_y_library
 - replace all cell_x_name instances with cell_y
 '''
-def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file, Exact = True):
+def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True):
 
-    # Load cell_y_name:
-    layout.read(cell_y_file)
-
+    # Find the cells that need replacement (cell_x)
     if Exact:
         # find cell name exactly matching cell_x_name
         cells_x = [layout.cell(cell_x_name)]
     else:
         # replacement for all cells that begin with the cell name, i.e., xxx* is matched
         cells_x = [cell for cell in layout.each_cell() if cell.name.find(cell_replace[i][0]) == 0]
-
 
     if cells_x == []:
         # raise Exception("No cell '%s' found in layout." % cell_x_name)
@@ -3213,12 +3210,18 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file, Exact = True):
     for cell_x in cells_x:
         print("   - %s" % cell_x.name)
 
-    # find cell name CELL_Y
-    cell_y = layout.cell(cell_y_name)
-    if cell_y == None:
-        raise Exception("No cell '%s' found in layout." % cell_y_name)
-    print(" - found cell_y: %s in layout %s." % (cell_y.name, cell_y_file))
-
+    if cell_y_file:
+        # Load cell_y_name:
+        layout.read(cell_y_file)
+        # find cell name CELL_Y
+        cell_y = layout.cell(cell_y_name)
+        if cell_y == None:
+            raise Exception("No cell '%s' found in layout %s." % (cell_y_name, cell_y_file))
+        print(" - found cell_y: %s in layout %s." % (cell_y.name, cell_y_file))
+    if cell_y_library:
+        cell_y = layout.create_cell(cell_y_name, cell_y_library)
+        if not cell_y:
+            raise Exception ('Cannot import cell %s from library %s' % (cell_y_name, cell_y_library))        
 
     # loop through all the cells that need to be replaced
     for cell_x in cells_x:
