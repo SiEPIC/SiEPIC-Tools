@@ -576,7 +576,7 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
         
         # Get user property #1: the waveguide type        
         prop1 = obj.shape.property(1)
-        if prop1:
+        if prop1 and GUI==False:
             print(' - user property: waveguide_type - %s' % (prop1) )
             waveguide_type = prop1
         else:
