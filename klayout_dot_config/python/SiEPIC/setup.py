@@ -201,7 +201,8 @@ def register_on_view_created(index):
     def on_file_open(view):
         print('*** SiEPIC.setup: automatic layout.cleanup() after loading.')
         ly = pya.Application.instance().main_window().current_view().active_cellview().layout()
-        ly.cleanup()            
+        if ly:
+            ly.cleanup()            
     view = pya.Application.instance().main_window().view(index)
     view.on_file_open = lambda __view=view: on_file_open(__view)
     on_file_open(view)    
