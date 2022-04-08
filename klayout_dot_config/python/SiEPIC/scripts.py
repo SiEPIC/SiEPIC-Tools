@@ -602,13 +602,14 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
                 for lib_name in TECHNOLOGY['libraries']:
                     pcell = ly.create_cell("Waveguide", lib_name,{"path": Dpath,
                                                                    "waveguide_type": waveguide_type})
-                    if 'waveguide_type' not in pcell.pcell_parameters_by_name():
-                        pcell.delete()
-                        pcell=0
-                        print("SiEPIC.scripts.path_to_waveguide2(): legacy waveguide PCell does not have 'waveguide_type' parameter")
-                    else:
-                        print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
-                          (lib_name, pcell))   
+                    if pcell:
+                        if 'waveguide_type' not in pcell.pcell_parameters_by_name():
+                            pcell.delete()
+                            pcell=0
+                            print("SiEPIC.scripts.path_to_waveguide2(): legacy waveguide PCell does not have 'waveguide_type' parameter")
+                        else:
+                            print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
+                              (lib_name, pcell))   
             except:
                 pass
 
@@ -1052,7 +1053,8 @@ def waveguide_to_path(cell=None, save_waveguide_type=True):
         # this method invalidates the shape, https://www.klayout.de/doc/code/class_Shape.html#method152
         # so you can't use the object selection
         if save_waveguide_type:
-            selection[-1].shape.set_property(1, waveguide.cell.pcell_parameters_by_name()['waveguide_type'])
+            if 'waveguide_type' in waveguide.cell.pcell_parameters_by_name():
+                selection[-1].shape.set_property(1, waveguide.cell.pcell_parameters_by_name()['waveguide_type'])
         
         selection[-1].top = obj.top
         selection[-1].cv_index = obj.cv_index

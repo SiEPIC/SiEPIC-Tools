@@ -192,6 +192,7 @@ inputs
 output:
 - waveguide
 - DevRec, PinRec
+by Lukas Chrostowski
 '''
 def layout_waveguide3(cell, pts, params, debug=True):
 
@@ -314,12 +315,18 @@ inputs
 Note: bezier parameters need to be simulated and optimized, and will depend on 
     wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
     most useful for TE 
+by Lukas Chrostowski
 '''
 def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier):
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from SiEPIC.extend import to_itype
     from pya import Path, Polygon, Trans
     dbu = layout.dbu
+    
+    if 'Errors' in TECHNOLOGY:
+        error_layer = layout.layer(TECHNOLOGY['Errors'])
+    else: 
+        error_layer = None
     
     width=widths[0]
     turn=0
@@ -335,20 +342,52 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             dis2 = pts[i].distance(pts[i+1])
             angle = angle_vector(pts[i]-pts[i-1])/90
             pt_radius = to_itype(radius,dbu)
+            error_seg1 = False
+            error_seg2 = False
             # determine the radius, based on how much space is available
             if len(pts)==3:
+                # simple corner, limit radius by the two edges
+                if dis1 < pt_radius:
+                    error_seg1 = True
+                if dis2 < pt_radius:
+                    error_seg2 = True
                 pt_radius = min (dis1, dis2, pt_radius)
             else:
                 if i==1:
-                    if dis1 <= pt_radius:
-                        pt_radius = dis1
-                    elif dis1 < 2*pt_radius:
-                        pt_radius = dis1/2
-                if i==len(pts)-2:
-                    if dis2 <= pt_radius:
-                        pt_radius = dis2
-                    elif dis2 < 2*pt_radius:
-                        pt_radius = dis2/2
+                    # first corner, limit radius by first edge, or 1/2 of second one
+                    if dis1 < pt_radius:
+                        error_seg1 = True
+                    if dis2/2 < pt_radius:
+                        error_seg2 = True
+                    pt_radius = min (dis1, dis2/2, pt_radius)
+                elif i==len(pts)-2:
+                    # last corner, limit radius by second edge, or 1/2 of first one
+                    if dis1/2 < pt_radius:
+                        error_seg1 = True
+                    if dis2 < pt_radius:
+                        error_seg2 = True
+                    pt_radius = min (dis1/2, dis2, pt_radius)
+                else:
+                    if dis1/2 < pt_radius:
+                        error_seg1 = True
+                    if dis2/2 < pt_radius:
+                        error_seg2 = True
+                    pt_radius = min (dis1/2, dis2/2, pt_radius)
+
+            if error_seg1 or error_seg2:
+                if not error_layer:
+                    # we have an error, but no Error layer
+                    print('- SiEPIC:layout_waveguide2: missing Error layer')
+                elif layer == layout.layer(TECHNOLOGY['Waveguide']): # and pt_radius < to_itype(radius,dbu):
+                    # add an error polygon to flag the incorrect bend        
+                    if error_seg1:
+                        error_pts = pya.Path([pts[i-1], pts[i]], width)
+                        cell.shapes(error_layer).insert(error_pts)
+                    if error_seg2:
+                        error_pts = pya.Path([pts[i], pts[i+1]], width)
+                        cell.shapes(error_layer).insert(error_pts)
+    #                error_pts = pya.Path([pts[i-1], pts[i], pts[i+1]], width)
+    #                cell.shapes(error_layer).insert(error_pts)
             # waveguide bends:
             if abs(turn)==1:
                 if(adiab):
