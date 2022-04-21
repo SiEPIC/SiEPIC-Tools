@@ -1257,12 +1257,18 @@ def svg_from_component(component, filename, verbose=False):
     polygons = component.get_polygons(include_pins=False)
 
     x, y = component.DevRec_polygon.bbox().center().x, component.DevRec_polygon.bbox().center().y
+    print('x,y: %s, %s' % (x,y))
     width, height = component.DevRec_polygon.bbox().width(), component.DevRec_polygon.bbox().height()
     scale = max(width, height) / 0.64
-    s1, s2 = (64, 64 * height / width) if width > height else (64 * width / height, 64)
 
-    polygons_vertices = [[[round((vertex.x - x) * 100. / scale + s1 / 2, 2), round((y - vertex.y) * 100. / scale + s2 / 2, 2)]
+    # These values are trial and error guesses, but they don't always work well
+    s1, s2 = (64, 64 * height / width) if width > height else (64 * width / height, 64)
+    x1, y1 = 5, 3
+
+    polygons_vertices = [[[round((vertex.x - x) * 100. / scale + s1 / x1, 2), round((y - vertex.y) * 100. / scale + s2 / y1, 2)]
                           for vertex in p.each_point()] for p in [p.to_simple_polygon() for p in polygons]]
+    for p in polygons_vertices:
+        print(p)
 
     
     try:  # not sure why the first time it gives an error (Windows 8.1 lukas VM), Mustafa: svgwrite is not a module available in KL windows python
