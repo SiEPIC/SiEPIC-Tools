@@ -314,7 +314,6 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
     import fnmatch
 
     paths = []
-    debug = True
 
     from .._globals import KLAYOUT_VERSION
 
@@ -374,8 +373,9 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
                 except:
                     pass
         for waveguide in waveguides:
-            if not isinstance(waveguide['component'], list):
-                waveguide['component'] = [waveguide['component']]
+            if 'component' in waveguide.keys():
+                if not isinstance(waveguide['component'], list):
+                    waveguide['component'] = [waveguide['component']]
             if not 'bezier' in waveguide.keys():
                 waveguide['adiabatic'] = False
                 waveguide['bezier'] = ''
@@ -388,7 +388,8 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
     if not(waveguides):
         print('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and WAVEGUIDES.xml file' % (tech_name, tech_name) )
     
-    print('- done: load_Waveguides_by_Tech.  Technology: %s' %(tech_name) )
+    if debug:
+        print('- done: load_Waveguides_by_Tech.  Technology: %s' %(tech_name) )
     return waveguides if waveguides else None
 
 '''

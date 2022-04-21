@@ -646,8 +646,7 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], matlab_data
     try:
         import pathlib
         opics_script_path = pathlib.Path(__file__).parent.absolute()/"opics_netlist_sim.py"
-
-#        os.system(f'python {opics_script_path} {filename} & pause')
+        os.system(f'python {opics_script_path} {filename} & pause')
     except:
         print('SiEPIC.lumerical.OPICS: circuit_simulation: error')
         pass

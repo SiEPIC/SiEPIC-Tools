@@ -315,7 +315,13 @@ class WaveguideGUI():
         TECHNOLOGY, lv, ly, cell = get_layout_variables()
         tech_name = TECHNOLOGY['technology_name']
         self.window.findChild("configuration").clear()
-        self.waveguides = load_Waveguides_by_Tech(tech_name)
+        waveguide_types = load_Waveguides_by_Tech(tech_name)
+        self.waveguides = waveguide_types
+        print ('SiEPIC.core: tech %s, waveguide_types: %s' % (tech_name, waveguide_types) )
+        if 0:
+            # keep only simple waveguides (not compound ones)
+            waveguide_types_simple = [t for t in waveguide_types if not 'compound_waveguide' in t.keys()]
+            self.waveguides = waveguide_types_simple
         try:
             self.options = [waveguide['name'] for waveguide in self.waveguides]
         except:
@@ -332,10 +338,26 @@ class WaveguideGUI():
         self.window.close()
 
     def config_changed(self, val):
-        options = [t for t in self.waveguides if t['name'] ==
-                   self.window.findChild('configuration').currentText]
-        if options:
-            waveguide = options[0]
+        waveguide_type = self.window.findChild('configuration').currentText
+        params = [t for t in self.waveguides if t['name'] == waveguide_type]
+        if not params:
+            raise Exception("Waveguides '%s' not found. \n(Error in SiEPIC.core.WaveguideGUI.update)" % (waveguide_type) )
+        params = params[0]
+        if 'compound_waveguide' in params.keys():
+            # Find the single mode waveguide, and put that in the text fields
+            if 'singlemode' in params['compound_waveguide']:
+                singlemode = params['compound_waveguide']['singlemode']
+                from .utils import get_layout_variables, load_Waveguides_by_Tech
+                TECHNOLOGY, lv, ly, cell = get_layout_variables()
+                tech_name = TECHNOLOGY['technology_name']
+                waveguide_types = load_Waveguides_by_Tech(tech_name)
+                waveguide = [t for t in waveguide_types if t['name'] == singlemode][0]
+            else:
+                raise Exception('error: waveguide type (%s) does not have singlemode defined' % waveguide_type)            
+        else:
+            # regular waveguide
+            waveguide = params
+        if waveguide:
             if 'width' in waveguide:
                 self.window.findChild('width').text = waveguide['width']
             elif 'wg_width' in waveguide:
@@ -385,18 +407,27 @@ class WaveguideGUI():
                   'bezier': 0 if bezier=='' else float(bezier),
                   'wgs': []}
 
+        waveguide_type = self.window.findChild('configuration').currentText
         if not self.window.findChild('configuration').currentText == '':
-            waveguide = [wg for wg in self.waveguides if wg['name'] ==
-                         self.window.findChild('configuration').currentText][0]
-            for component in waveguide['component']:
-                params['wgs'].append({'layer': component['layer'], 'width': float(
-                    component['width']), 'offset': float(component['offset'])})
-                w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
-                # enable 2 new parameters: CML and model to support multiple WG models
-                if 'CML' in waveguide:
-                    params['CML'] = waveguide['CML']
-                if 'model' in waveguide:
-                    params['model'] = waveguide['model']
+            waveguide = [wg for wg in self.waveguides if wg['name'] == waveguide_type][0]
+            params['waveguide_type'] = self.window.findChild('configuration').currentText
+
+            if 'component' in waveguide.keys():
+                for component in waveguide['component']:
+                    params['wgs'].append({
+                        'layer': component['layer'], 
+                        'width': float(component['width']), 
+                        'offset': float(component['offset'])})
+#                    w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
+                    # parameters: CML and model to support multiple WG models
+                    if 'CML' in waveguide:
+                        params['CML'] = waveguide['CML']
+                    else:
+                        params['CML'] = ''
+                    if 'model' in waveguide:
+                        params['model'] = waveguide['model']
+                    else:
+                        params['model'] = ''
             return params
         else:
             return None
