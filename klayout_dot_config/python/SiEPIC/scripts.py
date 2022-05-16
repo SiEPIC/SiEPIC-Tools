@@ -82,7 +82,7 @@ def pointlist_to_turtle(pointlist):
   #  return pointlist
           
 
-def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, error_min_bend_radius=True):
+def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True):
     '''
     Create a Path connecting instanceA:pinA to instanceB:pinB
         where instance = pya.Instance; pin = string, e.g. 'pin1'
@@ -300,8 +300,14 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     points_fromB = [cpinB.center] # last    point B
 
     # if no turtles are specified, assume a forward movement to be the bend radius
-    radius_um = float(waveguide['radius'])
-    radius = to_itype(waveguide['radius'],dbu)
+    # if user hasn't specified radius, load from XML
+    if r is None:
+        radius_um = float(waveguide['radius'])
+        radius = to_itype(waveguide['radius'],dbu)
+    else:
+        radius_um = r
+        radius = to_itype(radius_um,dbu)
+    
     if turtle_A == None:
         turtle_A = [radius_um]
     if turtle_B == None:
