@@ -266,16 +266,19 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     TECHNOLOGY = get_technology_by_name(ly.technology().name)
     technology_name = TECHNOLOGY['technology_name']
     
-    # Waveguide type:
+    # Waveguide type:  
+    # Backwards compatible with Waveguides that don't use "waveguide_types"
     if not(waveguide):
         waveguides = ly.load_Waveguide_types()
         if verbose:
-            print('Time elapsed, waveguide types: %s' % (time() - t))    
+            print('Time elapsed, to load waveguide types: %s' % (time() - t))    
             print(waveguides)
-        if waveguide==[] or not(waveguide_type):
+        if not(waveguide_type):
             waveguide = waveguides[0]
         if waveguide_type:
             waveguide1 = [w for w in waveguides if w['name']==waveguide_type]
+            if verbose:
+                print('matching waveguide types: %s' % waveguide1)
             if type(waveguide1) == type([]) and len(waveguide1)>0:
                 waveguide = waveguide1[0]
             else:
@@ -467,7 +470,9 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             pass
     
     # generate the Waveguide PCell, and instantiate
-    wg_pcell = ly.create_cell("Waveguide", technology_name, {"path": path,
+    # Backwards compatible with Waveguides that don't use "waveguide_types"
+    wg_pcell = ly.create_cell("Waveguide", technology_name, {"waveguide_type":waveguide_type,
+                                                             "path": path,
                                                              "radius": radius_um,
                                                              "width": width_um,
                                                              "wg_width": width_um,
@@ -478,6 +483,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                                                              "offsets": [wg['offset'] for wg in waveguide['component']],
                                                              "CML": waveguide['CML'],
                                                              "model": waveguide['model']})
+    
     if wg_pcell==None:
         raise Exception("problem! cannot create Waveguide PCell from library: %s" % technology_name)
     inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
