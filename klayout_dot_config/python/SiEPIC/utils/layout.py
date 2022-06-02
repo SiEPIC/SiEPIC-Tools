@@ -266,7 +266,7 @@ def layout_waveguide3(cell, pts, params, debug=True):
       dpt=Point(0.2*wg_width,0)
     pt2=pts[0] + dpt
     pt3=pts[0] - dpt
-    pt4=pts[0] - 2*dpt
+    pt4=pts[0] - 6*dpt
     pt5=pts[0] + 2*dpt
 
     t = Trans(angle, False, pt3) 
@@ -284,13 +284,13 @@ def layout_waveguide3(cell, pts, params, debug=True):
     t = Trans(angle, False, pts[0])
     pts_txt = str([ [round(p.to_dtype(dbu).x,3), round(p.to_dtype(dbu).y,3)] for p in pts ]).replace(', ',',')
     text = Text ( \
-      'Spice_param:wg_length=%.3g wg_width=%.3g points="%s" radius=%.3g' %\
-        (waveguide_length*1e-6, wg_width*1e-6, pts_txt,radius*1e-6 ), t, 0.1*wg_width, -1  )
+      'Spice_param:wg_length=%.9f wg_width=%.3g points="%s" radius=%.3g' %\
+        (waveguide_length*1e-6, wg_width*1e-9, pts_txt,radius*1e-6 ), t, 0.1*wg_width, -1  )
     text.halign=halign
     shape = cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt4)
     text = Text ( \
-      'Length=%.3g' %(waveguide_length*1e-6), t, 0.5*wg_width, -1  )
+      'Length=%.3f (microns)' %(waveguide_length), t, 0.5*wg_width, -1  )
     text.halign=halign
     shape = cell.shapes(LayerDevRecN).insert(text)
     
@@ -917,7 +917,7 @@ def layout_connect_ports(cell, layer, port_from, port_to):
 
 
 
-def make_pin(cell, name, center, w, layer, direction):
+def make_pin(cell, name, center, w, layer, direction, debug=False):
 
     '''
     Makes a pin that SiEPIC-Tools will recognize
@@ -941,18 +941,22 @@ def make_pin(cell, name, center, w, layer, direction):
     dbu = cell.layout().dbu
     if type(w)==type(float()):
         w = to_itype(w,dbu)
-        print('SiEPIC.utils.layout.make_pin: w converted to %s' %w )
+        if debug:
+            print('SiEPIC.utils.layout.make_pin: w converted to %s' %w )
     else:
-        print('SiEPIC.utils.layout.make_pin: w %s' %w )
+        if debug:
+            print('SiEPIC.utils.layout.make_pin: w %s' %w )
 #    print(type(center[0]))
     if type(center) == type(Point()) or type(center) == type(DPoint()):
         center = [center.x, center.y]
     if type(center[0])==type(float()) or type(center[0])==type(numpy.float64()):
         center[0] = to_itype(center[0],dbu)
         center[1] = to_itype(center[1],dbu)
-        print('SiEPIC.utils.layout.make_pin: center converted to %s' % (center)  )
+        if debug:
+            print('SiEPIC.utils.layout.make_pin: center converted to %s' % (center)  )
     else:
-        print('SiEPIC.utils.layout.make_pin: center %s' % (center)  )
+        if debug:
+            print('SiEPIC.utils.layout.make_pin: center %s' % (center)  )
 
     from SiEPIC._globals import PIN_LENGTH as pin_length
 
@@ -964,7 +968,7 @@ def make_pin(cell, name, center, w, layer, direction):
     t = pya.Trans(pya.Trans.R0, center[0],center[1])
     text = pya.Text (name, t)
     shape = cell.shapes(layer).insert(text)
-    shape.text_dsize = float(w*dbu)
+    shape.text_dsize = float(w*dbu/2)
     shape.text_valign=1
 
     if direction == 0:
