@@ -3202,6 +3202,7 @@ def resize_waveguide():
 
 
 '''
+SiEPIC-Tools: scripts.replace_cell
 Search and replace: cell_x with cell_y
 - load layout containing cell_y_name from cell_y_file or cell_y_library
 - replace all cell_x_name instances with cell_y
@@ -3215,59 +3216,65 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
         cells_x = [layout.cell(cell_x_name)]
     else:
         # replacement for all cells that begin with the cell name, i.e., xxx* is matched
-        cells_x = [cell for cell in layout.each_cell() if cell.name.find(cell_replace[i][0]) == 0]
+        cells_x = [cell for cell in layout.each_cell() if cell.name.find(cell_x_name) == 0]
+        print(' - cells that need replacing: %s' % [c.name for c in cells_x])
 
     if cells_x == []:
         # raise Exception("No cell '%s' found in layout." % cell_x_name)
         print (' - replace_cell: layout does not contain cell %s' % (cell_x_name) )
-        return
-    for cell_x in cells_x:
-        if cell_x == None:
-            print (' - replace_cell: layout does not contain cell %s' % (cell_x_name) )
-            return
-        print("   - %s" % cell_x.name)
-    print(" - replace_cell: found cells to be replaced: %s"  % (cell_x_name))
+        return False
 
+    # Load the new cell:   
     if cell_y_file:
-        # Load cell_y_name:
-        layout.read(cell_y_file)
         # find cell name CELL_Y
         cell_y = layout.cell(cell_y_name)
-        if cell_y == None:
+        print(" - checking for cell %s in current layout: %s" % (cell_y_name, cell_y))
+        if not cell_y:
+            # Load cell_y_name:
+            print(" - loading cell %s from file %s" % (cell_y_name, cell_y_file))
+            layout.read(cell_y_file)
+            # find cell name CELL_Y
+            cell_y = layout.cell(cell_y_name)
+        if not cell_y:
             raise Exception("No cell '%s' found in layout %s." % (cell_y_name, cell_y_file))
         print(" - found cell_y: %s in layout %s." % (cell_y.name, cell_y_file))
     if cell_y_library:
         cell_y = layout.create_cell(cell_y_name, cell_y_library)
         if not cell_y:
             raise Exception ('Cannot import cell %s from library %s' % (cell_y_name, cell_y_library))        
-
-    # loop through all the cells that need to be replaced
+        
     for cell_x in cells_x:
-
+        
+        print(" - replace_cell: found cells to be replaced: %s"  % (cell_x.name))
+    
         # find caller cells
         caller_cells = cell_x.caller_cells()
         # loop through all caller cells:
         for c in caller_cells:
             cc = layout.cell(c)
 
-            # find instaces of CELL_X in caller cell
+            # find instances of CELL_X in caller cell
             itr = cc.each_inst()
-            try:
-                while True:
-                    inst = next(itr)
-                    #print("   - found inst: %s, %s" % (inst, inst.cell.name))
-                    if inst.cell.name == cell_x_name:
-                        # replace with CELL_Y
-                        if inst.is_regular_array():
-                            ci = inst.cell_inst
-                            cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
-                            print("    - replacing %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
-                        else:
-                            cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans))
-                            print("    - replacing %s in %s, with cell: %s" % (cell_x.name, cc.name, cell_y.name))
-            except:
-                pass
+            inst = next(itr)
+            while inst:
+                print("   - found inst: %s, %s" % (inst, inst.cell.name))
+                if inst.cell.name == cell_x.name:
+                    # replace with CELL_Y
+                    if inst.is_regular_array():
+                        ci = inst.cell_inst
+                        cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
+                        print("    - replacing %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
+                    else:
+                        cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans))
+                        print("    - replacing %s in %s, with cell: %s" % (cell_x.name, cc.name, cell_y.name))
+                inst = next(itr, None)
+
         cell_x.prune_cell()
+
+        cells_x = [cell for cell in layout.each_cell() if cell.name.find(cell_x_name) == 0]
+        print(' *** - cells that need replacing: %s' % [c.name for c in cells_x])
+
+
 
 
 def svg_from_cell(verbose=True):
