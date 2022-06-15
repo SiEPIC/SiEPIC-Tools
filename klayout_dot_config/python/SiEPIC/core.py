@@ -339,6 +339,9 @@ class WaveguideGUI():
 
     def config_changed(self, val):
         waveguide_type = self.window.findChild('configuration').currentText
+        if not waveguide_type:
+            # no waveguide selected in the GUI
+            waveguide_type = self.waveguides[0]['name']
         params = [t for t in self.waveguides if t['name'] == waveguide_type]
         if not params:
             raise Exception("Waveguides '%s' not found. \n(Error in SiEPIC.core.WaveguideGUI.update)" % (waveguide_type) )
