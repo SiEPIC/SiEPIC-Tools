@@ -1103,7 +1103,11 @@ def waveguide_length():
         cell = selection[0].inst().cell
         area = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        width = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        if(cell.pcell_parameter("width") is None):
+          width = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
+        else:      
+          width = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        
         pya.MessageBox.warning("Waveguide Length", "Waveguide length (um): %s" %
                                str(area / width * cell.layout().dbu), pya.MessageBox.Ok)
     else:
@@ -1130,11 +1134,19 @@ def waveguide_length_diff():
         cell = selection[0].inst().cell
         area1 = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        width1 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        if(cell.pcell_parameter("width") is None):
+          width1 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
+        else:      
+          width1 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        
         cell = selection[1].inst().cell
         area2 = SiEPIC.utils.advance_iterator(cell.each_shape(
             cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        width2 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        if(cell.pcell_parameter("width") is None):
+          width2 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
+        else:      
+          width2 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+
         dbu = cell.layout().dbu
         length1 = (area1 / width1) * dbu
         length2 = (area2 / width2) * dbu
