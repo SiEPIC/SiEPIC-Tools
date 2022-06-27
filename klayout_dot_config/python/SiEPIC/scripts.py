@@ -2354,8 +2354,23 @@ def layout_check(cell=None, verbose=False):
         rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
         rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
         rdb_cat_id_GCarrayconfig = rdb.create_category(rdb_cat_id, "Fibre array configuration")
-        rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) above the opt_in label (laser injection port) and at most %s Grating Coupler(s) below the opt_in label. \n\nGrating couplers must be on a %s micron pitch, vertically arranged." % (
-            int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
+        array_angle = (float(DFT['design-for-test']['grating-couplers']['gc-array-orientation']))%360.0
+        if array_angle==0:
+          dir1 = ' right of '
+          dir2 = ' left of '
+        elif array_angle==90:
+          dir1 = ' above '
+          dir2 = ' below '
+        elif array_angle == 180:
+          dir1 = ' left of '
+          dir2 = ' right of '
+        else:
+          dir1 = ' below '
+          dir2 = ' above '
+        
+        rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) %s the opt_in label (laser injection port) and at most %s Grating Coupler(s) %s the opt_in label. \n\nGrating couplers must be on a %s micron pitch, vertically arranged." % (
+            int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), dir1,int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), dir2,float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
+
     else:
         if verbose:
             print('  No DFT rules found.')
@@ -2538,10 +2553,16 @@ def layout_check(cell=None, verbose=False):
                 #    rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
 
                 # find the GCs in the circuit that don't match the testing configuration
+                import numpy as np
+                array_angle = float(DFT['design-for-test']['grating-couplers']['gc-array-orientation'])
+                pitch = float(DFT['design-for-test']['grating-couplers']['gc-pitch'])
+                sx = np.round(np.sin(array_angle/180*np.pi))
+                sy = np.round(np.cos(array_angle/180*np.pi))
+                
                 for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
-                    if pya.DPoint(0, d * float(DFT['design-for-test']['grating-couplers']['gc-pitch']) * 1000) in vect_optin_GCs:
+                    if pya.DPoint(d * sx* pitch * 1000, d *sy* pitch * 1000) in vect_optin_GCs:
                         del_index = vect_optin_GCs.index(pya.DPoint(
-                            0, d * float(DFT['design-for-test']['grating-couplers']['gc-pitch']) * 1000))
+                            d * sx* pitch * 1000, d *sy* pitch * 1000))
                         del vect_optin_GCs[del_index]
                         del detector_GCs[del_index]
                 for vi in range(0, len(vect_optin_GCs)):
