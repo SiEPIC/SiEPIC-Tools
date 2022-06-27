@@ -2358,18 +2358,22 @@ def layout_check(cell=None, verbose=False):
         if array_angle==0:
           dir1 = ' right of '
           dir2 = ' left of '
+          dir3 = 'horizontally'
         elif array_angle==90:
           dir1 = ' above '
           dir2 = ' below '
+          dir3 = 'vertically'
         elif array_angle == 180:
           dir1 = ' left of '
           dir2 = ' right of '
+          dir3 = 'horizontally'
         else:
           dir1 = ' below '
           dir2 = ' above '
+          dir3 = 'vertically'
         
-        rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) %s the opt_in label (laser injection port) and at most %s Grating Coupler(s) %s the opt_in label. \n\nGrating couplers must be on a %s micron pitch, vertically arranged." % (
-            int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), dir1,int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), dir2,float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
+        rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) %s the opt_in label (laser injection port) and at most %s Grating Coupler(s) %s the opt_in label. \nGrating couplers must be on a %s micron pitch, %s arranged." % (
+            int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), dir1,int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), dir2,float(DFT['design-for-test']['grating-couplers']['gc-pitch']),dir3)
 
     else:
         if verbose:
@@ -2559,8 +2563,8 @@ def layout_check(cell=None, verbose=False):
                 import numpy as np
                 array_angle = float(DFT['design-for-test']['grating-couplers']['gc-array-orientation'])
                 pitch = float(DFT['design-for-test']['grating-couplers']['gc-pitch'])
-                sx = np.round(np.sin(array_angle/180*np.pi))
-                sy = np.round(np.cos(array_angle/180*np.pi))
+                sx = np.round(np.cos(array_angle/180*np.pi))
+                sy = np.round(np.sin(array_angle/180*np.pi))
                 
                 for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
                     if pya.DPoint(d * sx* pitch * 1000, d *sy* pitch * 1000) in vect_optin_GCs:
