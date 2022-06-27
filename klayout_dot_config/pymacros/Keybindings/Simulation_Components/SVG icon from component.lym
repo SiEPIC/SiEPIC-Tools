@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>SVG icon from component</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name>component</group-name>
+ <menu-path>siepic_menu.simulation_components.end</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>from SiEPIC.scripts import svg_from_cell
+
+# Enter your Python code here ..
+
+svg_from_cell()
+
+</text>
+</klayout-macro>

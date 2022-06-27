@@ -2404,6 +2404,7 @@ def layout_check(cell=None, verbose=False):
             # Radius check:
             if not Dpath.radius_check(radius):
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_radius.rdb_id())
+                rdb_item.add_value(pya.RdbItemValue( "The minimum radius is set at %s microns for this waveguide." % (radius) ))
                 rdb_item.add_value(pya.RdbItemValue(Dpath))
 
             # Check for waveguides with too few bend points
@@ -2442,7 +2443,7 @@ def layout_check(cell=None, verbose=False):
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_overlap.rdb_id())
                 if c.component == c2.component:
                     rdb_item.add_value(pya.RdbItemValue(
-                        "There are two identical components overlapping: \n" + c.component + "\n"))
+                        "There are two identical components overlapping: " + c.component))
                 for p in polygon_and:
                     rdb_item.add_value(pya.RdbItemValue(p.to_dtype(dbu)))
                 # check if these components have the same name; possibly a copy and paste error
@@ -2453,14 +2454,15 @@ def layout_check(cell=None, verbose=False):
                 ci = c.basic_name  # .replace(' ','_').replace('$','_')
                 gc_orientation_error = False
                 for gc in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys():
-                    if ci == gc and c.trans.angle != int(DFT['design-for-test']['grating-couplers']['gc-orientation'][gc]):
-                        gc_orientation_error = True
-                if gc_orientation_error:
-                    if verbose:
-                        print(" - Found DFT error, GC facing the wrong way: %s, %s" %
-                              (c.component, c.trans.angle))
-                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GCorient.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
+                    DFT_GC_angle = int(DFT['design-for-test']['grating-couplers']['gc-orientation'][gc])
+                    if ci.startswith(gc) and c.trans.angle != DFT_GC_angle:
+                        if verbose:
+                            print(" - Found DFT error, GC facing the wrong way: %s, %s" %
+                                  (c.component, c.trans.angle))
+                        rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GCorient.rdb_id())
+                        rdb_item.add_value(pya.RdbItemValue( "Cell %s should be %s degrees" % (ci,DFT_GC_angle) ))
+                        rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
+
 
         # Pre-simulation check: do components have models?
         # disabled by lukasc, 2021/05
@@ -2499,6 +2501,7 @@ def layout_check(cell=None, verbose=False):
                         print(" - Found DFT error, non unique text labels: %s, %s, %s" %
                               (t.string, t.x, t.y))
                     rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_unique.rdb_id())
+                    rdb_item.add_value(pya.RdbItemValue(t.string))
                     rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
 
             # opt_in format check:
@@ -2572,7 +2575,7 @@ def layout_check(cell=None, verbose=False):
                     rdb_item = rdb.create_item(
                         rdb_cell.rdb_id(), rdb_cat_id_GCarrayconfig.rdb_id())
                     rdb_item.add_value(pya.RdbItemValue(
-                        "The label having the error is: \n" + opt_in[ti1]['opt_in'] + "\n"))
+                        "The label having the error is: " + opt_in[ti1]['opt_in']))
                     rdb_item.add_value(pya.RdbItemValue(detector_GCs[vi].polygon.to_dtype(dbu)))
                     rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
 
@@ -2616,6 +2619,7 @@ def layout_check(cell=None, verbose=False):
                                 pin_paths[-1].to_itype(1).polygon()])
                 polygon_merged = advance_iterator(r.each_merged())
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_mismatchedpin.rdb_id())
+                rdb_item.add_value(pya.RdbItemValue( "Pin widths: %s, %s" % (pin_paths[0].width, pin_paths[-1].width)  ))
                 rdb_item.add_value(pya.RdbItemValue(polygon_merged.to_dtype(dbu)))
 
     # displays results in Marker Database Browser, using Results Database (rdb)
