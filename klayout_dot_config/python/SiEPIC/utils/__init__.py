@@ -1053,33 +1053,57 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
         if topcell == None:
             raise UserWarning("No cell. Make sure you have an open layout.")
 
-    text_out = '% X-coord, Y-coord, Polarization, wavelength, type, deviceID, params <br>'
+    text_out = '% X-coord, Y-coord, Polarization, wavelength, deviceID, params <br>'
     dbu = topcell.layout().dbu
     iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
     i = 0
     texts = []  # pya Text, for Verification
     opt_in = []  # dictionary containing everything extracted from the opt_in labels.
-    while not(iter.at_end()):
+    while not (iter.at_end()):
         if iter.shape().is_text():
             text = iter.shape().text
-            if text.string.find("opt_in") > -1:
+            if text.string.find("opt") > -1:
                 i += 1
                 text2 = iter.shape().text.transformed(iter.itrans())
                 texts.append(text2)
                 fields = text.string.split("_")
-                while len(fields) < 7:
+                while len(fields) < 6:
                     fields.append('comment')
-                opt_in.append({'opt_in': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
-                              2], 'wavelength': fields[3], 'type': fields[4], 'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
+                opt_in.append({'opt': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
+                    1], 'wavelength': fields[2], 'deviceID': fields[3], 'params': fields[4]})
                 params_txt = ''
-                for f in fields[6:]:
+                for f in fields[5:]:
                     params_txt += ', ' + str(f)
-                text_out += "%s, %s, %s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
-                                                              2], fields[3], fields[4], fields[5], params_txt)
+                text_out += "%s, %s, %s, %s, %s, %s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
+                    1], fields[2], fields[3], fields[4])
         iter.next()
-    text_out += "<br> Number of automated measurement labels: %s.<br>" % i
-    text_out += "<br> Number of sub-cells: %s<br>" % topcell.child_cells()
-    
+
+    text_out += "<br>"
+    text_out += '% X-coord, Y-coord, deviceID, padName, params <br>'
+    dbu = topcell.layout().dbu
+    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
+    i = 0
+    while not (iter.at_end()):
+        if iter.shape().is_text():
+            text = iter.shape().text
+            if text.string.find("elec") > -1:
+                i += 1
+                text2 = iter.shape().text.transformed(iter.itrans())
+                texts.append(text2)
+                fields = text.string.split("_")
+                while len(fields) < 4:
+                    fields.append('comment')
+                opt_in.append({'elec': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu),
+                               'deviceID': fields[1], 'params': fields[2:], 'Text': text2})
+                params_txt = ''
+                for f in fields[3:]:
+                    params_txt += ', ' + str(f)
+                text_out += "%s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
+                    1], fields[2], params_txt)
+        iter.next()
+    #text_out += "<br> Number of automated measurement labels: %s.<br>" % i
+    #text_out += "<br> Number of sub-cells: %s<br>" % topcell.child_cells()
+
     return text_out, opt_in
 
 
@@ -1088,7 +1112,6 @@ try:
 except NameError:
     def advance_iterator(it):
         return it.next()
-
 
 def find_SEM_labels(topcell=None, LayerSEMN=None):
     # example usage:
