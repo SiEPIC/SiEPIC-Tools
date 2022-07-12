@@ -2044,7 +2044,7 @@ def auto_coord_extract():
             wd.move(1, 1)
             grid = pya.QGridLayout(wd)
             windowlabel = pya.QLabel(wd)
-            windowlabel.setText("Download Complete.")
+            windowlabel.setText("Download Complete. Saved to {}".format(file_out))
             grid.addWidget(windowlabel, 2, 2, 4, 4)
             wd.show()
 
