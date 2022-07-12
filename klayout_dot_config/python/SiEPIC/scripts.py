@@ -1997,12 +1997,7 @@ def calibreDRC(params=None, cell=None):
 
 
 def auto_coord_extract():
-    import os
-    import time
     from .utils import get_technology
-    from .utils import get_layout_variables
-    TECHNOLOGY, lv, ly, topcell = get_layout_variables()
-
     TECHNOLOGY = get_technology()
 
     def gen_ui():
@@ -2015,38 +2010,6 @@ def auto_coord_extract():
         def button_clicked(checked):
             """ Event handler: "OK" button clicked """
             wdg.destroy()
-
-        def download_text(checked):
-            mw = pya.Application.instance().main_window()
-            layout_filename = mw.current_view().active_cellview().filename()
-            if len(layout_filename) == 0:
-                raise Exception("Please save your layout before exporting.")
-            file_out = os.path.join(os.path.dirname(layout_filename),
-                                    "{}.txt".format(os.path.splitext(os.path.basename(layout_filename))[0]))
-            f = open(file_out, 'w')
-
-            # Find the automated measurement coordinates:
-            from .utils import find_automated_measurement_labels
-            cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-            text_out, opt_in = find_automated_measurement_labels(cell)
-
-            #text_out doesn't have new line spaces
-
-            f.write(text_out.replace("<br>", "\n"))
-
-            wd = pya.QDialog(pya.Application.instance().main_window())
-
-            #        wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
-            wd.setAttribute = pya.Qt.WA_DeleteOnClose
-
-
-            wd.resize(150, 50)
-            wd.move(1, 1)
-            grid = pya.QGridLayout(wd)
-            windowlabel = pya.QLabel(wd)
-            windowlabel.setText("Download Complete. Saved to {}".format(file_out))
-            grid.addWidget(windowlabel, 2, 2, 4, 4)
-            wd.show()
 
         wdg = pya.QDialog(pya.Application.instance().main_window())
 
@@ -2066,16 +2029,13 @@ def auto_coord_extract():
         wtext.setText('')
 
         ok = pya.QPushButton("OK", wdg)
-        Download = pya.QPushButton("Download", wdg)
         ok.clicked(button_clicked)   # attach the event handler
-        Download.clicked(download_text)
 #    netlist = pya.QPushButton("Save", wdg) # not implemented
 
         grid.addWidget(windowlabel1, 0, 0, 1, 3)
         grid.addWidget(wtext, 1, 1, 3, 3)
 #    grid.addWidget(netlist, 4, 2)
         grid.addWidget(ok, 4, 3)
-        grid.addWidget(Download, 4, 2)
 
         grid.setRowStretch(3, 1)
         grid.setColumnStretch(1, 1)
@@ -2084,7 +2044,7 @@ def auto_coord_extract():
 
     # Create a GUI for the output:
     gen_ui()
-    #wtext.insertHtml('<br>* Automated measurement coordinates:<br><br>')
+    wtext.insertHtml('<br>* Automated measurement coordinates:<br><br>')
 
     # Find the automated measurement coordinates:
     from .utils import find_automated_measurement_labels
