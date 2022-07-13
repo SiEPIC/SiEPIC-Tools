@@ -1059,6 +1059,8 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
     i = 0
     texts = []  # pya Text, for Verification
     opt_in = []  # dictionary containing everything extracted from the opt_in labels.
+    device_ids = set()
+    duplicate = False
     while not (iter.at_end()):
         if iter.shape().is_text():
             text = iter.shape().text
@@ -1069,6 +1071,22 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
                 fields = text.string.split("_")
                 while len(fields) < 7:
                     fields.append('comment')
+                if fields[5] in device_ids and not duplicate:
+                    error = pya.QDialog(pya.Application.instance().main_window())
+
+                    #        wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+                    error.setAttribute = pya.Qt.WA_DeleteOnClose
+
+                    error.resize(200, 100)
+                    error.move(1, 1)
+                    grid = pya.QGridLayout(error)
+                    windowlabel = pya.QLabel(error)
+                    windowlabel.setText("Duplicate device-ids detected. Please make sure all device-ids are unique")
+                    grid.addWidget(windowlabel, 2, 2, 4, 4)
+                    error.show()
+                    duplicate = True
+                else:
+                    device_ids.add(fields[5])
                 opt_in.append({'opt_in': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
                               2], 'wavelength': fields[3], 'type': fields[4], 'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
                 params_txt = ''
