@@ -1053,7 +1053,7 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
         if topcell == None:
             raise UserWarning("No cell. Make sure you have an open layout.")
 
-    text_out = '% X-coord, Y-coord, Polarization, wavelength, deviceID, params <br>'
+    text_out = '% X-coord, Y-coord, Polarization, wavelength, type, deviceID, params <br>'
     dbu = topcell.layout().dbu
     iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
     i = 0
@@ -1067,15 +1067,15 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
                 text2 = iter.shape().text.transformed(iter.itrans())
                 texts.append(text2)
                 fields = text.string.split("_")
-                while len(fields) < 6:
+                while len(fields) < 7:
                     fields.append('comment')
-                opt_in.append({'opt': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
-                    1], 'wavelength': fields[2], 'deviceID': fields[3], 'params': fields[4]})
+                opt_in.append({'opt_in': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
+                              2], 'wavelength': fields[3], 'type': fields[4], 'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
                 params_txt = ''
-                for f in fields[5:]:
+                for f in fields[6:]:
                     params_txt += ', ' + str(f)
-                text_out += "%s, %s, %s, %s, %s, %s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
-                    1], fields[2], fields[3], fields[4])
+                text_out += "%s, %s, %s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
+                                                              2], fields[3], fields[4], fields[5], params_txt)
         iter.next()
 
     text_out += "<br>"
