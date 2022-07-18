@@ -1104,24 +1104,24 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
     while not (iter.at_end()):
         if iter.shape().is_text():
             text = iter.shape().text
-            if text.string.find("elec") > -1:
+            if text.string.find("opt_in") > -1:
                 i += 1
                 text2 = iter.shape().text.transformed(iter.itrans())
                 texts.append(text2)
                 fields = text.string.split("_")
-                while len(fields) < 4:
+                while len(fields) < 7:
                     fields.append('comment')
-                opt_in.append({'elec': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu),
-                               'deviceID': fields[1], 'params': fields[2:], 'Text': text2})
+                opt_in.append({'opt_in': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
+                              2], 'wavelength': fields[3], 'type': fields[4], 'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
                 params_txt = ''
-                for f in fields[3:]:
+                for f in fields[6:]:
                     params_txt += ', ' + str(f)
-                text_out += "%s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
-                    1], fields[2], params_txt)
+                text_out += "%s, %s, %s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
+                                                              2], fields[3], fields[4], fields[5], params_txt)
         iter.next()
-    #text_out += "<br> Number of automated measurement labels: %s.<br>" % i
-    #text_out += "<br> Number of sub-cells: %s<br>" % topcell.child_cells()
-
+    text_out += "<br> Number of automated measurement labels: %s.<br>" % i
+    text_out += "<br> Number of sub-cells: %s<br>" % topcell.child_cells()
+    
     return text_out, opt_in
 
 
@@ -1130,6 +1130,7 @@ try:
 except NameError:
     def advance_iterator(it):
         return it.next()
+
 
 def find_SEM_labels(topcell=None, LayerSEMN=None):
     # example usage:
