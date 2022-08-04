@@ -426,11 +426,20 @@ class WaveguideGUI():
                     if 'CML' in waveguide:
                         params['CML'] = waveguide['CML']
                     else:
-                        params['CML'] = ''
-                    if 'model' in waveguide:
-                        params['model'] = waveguide['model']
-                    else:
-                        params['model'] = ''
+#                    w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2               
+                # parameters: CML and model to support multiple WG models
+                if 'CML' in waveguide:
+                    params['CML'] = waveguide['CML']
+                else:
+                    params['CML'] = ''
+                if 'model' in waveguide:
+                    params['model'] = waveguide['model']
+                else:
+                    params['model'] = ''
+                if 'crossing_cell' in waveguide:
+                    params['crossing_cell'] = waveguide['crossing_cell']
+                else:
+                    params['crossing_cell'] = ''
             return params
         else:
             return None
