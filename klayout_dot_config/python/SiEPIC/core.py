@@ -421,11 +421,6 @@ class WaveguideGUI():
                         'layer': component['layer'], 
                         'width': float(component['width']), 
                         'offset': float(component['offset'])})
-#                    w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
-                    # parameters: CML and model to support multiple WG models
-                    if 'CML' in waveguide:
-                        params['CML'] = waveguide['CML']
-                    else:
 #                    w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2               
                 # parameters: CML and model to support multiple WG models
                 if 'CML' in waveguide:
