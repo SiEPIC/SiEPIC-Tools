@@ -10,7 +10,7 @@ Extra classes:
   myBox: extended class for pya.Box
     move_to: move the Box to the input Point (from its center)
 
-Version: 1.1 (Aug 04 2022)
+Version: 1.2 (Aug 05 2022)
 Auhtor: Juan E. Villegas, August 2022
 '''
 
@@ -319,13 +319,12 @@ def breakPath(path, list_inter, crossing_bbox, obj, verbose = False):
 
 
 # Find crossings points between two points, and return the broken down pieces of the paths, leaving xcells placed on every crossing
-def cross_2paths(oip_path1, oip_path2, xcell, offset = 0, verbose = False):
+def cross_2paths(oip_path1, oip_path2, xcell, offset = 0, origin = pya.Trans(0,0), verbose = False):
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
     x_bbox = xcell.bbox()
     path1 = myPath(oip_path1.shape.path)
     path2 = myPath(oip_path2.shape.path)
-    new_paths = []
-    
+  
     list_inter= path_intersection(path1,path2, x_bbox, offset)
     if not list_inter:
       return [], [], False
@@ -354,7 +353,7 @@ def cross_2paths(oip_path1, oip_path2, xcell, offset = 0, verbose = False):
     
     for c in list_inter:
       t = pya.Trans(int(c[0]),int(c[1]))  
-      cell.insert(pya.CellInstArray(xcell.cell_index(),t))
+      cell.insert(pya.CellInstArray(xcell.cell_index(),t*origin))
     
     return new_path1, new_path2, True
 
@@ -390,26 +389,27 @@ def insert_crossing(selected_paths, params = None, verbose = False):
     iter_paths1 = iter2(test_instances)  
     
     for obj1 in iter_paths1:
-        iter_paths2 = iter2(test_instances[iter_paths1.index+1::])
-        #Iterate over the remaining paths to make pairwise crossing checks
-        for obj2 in iter_paths2:
-            new_paths1, new_paths2, check = cross_2paths(obj1, obj2, xcell ,int(params['radius']/dbu), verbose)
-            
-            #if a crossing was inserted, the two paths are replaced by their broken down parts
-            if check:
-              idx_obj1 = iter_paths1.index
-              idx_obj2 = iter_paths1.index+iter_paths2.index+1
-              
-              iter_paths1.pop_and_del(idx_obj2)         #remove the second oip 
-              iter_paths1.insert(idx_obj2, new_paths2)  #insert the split parts of the path
-              
-              iter_paths1.pop_and_del(idx_obj1)         #then remove the first oip 
-              iter_paths1.insert(idx_obj1, new_paths1)  #and insert the split parts of the path
-              #iter_paths1.set_index(-1);               
-              iter_paths1.prev()                        #Repeat the comaprison from the first of the newly split paths
-              
-              test_instances = iter_paths1.get_data()   #Update the outer iterator data to onclude the new paths in the exploration
-              break
+      iter_paths2 = iter2(test_instances[iter_paths1.index+1::])
+      #Iterate over the remaining paths to make pairwise crossing checks
+      for obj2 in iter_paths2:
+        crossing_origin = eval(params['crossing_offset'])
+        new_paths1, new_paths2, check = cross_2paths(obj1, obj2, xcell ,offset=int(params['radius']/dbu),origin = pya.Trans(int(crossing_origin[0]/dbu),int(crossing_origin[1]/dbu) ), verbose=verbose)
+        
+        #if a crossing was inserted, the two paths are replaced by their broken down parts
+        if check:
+          idx_obj1 = iter_paths1.index
+          idx_obj2 = iter_paths1.index+iter_paths2.index+1
+          
+          iter_paths1.pop_and_del(idx_obj2)         #remove the second oip 
+          iter_paths1.insert(idx_obj2, new_paths2)  #insert the split parts of the path
+          
+          iter_paths1.pop_and_del(idx_obj1)         #then remove the first oip 
+          iter_paths1.insert(idx_obj1, new_paths1)  #and insert the split parts of the path
+          #iter_paths1.set_index(-1);               
+          iter_paths1.prev()                        #Repeat the comaprison from the first of the newly split paths
+          
+          test_instances = iter_paths1.get_data()   #Update the outer iterator data to onclude the new paths in the exploration
+          break
               
     end = time.time()
     if verbose:
@@ -424,9 +424,6 @@ def example(params=None, cell=None, snap=True, lv_commit=True, GUI=False, verbos
     if not cell:
         cell = top_cell
 
-    if verbose:
-        print("SiEPIC.utils.insert_crossing() EXAMPLE; start")
-
     if lv_commit:
         lv.transaction("Insert crossings")
 
@@ -439,14 +436,12 @@ def example(params=None, cell=None, snap=True, lv_commit=True, GUI=False, verbos
     if verbose:
         print("SiEPIC.utils.insert_crossing() EXAMPLE: params = %s" % params)
 
-    
     selected_paths = select_paths(TECHNOLOGY['Waveguide'], cell, verbose=verbose)
     
     global SiEPIC_crossings_UI_insertcrossing_flag
     SiEPIC_crossings_UI_insertcrossing_flag = True #Flag to show the message to make crossings
       
-    params['crossing_cell'] = 'ebeam_crossing4' #Update SiEPIC core to read this from the WAVEGUIDE xml
-    selected_paths = insert_crossing(selected_paths, params, verbose= False)
+    selected_paths = insert_crossing(selected_paths, params, verbose= True)
     lv.object_selection = selected_paths
     
 example(verbose=True)

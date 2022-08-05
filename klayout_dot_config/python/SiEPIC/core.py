@@ -431,10 +431,15 @@ class WaveguideGUI():
                     params['model'] = waveguide['model']
                 else:
                     params['model'] = ''
-                if 'crossing_cell' in waveguide:
+                if 'crossing' in waveguide:
+                    params['crossing_cell'] = waveguide['crossing']['crossing_cell']
+                    params['crossing_offset'] = waveguide['crossing']['crossing_offset']
+                elif 'crossing_cell' in waveguide:
                     params['crossing_cell'] = waveguide['crossing_cell']
+                    params['crossing_offset'] = '(0,0)'
                 else:
                     params['crossing_cell'] = ''
+                    params['crossing_offset'] = '(0,0)'
             return params
         else:
             return None
@@ -530,3 +535,5 @@ class MonteCarloGUI():
                 }
             }
         }
+
+paraam = WaveguideGUI()
