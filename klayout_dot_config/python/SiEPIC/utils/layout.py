@@ -293,6 +293,7 @@ def layout_waveguide3(cell, pts, params, debug=True):
     pt5 = pts[0] + 2*dpt
 
     t = Trans(angle, False, pt3)
+    CML = CML.replace('Design Kits/','')
     text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
     text.halign = halign
     shape = cell.shapes(LayerDevRecN).insert(text)
@@ -1032,6 +1033,50 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
 
     pin = pya.Path([p1, p2], w)
     cell.shapes(layer).insert(pin)
+
+
+def make_devrec_label(cell, libname, devname, layer, x=0, y=0, text_size=0.5):
+    """
+    Generate a SiEPIC-Tools DevRec label for the device and library name.
+
+    Mustafa Hammood, 2022
+    TODO: add SPICE params generator
+
+    Parameters
+    ----------
+    cell : pya cell
+        Cell to place the label in.
+    libname : string
+        Name of the library.
+    devname : string
+        Name of the device.
+    layer : pya lyayer
+        devRec layer.
+    x : float, optional
+        X position of the label, microns. The default is 0.
+    y : TYPE, optional
+        Y position of the label, microns. The default is 0.
+    text_size : float, optional
+        Text size of the label. The default is 0.5.
+
+    Returns
+    -------
+    None.
+
+    """
+    dbu = cell.layout().dbu
+    shapes = cell.shapes
+    # Compact model information
+    text_size = 0.1/dbu
+    t = pya.Trans(pya.Trans.R0, x, y)
+    text = pya.Text('Lumerical_INTERCONNECT_library=Design kits/'+libname, t)
+    shape = shapes(layer).insert(text)
+    shape.text_size = text_size
+
+    t = pya.Trans(pya.Trans.R0, x, y+text_size)
+    text = pya.Text('Component='+devname, t)
+    shape = shapes(layer).insert(text)
+    shape.text_size = text_size
 
 
 def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", library="SiEPICfab_Shuksan_PDK", wg_type='Strip TE 1310 nm, w=350 nm', draw_waveguides=True):
