@@ -3074,7 +3074,10 @@ def resize_waveguide():
 
         else:
             # calculate the length of the waveguide using the area / width
-            wg_width = c.pcell_parameters_by_name()["width"] / c.layout().dbu
+            try:
+                wg_width = c.pcell_parameters_by_name()["width"] / c.layout().dbu
+            except:
+                wg_width = float(c.pcell_parameters()[0].split("w=")[1].split(" ")[0])
             iter2 = c.begin_shapes_rec(LayerSiN)
 
             if iter2.shape().is_polygon():
