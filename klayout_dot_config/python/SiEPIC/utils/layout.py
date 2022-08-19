@@ -67,6 +67,8 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
     params = [t for t in waveguide_types if t['name'] == waveguide_type]
     if type(params) == type([]) and len(params) > 0:
         params = params[0]
+        if 'width' not in params and 'compound_waveguide' not in params:
+            params['width'] = params['wg_width']
     else:
         print('error: waveguide type not found in PDK waveguides')
         raise Exception('error: waveguide type (%s) not found in PDK waveguides' %
