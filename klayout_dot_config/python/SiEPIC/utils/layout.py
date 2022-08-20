@@ -24,8 +24,8 @@ from numpy import cos, sin, pi, sqrt
 import math as m
 
 from functools import reduce
-from SiEPIC.utils.sampling import sample_function
-from SiEPIC.utils.geometry import rotate90, rotate, bezier_optimal, curve_length
+from .utils.sampling import sample_function
+from .utils.geometry import rotate90, rotate, bezier_optimal, curve_length
 
 '''
 Create a waveguide, in a specific technology
@@ -381,17 +381,15 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             
             #determine if waveguide does an S-Shape
             if i < len(pts)-2:
-                angle0 = angle_vector(pts[i]-pts[i-1])/90
                 angle2 = angle_vector(pts[i+2]-pts[i+1])/90
-                if angle0 == angle2 and dis2<2*pt_radius:  
+                if angle == angle2 and dis2<2*pt_radius:  
                     dis3 = pts[i+2].distance(pts[i+1])
                     h = pts[i+1].y- pts[i].y if not (angle%2) else pts[i+1].x- pts[i].x
                     theta = m.acos(float(pt_radius-abs(h/2))/pt_radius)*180/pi
-                    curved_l = int(2*pt_radius*sin(theta/180.0*pi))                 
-                    if dis1 < curved_l/2 or (dis3) < curved_l/2: pass # Check if there is clearance for the bend
-                    elif i < len(pts)-3 and (dis3 - pt_radius) < curved_l/2: pass# And check if there is clearance for the bend when there is a turn afterwards
+                    curved_l = int(2*pt_radius*sin(theta/180.0*pi))                  
+                    if (i > len(pts)-3 or i<3) and (dis2 < curved_l/2 or dis3 < curved_l/2): pass# Check if there is partial clearance for the bend when there is an end near
+                    elif (dis1 - pt_radius) < curved_l/2 or (dis3 - pt_radius) < curved_l/2: pass # Check if there is full clearance for the bend
                     else:
-                      print ('Inserting SBend at (%s, %s) with heigth %s and length %s'%(pts[i].x,pts[i].y, h, curved_l))
                       if not (angle%2):
                         t = pya.Trans(angle,0,pts[i].x-int(curved_l/2), pts[i].y)  
                       else :
@@ -403,7 +401,7 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                       continue                   
             # determine the radius, based on how much space is available
             if len(pts) == 3:
-                # simple corner, limit radius by the two edges                
+                # simple corner, limit radius by the two edges
                 if dis1 < pt_radius:
                     error_seg1 = True
                 if dis2 < pt_radius:
