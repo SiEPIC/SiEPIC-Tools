@@ -24,8 +24,8 @@ from numpy import cos, sin, pi, sqrt
 import math as m
 
 from functools import reduce
-from .utils.sampling import sample_function
-from .utils.geometry import rotate90, rotate, bezier_optimal, curve_length
+from .sampling import sample_function
+from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
 '''
 Create a waveguide, in a specific technology
