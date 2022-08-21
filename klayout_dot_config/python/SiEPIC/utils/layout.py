@@ -244,8 +244,10 @@ def layout_waveguide3(cell, pts, params, debug=True):
             'error: this function cannot handle compound waveguides (%s)' % waveguide_type)
 
     # draw the waveguide
+    sbends = params['sbends'].lower() in ['true', '1', 't', 'y', 'yes'] if 'sbends' in params.keys() else False
     waveguide_length = layout_waveguide2(TECHNOLOGY, layout, cell, [wg['layer'] for wg in params['component']], [
-                                         wg['width'] for wg in params['component']], [wg['offset'] for wg in params['component']], pts, radius, params['adiabatic'], params['bezier'])
+                                         wg['width'] for wg in params['component']], [wg['offset'] for wg in params['component']], 
+                                         pts, radius, params['adiabatic'], params['bezier'], sbends)
 
     # Draw the marking layers
     from SiEPIC.utils import angle_vector
@@ -339,7 +341,7 @@ inputs
 - radius: in Microns, e.g., 5
 - adiab: 1 = Bezier curve, 0 = radial bend (arc)
 - bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
-
+- sbends (optional): sbends (Boolean)
 Note: bezier parameters need to be simulated and optimized, and will depend on 
     wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
     most useful for TE 
@@ -347,7 +349,7 @@ by Lukas Chrostowski
 '''
 
 
-def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier):
+def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier, sbends = False):
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from SiEPIC.extend import to_itype
     from SiEPIC.utils.geometry import bezier_parallel
@@ -380,9 +382,9 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             error_seg2 = False
             
             #determine if waveguide does an S-Shape
-            if i < len(pts)-2:
+            if (sbends) and i < len(pts)-2:
                 angle2 = angle_vector(pts[i+2]-pts[i+1])/90
-                if angle == angle2 and dis2<2*pt_radius:  
+                if angle == angle2 and dis2<2*pt_radius:  # An SBend may be inserted
                     dis3 = pts[i+2].distance(pts[i+1])
                     h = pts[i+1].y- pts[i].y if not (angle%2) else pts[i+1].x- pts[i].x
                     theta = m.acos(float(pt_radius-abs(h/2))/pt_radius)*180/pi
@@ -398,7 +400,8 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                       wg_pts += bend_pts.each_point()
                       turn = 0
                       i = next(it) #skip the step that was replaced by the SBend
-                      continue                   
+                      continue
+                        
             # determine the radius, based on how much space is available
             if len(pts) == 3:
                 # simple corner, limit radius by the two edges
