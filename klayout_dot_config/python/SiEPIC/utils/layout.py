@@ -349,7 +349,7 @@ by Lukas Chrostowski
 '''
 
 
-def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier, sbends = False):
+def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier, sbends = True):
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from SiEPIC.extend import to_itype
     from SiEPIC.utils.geometry import bezier_parallel
@@ -392,10 +392,11 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                     if (i > len(pts)-3 or i<3) and (dis1 < curved_l/2 or dis3 < curved_l/2): pass# Check if there is partial clearance for the bend when there is an end near
                     elif (dis1 - pt_radius) < curved_l/2 or (dis3 - pt_radius) < curved_l/2: pass # Check if there is full clearance for the bend
                     else:
+                      
                       if not (angle%2):
-                        t = pya.Trans(angle,0,pts[i].x-int(curved_l/2), pts[i].y)  
-                      else :
-                        t = pya.Trans(angle,1,pts[i].x, pts[i].y-int(curved_l/2))
+                        t = pya.Trans(angle, (angle == 2), pts[i].x+(angle-1)*int(curved_l/2), pts[i].y)  
+                      else:
+                        t = pya.Trans(angle, (angle == 1), pts[i].x, pts[i].y-(angle)*int(curved_l/2))
                       bend_pts = pya.DPath(bezier_parallel(pya.DPoint(0, 0), pya.DPoint(curved_l*dbu, h*dbu), 0),0).to_itype(dbu).transformed(t)
                       wg_pts += bend_pts.each_point()
                       turn = 0
