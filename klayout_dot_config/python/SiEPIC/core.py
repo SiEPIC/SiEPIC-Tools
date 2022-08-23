@@ -239,8 +239,8 @@ class Component():
         str_ = ''
         keys = list(arg.keys())
         for i in range(0, len(arg)):
-              str_ += keys[i] + '=' + str(arg[keys[i]])
-              if i < len(arg) - 1: str_ +=  '; '
+              str_ += '"' + keys[i] + '"=' + str(arg[keys[i]])
+              if i < len(arg) - 1: str_ +=  ' '
         return str_
     
     def set_SPICE_params(self, arg, verbose = False):
