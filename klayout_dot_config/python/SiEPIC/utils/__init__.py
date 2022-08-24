@@ -222,29 +222,20 @@ def get_technology_by_name(tech_name, verbose=False):
     else:
         layer_dict = xml_dict['layer-properties']['properties']
    
-   
     file.close()
-
-    for k in layer_dict:
-        layerInfo = k['source'].split('@')[0]
-        if 'group-members' in k:
-            # encoutered a layer group, look inside:
-            j = k['group-members']
-            if 'name' in j:
-                layerInfo_j = j['source'].split('@')[0]
-                technology[j['name']] = pya.LayerInfo(
-                    int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-            else:
-                for j in k['group-members']:
-                    layerInfo_j = j['source'].split('@')[0]
-                    technology[j['name']] = pya.LayerInfo(
-                        int(layerInfo_j.split('/')[0]), int(layerInfo_j.split('/')[1]))
-            if k['source'] != '*/*@*':
-                technology[k['name']] = pya.LayerInfo(
-                    int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
-        else:
-            technology[k['name']] = pya.LayerInfo(
-                int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+    
+    def get_members(layer_dict, technology):
+        if isinstance(layer_dict, list):
+            for k in layer_dict:
+                get_members(k, technology)
+        elif 'group-members' in layer_dict:
+            get_members(layer_dict['group-members'], technology)
+        elif 'name' in layer_dict:
+            layerInfo = layer_dict['source'].split('@')[0]
+            if layer_dict['source'] != '*/*@*':
+                technology[layer_dict['name']] = pya.LayerInfo(int(layerInfo.split('/')[0]), int(layerInfo.split('/')[1]))
+        return technology
+    get_members(layer_dict, technology)
     
     # Get library names
     technology['libraries'] = get_library_names(tech_name)
