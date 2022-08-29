@@ -1101,15 +1101,9 @@ def waveguide_length():
     selection = select_waveguides(cell)
     if len(selection) == 1:
         cell = selection[0].inst().cell
-        area = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
-        
+        length = float(cell.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
         pya.MessageBox.warning("Waveguide Length", "Waveguide length (um): %s" %
-                               str(area / width * cell.layout().dbu), pya.MessageBox.Ok)
+                               length, pya.MessageBox.Ok)
     else:
         pya.MessageBox.warning("Selection is not a waveguide",
                                "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
