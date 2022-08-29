@@ -217,9 +217,12 @@ def _bezier_optimal(angle0, angle3):
     except:
         from SiEPIC.install import install_scipy
         install_scipy()
-
-    from scipy.optimize import minimize
-
+    
+    try:
+      from scipy.optimize import minimize
+    except:
+      opt =   scipy.optimize()
+      minimize = opt.minimize()
 
 
     angle0 = fix_angle(angle0)
