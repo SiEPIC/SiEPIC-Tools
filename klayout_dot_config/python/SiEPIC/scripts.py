@@ -1125,25 +1125,11 @@ def waveguide_length_diff():
     selection = SiEPIC.utils.select_waveguides(cell)
 
     if len(selection) == 2:
-        cell = selection[0].inst().cell
-        area1 = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width1 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width1 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
-        
-        cell = selection[1].inst().cell
-        area2 = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width2 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width2 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        cell1 = selection[0].inst().cell
+        cell2 = selection[1].inst().cell
 
-        dbu = cell.layout().dbu
-        length1 = (area1 / width1) * dbu
-        length2 = (area2 / width2) * dbu
+        length1 = float(cell1.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
+        length2 = float(cell2.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
 
         # function to find the nearest value in aa 2d array
         def find_nearest(array, value):
@@ -1433,7 +1419,7 @@ def waveguide_length_diff():
                     phase_arr[each_sample] = ((beta1 * length1) - (beta2 * length2)) / np.pi
 
         pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(
-            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: ' + str(round(np.std(phase_arr), 3)) + ' pi radians', pya.MessageBox.Ok)
+            abs(length1 - length2)) + '\r\n RMS phase error: ' + str(round(np.std(phase_arr), 3)) + ' pi radians', pya.MessageBox.Ok)
 
     else:
         pya.MessageBox.warning("Selection are not a waveguides",
