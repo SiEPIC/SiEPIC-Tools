@@ -3053,18 +3053,8 @@ def resize_waveguide():
             )
 
         else:
-            # calculate the length of the waveguide using the area / width
-            try:
-                wg_width = c.pcell_parameters_by_name()["width"] / c.layout().dbu
-            except:
-                wg_width = float(c.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-            iter2 = c.begin_shapes_rec(LayerSiN)
-
-            if iter2.shape().is_polygon():
-                area = utils.advance_iterator(
-                    c.each_shape(c.layout().layer(TECHNOLOGY["Waveguide"]))
-                ).polygon.area()
-                path_length = area / wg_width * c.layout().dbu
+            # calculate the length of the waveguide using the spice parameters
+            path_length = float(c.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
 
             # get path points
             points_obj = path_obj.get_dpoints()
@@ -3230,7 +3220,7 @@ def resize_waveguide():
                     path_edges[index][1][1] = path_edges[index][1][1] + diff / 2
 
                 dpoints = [pya.DPoint(each[0], each[1]) for each in points]
-                dpath = pya.DPath(dpoints, wg_width * c.layout().dbu)
+                dpath = pya.DPath(dpoints, 0.5 * c.layout().dbu) # 0.5 is irrelevant to actual waveguide width
 
                 # replace the old waveguide path points with the new path points
                 oinst.change_pcell_parameter("path", dpath)
