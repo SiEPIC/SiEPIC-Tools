@@ -239,7 +239,10 @@ class Component():
         str_ = ''
         keys = list(arg.keys())
         for i in range(0, len(arg)):
-              str_ += '"' + keys[i] + '"=' + str(arg[keys[i]])
+              if keys[i].find(' ',0)==-1:
+                str_ += keys[i] + '=' + str(arg[keys[i]])
+              else:
+                str_ += '"'+ keys[i] +'"'+ '=' + str(arg[keys[i]])
               if i < len(arg) - 1: str_ +=  ' '
         return str_
     
@@ -250,7 +253,7 @@ class Component():
             spice_str = self.pdic2str(arg)
         else:
           return False
-        newSPICE_text =  "Spice_param:" + spice_str;  
+        newSPICE_text =  'Spice_param:' + spice_str;  
         
         cell = self.cell
         cell_idx = cell.cell_index()
