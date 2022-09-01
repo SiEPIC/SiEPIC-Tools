@@ -1101,15 +1101,9 @@ def waveguide_length():
     selection = select_waveguides(cell)
     if len(selection) == 1:
         cell = selection[0].inst().cell
-        area = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
-        
+        length = float(cell.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
         pya.MessageBox.warning("Waveguide Length", "Waveguide length (um): %s" %
-                               str(area / width * cell.layout().dbu), pya.MessageBox.Ok)
+                               length, pya.MessageBox.Ok)
     else:
         pya.MessageBox.warning("Selection is not a waveguide",
                                "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
@@ -1131,25 +1125,11 @@ def waveguide_length_diff():
     selection = SiEPIC.utils.select_waveguides(cell)
 
     if len(selection) == 2:
-        cell = selection[0].inst().cell
-        area1 = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width1 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width1 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
-        
-        cell = selection[1].inst().cell
-        area2 = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width2 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width2 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        cell1 = selection[0].inst().cell
+        cell2 = selection[1].inst().cell
 
-        dbu = cell.layout().dbu
-        length1 = (area1 / width1) * dbu
-        length2 = (area2 / width2) * dbu
+        length1 = float(cell1.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
+        length2 = float(cell2.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
 
         # function to find the nearest value in aa 2d array
         def find_nearest(array, value):
@@ -1439,7 +1419,7 @@ def waveguide_length_diff():
                     phase_arr[each_sample] = ((beta1 * length1) - (beta2 * length2)) / np.pi
 
         pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(
-            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: ' + str(round(np.std(phase_arr), 3)) + ' pi radians', pya.MessageBox.Ok)
+            abs(length1 - length2)) + '\r\n RMS phase error: ' + str(round(np.std(phase_arr), 3)) + ' pi radians', pya.MessageBox.Ok)
 
     else:
         pya.MessageBox.warning("Selection are not a waveguides",
@@ -3073,18 +3053,8 @@ def resize_waveguide():
             )
 
         else:
-            # calculate the length of the waveguide using the area / width
-            try:
-                wg_width = c.pcell_parameters_by_name()["width"] / c.layout().dbu
-            except:
-                wg_width = float(c.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-            iter2 = c.begin_shapes_rec(LayerSiN)
-
-            if iter2.shape().is_polygon():
-                area = utils.advance_iterator(
-                    c.each_shape(c.layout().layer(TECHNOLOGY["Waveguide"]))
-                ).polygon.area()
-                path_length = area / wg_width * c.layout().dbu
+            # calculate the length of the waveguide using the spice parameters
+            path_length = float(c.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
 
             # get path points
             points_obj = path_obj.get_dpoints()
@@ -3250,7 +3220,7 @@ def resize_waveguide():
                     path_edges[index][1][1] = path_edges[index][1][1] + diff / 2
 
                 dpoints = [pya.DPoint(each[0], each[1]) for each in points]
-                dpath = pya.DPath(dpoints, wg_width * c.layout().dbu)
+                dpath = pya.DPath(dpoints, 0.5 * c.layout().dbu) # 0.5 is irrelevant to actual waveguide width
 
                 # replace the old waveguide path points with the new path points
                 oinst.change_pcell_parameter("path", dpath)

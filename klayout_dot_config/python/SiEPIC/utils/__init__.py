@@ -214,7 +214,15 @@ def get_technology_by_name(tech_name, verbose=False):
     
     # Layers:
     file = open(lyp_file, 'r')
-    layer_dict = xml_to_dict(file.read())['layer-properties']['properties']
+    xml_dict = xml_to_dict(file.read())
+    if("layer-properties-tabs" in xml_dict):
+        #if multiple layer tabs are present then use layout.current_layer_list for index
+        lv = pya.Application.instance().main_window().current_view()
+        layer_dict = xml_dict["layer-properties-tabs"]['layer-properties'][lv.current_layer_list]['properties']
+    else:
+        layer_dict = xml_dict['layer-properties']['properties']
+   
+   
     file.close()
 
     for k in layer_dict:
