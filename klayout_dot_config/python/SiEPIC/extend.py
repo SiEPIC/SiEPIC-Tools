@@ -1471,11 +1471,11 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
             if p.type == _globals.PIN_TYPES.ELECTRICAL:
                 if idx > 0:  
                     if p.pin_name == c.pins[idx - 1].pin_name: continue  # Skip pins that have exactly the same name (assume they are internally connected in the component)
-                NetName = " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
+                NetName = " " + c.cell.name + '_' + str(c.idx) + '_' + p.pin_name
                 electricalIO_pins += NetName
                 DCsources += "N" + \
                     str(Vn) + NetName + \
-                    " dcsource amplitude=0 sch_x=%s sch_y=%s\n" % (-2 - Vn / 3., -2 + Vn / 8.)
+                    ' "dc source" amplitude=0 sch_x=%s sch_y=%s\n' % (-2 - Vn / 3., -2 + Vn / 8.)
                 Vn += 1
     electricalIO_pins_subckt = electricalIO_pins
 
@@ -1487,7 +1487,7 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
                 if p.type == _globals.PIN_TYPES.ELECTRICAL:
                     NetName = " N$"
                     electricalIO_pins_subckt += NetName
-                    DCsources = "N1" + NetName + " dcsource amplitude=0 sch_x=-2 sch_y=0\n"
+                    DCsources = "N1" + NetName + ' "dc source" amplitude=0 sch_x=-2 sch_y=0\n'
 
     # find optical IO pins
     opticalIO_pins = ''
@@ -1529,7 +1529,7 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
                 if idx > 0:  
                     if p.pin_name == c.pins[idx - 1].pin_name: continue  # Skip pins that have exactly the same name (assume they are internally connected in the component)
                 if p.type == _globals.PIN_TYPES.ELECTRICAL:
-                    nets_str += " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
+                    nets_str += " " + c.cell.name + '_' + str(c.idx) + '_' + p.pin_name
                 if p.type == _globals.PIN_TYPES.OPTICALIO:
                     nets_str += " " + str(p.net.idx)    
                 if p.type == _globals.PIN_TYPES.OPTICAL:
@@ -1538,7 +1538,7 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
             # optical nets: must be ordered electrical, optical IO, then optical
             for p in c.pins:
                 if p.type == _globals.PIN_TYPES.ELECTRICAL:
-                    nets_str += " " + c.component + '_' + str(c.idx) + '_' + p.pin_name
+                    nets_str += " " + c.cell.name + '_' + str(c.idx) + '_' + p.pin_name
             for p in c.pins:
                 if p.type == _globals.PIN_TYPES.OPTICALIO:
                     nets_str += " " + str(p.net.idx)
@@ -1568,9 +1568,13 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
         # Remove "$N" from component's name for cell instance arrays of the same name     
         if "$" in component1:
             component1 = component1[:component1.find("$")]
-
-        text_subckt += ' %s %s %s ' % (component1.replace(' ', '_') +
-                                       "_" + str(c.idx), nets_str, component1.replace(' ', '_'))
+        
+        if component1.find(' ')>=0 and component1.find('"')==-1:
+          text_subckt += ' %s %s "%s" ' % (component1.replace(' ','_') +
+                                       "_" + str(c.idx), nets_str, component1)
+        else:
+          text_subckt += ' %s %s %s ' % (component1.replace('"', '').replace(' ', '_') +
+                                       "_" + str(c.idx), nets_str, component1)
         if c.library != None:
             text_subckt += 'library="%s" ' % c.library
         x, y = c.Dcenter.x, c.Dcenter.y
