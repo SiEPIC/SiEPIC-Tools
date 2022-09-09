@@ -233,16 +233,26 @@ class Component():
                 q=float(Decimal(string)*Decimal('1e6'))  # in microns
             dictb[s.split('=')[0]]=q
       return dictb
-    
+          
     @staticmethod
-    def pdic2str(arg): #A Dictionary of SPICE parameters to a string
+    def pdic2str(arg: dict): #A Dictionary of SPICE parameters to a string
+        def _isfloat(arg: str)-> bool:
+          try:
+              float(arg)
+              return True
+          except ValueError:
+              return False
+          
         str_ = ''
         keys = list(arg.keys())
         for i in range(0, len(arg)):
+              value = str(arg[keys[i]])
+              if _isfloat(value):
+                 value = '%.4f'%(float(value)*1e6)+'u' if float(value)<1e-3 else value
               if keys[i].find(' ',0)==-1:
-                str_ += keys[i] + '=' + str(arg[keys[i]])
+                str_ += keys[i] + '=' + value
               else:
-                str_ += '"'+ keys[i] +'"'+ '=' + str(arg[keys[i]])
+                str_ += '"'+ keys[i] +'"'+ '=' + value
               if i < len(arg) - 1: str_ +=  ' '
         return str_
     
