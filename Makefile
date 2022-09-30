@@ -4,7 +4,7 @@ LUMERICAL_DIR=$$HOME/.config/Lumerical
 
 install:
 	mkdir -p $(INSTALL_DIR)
-	cp -rv * $(INSTALL_DIR) 
+	cp -r * $(INSTALL_DIR) 
 
 	ln -s $(INSTALL_DIR)/klayout_dot_config/pymacros/* $(KLAYOUT_DIR)/pymacros/
 	ln -s $(INSTALL_DIR)/klayout_dot_config/python/* $(KLAYOUT_DIR)/python/
@@ -20,10 +20,10 @@ install:
 
 	if [ -f "$(LUMERICAL_DIR)/INTERCONNECT.ini.bak" ]; then rm "$(LUMERICAL_DIR)/INTERCONNECT.ini.bak"; fi
 
-	cp -v $(LUMERICAL_DIR)/INTERCONNECT.ini $(LUMERICAL_DIR)/INTERCONNECT.ini.bak
+	cp $(LUMERICAL_DIR)/INTERCONNECT.ini $(LUMERICAL_DIR)/INTERCONNECT.ini.bak
 
 	grep -q -F '[Design%20kits]' "$(LUMERICAL_DIR)/INTERCONNECT.ini" || echo '[Design%20kits]' >> "$(LUMERICAL_DIR)/INTERCONNECT.ini"
-	grep -q -F '/GSip' $(LUMERICAL_DIR)/INTERCONNECT.ini || cat $(LUMERICAL_DIR)/INTERCONNECT.ini | sed "/Design/a\ \nGSiP=$HOME/SiEPIC-Tools/Lumerical_CML_GSiP/GSiP\n" > $(LUMERICAL_DIR)/INTERCONNECT.ini
+	grep -q -F '/GSip' $(LUMERICAL_DIR)/INTERCONNECT.ini || (cat $(LUMERICAL_DIR)/INTERCONNECT.ini | sed "/Design/a\ \nGSiP=$(INSTALL_DIR)/Lumerical_CML_GSiP/GSiP\n" > $(LUMERICAL_DIR)/INTERCONNECT.ini)
 
 uninstall:
 	rm -rvf $(INSTALL_DIR)
