@@ -2,10 +2,13 @@ KLAYOUT_DIR=$$HOME/.klayout
 INSTALL_DIR=$$HOME/SiEPIC-Tools
 LUMERICAL_DIR=$$HOME/.config/Lumerical
 
-install:
+all: copyall klayout lumerical
+
+copyall:
 	mkdir -p $(INSTALL_DIR)
 	cp -r * $(INSTALL_DIR) 
 
+klayout:
 	ln -s $(INSTALL_DIR)/klayout_dot_config/pymacros/* $(KLAYOUT_DIR)/pymacros/
 	ln -s $(INSTALL_DIR)/klayout_dot_config/python/* $(KLAYOUT_DIR)/python/
 	ln -s $(INSTALL_DIR)/Python_packages_for_KLayout/python/* $(KLAYOUT_DIR)/python/
@@ -13,6 +16,7 @@ install:
 	mkdir -p "$(KLAYOUT_DIR)/tech"
 	ln -s $(INSTALL_DIR)/klayout_dot_config/tech/* $(KLAYOUT_DIR)/tech/
 
+lumerical:
 	mkdir -p "$(LUMERICAL_DIR)/Custom"
 	ln -s $(INSTALL_DIR)/Lumerical_CML_GSiP/GSiP/* $(LUMERICAL_DIR)/Custom/
 
@@ -22,17 +26,14 @@ install:
 
 	cp $(LUMERICAL_DIR)/INTERCONNECT.ini $(LUMERICAL_DIR)/INTERCONNECT.ini.bak
 
-	grep -q -F '[Design%20kits]' "$(LUMERICAL_DIR)/INTERCONNECT.ini" || echo '[Design%20kits]' >> "$(LUMERICAL_DIR)/INTERCONNECT.ini"
-	grep -q -F '/GSip' $(LUMERICAL_DIR)/INTERCONNECT.ini || (cat $(LUMERICAL_DIR)/INTERCONNECT.ini | sed "/Design/a\ \nGSiP=$(INSTALL_DIR)/Lumerical_CML_GSiP/GSiP\n" > $(LUMERICAL_DIR)/INTERCONNECT.ini)
+	crudini --set $(LUMERICAL_DIR)/INTERCONNECT.ini "Design%20kits" GSIP $(INSTALL_DIR)/Lumerical_CML_GSIP/GSIP
 
 uninstall:
-	rm -rvf $(INSTALL_DIR)
+	rm -r $(INSTALL_DIR)
 
 	find $(KLAYOUT_DIR)/pymacros/ -xtype l -delete
 	find $(KLAYOUT_DIR)/python/ -xtype l -delete
 	find $(KLAYOUT_DIR)/tech/ -xtype l -delete
 	find $(LUMERICAL_DIR)/Custom/ -xtype l -delete
 
-	cp $(LUMERICAL_DIR)/INTERCONNECT.ini $(LUMERICAL_DIR)/INTERCONNECT.ini.bak.bak
-	mv $(LUMERICAL_DIR)/INTERCONNECT.ini.bak $(LUMERICAL_DIR)/INTERCONNECT.ini
-	mv $(LUMERICAL_DIR)/INTERCONNECT.ini.bak.bak $(LUMERICAL_DIR)/INTERCONNECT.ini.bak
+	crudini --del $(LUMERICAL_DIR)/INTERCONNECT.ini "Design%20kits" GSIP
