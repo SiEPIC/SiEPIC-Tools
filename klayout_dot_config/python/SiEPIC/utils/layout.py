@@ -298,7 +298,10 @@ def layout_waveguide3(cell, pts, params, debug=True):
     pt5 = pts[0] + 2*dpt
 
     t = Trans(angle, False, pt3)
-    text = Text('Lumerical_INTERCONNECT_library=%s' % CML, t, 0.1*wg_width, -1)
+    import re
+    CML = re.sub('design kits/', '', CML, flags=re.IGNORECASE)
+#    CML = CML.lower().replace('design kits/','') # lower: to make it case insensitive, in case WAVEGUIDES.XML contains "Design Kits/" rather than "Design kits/"
+    text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
     text.halign = halign
     shape = cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt2)
