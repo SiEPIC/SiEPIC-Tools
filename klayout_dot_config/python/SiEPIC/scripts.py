@@ -198,13 +198,20 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     componentA = instanceA.parent_cell.find_components(inst=instanceA)
     componentB = instanceB.parent_cell.find_components(inst=instanceB)
 #    print('Time elapsed: %s' % (time() - t))    
-    if componentA==[] or componentB==[]:
-        print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-        print('componentA: %s, componentB: %s' % (componentA, componentB) )
-        print('parent_cell A: %s, parent_cell B: %s, cell A: %s, cell B: %s' % (instanceA.parent_cell, instanceB.parent_cell, instanceA.cell, instanceB.cell) )
-        print('all found components A: %s' %    instanceA.parent_cell.find_components() )
-        print('all found components B: %s' %    instanceB.parent_cell.find_components() )
-        raise Exception("Component not found")
+    if componentA==[]:
+        print('InstA: %s, %s' % (instanceA.cell.name, instanceA) )
+        print('componentA: %s' % (componentA) )
+        print('parent_cell A: %s, cell A: %s' % (instanceA.parent_cell, instanceA.cell) )
+        print('all found components A: instance variable: %s' %    ([n.instance for n in instanceA.parent_cell.find_components()]) )
+        print('all found components A: component variable: %s' %    ([n.component for n in instanceA.parent_cell.find_components()]) )
+        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceA.cell.name)
+    if componentB==[]:
+        print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
+        print('componentB: %s' % (componentB) )
+        print('parent_cell B: %s, cell B: %s' % (instanceB.parent_cell, instanceB.cell) )
+        print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
+        print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
+        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
 
     # if the instance had sub-cells, then there will be many components. Pick the first one.
     if type(componentA) == type([]):
