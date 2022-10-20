@@ -1033,7 +1033,7 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
 
     direction = direction % 360
     if direction not in [0, 90, 180, 270]:
-        raise('error in make_pin: direction must be one of [0, 90, 180, 270]')
+        raise Exception('error in make_pin: direction (%s) must be one of [0, 90, 180, 270]' % direction )
 
     # text label
     t = pya.Trans(pya.Trans.R0, center[0], center[1])
