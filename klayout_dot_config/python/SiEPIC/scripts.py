@@ -82,7 +82,7 @@ def pointlist_to_turtle(pointlist):
   #  return pointlist
           
 
-def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True):
+def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True, relaxed_pinnames=True):
     '''
     Create a Path connecting instanceA:pinA to instanceB:pinB
         where instance = pya.Instance; pin = string, e.g. 'pin1'
@@ -228,6 +228,17 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # Find pinA and pinB
     cpinA = [p for p in componentA.pins if p.pin_name == pinA]
     cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
+    # relaxed_pinnames:  scan for only the number
+    if relaxed_pinnames==True:
+        import re
+        try:
+            if cpinA==[]:
+                cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+            if cpinB==[]:
+                cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+        except:
+            print('error in siepic.scripts.connect_cell')      
+
     if cpinA==[]:
         try:  
             # this checks if the cell (which could contain multiple components) 
@@ -1596,7 +1607,7 @@ def snap_component():
 def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=False):
     return connect_cell(instanceA, pinA, cellB, pinB, verbose)
     
-def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, translation=pya.Trans.R0):
+def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, translation=pya.Trans.R0, relaxed_pinnames=False):
   '''
   Instantiate, Move & rotate cellB to connect to instanceA, 
    such that their pins (pinB, pinA) match
@@ -1634,6 +1645,11 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   
   '''
+  if not(instanceA):
+    raise Exception("instanceA not found")
+  if not(cellB):
+    raise Exception("cellB not found")
+
 
   # Find the two components:
   componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
@@ -1659,6 +1675,18 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   # Find pinA and pinB
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
   cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
+
+  # relaxed_pinnames:  scan for only the number
+  if relaxed_pinnames==True:
+      import re
+      try:
+          if cpinA==[]:
+              cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+          if cpinB==[]:
+              cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+      except:
+          print('error in siepic.scripts.connect_cell')      
+
 
   # for cells with hierarchy
   if cpinA==[]:
