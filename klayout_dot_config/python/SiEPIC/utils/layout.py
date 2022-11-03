@@ -1143,7 +1143,10 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
     cell_tree = ly.create_cell("y_splitter_tree")
 
     # load the y-splitter from the library
-    y_splitter = ly.create_cell(y_splitter_cell, library)
+    if type(y_splitter_cell)==pya.Cell:
+        y_splitter=y_splitter_cell
+    else:
+        y_splitter = ly.create_cell(y_splitter_cell, library)
     if not y_splitter:
         raise Exception('Cannot import cell %s:%s' % (library, y_splitter_cell))
 
