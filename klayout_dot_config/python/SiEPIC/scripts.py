@@ -228,16 +228,20 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # Find pinA and pinB
     cpinA = [p for p in componentA.pins if p.pin_name == pinA]
     cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
+
     # relaxed_pinnames:  scan for only the number
     if relaxed_pinnames==True:
         import re
         try:
             if cpinA==[]:
-                cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+                if re.findall(r'\d+', pinA):
+                    cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
             if cpinB==[]:
-                cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+                if re.findall(r'\d+', pinB):
+                    cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
         except:
-            print('error in siepic.scripts.connect_cell')      
+            print('error in siepic.scripts.connect_cell, relaxed_pinnames')      
+
 
     if cpinA==[]:
         try:  
