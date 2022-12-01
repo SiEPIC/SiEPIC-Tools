@@ -307,9 +307,14 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 waveguide = waveguides[0]
                 print('error: waveguide type not found in PDK waveguides')
                 raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
+        # check if the waveguide type is compound waveguide
+        if 'compound_waveguide' in waveguide:
+            waveguide = [w for w in waveguides if w['name']==waveguide['compound_waveguide']['singlemode']]
+            waveguide = waveguide[0]
     if verbose:
         print('waveguide type: %s' % waveguide )    
     # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
+    
     waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
     if len(waveguide_component) > 0:
         width_um = waveguide_component[0]['width']
