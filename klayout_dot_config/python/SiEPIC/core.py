@@ -540,5 +540,3 @@ class MonteCarloGUI():
                 }
             }
         }
-
-paraam = WaveguideGUI()
