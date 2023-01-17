@@ -434,9 +434,14 @@ class WaveguideGUI():
                 if 'crossing' in waveguide:
                     params['crossing_cell'] = waveguide['crossing']['crossing_cell']
                     params['crossing_offset'] = waveguide['crossing']['crossing_offset']
+                    params['crossing_library'] = waveguide['crossing']['crossing_library']
                 elif 'crossing_cell' in waveguide:
                     params['crossing_cell'] = waveguide['crossing_cell']
                     params['crossing_offset'] = '(0,0)'
+                    if 'crossing_library' in waveguide:
+                        params['crossing_library'] = waveguide['crossing_library']
+                    else:
+                        params['crossing_library'] = 'GSiP'
                 else:
                     params['crossing_cell'] = ''
                     params['crossing_offset'] = '(0,0)'

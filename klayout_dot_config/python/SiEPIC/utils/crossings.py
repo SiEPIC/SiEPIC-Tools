@@ -10,7 +10,7 @@ Extra classes:
   myBox: extended class for pya.Box
     move_to: move the Box to the input Point (from its center)
 
-Version: 1.2 (Aug 05 2022)
+Version: 1.3 (Jan 16 2023)
 Auhtor: Juan E. Villegas, August 2022
 '''
 
@@ -376,7 +376,10 @@ def insert_crossing(selected_paths, params = None, verbose = False):
     
     xcell = None
     if 'crossing_cell' in params.keys():
-      xcell = top_cell.layout().create_cell(params['crossing_cell'], TECHNOLOGY['technology_name'])
+      if 'crossing_library' in params.keys():
+        xcell = top_cell.layout().create_cell(params['crossing_cell'], params['crossing_library'])
+      else:
+        xcell = top_cell.layout().create_cell(params['crossing_cell'], TECHNOLOGY['technology_name'])
     if xcell == None:
       if verbose:
         print("SiEPIC.utils.insert_crossing(): No available crossing cell in technology ", TECHNOLOGY['technology_name'])
