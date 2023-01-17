@@ -17,11 +17,12 @@ y_splitter_tree
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
 """
-
 from itertools import repeat
 import pya
 import numpy as np
 from numpy import cos, sin, pi, sqrt
+import math as m
+
 from functools import reduce
 from .sampling import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
@@ -67,6 +68,8 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
     params = [t for t in waveguide_types if t['name'] == waveguide_type]
     if type(params) == type([]) and len(params) > 0:
         params = params[0]
+        if 'width' not in params and 'compound_waveguide' not in params:
+            params['width'] = params['wg_width']
     else:
         print('error: waveguide type not found in PDK waveguides')
         raise Exception('error: waveguide type (%s) not found in PDK waveguides' %
@@ -241,8 +244,10 @@ def layout_waveguide3(cell, pts, params, debug=True):
             'error: this function cannot handle compound waveguides (%s)' % waveguide_type)
 
     # draw the waveguide
+    sbends = params['sbends'].lower() in ['true', '1', 't', 'y', 'yes'] if 'sbends' in params.keys() else False
     waveguide_length = layout_waveguide2(TECHNOLOGY, layout, cell, [wg['layer'] for wg in params['component']], [
-                                         wg['width'] for wg in params['component']], [wg['offset'] for wg in params['component']], pts, radius, params['adiabatic'], params['bezier'])
+                                         wg['width'] for wg in params['component']], [wg['offset'] for wg in params['component']], 
+                                         pts, radius, params['adiabatic'], params['bezier'], sbends)
 
     # Draw the marking layers
     from SiEPIC.utils import angle_vector
@@ -293,6 +298,9 @@ def layout_waveguide3(cell, pts, params, debug=True):
     pt5 = pts[0] + 2*dpt
 
     t = Trans(angle, False, pt3)
+    import re
+    CML = re.sub('design kits/', '', CML, flags=re.IGNORECASE)
+#    CML = CML.lower().replace('design kits/','') # lower: to make it case insensitive, in case WAVEGUIDES.XML contains "Design Kits/" rather than "Design kits/"
     text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
     text.halign = halign
     shape = cell.shapes(LayerDevRecN).insert(text)
@@ -336,7 +344,7 @@ inputs
 - radius: in Microns, e.g., 5
 - adiab: 1 = Bezier curve, 0 = radial bend (arc)
 - bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
-
+- sbends (optional): sbends (Boolean)
 Note: bezier parameters need to be simulated and optimized, and will depend on 
     wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
     most useful for TE 
@@ -344,10 +352,12 @@ by Lukas Chrostowski
 '''
 
 
-def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier):
+def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier, sbends = True):
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from SiEPIC.extend import to_itype
+    from SiEPIC.utils.geometry import bezier_parallel
     from pya import Path, Polygon, Trans
+
     dbu = layout.dbu
 
     if 'Errors' in TECHNOLOGY:
@@ -363,7 +373,9 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
         layer = layout.layer(TECHNOLOGY[layers[lr]])
         width = to_itype(widths[lr], dbu)
         offset = to_itype(offsets[lr], dbu)
-        for i in range(1, len(pts)-1):
+        
+        it = iter(range(1, len(pts)-1))
+        for i in it:
             turn = ((angle_b_vectors(pts[i]-pts[i-1], pts[i+1]-pts[i])+90) % 360-90)/90
             dis1 = pts[i].distance(pts[i-1])
             dis2 = pts[i].distance(pts[i+1])
@@ -371,6 +383,29 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             pt_radius = to_itype(radius, dbu)
             error_seg1 = False
             error_seg2 = False
+            
+            #determine if waveguide does an S-Shape
+            if (sbends) and i < len(pts)-2:
+                angle2 = angle_vector(pts[i+2]-pts[i+1])/90
+                if angle == angle2 and dis2<2*pt_radius:  # An SBend may be inserted
+                    dis3 = pts[i+2].distance(pts[i+1])
+                    h = pts[i+1].y- pts[i].y if not (angle%2) else pts[i+1].x- pts[i].x
+                    theta = m.acos(float(pt_radius-abs(h/2))/pt_radius)*180/pi
+                    curved_l = int(2*pt_radius*sin(theta/180.0*pi))                  
+                    if (i > len(pts)-3 or i<3) and (dis1 < curved_l/2 or dis3 < curved_l/2): pass# Check if there is partial clearance for the bend when there is an end near
+                    elif (dis1 - pt_radius) < curved_l/2 or (dis3 - pt_radius) < curved_l/2: pass # Check if there is full clearance for the bend
+                    else:
+                      
+                      if not (angle%2):
+                        t = pya.Trans(angle, (angle == 2), pts[i].x+(angle-1)*int(curved_l/2), pts[i].y)  
+                      else:
+                        t = pya.Trans(angle, (angle == 1), pts[i].x, pts[i].y-(angle)*int(curved_l/2))
+                      bend_pts = pya.DPath(bezier_parallel(pya.DPoint(0, 0), pya.DPoint(curved_l*dbu, h*dbu), 0),0).to_itype(dbu).transformed(t)
+                      wg_pts += bend_pts.each_point()
+                      turn = 0
+                      i = next(it) #skip the step that was replaced by the SBend
+                      continue
+                        
             # determine the radius, based on how much space is available
             if len(pts) == 3:
                 # simple corner, limit radius by the two edges
@@ -400,7 +435,6 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                     if dis2/2 < pt_radius:
                         error_seg2 = True
                     pt_radius = min(dis1/2, dis2/2, pt_radius)
-
             if error_seg1 or error_seg2:
                 if not error_layer:
                     # we have an error, but no Error layer
@@ -1002,7 +1036,7 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
 
     direction = direction % 360
     if direction not in [0, 90, 180, 270]:
-        raise('error in make_pin: direction must be one of [0, 90, 180, 270]')
+        raise Exception('error in make_pin: direction (%s) must be one of [0, 90, 180, 270]' % direction )
 
     # text label
     t = pya.Trans(pya.Trans.R0, center[0], center[1])
@@ -1109,7 +1143,10 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
     cell_tree = ly.create_cell("y_splitter_tree")
 
     # load the y-splitter from the library
-    y_splitter = ly.create_cell(y_splitter_cell, library)
+    if type(y_splitter_cell)==pya.Cell:
+        y_splitter=y_splitter_cell
+    else:
+        y_splitter = ly.create_cell(y_splitter_cell, library)
     if not y_splitter:
         raise Exception('Cannot import cell %s:%s' % (library, y_splitter_cell))
 

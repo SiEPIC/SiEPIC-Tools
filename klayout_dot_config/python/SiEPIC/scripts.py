@@ -82,7 +82,7 @@ def pointlist_to_turtle(pointlist):
   #  return pointlist
           
 
-def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True):
+def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True, relaxed_pinnames=True):
     '''
     Create a Path connecting instanceA:pinA to instanceB:pinB
         where instance = pya.Instance; pin = string, e.g. 'pin1'
@@ -198,13 +198,20 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     componentA = instanceA.parent_cell.find_components(inst=instanceA)
     componentB = instanceB.parent_cell.find_components(inst=instanceB)
 #    print('Time elapsed: %s' % (time() - t))    
-    if componentA==[] or componentB==[]:
-        print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-        print('componentA: %s, componentB: %s' % (componentA, componentB) )
-        print('parent_cell A: %s, parent_cell B: %s, cell A: %s, cell B: %s' % (instanceA.parent_cell, instanceB.parent_cell, instanceA.cell, instanceB.cell) )
-        print('all found components A: %s' %    instanceA.parent_cell.find_components() )
-        print('all found components B: %s' %    instanceB.parent_cell.find_components() )
-        raise Exception("Component not found")
+    if componentA==[]:
+        print('InstA: %s, %s' % (instanceA.cell.name, instanceA) )
+        print('componentA: %s' % (componentA) )
+        print('parent_cell A: %s, cell A: %s' % (instanceA.parent_cell, instanceA.cell) )
+        print('all found components A: instance variable: %s' %    ([n.instance for n in instanceA.parent_cell.find_components()]) )
+        print('all found components A: component variable: %s' %    ([n.component for n in instanceA.parent_cell.find_components()]) )
+        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceA.cell.name)
+    if componentB==[]:
+        print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
+        print('componentB: %s' % (componentB) )
+        print('parent_cell B: %s, cell B: %s' % (instanceB.parent_cell, instanceB.cell) )
+        print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
+        print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
+        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
 
     # if the instance had sub-cells, then there will be many components. Pick the first one.
     if type(componentA) == type([]):
@@ -221,6 +228,21 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # Find pinA and pinB
     cpinA = [p for p in componentA.pins if p.pin_name == pinA]
     cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
+
+    # relaxed_pinnames:  scan for only the number
+    if relaxed_pinnames==True:
+        import re
+        try:
+            if cpinA==[]:
+                if re.findall(r'\d+', pinA):
+                    cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+            if cpinB==[]:
+                if re.findall(r'\d+', pinB):
+                    cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+        except:
+            print('error in siepic.scripts.connect_cell, relaxed_pinnames')      
+
+
     if cpinA==[]:
         try:  
             # this checks if the cell (which could contain multiple components) 
@@ -285,9 +307,14 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 waveguide = waveguides[0]
                 print('error: waveguide type not found in PDK waveguides')
                 raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
+        # check if the waveguide type is compound waveguide
+        if 'compound_waveguide' in waveguide:
+            waveguide = [w for w in waveguides if w['name']==waveguide['compound_waveguide']['singlemode']]
+            waveguide = waveguide[0]
     if verbose:
         print('waveguide type: %s' % waveguide )    
     # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
+    
     waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
     if len(waveguide_component) > 0:
         width_um = waveguide_component[0]['width']
@@ -1106,15 +1133,9 @@ def waveguide_length():
     selection = select_waveguides(cell)
     if len(selection) == 1:
         cell = selection[0].inst().cell
-        area = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
-        
+        length = float(cell.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
         pya.MessageBox.warning("Waveguide Length", "Waveguide length (um): %s" %
-                               str(area / width * cell.layout().dbu), pya.MessageBox.Ok)
+                               length, pya.MessageBox.Ok)
     else:
         pya.MessageBox.warning("Selection is not a waveguide",
                                "Select one waveguide you wish to measure.", pya.MessageBox.Ok)
@@ -1136,25 +1157,11 @@ def waveguide_length_diff():
     selection = SiEPIC.utils.select_waveguides(cell)
 
     if len(selection) == 2:
-        cell = selection[0].inst().cell
-        area1 = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width1 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width1 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
-        
-        cell = selection[1].inst().cell
-        area2 = SiEPIC.utils.advance_iterator(cell.each_shape(
-            cell.layout().layer(TECHNOLOGY['Waveguide']))).polygon.area()
-        if(cell.pcell_parameter("width") is None):
-          width2 = float(cell.pcell_parameters()[0].split("w=")[1].split(" ")[0])
-        else:      
-          width2 = cell.pcell_parameters_by_name()['width'] / cell.layout().dbu
+        cell1 = selection[0].inst().cell
+        cell2 = selection[1].inst().cell
 
-        dbu = cell.layout().dbu
-        length1 = (area1 / width1) * dbu
-        length2 = (area2 / width2) * dbu
+        length1 = float(cell1.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
+        length2 = float(cell2.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
 
         # function to find the nearest value in aa 2d array
         def find_nearest(array, value):
@@ -1444,7 +1451,7 @@ def waveguide_length_diff():
                     phase_arr[each_sample] = ((beta1 * length1) - (beta2 * length2)) / np.pi
 
         pya.MessageBox.warning("Waveguide Length Difference", "Difference in waveguide lengths (um): %s" % str(
-            abs(area1 / width1 - area2 / width2) * cell.layout().dbu) + '\r\n RMS phase error: ' + str(round(np.std(phase_arr), 3)) + ' pi radians', pya.MessageBox.Ok)
+            abs(length1 - length2)) + '\r\n RMS phase error: ' + str(round(np.std(phase_arr), 3)) + ' pi radians', pya.MessageBox.Ok)
 
     else:
         pya.MessageBox.warning("Selection are not a waveguides",
@@ -1614,7 +1621,7 @@ def snap_component():
 def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=False):
     return connect_cell(instanceA, pinA, cellB, pinB, verbose)
     
-def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, translation=pya.Trans.R0):
+def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, translation=pya.Trans.R0, relaxed_pinnames=False):
   '''
   Instantiate, Move & rotate cellB to connect to instanceA, 
    such that their pins (pinB, pinA) match
@@ -1652,6 +1659,11 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   
   '''
+  if not(instanceA):
+    raise Exception("instanceA not found")
+  if not(cellB):
+    raise Exception("cellB not found")
+
 
   # Find the two components:
   componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
@@ -1677,6 +1689,18 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   # Find pinA and pinB
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
   cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
+
+  # relaxed_pinnames:  scan for only the number
+  if relaxed_pinnames==True:
+      import re
+      try:
+          if cpinA==[]:
+              cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+          if cpinB==[]:
+              cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+      except:
+          print('error in siepic.scripts.connect_cell')      
+
 
   # for cells with hierarchy
   if cpinA==[]:
@@ -2002,7 +2026,12 @@ def calibreDRC(params=None, cell=None):
 
 
 def auto_coord_extract():
+    import os
+    import time
     from .utils import get_technology
+    from .utils import get_layout_variables
+    TECHNOLOGY, lv, ly, topcell = get_layout_variables()
+
     TECHNOLOGY = get_technology()
 
     def gen_ui():
@@ -2015,6 +2044,38 @@ def auto_coord_extract():
         def button_clicked(checked):
             """ Event handler: "OK" button clicked """
             wdg.destroy()
+
+        def download_text(checked):
+            mw = pya.Application.instance().main_window()
+            layout_filename = mw.current_view().active_cellview().filename()
+            if len(layout_filename) == 0:
+                raise Exception("Please save your layout before exporting.")
+            file_out = os.path.join(os.path.dirname(layout_filename),
+                                    "{}.txt".format(os.path.splitext(os.path.basename(layout_filename))[0]))
+            f = open(file_out, 'w')
+
+            # Find the automated measurement coordinates:
+            from .utils import find_automated_measurement_labels
+            cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+            text_out, opt_in = find_automated_measurement_labels(cell)
+
+            #text_out doesn't have new line spaces
+
+            f.write(text_out.replace("<br>", "\n"))
+
+            wd = pya.QDialog(pya.Application.instance().main_window())
+
+            #        wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+            wd.setAttribute = pya.Qt.WA_DeleteOnClose
+
+
+            wd.resize(150, 50)
+            wd.move(1, 1)
+            grid = pya.QGridLayout(wd)
+            windowlabel = pya.QLabel(wd)
+            windowlabel.setText("Download Complete. Saved to {}".format(file_out))
+            grid.addWidget(windowlabel, 2, 2, 4, 4)
+            wd.show()
 
         wdg = pya.QDialog(pya.Application.instance().main_window())
 
@@ -2034,13 +2095,16 @@ def auto_coord_extract():
         wtext.setText('')
 
         ok = pya.QPushButton("OK", wdg)
+        Download = pya.QPushButton("Download", wdg)
         ok.clicked(button_clicked)   # attach the event handler
+        Download.clicked(download_text)
 #    netlist = pya.QPushButton("Save", wdg) # not implemented
 
         grid.addWidget(windowlabel1, 0, 0, 1, 3)
         grid.addWidget(wtext, 1, 1, 3, 3)
 #    grid.addWidget(netlist, 4, 2)
         grid.addWidget(ok, 4, 3)
+        grid.addWidget(Download, 4, 2)
 
         grid.setRowStretch(3, 1)
         grid.setColumnStretch(1, 1)
@@ -2049,7 +2113,7 @@ def auto_coord_extract():
 
     # Create a GUI for the output:
     gen_ui()
-    wtext.insertHtml('<br>* Automated measurement coordinates:<br><br>')
+    #wtext.insertHtml('<br>* Automated measurement coordinates:<br><br>')
 
     # Find the automated measurement coordinates:
     from .utils import find_automated_measurement_labels
@@ -3038,15 +3102,8 @@ def resize_waveguide():
             )
 
         else:
-            # calculate the length of the waveguide using the area / width
-            wg_width = c.pcell_parameters_by_name()["width"] / c.layout().dbu
-            iter2 = c.begin_shapes_rec(LayerSiN)
-
-            if iter2.shape().is_polygon():
-                area = utils.advance_iterator(
-                    c.each_shape(c.layout().layer(TECHNOLOGY["Waveguide"]))
-                ).polygon.area()
-                path_length = area / wg_width * c.layout().dbu
+            # calculate the length of the waveguide using the spice parameters
+            path_length = float(c.find_components()[0].params.split(' ')[0].split('=')[1])*1e6
 
             # get path points
             points_obj = path_obj.get_dpoints()
@@ -3212,7 +3269,7 @@ def resize_waveguide():
                     path_edges[index][1][1] = path_edges[index][1][1] + diff / 2
 
                 dpoints = [pya.DPoint(each[0], each[1]) for each in points]
-                dpath = pya.DPath(dpoints, wg_width * c.layout().dbu)
+                dpath = pya.DPath(dpoints, 0.5 * c.layout().dbu) # 0.5 is irrelevant to actual waveguide width
 
                 # replace the old waveguide path points with the new path points
                 oinst.change_pcell_parameter("path", dpath)

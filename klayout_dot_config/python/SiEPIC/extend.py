@@ -1637,7 +1637,11 @@ def check_components_models():
 def pinPoint(self, pin_name, verbose=False):
     pins = self.find_pins()
     if pins:
-        return [p for p in pins if (p.pin_name==pin_name)][0].center
+        matched_pins = [p for p in pins if (p.pin_name==pin_name)]
+        if not matched_pins:
+            raise Exception("Did not find matching pin (%s), in the components list of pins (%s)." %(pin_name, [p.pin_name for p in pins]) )
+            return
+        return matched_pins[0].center
     else:
         pass
 
