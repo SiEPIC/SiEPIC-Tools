@@ -142,6 +142,8 @@ def get_technology_by_name(tech_name, verbose=False):
     if KLAYOUT_VERSION > 24:
         lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()
         technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
+        if not technology['base_path']:
+            raise Exception('Cannot find the technology "%s"' % tech_name)
     else:
         import fnmatch
         dir_path = pya.Application.instance().application_data_path()
@@ -154,10 +156,10 @@ def get_technology_by_name(tech_name, verbose=False):
             lyp_file = matches[0]
         else:
             raise Exception('Cannot find technology layer properties file %s' % search_str)
-        # technology['base_path']
 
-    # Load technology folder location
-    technology['base_path'] = os.path.dirname(lyp_file)
+        # Load technology folder location
+        technology['base_path'] = os.path.dirname(lyp_file)
+        print('technology base path:%s' % technology['base_path'])
 
     # Find the Compact Model Library files    
     cml_files = []
