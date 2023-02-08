@@ -156,10 +156,10 @@ def get_technology_by_name(tech_name, verbose=False):
             raise Exception('Cannot find technology layer properties file %s' % search_str)
         # technology['base_path']
 
-    # Load CML file locations
-    head, tail = os.path.split(lyp_file)
-    technology['base_path'] = head
-    
+    # Load technology folder location
+    technology['base_path'] = os.path.dirname(lyp_file)
+
+    # Find the Compact Model Library files    
     cml_files = []
     cml_paths = []
     cml_versions = []

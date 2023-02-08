@@ -58,6 +58,7 @@ if 1:
     SiEPIC.lumerical.mode = reload(SiEPIC.lumerical.mode)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
     SiEPIC.scripts = reload(SiEPIC.scripts)
+    SiEPIC.install = reload(SiEPIC.install)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.utils.layout = reload(SiEPIC.utils.layout)
     SiEPIC.utils.geometry = reload(SiEPIC.utils.geometry)
