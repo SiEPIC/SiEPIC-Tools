@@ -667,7 +667,7 @@ def print_parameter_values(self):
     print(self.pcell_parameters())
     params = self.pcell_parameters_by_name()
     for key in params.keys():
-        print("Parameter: %s, Value: %s") % (key, params[key])
+        print("Parameter: %s, Value: %s" % (key, params[key]) )
 
 '''
 Optical Pins have:
