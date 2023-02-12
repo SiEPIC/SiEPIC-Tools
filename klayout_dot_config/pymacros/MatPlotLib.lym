@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+
+# Enter your Python code here ..
+
+from SiEPIC.install import install_scipy
+from SiEPIC.install import install_matplotlib
+install_matplotlib()
+
+import matplotlib.pyplot as plt  
+import numpy as n
+
+wavelength = n.array([1, 2, 3, 4, 5])
+power = wavelength**2
+
+plt.figure()
+print(wavelength*1e9)
+print(power)
+plt.plot(wavelength*1e9, power)
+plt.xlim((1*10**9,7*10**9)) 
+plt.xlabel('Wavelength (nm)') 
+plt.ylabel('Transmission (dB)')
+print("TEST1")
+plt.show(block=False)
+print("TEST2")
+for i in range(0,10):
+    print("This text should show with the plot up")
+
+plt.figure(2)
+plt.plot(wavelength, wavelength)
+plt.xlim((0,10)) 
+plt.xlabel('Test') 
+plt.ylabel('Test')
+print("TEST3")
+plt.show(block=False)
+for i in range(0,10):
+    print("This text should show with the plot up")
+
+</text>
+</klayout-macro>

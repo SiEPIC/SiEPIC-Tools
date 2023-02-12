@@ -114,3 +114,22 @@ def install_potrace():
         except ImportError:
             return False
     return True
+
+
+def install_matplotlib():
+    try:
+        import matplotlib
+    except:
+        try:
+            import pip
+            import pya
+            install = pya.MessageBox.warning(
+                "Install package?", "Install package 'matplotlib' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+            if install == pya.MessageBox.Yes:
+                # try installing using pip
+                from SiEPIC.install import get_pip_main
+                main = get_pip_main()
+                main(['install', 'matplotlib'])
+        except ImportError:
+            return False
+    return True

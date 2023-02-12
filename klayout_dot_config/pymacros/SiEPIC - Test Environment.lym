@@ -52,6 +52,7 @@ if 1:
     SiEPIC.extend = reload(SiEPIC.extend)
     SiEPIC._globals = reload(SiEPIC._globals)
     SiEPIC.core = reload(SiEPIC.core)
+    SiEPIC.install = reload(SiEPIC.install)
     SiEPIC.examples = reload(SiEPIC.examples)
     SiEPIC.github = reload(SiEPIC.github)
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
