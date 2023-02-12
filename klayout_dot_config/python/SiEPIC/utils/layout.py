@@ -66,10 +66,12 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
 
     # Load parameters for the chosen waveguide type
     params = [t for t in waveguide_types if t['name'] == waveguide_type]
+
     if type(params) == type([]) and len(params) > 0:
         params = params[0]
         if 'width' not in params and 'compound_waveguide' not in params:
             params['width'] = params['wg_width']
+        params['waveguide_type'] = waveguide_type
     else:
         print('error: waveguide type not found in PDK waveguides')
         raise Exception('error: waveguide type (%s) not found in PDK waveguides' %
@@ -92,11 +94,13 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
         params_multimode = [t for t in waveguide_types if t['name'] == multimode]
         if type(params_singlemode) == type([]) and len(params_singlemode) > 0:
             params_singlemode = params_singlemode[0]
+            params_singlemode['waveguide_type'] = singlemode
         else:
             raise Exception(
                 'error: waveguide type (%s) not found in PDK waveguides' % singlemode)
         if type(params_multimode) == type([]) and len(params_multimode) > 0:
             params_multimode = params_multimode[0]
+            params_multimode['waveguide_type'] = multimode
         else:
             raise Exception(
                 'error: waveguide type (%s) not found in PDK waveguides' % multimode)
@@ -234,6 +238,7 @@ def layout_waveguide3(cell, pts, params, debug=False):
     model = params['model']
     cellName = 'Waveguide'
     CML = params['CML']
+    waveguide_type = params['waveguide_type']
 
     if debug:
         print(' - waveguide params: %s' % (params))
@@ -296,6 +301,7 @@ def layout_waveguide3(cell, pts, params, debug=False):
     pt3 = pts[0] - dpt
     pt4 = pts[0] - 6*dpt
     pt5 = pts[0] + 2*dpt
+    pt6 = pts[0] - 2*dpt
 
     t = Trans(angle, False, pt3)
     import re
@@ -323,6 +329,10 @@ def layout_waveguide3(cell, pts, params, debug=False):
     t = Trans(angle, False, pt4)
     text = Text(
         'Length=%.3f (microns)' % (waveguide_length), t, 0.5*wg_width, -1)
+    text.halign = halign
+    shape = cell.shapes(LayerDevRecN).insert(text)
+    t = Trans(angle, False, pt6)
+    text = Text('waveguide_type=%s' % waveguide_type, t, 0.1*wg_width, -1)
     text.halign = halign
     shape = cell.shapes(LayerDevRecN).insert(text)
 

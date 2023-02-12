@@ -992,6 +992,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 iter2 = subcell.begin_shapes_rec(LayerDevRecN)
                 spice_params = ""
                 library, cellName = None, None
+                waveguide_type = None
                 while not(iter2.at_end()):
                     if iter2.shape().is_text():
                         text = iter2.shape().text
@@ -1011,6 +1012,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                                 component_ID = cID
                         if text.string.find("Spice_param:") > -1:
                             spice_params = text.string[len("Spice_param:"):]
+                        if text.string.find("waveguide_type=") > -1:
+                            waveguide_type = text.string[len("waveguide_type="):]
                     iter2.next()
                 if library == None:
                     if verbose:
@@ -1024,7 +1027,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                        trans=iter1.trans(), library=library, 
                        params=spice_params, polygon=polygon, 
                        DevRec_polygon=DevRec_polygon, cell=subcell, 
-                       basic_name=subcell.basic_name(), cellName=cellName))
+                       basic_name=subcell.basic_name(), cellName=cellName, 
+                       waveguide_type=waveguide_type))
 
                 # find the component pins, and Sort by pin text labels
                 pins = sorted(subcell.find_pins_component(

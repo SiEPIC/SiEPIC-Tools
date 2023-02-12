@@ -165,7 +165,7 @@ Component defs:
 
 class Component():
 
-    def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, pins=[], epins=[], nets=[], polygon=None, DevRec_polygon=None, cell=None, basic_name=None, cellName=None):
+    def __init__(self, idx=None, component=None, instance=None, trans=None, library=None, params=None, waveguide_type=None, pins=[], epins=[], nets=[], polygon=None, DevRec_polygon=None, cell=None, basic_name=None, cellName=None):
         self.idx = idx             # component index, should be unique, 0, 1, 2, ...
         self.component = component  # which component (name) this belongs to
         self.instance = instance   # which component (instance) this belongs to  # Needs to fixed to be pya.Instance
@@ -178,6 +178,7 @@ class Component():
         self.pins = pins           # an array of all the optical pins, Pin[]
         self.npins = len(pins)     # number of pins
         self.params = params       # Spice parameters
+        self.waveguide_type = waveguide_type # Waveguide Type, referring to Waveguides.XML
         # The component's DevRec polygon/box outline (absolute coordinates, i.e., transformed)
         self.polygon = polygon
         # The component's DevRec polygon/box outline (relative coordinates, i.e.,
@@ -211,6 +212,7 @@ class Component():
         return text
 
     def params_dict(self):
+      '''return Spice parameters for the component'''
       from decimal import Decimal
       if not(self.params):
         return {}
