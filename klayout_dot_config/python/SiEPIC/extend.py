@@ -338,7 +338,7 @@ def snap(self, pins):
       if len(pins_sorted):
           # pins_sorted[0] is the closest one
           dpt = pins_sorted[0].center - pts[0]
-          print(dpt)
+          # print(dpt)
           # check if the pin is close enough to the path endpoint
           if dpt.abs() <= d_min:
               # snap the endpoint to the pin
