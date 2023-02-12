@@ -57,6 +57,7 @@ def install_numpy():
         except ImportError:
             return False
     return True
+    import numpy
 
 
 def install_scipy():
@@ -76,6 +77,7 @@ def install_scipy():
         except ImportError:
             return False
     return True
+    import scipy
 
 def install_imageio():
 
@@ -133,6 +135,7 @@ def install_matplotlib():
         except ImportError:
             return False
     return True
+    import matplotlib
 
 def install_tidy3d():
     try:
@@ -151,6 +154,7 @@ def install_tidy3d():
         except ImportError:
             return False
     return True
+    import tidy3d
 
 def install_urllib3():
     try:
@@ -169,3 +173,24 @@ def install_urllib3():
         except ImportError:
             return False
     return True
+
+def install_SiEPICLabTestParam3():
+    try:
+        import SiEPICLabTestParam
+    except:
+        try:
+            import pip
+            import pya
+            install = pya.MessageBox.warning(
+                "Install package?", "Install package 'SiEPICLabTestParam3' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+            if install == pya.MessageBox.Yes:
+                # try installing using pip
+                from SiEPIC.install import get_pip_main
+                main = get_pip_main()
+                main(['install', 'SiEPICLabTestParam3'])
+        except ImportError:
+            return False
+    return True
+    import SiEPICLabTestParam
+
+
