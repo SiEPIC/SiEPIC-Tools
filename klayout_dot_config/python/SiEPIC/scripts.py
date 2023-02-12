@@ -616,7 +616,8 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
         # Get user property #1: the waveguide type        
         prop1 = obj.shape.property(1)
         if prop1 and GUI==False:
-            print(' - user property: waveguide_type - %s' % (prop1) )
+            if verbose:
+                print(' - user property: waveguide_type - %s' % (prop1) )
             waveguide_type = prop1
         else:
             waveguide_type = params['waveguide_type']
@@ -632,8 +633,9 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
                 pcell=0
                 print("SiEPIC.scripts.path_to_waveguide2(): legacy waveguide PCell does not have 'waveguide_type' parameter")
             else:
-                print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
-                  (TECHNOLOGY['technology_name'], pcell))   
+                if verbose:
+                    print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
+                      (TECHNOLOGY['technology_name'], pcell))   
         except:
             pass
         if not pcell:

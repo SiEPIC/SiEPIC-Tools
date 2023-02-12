@@ -42,7 +42,7 @@ acknowledgements: Diedrik Vermeulen for the code to place the taper in the corre
 '''
 
 
-def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
+def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
 
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide4: ')
@@ -141,7 +141,7 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
                     subcell = layout.create_cell("Waveguide_sm_%s" % ii)
                     cell.insert(CellInstArray(subcell.cell_index(), Trans()))
                     waveguide_length += layout_waveguide3(subcell,
-                                                          wg_sm_segment_pts, params_singlemode, debug=True)
+                                                          wg_sm_segment_pts, params_singlemode, debug=False)
             else:
                 # insert two tapers and multimode waveguide
                 angle = math.atan2((end_point.y-start_point.y),
@@ -182,21 +182,21 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
                 subcell = layout.create_cell("Waveguide_mm_%s" % ii)
                 cell.insert(CellInstArray(subcell.cell_index(), Trans()))
                 waveguide_length += layout_waveguide3(subcell,
-                                                      [wg_start_pt, wg_end_pt], params_multimode, debug=True)
+                                                      [wg_start_pt, wg_end_pt], params_multimode, debug=False)
                 # compound segment
                 if ii > 1:
                     wg_sm_segment_pts.append(t.disp.to_p())
                     subcell = layout.create_cell("Waveguide_sm_%s" % ii)
                     cell.insert(CellInstArray(subcell.cell_index(), Trans()))
                     waveguide_length += layout_waveguide3(subcell,
-                                                          wg_sm_segment_pts, params_singlemode, debug=True)
+                                                          wg_sm_segment_pts, params_singlemode, debug=False)
                     wg_sm_segment_pts = [t2.disp.to_p(), pts[ii]]
                 else:
                     wg_sm_segment_pts = [t2.disp.to_p(), pts[ii]]
 
     else:
         # primitive waveguide type
-        waveguide_length = layout_waveguide3(cell, pts, params, debug=True)
+        waveguide_length = layout_waveguide3(cell, pts, params, debug=False)
 
     return waveguide_length
 
@@ -217,7 +217,7 @@ by Lukas Chrostowski
 '''
 
 
-def layout_waveguide3(cell, pts, params, debug=True):
+def layout_waveguide3(cell, pts, params, debug=False):
 
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide3: ')
@@ -232,7 +232,7 @@ def layout_waveguide3(cell, pts, params, debug=True):
     wg_width = to_itype(params['width'], dbu)
     radius = float(params['radius'])
     model = params['model']
-    cellName = 'Waveguide2'
+    cellName = 'Waveguide'
     CML = params['CML']
 
     if debug:
@@ -600,8 +600,8 @@ def layout_waveguide(cell, layer, points_list, width):
 
     # Append point only if change in direction is less than 120 degrees.
     def smooth_append(point_list, point):
-        if point_list is None:
-            print(point)
+#        if point_list is None:
+#            print(point)
         if len(point_list) < 1:
             point_list.append(point)
             return point_list
@@ -833,7 +833,7 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
     pt = pt1+pt2[::-1]
 
     poly = pya.DPolygon(pt)
-    print(poly)
+#    print(poly)
     poly_t = poly.transformed(trans)
     if insert == True:
         cell.shapes(layer).insert(poly_t)
@@ -937,8 +937,8 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
         else:
             return shape_bend
 
-    print('SBend: theta %s, x %s, straight_l %s, r %s, h %s, length %s' %
-          (theta, x, straight_l, r, h, length))
+#    print('SBend: theta %s, x %s, straight_l %s, r %s, h %s, length %s' %
+#          (theta, x, straight_l, r, h, length))
     return length
 
 

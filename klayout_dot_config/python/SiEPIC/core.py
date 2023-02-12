@@ -317,7 +317,7 @@ class WaveguideGUI():
         self.window.findChild("configuration").clear()
         waveguide_types = load_Waveguides_by_Tech(tech_name)
         self.waveguides = waveguide_types
-        print ('SiEPIC.core: tech %s, waveguide_types: %s' % (tech_name, waveguide_types) )
+        # print ('SiEPIC.core, Waveguide GUI: tech %s, waveguide_types: %s' % (tech_name, waveguide_types) )
         if 0:
             # keep only simple waveguides (not compound ones)
             waveguide_types_simple = [t for t in waveguide_types if not 'compound_waveguide' in t.keys()]
