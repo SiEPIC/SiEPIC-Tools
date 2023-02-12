@@ -133,3 +133,39 @@ def install_matplotlib():
         except ImportError:
             return False
     return True
+
+def install_tidy3d():
+    try:
+        import tidy3d
+    except:
+        try:
+            import pip
+            import pya
+            install = pya.MessageBox.warning(
+                "Install package?", "Install package 'tidy3d' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+            if install == pya.MessageBox.Yes:
+                # try installing using pip
+                from SiEPIC.install import get_pip_main
+                main = get_pip_main()
+                main(['install', 'tidy3d'])
+        except ImportError:
+            return False
+    return True
+
+def install_urllib3():
+    try:
+        import urllib3
+    except:
+        try:
+            import pip
+            import pya
+            install = pya.MessageBox.warning(
+                "Install package?", "Install package 'urllib3' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+            if install == pya.MessageBox.Yes:
+                # try installing using pip
+                from SiEPIC.install import get_pip_main
+                main = get_pip_main()
+                main(['install', 'urllib3'])
+        except ImportError:
+            return False
+    return True

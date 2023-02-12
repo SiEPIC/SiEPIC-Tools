@@ -19,7 +19,6 @@
 
 # Enter your Python code here ..
 
-from SiEPIC.install import install_scipy
 from SiEPIC.install import install_matplotlib
 install_matplotlib()
 
@@ -51,6 +50,5 @@ print("TEST3")
 plt.show(block=False)
 for i in range(0,10):
     print("This text should show with the plot up")
-
 </text>
 </klayout-macro>
