@@ -1029,19 +1029,31 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv=False):
     cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x / dbu, y / dbu)))
 
 
-'''
-return all opt_in labels:
- text_out: HTML text
- opt_in: a Dictionary
-'''
 
 
 def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
-    # example usage:
-    # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
-    # LayerText = pya.LayerInfo(10, 0)
-    # LayerTextN = topcell.layout().layer(LayerText)
-    # find_automated_measurement_labels(topcell, LayerTextN)
+    """return all opt_in labels from a cell
+    requires a layout with Text labels on the layer LayerTextN
+    the format of the labels is
+       opt_in_<polarization>_<wavelength>_<type>_<deviceID>_<params>
+         or 
+       opt_<polarization>_<wavelength>_<type>_<deviceID>_<params>
+         or
+       elec_<deviceID>_<params>
+    for electrical-optical measurements, the deviceID on the electrical contact
+    needs to match that of the optical input
+       
+    returns:
+        text_out: HTML text
+        opt_in: a Dictionary
+
+    example usage:
+    topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    LayerText = pya.LayerInfo(10, 0)
+    LayerTextN = topcell.layout().layer(LayerText)
+    find_automated_measurement_labels(topcell, LayerTextN)
+    """
+    
     import string
     if not LayerTextN:
         from . import get_technology, find_paths
@@ -1078,7 +1090,12 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
                 i += 1
                 text2 = iter.shape().text.transformed(iter.itrans())
                 texts.append(text2)
-                fields = text.string.split("_")
+                if 'opt_in' in text.string:
+                    # allow for either opt_ or opt_in_ formats
+                    textlabel = text.string
+                else:
+                    textlabel = text.string.replace('opt_','opt_in_')
+                fields = textlabel.split("_")
                 while len(fields) < 7:
                     fields.append('comment')
                 if GUI == True:
@@ -1098,13 +1115,14 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
                         duplicate = True
                     else:
                         device_ids.add(fields[5])
-                opt_in.append({'opt_in': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
-                              2], 'wavelength': fields[3], 'type': fields[4], 'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
+                opt_in.append({'opt_in': textlabel, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[2], 
+                        'wavelength': fields[3], 'type': fields[4], 
+                        'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
                 params_txt = ''
                 for f in fields[6:]:
                     params_txt += ', ' + str(f)
-                text_out += "%s, %s, %s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
-                                                              2], fields[3], fields[4], fields[5], params_txt)
+                text_out += "%s, %s, %s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[2], 
+                        fields[3], fields[4], fields[5], params_txt)
         iter.next()
 
     text_out += "<br>"

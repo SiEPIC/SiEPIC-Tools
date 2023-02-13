@@ -2561,93 +2561,95 @@ def layout_check(cell=None, verbose=False):
 
         # opt_in labels
         for ti1 in range(0, len(opt_in)):
-            t = opt_in[ti1]['Text']
-            box_s = 1000
-            box = pya.Box(t.x - box_s, t.y - box_s, t.x + box_s, t.y + box_s)
-            # opt_in labels check for unique
-            for ti2 in range(ti1 + 1, len(opt_in)):
-                if opt_in[ti1]['opt_in'] == opt_in[ti2]['opt_in']:
+            if 'opt_in' in opt_in[ti1]:
+                t = opt_in[ti1]['Text']
+                box_s = 1000
+                box = pya.Box(t.x - box_s, t.y - box_s, t.x + box_s, t.y + box_s)
+                # opt_in labels check for unique
+                for ti2 in range(ti1 + 1, len(opt_in)):
+                    if 'opt_in' in opt_in[ti2]:
+                        if opt_in[ti1]['opt_in'] == opt_in[ti2]['opt_in']:
+                            if verbose:
+                                print(" - Found DFT error, non unique text labels: %s, %s, %s" %
+                                      (t.string, t.x, t.y))
+                            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_unique.rdb_id())
+                            rdb_item.add_value(pya.RdbItemValue(t.string))
+                            rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
+    
+                # opt_in format check:
+                if not opt_in[ti1]['wavelength'] in DFT_wavelengths:
                     if verbose:
-                        print(" - Found DFT error, non unique text labels: %s, %s, %s" %
-                              (t.string, t.x, t.y))
-                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_unique.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(t.string))
+                        print(" - DFT error: wavelength")
+                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_wavelength.rdb_id())
                     rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-            # opt_in format check:
-            if not opt_in[ti1]['wavelength'] in DFT_wavelengths:
-                if verbose:
-                    print(" - DFT error: wavelength")
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_wavelength.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-            if not (opt_in[ti1]['pol'] in DFT_polarizations):
-                if verbose:
-                    print(" - DFT error: polarization")
-                rdb_item = rdb.create_item(
-                    rdb_cell.rdb_id(), rdb_cat_id_optin_polarization.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-            # find the GC closest to the opt_in label.
-            from ._globals import KLAYOUT_VERSION
-            components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
-                                       key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
-            # GC too far check:
-            if components_sorted:
-                dist_optin_c = components_sorted[0].trans.disp.to_p(
-                ).distance(pya.Point(t.x, t.y).to_dtype(1))
-                if verbose:
-                    print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in[ti1][
-                          'Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c * dbu))
-                if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']) * 1000:
+    
+                if not (opt_in[ti1]['pol'] in DFT_polarizations):
                     if verbose:
-                        print(" - opt_in label too far from the nearest grating coupler: %s, %s" %
-                              (components_sorted[0].instance, opt_in[ti1]['opt_in']))
-                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_toofar.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-                # starting with each opt_in label, identify the sub-circuit, then GCs, and
-                # check for GC spacing
-                trimmed_nets, trimmed_components = trim_netlist(
-                    nets, components, components_sorted[0])
-                components_connected_opt_in = components_connected_opt_in + trimmed_components
-                detector_GCs = [c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (
-                    c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0, 0)]
-                if verbose:
-                    print("   N=%s, detector GCs: %s" %
-                          (len(detector_GCs), [c.display() for c in detector_GCs]))
-                vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p()
-                                  for c in detector_GCs]
-                # for vi in range(0,len(detector_GCs)):
-                #  if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
-                #    if verbose:
-                #      print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
-                #    rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
-                #    rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
-
-                # find the GCs in the circuit that don't match the testing configuration
-                import numpy as np
-                array_angle = float(DFT['design-for-test']['grating-couplers']['gc-array-orientation'])
-                pitch = float(DFT['design-for-test']['grating-couplers']['gc-pitch'])
-                sx = np.round(np.cos(array_angle/180*np.pi))
-                sy = np.round(np.sin(array_angle/180*np.pi))
-                
-                for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
-                    if pya.DPoint(d * sx* pitch * 1000, d *sy* pitch * 1000) in vect_optin_GCs:
-                        del_index = vect_optin_GCs.index(pya.DPoint(
-                            d * sx* pitch * 1000, d *sy* pitch * 1000))
-                        del vect_optin_GCs[del_index]
-                        del detector_GCs[del_index]
-                for vi in range(0, len(vect_optin_GCs)):
-                    if verbose:
-                        print(" - DFT GC array config error: %s, %s" %
-                              (components_sorted[0].instance, opt_in[ti1]['opt_in']))
+                        print(" - DFT error: polarization")
                     rdb_item = rdb.create_item(
-                        rdb_cell.rdb_id(), rdb_cat_id_GCarrayconfig.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(
-                        "The label having the error is: " + opt_in[ti1]['opt_in']))
-                    rdb_item.add_value(pya.RdbItemValue(detector_GCs[vi].polygon.to_dtype(dbu)))
+                        rdb_cell.rdb_id(), rdb_cat_id_optin_polarization.rdb_id())
                     rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
+    
+                # find the GC closest to the opt_in label.
+                from ._globals import KLAYOUT_VERSION
+                components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
+                                           key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
+                # GC too far check:
+                if components_sorted:
+                    dist_optin_c = components_sorted[0].trans.disp.to_p(
+                    ).distance(pya.Point(t.x, t.y).to_dtype(1))
+                    if verbose:
+                        print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in[ti1][
+                              'Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c * dbu))
+                    if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']) * 1000:
+                        if verbose:
+                            print(" - opt_in label too far from the nearest grating coupler: %s, %s" %
+                                  (components_sorted[0].instance, opt_in[ti1]['opt_in']))
+                        rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_toofar.rdb_id())
+                        rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
+    
+                    # starting with each opt_in label, identify the sub-circuit, then GCs, and
+                    # check for GC spacing
+                    trimmed_nets, trimmed_components = trim_netlist(
+                        nets, components, components_sorted[0])
+                    components_connected_opt_in = components_connected_opt_in + trimmed_components
+                    detector_GCs = [c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (
+                        c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0, 0)]
+                    if verbose:
+                        print("   N=%s, detector GCs: %s" %
+                              (len(detector_GCs), [c.display() for c in detector_GCs]))
+                    vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p()
+                                      for c in detector_GCs]
+                    # for vi in range(0,len(detector_GCs)):
+                    #  if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
+                    #    if verbose:
+                    #      print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
+                    #    rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
+                    #    rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+    
+                    # find the GCs in the circuit that don't match the testing configuration
+                    import numpy as np
+                    array_angle = float(DFT['design-for-test']['grating-couplers']['gc-array-orientation'])
+                    pitch = float(DFT['design-for-test']['grating-couplers']['gc-pitch'])
+                    sx = np.round(np.cos(array_angle/180*np.pi))
+                    sy = np.round(np.sin(array_angle/180*np.pi))
+                    
+                    for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
+                        if pya.DPoint(d * sx* pitch * 1000, d *sy* pitch * 1000) in vect_optin_GCs:
+                            del_index = vect_optin_GCs.index(pya.DPoint(
+                                d * sx* pitch * 1000, d *sy* pitch * 1000))
+                            del vect_optin_GCs[del_index]
+                            del detector_GCs[del_index]
+                    for vi in range(0, len(vect_optin_GCs)):
+                        if verbose:
+                            print(" - DFT GC array config error: %s, %s" %
+                                  (components_sorted[0].instance, opt_in[ti1]['opt_in']))
+                        rdb_item = rdb.create_item(
+                            rdb_cell.rdb_id(), rdb_cat_id_GCarrayconfig.rdb_id())
+                        rdb_item.add_value(pya.RdbItemValue(
+                            "The label having the error is: " + opt_in[ti1]['opt_in']))
+                        rdb_item.add_value(pya.RdbItemValue(detector_GCs[vi].polygon.to_dtype(dbu)))
+                        rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
 
         # subtract components connected to opt_in labels from all components to
         # find circuits with missing opt_in
