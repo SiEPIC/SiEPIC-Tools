@@ -2237,22 +2237,23 @@ def calculate_area():
         print(area / total)
 
 
-"""
-SiEPIC-Tools: Trim Netlist
-by Jaspreet Jhoja (c) 2016-2017
-
-This Python function facilitates trimming of netlist based on a selected component.
-Version history:
-
-Jaspreet Jhoja           2017/12/29
- - Initial version
-"""
-# Inputs, and example of how to generate them:
-# nets, components = topcell.identify_nets()
-# selected_component = components[5]   (elsewhere the desired component is selected)
 
 
 def trim_netlist(nets, components, selected_component, verbose=None):
+    """Trim Netlist
+    by Jaspreet Jhoja (c) 2016-2017
+    
+    This Python function facilitates trimming of netlist based on a selected component.
+    Version history:
+    
+    Jaspreet Jhoja           2017/12/29
+     - Initial version
+
+    Inputs, and example of how to generate them:
+        nets, components = topcell.identify_nets()
+        selected_component = components[5]   (elsewhere the desired component is selected)
+    """
+
     selected = selected_component
     #>17        <2
     # nets[0].pins[0].component.idx
@@ -2287,22 +2288,44 @@ def trim_netlist(nets, components, selected_component, verbose=None):
     return trimmed_nets, trimmed_components
 
 
-'''
-Verification:
-
-Limitations:
-- we assume that the layout was created by SiEPIC-Tools in KLayout, that PCells are there,
-  and that the layout hasn't been flattened. This allows us to isolate individual components,
-  and get their parameters. Working with a flattened layout would be harder, and require:
-   - reading parameters from the text labels (OK)
-   - find_components would need to look within the DevRec layer, rather than in the selected cell
-   - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
-     This could be solved by putting the pins inside the cells, rather than sticking out.
-
-'''
 
 
 def layout_check(cell=None, verbose=False):
+    '''Functional Verification:
+    
+    Verification of things that are specific to photonic integrated circuits, including
+    - Waveguides: paths, radius, bend points, Manhattan
+    - Component checking: overlapping, avoiding crosstalk
+    - Connectivity check: disconnected pins, mismatched pins
+    - Simulation model check
+    - Design for Test: Specific for each technology, check of optical IO position, direction, pitch, etc.
+
+    Description: https://github.com/SiEPIC/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#functional-layout-check
+
+    Tools that can create layouts that are compatible with this Verification:
+        - KLayout SiEPIC-Tools, and various PDKs such as
+            https://github.com/SiEPIC/SiEPIC_EBeam_PDK
+        - GDSfactory 
+            "UBCPDK" https://github.com/gdsfactory/ubc
+            based on https://github.com/SiEPIC/SiEPIC_EBeam_PDK
+        - Luceda
+            https://academy.lucedaphotonics.com/pdks/siepic/siepic.html
+            https://academy.lucedaphotonics.com/pdks/siepic_shuksan/siepic_shuksan.html
+    
+    Limitations:
+    - we assume that the layout was created based on the standard defined in SiEPIC-Tools in KLayout
+      https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout
+    - The layout can contain PCells, or with $$$CONTEXT_INFO$$$ removed, i.e., fixed cells
+    - The layout cannot have been flattened. This allows us to isolate individual components
+      by their instances and cells.
+    - Parameters from cells can be extracted from the PCell, or from the text labels in the cell
+    - Working with a flattened layout would be harder, and require:
+       - reading parameters from the text labels (OK)
+       - find_components would need to look within the DevRec layer, rather than in the selected cell
+       - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
+         This could be solved by putting the pins inside the cells, rather than sticking out.    
+    '''
+
     if verbose:
         print("*** layout_check()")
 
