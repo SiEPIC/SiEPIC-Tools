@@ -24,37 +24,42 @@ def registerMenuItems():
     if not(menu.is_menu(s1)):
         menu.insert_menu("help_menu", s1, "SiEPIC %s" % SiEPIC.__init__.__version__ + extra)
 
+    # begin/end described: https://www.klayout.de/doc/about/macro_in_menu.html
     s2 = "waveguides"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Waveguides")
+        menu.insert_menu(s1 + ".begin", s2, "Waveguides")
     
     s2 = "metal"
     if not(menu.is_menu(s1 + "." + s2)):
-       menu.insert_menu(s1 + ".end", s2, "Metal")
+       menu.insert_menu(s1 + ".waveguides+", s2, "Metal")
 
     s2 = "layout"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Layout")
+        menu.insert_menu(s1 + ".metal+", s2, "Layout")
 
     s2 = "exlayout"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Example Layouts")
+        menu.insert_menu(s1 + ".layout+", s2, "Example Layouts")
 
     s2 = "verification"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Verification")
+        menu.insert_menu(s1 + ".exlayout+", s2, "Verification")
 
     s2 = "simulation_circuits"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Simulation, Circuits")
+        menu.insert_menu(s1 + ".verification+", s2, "Simulation, Circuits")
 
     s2 = "simulation_components"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Simulation, Components")
+        menu.insert_menu(s1 + ".simulation_circuits+", s2, "Simulation, Components")
 
     s2 = "measurements"
     if not(menu.is_menu(s1 + "." + s2)):
-        menu.insert_menu(s1 + ".end", s2, "Measurement Data")
+        menu.insert_menu(s1 + ".simulation_components+", s2, "Measurement Data")
+
+    s2 = "export"
+    if not(menu.is_menu(s1 + "." + s2)):
+        menu.insert_menu(s1 + ".measurements+", s2, "Export Design")
 
     if not(menu.is_menu("@toolbar.cir_sim")):
         ACTIONS.append(pya.Action())
