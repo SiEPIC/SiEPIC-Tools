@@ -265,15 +265,31 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
     libs_comps = {}
     for each_lib in list(set(circuitData["compLibs"])):
         # temp_comps = dict(inspect.getmembers(all_libraries[each_lib], inspect.isclass))
-        libs_comps[each_lib] = all_libraries[each_lib].component_factory
+        if each_lib in all_libraries:
+            # Using the libraries installed within the OPICS folder
+            libs_comps[each_lib] = all_libraries[each_lib].component_factory
+        else:
+            opics_lib_name = "opics_"+each_lib
+            try:
+                # import the library named opics_xxx where xxx is the library name
+                import importlib
+                opics_lib = importlib.import_module(opics_lib_name)
+                globals()[opics_lib_name] = opics_lib
+                libs_comps[each_lib] = opics_lib.component_factory
+            except:
+                raise Exception ('Unable to import the library: %s' %opics_lib_name) 
 
     # add circuit components
     for i in range(len(circuitData["compModels"])):
 
         # get component model
-        comp_model = libs_comps[circuitData["compLibs"][i]][
-            circuitData["compModels"][i]
-        ]
+        if circuitData["compLibs"][i] in libs_comps:
+            comp_model = libs_comps[circuitData["compLibs"][i]][
+                circuitData["compModels"][i]
+            ]
+        else:
+            # Missing component
+            raise Exception ('Missing OPICS compact model for component %s in library %s' % (circuitData["compModels"][i],circuitData["compLibs"][i]) ) 
         # clean attributes
         cls_attrs = deepcopy(comp_model.cls_attrs)  # class attributes
         comp_attrs = circuitData["compAttrs"][i]  # component attributes
