@@ -22,6 +22,9 @@ install_ployly()
 from SiEPIC.install import install_pandas
 install_pandas()
 
+from SiEPIC.install import install_packaging
+install_packaging()
+
 
 import plotly.express as px
 fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])

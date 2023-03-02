@@ -16,6 +16,9 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text>
+from SiEPIC.install import install_matplotlib
+install_matplotlib()
+
 from SiEPIC.install import install_tidy3d
 install_tidy3d()
 
@@ -24,24 +27,6 @@ import tidy3d
 from SiEPIC.install import install_urllib3
 install_urllib3()
 import urllib3
-
-# test:
-import matplotlib.pyplot as plt  
-import numpy as n
-wavelength = n.array([1, 2, 3, 4, 5])
-power = wavelength**2
-plt.figure()
-print(wavelength*1e9)
-print(power)
-plt.plot(wavelength*1e9, power)
-plt.xlim((1*10**9,7*10**9)) 
-plt.xlabel('Wavelength (nm)') 
-plt.ylabel('Transmission (dB)')
-print("TEST1")
-plt.show(block=False)
-print("TEST2")
-for i in range(0,10):
-    print("This text should show with the plot up")
 
 
 # https://docs.flexcompute.com/projects/tidy3d/en/stable/notebooks/ModeSolver.html
@@ -127,19 +112,5 @@ ax2.set_title("|Ez(x, y)|")
 ax2.set_aspect("equal")
 plt.show()
 
-
-# test:
-plt.figure()
-print(wavelength*1e9)
-print(power)
-plt.plot(wavelength*1e9, power)
-plt.xlim((1*10**9,7*10**9)) 
-plt.xlabel('Wavelength (nm)') 
-plt.ylabel('Transmission (dB)')
-print("TEST1")
-plt.show(block=False)
-print("TEST2")
-for i in range(0,10):
-    print("This text should show with the plot up")
 </text>
 </klayout-macro>

@@ -878,7 +878,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     from math import pi, cos, sin
     from . import points_per_circle
 
-    print("SiEPIC.utils arc_wg")
+    # print("SiEPIC.utils arc_wg")
     circle_fraction = abs(theta_stop - theta_start) / 360.0
     npoints = int(points_per_circle(radius/1000) * circle_fraction)
     if DevRec:

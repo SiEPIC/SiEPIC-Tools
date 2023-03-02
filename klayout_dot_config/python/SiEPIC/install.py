@@ -259,3 +259,24 @@ def install_pandas():
     import pandas
 
 
+
+def install_packaging():
+    try:
+        import packaging
+    except:
+        try:
+            import pip
+            import pya
+            install = pya.MessageBox.warning(
+                "Install package?", "Install package 'packaging' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+            if install == pya.MessageBox.Yes:
+                # try installing using pip
+                from SiEPIC.install import get_pip_main
+                main = get_pip_main()
+                main(['install', 'packaging'])
+        except ImportError:
+            return False
+    return True
+    import packaging
+
+

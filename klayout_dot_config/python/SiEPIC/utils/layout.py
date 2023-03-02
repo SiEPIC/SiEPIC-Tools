@@ -1016,7 +1016,7 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
         180: left
         270: down
 
-    Units: intput can be float for microns, or int for nm
+    Units: input can be float for microns, or int for nm
     '''
 
     from SiEPIC.extend import to_itype

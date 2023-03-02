@@ -1,0 +1,22 @@
+# Packages in KLayout
+
+- matplotlib: 
+    - installs in OSX, Linux
+    - works on OSX, but causes crash when closing windows
+    - Windows: pip install gives error: --egg-base
+
+- modes: https://github.com/joamatab/modesolverpy
+    - pip install gives error: --egg-base
+    
+- opics:
+    - install works, requires 'defusedxml'
+    - install ebeam PDK doesn't work:
+        SSL error with urllib
+        changed to requests, but has another error
+    - added to EBeam PDK
+        
+    
+- SAX: https://github.com/flaport/sax
+    - install without JAX works
+    - JAX gives error --egg-base
+    
