@@ -8,8 +8,9 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut/>
- <show-in-menu>true</show-in-menu>
+ <show-in-menu>false</show-in-menu>
  <group-name>Setup</group-name>
  <menu-path>siepic_menu.simulation_circuits.begin</menu-path>
  <interpreter>python</interpreter>

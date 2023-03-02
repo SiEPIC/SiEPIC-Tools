@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Circuit Simulation: OPICS</description>
+ <description>Export SPICE netlist</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -11,19 +11,23 @@
  <priority>0</priority>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
- <group-name>opics</group-name>
- <menu-path>siepic_menu.simulation_circuits&gt;end("opics").end</menu-path>
+ <group-name>generic</group-name>
+ <menu-path>siepic_menu.simulation_circuits&gt;begin("generic").begin</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function
-# SiEPIC Launch OPICS
+# Export SPICE netlist files
 
 import pya
-from SiEPIC import opics_netlist_sim
+from SiEPIC import netlist
 
-opics_netlist_sim.circuit_simulation_opics(
-    verbose=True, opt_in_selection_text=[], 
-    require_save=False)
+netlist.export_spice_layoutview(verbose=True)
+
+from SiEPIC import scripts
+from SiEPIC import _globals
+tmp_folder = _globals.TEMP_FOLDER
+scripts.open_folder(tmp_folder)
+
 
 </text>
 </klayout-macro>
