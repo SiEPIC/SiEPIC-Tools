@@ -305,7 +305,9 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
         )
 
     # add circuit netlist
-    subckt.global_netlist = circuitData["circuitNets"]
+    # subckt.global_netlist = circuitData["circuitNets"]
+    subckt.global_netlist = {i:j for i,j in zip(circuitData['compLabels'], circuitData['circuitNets'])}
+
     # add unique net component connections
     subckt.current_connections = circuitData["circuitConns"]
 
