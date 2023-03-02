@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
 from .utils import LUT_processor
 from numpy import ndarray
 from pathlib import PosixPath
@@ -247,6 +246,7 @@ class componentModel:
             ports_ = ["S_%d_%d" % (each[0], each[1]) for each in ports]
 
         if not interactive:
+            import matplotlib.pyplot as plt
             for each_port in ports_:
                 _, i, j = each_port.split("_")
                 if scale == "log":
