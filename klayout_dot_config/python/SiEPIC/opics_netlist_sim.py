@@ -49,13 +49,22 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
     import pandas as pd # https://pandas.pydata.org/docs/user_guide/10min.html
     result = subckt.sim_result.get_data()
     wavelengths = c_/subckt.sim_result.f
-    transmission = result['S_0_1']
-    reflection = result['S_0_0']
+
+    # collect all the results for each port:
+    import numpy as np
+    nports = subckt.sim_result.nports
+    out = result['S_1_0']
+    print(out.shape)       
+    columns = ['Output 1']
+    for i in range(1,nports-1):
+        print(out.shape)       
+        out = np.vstack((out, result['S_%s_0' %(i+1)]))
+        columns = columns + ['Output %s' % (i+1) ]
 
     # *** There is something wrong where the f vector has a different length
     # than the results vector. This fixes it:
     import numpy as np
-    freq = np.linspace(subckt.sim_result.f[0], subckt.sim_result.f[-1], len(transmission))
+    freq = np.linspace(subckt.sim_result.f[0], subckt.sim_result.f[-1], len(result['S_0_0']))
     wavelengths = c_/freq
 
     
@@ -63,8 +72,7 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
     #df = pd.DataFrame(transmission, index=wavelengths, columns=['Transmission'])
     
     # Two lines:
-    import numpy as np
-    df = pd.DataFrame(np.stack((transmission, reflection)).transpose(), index=wavelengths, columns=['Transmission','Reflections'])
+    df = pd.DataFrame(out.transpose(), index=wavelengths, columns=columns)
     fig = px.line(df, labels={'index':'Wavelength', 'value':'Transmission (dB)'}, markers=True)
     fig.show()
     
