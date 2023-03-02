@@ -4,6 +4,15 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
     ''' Simulate the circuit using OPICS
     Using a netlist extracte from the layout'''
     
+    # Required packages
+    from SiEPIC.install import install
+    install('plotly')
+    install('pandas')
+    install('packaging')
+    install('defusedxml')
+    install('numpy')
+    
+    
     # obtain the spice file from the layout
     from SiEPIC.netlist import export_spice_layoutview
     spice_filepath, _ = export_spice_layoutview(verbose=False,opt_in_selection_text=[], require_save=require_save)
