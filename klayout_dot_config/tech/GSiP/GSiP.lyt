@@ -5,7 +5,7 @@
  <group/>
  <dbu>0.001</dbu>
  <base-path/>
- <original-base-path>/Users/lukasc/Documents/GitHub/SiEPIC-Tools/klayout_dot_config/tech/GSiP</original-base-path>
+ <original-base-path>/home/lukasc/Documents/GitHub/SiEPIC-Tools/klayout_dot_config/tech/GSiP</original-base-path>
  <layer-properties_file>klayout_Layers_GSiP.lyp</layer-properties_file>
  <add-other-layers>true</add-other-layers>
  <reader-options>
@@ -72,6 +72,21 @@
    <separate-groups>false</separate-groups>
    <map-file/>
   </lefdef>
+  <mebes>
+   <invert>false</invert>
+   <subresolution>true</subresolution>
+   <produce-boundary>true</produce-boundary>
+   <num-stripes-per-cell>64</num-stripes-per-cell>
+   <num-shapes-per-cell>0</num-shapes-per-cell>
+   <data-layer>1</data-layer>
+   <data-datatype>0</data-datatype>
+   <data-name>DATA</data-name>
+   <boundary-layer>0</boundary-layer>
+   <boundary-datatype>0</boundary-datatype>
+   <boundary-name>BORDER</boundary-name>
+   <layer-map>layer_map()</layer-map>
+   <create-other-layers>true</create-other-layers>
+  </mebes>
   <dxf>
    <dbu>0.001</dbu>
    <unit>1</unit>

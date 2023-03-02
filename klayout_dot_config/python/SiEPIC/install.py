@@ -216,67 +216,23 @@ def install_pyqt5():
 
 
 
-
-def install_ployly():
+def install(package):
+    import importlib
     try:
-        import plotly
-    except:
+        importlib.import_module(package)
+    except ImportError:
         try:
             import pip
             import pya
             install = pya.MessageBox.warning(
-                "Install package?", "Install package 'plotly' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
+                "Install package?", "Install package '%s' using pip?" %package,  pya.MessageBox.Yes + pya.MessageBox.No)
             if install == pya.MessageBox.Yes:
                 # try installing using pip
                 from SiEPIC.install import get_pip_main
                 main = get_pip_main()
-                main(['install', 'plotly'])
+                main(['install', package])
         except ImportError:
             return False
-    return True
-    import plotly
-
-
-
-
-def install_pandas():
-    try:
-        import pandas
-    except:
-        try:
-            import pip
-            import pya
-            install = pya.MessageBox.warning(
-                "Install package?", "Install package 'pandas' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
-            if install == pya.MessageBox.Yes:
-                # try installing using pip
-                from SiEPIC.install import get_pip_main
-                main = get_pip_main()
-                main(['install', 'pandas'])
-        except ImportError:
-            return False
-    return True
-    import pandas
-
-
-
-def install_packaging():
-    try:
-        import packaging
-    except:
-        try:
-            import pip
-            import pya
-            install = pya.MessageBox.warning(
-                "Install package?", "Install package 'packaging' using pip?",  pya.MessageBox.Yes + pya.MessageBox.No)
-            if install == pya.MessageBox.Yes:
-                # try installing using pip
-                from SiEPIC.install import get_pip_main
-                main = get_pip_main()
-                main(['install', 'packaging'])
-        except ImportError:
-            return False
-    return True
-    import packaging
-
+    finally:
+        globals()[package] = importlib.import_module(package)
 

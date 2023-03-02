@@ -16,17 +16,12 @@
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text>
-from SiEPIC.install import install_matplotlib
-install_matplotlib()
+# Required packages
+from SiEPIC.install import install
+install('matplotlib')
+install('tidy3d')
+install('urllib3')
 
-from SiEPIC.install import install_tidy3d
-install_tidy3d()
-
-import tidy3d
-
-from SiEPIC.install import install_urllib3
-install_urllib3()
-import urllib3
 
 
 # https://docs.flexcompute.com/projects/tidy3d/en/stable/notebooks/ModeSolver.html
