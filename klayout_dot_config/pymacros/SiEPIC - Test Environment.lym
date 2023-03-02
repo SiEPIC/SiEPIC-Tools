@@ -65,6 +65,11 @@ if 1:
     SiEPIC.utils.layout = reload(SiEPIC.utils.layout)
     SiEPIC.utils.geometry = reload(SiEPIC.utils.geometry)
     SiEPIC.setup = reload(SiEPIC.setup)
+    SiEPIC.opics_netlist_sim = reload(SiEPIC.opics_netlist_sim)
+    SiEPIC.netlist = reload(SiEPIC.netlist)
+    SiEPIC.opics.utils = reload(SiEPIC.opics.utils)
+    SiEPIC.opics.network = reload(SiEPIC.opics.network)
+    
 #    SiEPIC.lumerical.contraDirectionalCoupler = reload(lumerical.contraDirectionalCoupler)
     print('Reloaded SiEPIC')
 

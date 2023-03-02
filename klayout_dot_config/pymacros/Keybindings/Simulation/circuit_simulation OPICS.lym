@@ -8,6 +8,7 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
  <group-name>2 Circuit Simulation</group-name>
@@ -18,9 +19,11 @@
 # SiEPIC Launch OPICS
 
 import pya
-from SiEPIC import lumerical
+from SiEPIC import opics_netlist_sim
 
-lumerical.interconnect.circuit_simulation_opics(verbose=True, opt_in_selection_text=[])
+opics_netlist_sim.circuit_simulation_opics(
+    verbose=True, opt_in_selection_text=[], 
+    require_save=False)
 
 </text>
 </klayout-macro>
