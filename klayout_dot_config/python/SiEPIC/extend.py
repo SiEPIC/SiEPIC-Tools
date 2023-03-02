@@ -1303,7 +1303,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         # single tunable laser
         tunable_lasers = [tunable_lasers]
     for i in range(len(tunable_lasers)):
-        if tunable_lasers[i]['wavelength'] == opt_in_dict[0]['wavelength']:
+        if tunable_lasers[i]['wavelength'] == opt_in_dict[0]['wavelength'] and tunable_lasers[i]['polarization'] == opt_in_dict[0]['pol']:
             wavelength_start, wavelength_stop, wavelength_points = float(tunable_lasers[i]['wavelength-start']), float(
                 tunable_lasers[i]['wavelength-stop']), int(tunable_lasers[i]['wavelength-points'])
     if not('wavelength_start' in locals()):

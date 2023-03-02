@@ -20,6 +20,13 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
     
     print(circuitData)
     
+    '''
+    import numpy as np
+    from SiEPIC.opics.globals import C
+    freq = np.linspace(C * 1e6 / 1.5, C * 1e6 / 1.6, 2000)
+    circuit = Network(network_id="circuit_name", f=freq)
+    '''
+    
     # process netlist data
     subckt = NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbose=False)
     
@@ -48,7 +55,7 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
     import plotly.express as px
     import pandas as pd # https://pandas.pydata.org/docs/user_guide/10min.html
     result = subckt.sim_result.get_data()
-    wavelengths = c_/subckt.sim_result.f
+    wavelengths = c_/subckt.f
 
     # collect all the results for each port:
     import numpy as np
@@ -63,9 +70,9 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
 
     # *** There is something wrong where the f vector has a different length
     # than the results vector. This fixes it:
-    import numpy as np
-    freq = np.linspace(subckt.sim_result.f[0], subckt.sim_result.f[-1], len(result['S_0_0']))
-    wavelengths = c_/freq
+    #import numpy as np
+    #freq = np.linspace(subckt.sim_result.f[0], subckt.sim_result.f[-1], len(result['S_0_0']))
+    #wavelengths = c_/freq
 
     
     # Single line:

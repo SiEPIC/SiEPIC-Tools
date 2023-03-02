@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Union
 from numpy import ndarray
 from SiEPIC.opics.sparam_ops import connect_s
 from SiEPIC.opics.components import componentModel
-from SiEPIC.opics.globals import F
+#from SiEPIC.opics.globals import F
 import multiprocessing as mp
 
 
@@ -51,7 +51,8 @@ def solve_tasks(
 
     # If pin occurances are in different components:
     else:
-        combination_f = F
+#        combination_f = F
+        combination_f = None
         combination_s = connect_s(components[0].s, ntp[1], components[1].s, ntp[3])
 
         # nets of the new component
@@ -89,7 +90,9 @@ class Network:
 
         self.f = f
         if self.f is None:
-            self.f = F
+            print('Frequency range not defined, in opics/network')
+#            raise Exception ('Frequency range not defined, in opics/network')
+#            self.f = F
 
         self.network_id = (
             network_id if network_id else str(binascii.hexlify(os.urandom(4)))[2:-1]

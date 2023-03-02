@@ -3,7 +3,8 @@
 from SiEPIC.opics import libraries
 from SiEPIC.opics.network import Network
 from SiEPIC.opics.utils import netlistParser
-from SiEPIC.opics.globals import C, F
+#from SiEPIC.opics.globals import C, F
+from SiEPIC.opics.globals import C
 
 __author__ = "Jaspreet Jhoja"
 __email__ = "jj@alumni.ubc.ca"
