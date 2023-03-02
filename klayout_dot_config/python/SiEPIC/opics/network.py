@@ -280,8 +280,16 @@ class Network:
         
         # Lukas: this line worked for a single circuit, but failed
         # when there were two separate circuits on the same layout
-        # t_connections = [i for i in range(len(self.current_connections))]
-        t_connections = self.current_connections
+        # Lukas: I don't know why these don't have the same type
+        if type(self.current_connections[0])==int:
+            # this is the case for SPICE imported files, as fixed by Mustafa
+            # ex. [10, 11, 12, 13]
+            t_connections = self.current_connections
+        else:
+            # this is the case for circuits created using Python, circuit.connect, etc, by Jaspreet
+            # [['Ebeam_GC_48a2e40d', 1, 'Ebeam_Y_25eaf721', 0], ['Ebeam_Y_25eaf721', 1, 'Ebeam_WG_0fc722dc', 0], 
+            t_connections = [i for i in range(len(self.current_connections))]
+            
 
         _connections_in_use = set()
 
