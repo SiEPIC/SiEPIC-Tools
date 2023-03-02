@@ -277,7 +277,11 @@ class Network:
 
         t_components = self.current_components
         t_nets = self.global_netlist
-        t_connections = [i for i in range(len(self.current_connections))]
+        
+        # Lukas: this line worked for a single circuit, but failed
+        # when there were two separate circuits on the same layout
+        # t_connections = [i for i in range(len(self.current_connections))]
+        t_connections = self.current_connections
 
         _connections_in_use = set()
 
