@@ -1,3 +1,14 @@
+
+# Enable the importing of the tidy3d module, 
+# even while it is a subfolder
+import os, sys
+dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = os.path.join(dir_path,'..')
+if dir_path not in sys.path:
+    sys.path.append(dir_path)
+import tidy3d
+
+
 """ Tidy3d package imports"""
 
 # grid

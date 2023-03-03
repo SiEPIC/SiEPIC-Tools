@@ -15,11 +15,13 @@
  <menu-path/>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
- <text># Import tidy3d
+ <text>'''
+# Import tidy3d
 dir_path = os.path.dirname(os.path.realpath(__file__))
 if dir_path not in sys.path:
     sys.path.append(dir_path)
 import tidy3d
+'''
 
 # Required packages
 from SiEPIC.install import install
@@ -35,10 +37,14 @@ import plotly.express as px
 
 import numpy as np
 
+import SiEPIC.tidy3d.tidy3d
+
 import tidy3d as td
+
 from tidy3d.constants import C_0
 # import tidy3d.web as web
 
+import tidy3d.plugins.mode.mode_solver
 from tidy3d.plugins.mode.mode_solver import ModeSolver
 #from tidy3d.plugins import ModeSolver
 
