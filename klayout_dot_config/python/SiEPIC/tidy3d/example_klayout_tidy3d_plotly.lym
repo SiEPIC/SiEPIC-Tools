@@ -31,6 +31,10 @@ install('packaging')
 install('defusedxml')
 install('numpy')
 install('urllib3')
+install('pydantic')
+install('rich')
+install('h5py')
+
 import plotly.express as px
 
 # https://docs.flexcompute.com/projects/tidy3d/en/stable/notebooks/ModeSolver.html
