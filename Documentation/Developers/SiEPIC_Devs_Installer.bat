@@ -26,4 +26,6 @@ mklink /d %userprofile%\KLayout\python\h5py %userprofile%\Documents\GitHub\SiEPI
 
 mklink /d %userprofile%\KLayout\python\xarray %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\xarray-2023.2.0
 
+mklink /d %userprofile%\KLayout\python\shapely %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\shapely-2.0.1
+
 
