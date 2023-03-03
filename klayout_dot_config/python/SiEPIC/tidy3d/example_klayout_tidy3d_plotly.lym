@@ -54,7 +54,7 @@ import tidy3d as td
 from tidy3d.constants import C_0
 # import tidy3d.web as web
 
-try:
+try:  # keep trying; for some reason it works after 3 tries!
     import tidy3d.plugins.mode.mode_solver
     from tidy3d.plugins.mode.mode_solver import ModeSolver
 except:
