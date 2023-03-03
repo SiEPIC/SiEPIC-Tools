@@ -15,7 +15,16 @@
  <menu-path/>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
- <text>'''
+ <text>
+'''
+tidy3d, has been added as a GitHub subtree:
+ &gt; git subtree add --prefix klayout_dot_config/python/SiEPIC/tidy3d https://github.com/lukasc-ubc/tidy3d develop --squash
+following instructions:
+ https://gist.github.com/SKempin/b7857a6ff6bddb05717cc17a44091202
+A fork of https://github.com/flexcompute/tidy3d
+'''
+
+'''
 # Import tidy3d
 dir_path = os.path.dirname(os.path.realpath(__file__))
 if dir_path not in sys.path:
