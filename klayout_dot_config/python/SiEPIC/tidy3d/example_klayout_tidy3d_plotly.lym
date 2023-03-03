@@ -83,7 +83,10 @@ dl = 0.05
 # waveguide information
 wg_width = 0.5
 wg_height = 0.22
-wg_permittivity = 3.47**2
+#wg_permittivity = 3.47**2
+from tidy3d import material_library # https://docs.flexcompute.com/projects/tidy3d/en/latest/material_library.html
+mat_Si = material_library['cSi']['Li1993_293K']
+mat_sio2 = td.Medium(permittivity=1.44**2)  # Box and cladding material.
 
 # central frequency
 wvl_um = 1.55
@@ -97,15 +100,33 @@ run_time = 1e-12
 grid_spec = td.GridSpec.auto(min_steps_per_wvl=20, wavelength=wvl_um)
 
 
+'''
 waveguide = td.Structure(
     geometry=td.Box(size=(wg_width, td.inf, wg_height)),
     medium=td.Medium(permittivity=wg_permittivity),
 )
+'''
+
+# Silicon dioxide box + cladding layers
+_inf = td.inf
+cladding = td.Structure(
+    geometry=td.Box.from_bounds(
+        rmin=(-_inf, -_inf, -_inf), rmax=(_inf, _inf, _inf)
+    ),
+    medium=mat_sio2,
+)
+
+# Silicon core
+core = td.Structure(
+    geometry=td.Box(size=(wg_width, td.inf, wg_height)),
+    medium=mat_Si,
+)
+
 
 sim = td.Simulation(
     size=(Lx, Ly, Lz),
     grid_spec=grid_spec,
-    structures=[waveguide],
+    structures=[cladding, core],
     run_time=run_time,
     boundary_spec=td.BoundarySpec.all_sides(boundary=td.Periodic()),
 )
@@ -117,7 +138,7 @@ plane = td.Box(center=(0, 0, 0), size=(4, 0, 3.5))
 
 mode_spec = td.ModeSpec(
     num_modes=2,
-    target_neff=2.0,
+    target_neff=2.5,
 )
 
 num_freqs = 11
@@ -139,13 +160,14 @@ n_eff = mode_data.n_eff  # real part of the effective mode index
 
 # Plot mode0 frequency dependance
 import plotly.express as px
-fig = px.line(x=n_eff.f, y=n_eff[:,0], labels={'x':'Frequency', 'y':'Effective Index'}, markers=True)
+fig = px.line(x=C_0/n_eff.f, y=n_eff[:,0], labels={'x':'Frequency', 'y':'Effective Index'}, markers=True)
 fig.show()
 
 # Plot mode profile, using plotly
 Ex= abs(mode_data.Ex.isel(mode_index=0, f=f0_ind))[:,0,:]
 fig = px.imshow(Ex.transpose())
 fig.show()
+
 
 '''
 # Plot using matplotlib, field profile

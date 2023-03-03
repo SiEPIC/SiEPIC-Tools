@@ -353,7 +353,7 @@ class ModeSolver(Tidy3dBaseModel):
                 if e_edge / e_norm > FIELD_DECAY_CUTOFF:
                     log.warning(
                         f"Mode field at frequency index {freq_index}, mode index {mode_index} does "
-                        "not decay at the plane boundaries."
+                        "not decay at the plane boundaries. Ratio: {e_edge / e_norm}."
                     )
 
     def _grid_correction(
