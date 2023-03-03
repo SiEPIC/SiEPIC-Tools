@@ -65,8 +65,10 @@ if 1:
     SiEPIC.utils.layout = reload(SiEPIC.utils.layout)
     SiEPIC.utils.geometry = reload(SiEPIC.utils.geometry)
     SiEPIC.setup = reload(SiEPIC.setup)
+    import SiEPIC.opics_netlist_sim
     SiEPIC.opics_netlist_sim = reload(SiEPIC.opics_netlist_sim)
     #SiEPIC.netlist = reload(SiEPIC.netlist)
+    import SiEPIC.opics
     SiEPIC.opics.utils = reload(SiEPIC.opics.utils)
     SiEPIC.opics.network = reload(SiEPIC.opics.network)
     SiEPIC.opics.components = reload(SiEPIC.opics.components)

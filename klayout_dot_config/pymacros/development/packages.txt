@@ -18,5 +18,5 @@
     
 - SAX: https://github.com/flaport/sax
     - install without JAX works
-    - JAX gives error --egg-base
-    
+        - JAX gives error --egg-base
+    - Linux: installs 0.8.6, and plots

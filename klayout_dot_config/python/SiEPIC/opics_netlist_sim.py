@@ -6,11 +6,34 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
     
     # Required packages
     from SiEPIC.install import install
-    install('plotly')
-    install('pandas')
-    install('packaging')
-    install('defusedxml')
-    install('numpy')
+    if not install('plotly'):
+        pya.MessageBox.warning(
+        "Missing package", "The OPICS circuit simulator does not function without the package 'plotly'.",  pya.MessageBox.Ok)    
+        return None
+    if not install('pandas'):
+        pya.MessageBox.warning(
+        "Missing package", "The OPICS circuit simulator does not function without the package 'pandas'.",  pya.MessageBox.Ok)    
+        return None
+    if not install('packaging'):
+        pya.MessageBox.warning(
+        "Missing package", "The OPICS circuit simulator does not function without the package 'packaging'.",  pya.MessageBox.Ok)    
+        return None
+    if not install('defusedxml'):
+        pya.MessageBox.warning(
+        "Missing package", "The OPICS circuit simulator does not function without the package 'defusedxml'.",  pya.MessageBox.Ok)    
+        return None
+    if not install('numpy'):
+        pya.MessageBox.warning(
+        "Missing package", "The OPICS circuit simulator does not function without the package 'numpy'.",  pya.MessageBox.Ok)    
+        return None
+    if not install('yaml'):
+        pya.MessageBox.warning(
+        "Missing package", "The OPICS circuit simulator does not function without the package 'yaml'.",  pya.MessageBox.Ok)    
+        return None
+    if not install('scipy'):
+        pya.MessageBox.warning(
+        "Missing package", "The OPICS circuit simulator does not function without the package 'scipy'.",  pya.MessageBox.Ok)    
+        return None
     
     
     # obtain the spice file from the layout

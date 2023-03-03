@@ -230,9 +230,16 @@ def install(package):
                 # try installing using pip
                 from SiEPIC.install import get_pip_main
                 main = get_pip_main()
-                main(['install', package])
+                # Try installing it. Exit code 1 if it fails
+                if main(['install', package]) != 0:
+                    # Try installing it with "py" in front, e.g., yaml -> pyyaml
+                    if main(['install', 'py'+package]) != 0:
+                        return False   
+            else:
+                print('Not installing %s' %package)
+                return False
         except ImportError:
             return False
-    finally:
-        globals()[package] = importlib.import_module(package)
-
+            
+    globals()[package] = importlib.import_module(package)
+    return globals()[package]
