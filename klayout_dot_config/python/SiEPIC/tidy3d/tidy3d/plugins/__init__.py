@@ -2,7 +2,7 @@
 
 # dispersion fitter
 from .dispersion.fit import DispersionFitter
-from .dispersion.fit_web import StableDispersionFitter, AdvancedFitterParam
+#from .dispersion.fit_web import StableDispersionFitter, AdvancedFitterParam
 
 # mode solver
 from .mode.mode_solver import ModeSolver, ModeSolverData

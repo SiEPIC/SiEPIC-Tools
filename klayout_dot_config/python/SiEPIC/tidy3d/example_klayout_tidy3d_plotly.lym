@@ -34,6 +34,12 @@ install('urllib3')
 install('pydantic')
 install('rich')
 install('h5py')
+install('xarray')
+install('shapely')
+install('dask')
+install('pyroots')
+install('jwt')
+
 
 import plotly.express as px
 
@@ -48,8 +54,17 @@ import tidy3d as td
 from tidy3d.constants import C_0
 # import tidy3d.web as web
 
-import tidy3d.plugins.mode.mode_solver
-from tidy3d.plugins.mode.mode_solver import ModeSolver
+try:
+    import tidy3d.plugins.mode.mode_solver
+    from tidy3d.plugins.mode.mode_solver import ModeSolver
+except:
+    try:
+        import tidy3d.plugins.mode.mode_solver
+        from tidy3d.plugins.mode.mode_solver import ModeSolver
+    except:
+        import tidy3d.plugins.mode.mode_solver
+        from tidy3d.plugins.mode.mode_solver import ModeSolver
+        
 #from tidy3d.plugins import ModeSolver
 
 # size of simulation domain
