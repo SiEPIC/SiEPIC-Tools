@@ -22,10 +22,10 @@ mklink /d %userprofile%\KLayout\python\idna %userprofile%\Documents\GitHub\SiEPI
 
 
 
-mklink /d %userprofile%\KLayout\python\h5py %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\h5py-3.8.0
+mklink /d %userprofile%\KLayout\python\h5py %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\h5py
 
-mklink /d %userprofile%\KLayout\python\xarray %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\xarray-2023.2.0
+mklink /d %userprofile%\KLayout\python\xarray %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\xarray
 
-mklink /d %userprofile%\KLayout\python\shapely %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\shapely-2.0.1
+mklink /d %userprofile%\KLayout\python\shapely %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\shapely
 
 
