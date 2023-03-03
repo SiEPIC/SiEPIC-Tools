@@ -1,5 +1,19 @@
 """Top-level package for OPICS."""
 
+# Required packages:
+from SiEPIC.install import install
+import pya
+if not install('numpy'):
+    pya.MessageBox.warning(
+    "Missing package", "The OPICS circuit simulator does not function without the package 'numpy'.",  pya.MessageBox.Ok)    
+if not install('scipy'):
+    pya.MessageBox.warning(
+    "Missing package", "The OPICS circuit simulator does not function without the package 'scipy'.",  pya.MessageBox.Ok)    
+if not install('yaml'):
+    pya.MessageBox.warning(
+    "Missing package", "The OPICS circuit simulator does not function without the package 'yaml'.",  pya.MessageBox.Ok)    
+
+
 from SiEPIC.opics import libraries
 from SiEPIC.opics.network import Network
 from SiEPIC.opics.utils import netlistParser
