@@ -19,13 +19,11 @@ mklink /d %userprofile%\KLayout\python\chardet %userprofile%\Documents\GitHub\Si
 
 mklink /d %userprofile%\KLayout\python\idna %userprofile%\Documents\GitHub\SiEPIC-Tools\Python_packages_for_KLayout\python\idna
 
-mklink /d %userprofile%\KLayout\python\numpy %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\numpy
 
-mklink /d %userprofile%\KLayout\python\urllib3 %userprofile%\Documents\GitHub\SiEPIC-Tools\Python_packages_for_KLayout\python\urllib3
 
-mklink /d %userprofile%\KLayout\python\qtgr %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\qtgr
 
-mklink /d %userprofile%\KLayout\python\gr %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\gr
+mklink /d %userprofile%\KLayout\python\h5py %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\h5py-3.8.0
 
-mklink /d %userprofile%\KLayout\python\gr3 %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\gr3
+mklink /d %userprofile%\KLayout\python\xarray %userprofile%\Documents\GitHub\SiEPIC-Tools\Windows_Python_packages_for_KLayout\python\xarray-2023.2.0
+
 
