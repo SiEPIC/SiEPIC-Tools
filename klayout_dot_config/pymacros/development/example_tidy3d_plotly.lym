@@ -36,13 +36,13 @@ import tidy3d
 # https://docs.flexcompute.com/projects/tidy3d/en/stable/notebooks/ModeSolver.html
 
 import numpy as np
-# import matplotlib.pylab as plt
 
 import tidy3d as td
 from tidy3d.constants import C_0
-import tidy3d.web as web
+# import tidy3d.web as web
 
-from tidy3d.plugins import ModeSolver
+from tidy3d.plugins.mode.mode_solver import ModeSolver
+#from tidy3d.plugins import ModeSolver
 
 # size of simulation domain
 Lx, Ly, Lz = 6, 6, 6
@@ -110,13 +110,14 @@ import plotly.express as px
 fig = px.line(x=n_eff.f, y=n_eff[:,0], labels={'x':'Frequency', 'y':'Effective Index'}, markers=True)
 fig.show()
 
+# Plot mode profile, using plotly
 Ex= abs(mode_data.Ex.isel(mode_index=0, f=f0_ind))[:,0,:]
-
-fig = px.density_contour(Ex)
+fig = px.imshow(Ex.transpose())
 fig.show()
 
-
 '''
+# Plot using matplotlib, field profile
+import matplotlib.pylab as plt
 f, (ax1, ax2) = plt.subplots(1, 2, tight_layout=True, figsize=(10, 3))
 abs(mode_data.Ex.isel(mode_index=0, f=f0_ind)).plot(x="x", y="z", ax=ax1, cmap="magma")
 abs(mode_data.Ez.isel(mode_index=0, f=f0_ind)).plot(x="x", y="z", ax=ax2, cmap="magma")
