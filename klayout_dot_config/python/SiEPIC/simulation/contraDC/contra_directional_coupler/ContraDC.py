@@ -261,7 +261,7 @@ class ContraDC():
 
         z = np.arange(0, self.N_seg)
 
-        if self.apod_shape is "gaussian":
+        if self.apod_shape == "gaussian":
             if self.a == 0:
                 apod = self.kappa*np.ones(self.N_seg)
             else:
@@ -269,7 +269,7 @@ class ContraDC():
                 apod = (apod - min(apod))/(max(apod) - min(apod))
                 apod *= self.kappa
 
-        elif self.apod_shape is "tanh":
+        elif self.apod_shape == "tanh":
             z = np.arange(0, self.N_seg)
             alpha, beta = 2, 3
             apod = 1/2 * (1 + np.tanh(beta*(1-2*abs(2*z/self.N_seg)**alpha)))
@@ -506,7 +506,7 @@ class ContraDC():
         self.S = S
         sio.savemat("ContraDC_sparams.mat", S)
 
-        from lumerical_tools import generate_dat
+        # from lumerical_tools import generate_dat
         # generate_dat()
         self.generate_dat()
         return self

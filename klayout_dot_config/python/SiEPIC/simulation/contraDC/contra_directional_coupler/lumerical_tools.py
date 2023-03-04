@@ -1,43 +1,63 @@
 import sys, os, platform
 
-# Lumerical Python API path on system
 
-cwd = os.getcwd()
+# Start Lumerical INTERCONNECT
 
-if platform.system() == 'Windows':
-    try:
-        lumapi_path = r'C:\\Program Files\\Lumerical\\v212\\api\\python'
-        os.chdir(lumapi_path)
-        sys.path.append(lumapi_path)
-        import lumapi
-    except FileNotFoundError:
-        lumapi_path = r'C:\\Program Files\\Lumerical\\v221\\api\\python'
-        os.chdir(lumapi_path)
-        sys.path.append(lumapi_path)
-        import lumapi
-        
-else:
-    try:
-        lumapi_path = '/Applications/Lumerical/v212/api/python/'
-        os.chdir(lumapi_path)
-        sys.path.append(lumapi_path)
-        import lumapi
-
-    except FileNotFoundError:
-        lumapi_path = '/Applications/Lumerical v212.app/Contents/API/Python/' #Jflag
-        os.chdir(lumapi_path)
-        sys.path.append(lumapi_path)
-        import lumapi
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-if os.path.exists(os.path.join(lumapi_path,'lumapi.py')):
-    print('Found lumapi path at' + ': ' +lumapi_path)
-    sys.path.append(lumapi_path)
-else:
-    print('lumapi path does not exist, edit lumapi_path variable')
+# Try using SiEPIC.lumerical
+try:
+    import SiEPIC
+    isSiEPIC=True
+except:
+    isSiEPIC=False
     
-os.chdir(cwd)
-
+if isSiEPIC:
+    # Load Lumerical INTERCONNECT and Python API: 
+    from .... import _globals
+    from ....lumerical.interconnect import run_INTC
+    run_INTC()
+    lumapi = _globals.LUMAPI
+    if not lumapi:
+        raise Exception ('SiEPIC.lumerical.interconnect.INTC_loaddesignkit: Cannot load Lumerical INTERCONNECT and Python integration (lumapi).')
+else:
+    
+    # Lumerical Python API path on system
+    
+    cwd = os.getcwd()
+    
+    if platform.system() == 'Windows':
+        try:
+            lumapi_path = r'C:\\Program Files\\Lumerical\\v212\\api\\python'
+            os.chdir(lumapi_path)
+            sys.path.append(lumapi_path)
+            import lumapi
+        except FileNotFoundError:
+            lumapi_path = r'C:\\Program Files\\Lumerical\\v221\\api\\python'
+            os.chdir(lumapi_path)
+            sys.path.append(lumapi_path)
+            import lumapi
+            
+    else:
+        try:
+            lumapi_path = '/Applications/Lumerical/v212/api/python/'
+            os.chdir(lumapi_path)
+            sys.path.append(lumapi_path)
+            import lumapi
+    
+        except FileNotFoundError:
+            lumapi_path = '/Applications/Lumerical v212.app/Contents/API/Python/' #Jflag
+            os.chdir(lumapi_path)
+            sys.path.append(lumapi_path)
+            import lumapi
+    
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    if os.path.exists(os.path.join(lumapi_path,'lumapi.py')):
+        print('Found lumapi path at' + ': ' +lumapi_path)
+        sys.path.append(lumapi_path)
+    else:
+        print('lumapi path does not exist, edit lumapi_path variable')
+        
+    os.chdir(cwd)
+    
 
 def generate_dat(pol = 'TE', terminate = True):
     mode = lumapi.open('mode')
