@@ -1,0 +1,59 @@
+#
+#    Bragg grating Lumerical simulation flow
+#    see https://github.com/mustafacc/SiEPIC_Photonics_Package/ for documentation
+#
+#    Author: Mustafa Hammood   ; mustafa@siepic.com   ; mustafa@ece.ubc.ca
+#    SiEPIC Kits Ltd. 2020     ; University of British Columbia
+#
+#    (c)2020
+
+newproject;
+save("ContraDC_EME_sweep.fsp");
+clear;
+
+#############################
+# Simulation parameters     #
+#############################
+
+wl_min = 1.5e-6; # simulation wavelength start
+wl_max = 1.6e-6; # simulation wavelength stop
+res = 1000; # number of simulation points
+
+pol = 'TE'; # simulaiton polarization 
+
+mesh_y = 5e-9;
+mesh_x = 35e-9;
+mesh_z = 35e-9;
+
+#############################
+# Device geometry           #
+#############################
+
+W1 = 560e-9; # uncorrugated waveguide width
+dW1 = 48e-9; # waveguide corrugation
+W2 = 440e-9; # uncorrugated waveguide width
+dW2 = 24e-9; # waveguide corrugation
+gap = 100e-9; # average gap between two waveguides
+period = 318e-9; # corrugations period
+N_periods = 1000; # number of periods
+rib = false; # enable or disable rib layered waveguide type (do not enable with TM mode)
+sidewall_angle = 83;
+
+AR = true; # enable/disablel out-of-phase, anti-reflection gratings design
+
+
+thickness_device = 220e-9; # waveguide full thickness
+thickness_rib = 90e-9; # waveguide rib layer thickness
+thickness_superstrate = 2e-6; # superstrate thikness
+thickness_substrate = 2e-6; # substrate thickness
+thickness_handle = 300e-6; # handle substrate thickness
+
+mat_device = 'Si (Silicon) - Dispersive & Lossless'; # device material
+mat_superstrate = 'SiO2 (Glass) - Palik'; # superstrate material
+mat_substrate = 'SiO2 (Glass) - Palik'; # substrate material
+mat_handle = 'Si (Silicon) - Dispersive & Lossless'; # handle substrate material
+
+ContraDC_draw;
+ContraDC_simulatemodes;
+ContraDC_simulate;
+ContraDC_analysis;
