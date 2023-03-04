@@ -69,15 +69,20 @@ def run_INTC(verbose=False):
     raise Exception ("Can't run Lumerical INTERCONNECT via Python integration.")
 
 
-def Setup_Lumerical_KLayoutPython_integration(verbose=False):
-  import sys, os, string, pya
+   
 
+def INTC_installdesignkit(verbose=False):
+  '''Install a Compact Model Library into Lumerical INTERCONNECT,
+  using a compressed (.cml) in the PDK, placing it in the KLayout folder.'''
+
+  import sys, os, string, pya
   from ..utils import get_technology, get_technology_by_name
+
   # get current technology
   TECHNOLOGY = get_technology(query_activecellview_technology=True)  
   # load more technology details (CML file location)
   TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
-
+  
   # location for the where the CMLs will locally be installed:
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
 
@@ -187,6 +192,82 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
     if (i+1) % int(num**0.5) == 0:
       x += 250
       y = 0
+
+def INTC_loaddesignkit(folder_CML, verbose=False):
+    '''Load a Compact Model Library into Lumerical INTERCONNECT,
+    using a folder in the PDK.'''
+
+    # Load Lumerical INTERCONNECT and Python API: 
+    from .. import _globals
+    run_INTC()
+    lumapi = _globals.LUMAPI
+    if not lumapi:
+        raise Exception ('SiEPIC.lumerical.interconnect.INTC_loaddesignkit: Cannot load Lumerical INTERCONNECT and Python integration (lumapi).')
+
+    # Read INTC element library
+    lumapi.evalScript(_globals.INTC, "out=library;")
+    _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
+
+    # Load all the subfolders of the CML folder into INTERCONNECT:
+    import os
+    folder_names = []
+    new_loaded = False
+    for folder_name in next(os.walk(folder_CML))[1]:
+        if not ("design kits::"+folder_name.lower()+"::" in _globals.INTC_ELEMENTS):
+            folder_path = os.path.join(folder_CML,folder_name)
+            lumapi.evalScript(_globals.INTC, "loaddesignkit ('%s', '%s');" % (folder_name, folder_path ) )
+            new_loaded = True
+        folder_names.append(folder_name)
+
+    # Close INTERCONNECT so that the library information is saved, then re-open
+    if new_loaded:
+        lumapi.close(_globals.INTC)
+        run_INTC()
+
+    # Read INTC element library
+    lumapi.evalScript(_globals.INTC, "out=library;")
+    _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
+    print('%s' % folder_names)
+
+    if "design kits::"+folder_name.lower()+"::" in _globals.INTC_ELEMENTS:
+        integration_success_message = "message('KLayout-Lumerical INTERCONNECT integration successful, for Compact Model Libraries installed in Element Library | Design kits: %s.\n" % (' '.join(map(str,folder_names)))
+        integration_success_message += "');switchtodesign;\n"
+        lumapi.evalScript(_globals.INTC, integration_success_message)
+
+
+def Setup_Lumerical_KLayoutPython_integration(verbose=False):
+    '''Setup Lumerical INTERCONNECT KLayout integration,
+    including loading/installing a Compact Model Library.
+    Requires:
+        - an open window with an active technology
+        - a compact model library, sourced from the Technology folder 
+            (where the *.lyt file is located)
+            either, and in priority:
+            - inside the folder "CML"
+            - *.CML files
+    '''
+
+    # Check if there is a layout open, so we know which technology to install
+    lv = pya.Application.instance().main_window().current_view()
+    if lv == None:
+        raise UserWarning("To install the Compact Model Library, first, please create a new layout and select the desired technology:\n  Menu: File > New Layout, and a Technology.\nThen repeat.")
+
+  
+    # Get the Technology 
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
+    
+    # Check if there is a CML folder in the Technology folder
+    import os
+    base_path = ly.technology().base_path()    
+    folder_CML = os.path.join(base_path,'CML')
+    if os.path.exists(folder_CML):
+        print('Setup_Lumerical_KLayoutPython_integration: Load design kit')
+        return INTC_loaddesignkit(folder_CML)
+    else:
+        print('Setup_Lumerical_KLayoutPython_integration: Install design kit')
+        return INTC_installdesignkit()
+    
 
 def INTC_commandline(filename2):
   print ("Running Lumerical INTERCONNECT using the command interface.")
