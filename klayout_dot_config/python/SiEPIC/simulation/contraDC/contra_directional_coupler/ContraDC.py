@@ -117,7 +117,6 @@ class ContraDC():
         self.wvl_range = wvl_range
         self.apod_shape = apod_shape
 
-
         # physical parameters
         self.period = period
         self.w1 = w1
@@ -504,13 +503,222 @@ class ContraDC():
         S['S24'] = S24
         S['S34'] = S34
         S['S44'] = np.matrix.transpose(S44)
-
+        self.S = S
         sio.savemat("ContraDC_sparams.mat", S)
 
         from lumerical_tools import generate_dat
-        generate_dat()
-
+        # generate_dat()
+        self.generate_dat()
         return self
+
+    def generate_dat(self, make_plot=1):
+        import numpy as np
+        import plotly.graph_objects as go
+
+        if self.pol == 'TM':
+            mode_ID = '2'
+            mode_label = 'TM'
+        else:
+            mode_ID = "1"
+            mode_label = 'TE'
+
+        S = self.S
+        c = 299792458
+        lambda0 = S['lambda']*1e-9
+        f = np.transpose(c/lambda0)
+        S11 = np.transpose(S['S11'])
+        S21 = np.transpose(S['S21'])
+        S31 = np.transpose(S['S31'])
+        S41 = np.transpose(S['S41'])
+
+        S12 = np.transpose(S['S12'])
+        S22 = np.transpose(S['S22'])
+        S32 = np.transpose(S['S32'])
+        S42 = np.transpose(S['S42'])
+
+        S13 = np.transpose(S['S13'])
+        S23 = np.transpose(S['S23'])
+        S33 = np.transpose(S['S33'])
+        S43 = np.transpose(S['S43'])
+
+        S14 = np.transpose(S['S14'])
+        S24 = np.transpose(S['S24'])
+        S34 = np.transpose(S['S34'])
+        S44 = np.transpose(S['S44'])
+
+        FREQ_PTS = np.size(S11)
+        S_norm = []
+        S_err = []
+
+        for ff in range(FREQ_PTS):
+            S = np.array([[np.unique(S11[ff]), np.unique(S12[ff]), np.unique(S13[ff]), np.unique(S14[ff])],
+                          [np.unique(S21[ff]), np.unique(S22[ff]), np.unique(S23[ff]), np.unique(S24[ff])],
+                          [np.unique(S31[ff]), np.unique(S32[ff]), np.unique(S33[ff]), np.unique(S34[ff])],
+                          [np.unique(S41[ff]), np.unique(S42[ff]), np.unique(S43[ff]), np.unique(S44[ff])]])
+            S = np.squeeze(S)
+
+            S_norm.append(np.linalg.norm(S, ord=2))
+            #S = np.reshape(S, (-1, S.shape[-1]))
+            S_err.append(np.max(np.abs(np.subtract(S, np.transpose(S)))))
+
+        if np.max(S_err) > 0.05:
+            print('******* Warning: S parameters violate reciprocity by more than 5% *********')
+
+        if np.max(S_norm) > 1 + 1e-6:
+            print('******* Warning: S parameters not passive *********')
+            print(np.max(S_norm))
+            print('scaled S parameters to make passive')
+            scale_factor = 1 / np.max(S_norm) * 0.9999999
+
+            S11 = scale_factor*S11
+            S12 = scale_factor*S12
+            S13 = scale_factor*S13
+            S14 = scale_factor*S14
+
+            S21 = scale_factor*S21
+            S22 = scale_factor*S22
+            S23 = scale_factor*S23
+            S24 = scale_factor*S24
+
+            S31 = scale_factor*S31
+            S32 = scale_factor*S32
+            S33 = scale_factor*S33
+            S34 = scale_factor*S34
+
+            S41 = scale_factor*S41
+            S42 = scale_factor*S42
+            S43 = scale_factor*S43
+            S44 = scale_factor*S44
+
+        else:
+            print('******* S parameters are passive ********')
+
+        # Make plots
+        make_plot = True
+        if make_plot:
+            import plotly.graph_objs as go
+            import plotly.offline as pyo
+
+            passivity = go.Scatter(x=lambda0, y=S_norm, mode='lines', name='Norm |S|')
+            layout = go.Layout(title='Compact model passivity test', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+            fig = go.Figure(data=[passivity], layout=layout)
+            fig.show()
+
+            reciprocity = go.Scatter(x=lambda0, y=S_err, mode='lines', name='Norm |S|')
+            layout = go.Layout(title='Compact model reciprocity test', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+            fig = go.Figure(data=[reciprocity], layout=layout)
+            fig.show()
+
+
+
+        # Prepare data
+        S11_data = np.column_stack((f, np.abs(S11), np.unwrap(np.angle(S11))))
+        S21_data = np.column_stack((f, np.abs(S21), np.unwrap(np.angle(S21))))
+        S31_data = np.column_stack((f, np.abs(S31), np.unwrap(np.angle(S31))))
+        S41_data = np.column_stack((f, np.abs(S41), np.unwrap(np.angle(S41))))
+
+        S12_data = np.column_stack((f, np.abs(S12), np.unwrap(np.angle(S12))))
+        S22_data = np.column_stack((f, np.abs(S22), np.unwrap(np.angle(S22))))
+        S32_data = np.column_stack((f, np.abs(S32), np.unwrap(np.angle(S32))))
+        S42_data = np.column_stack((f, np.abs(S42), np.unwrap(np.angle(S42))))
+
+        S13_data = np.column_stack((f, np.abs(S13), np.unwrap(np.angle(S13))))
+        S23_data = np.column_stack((f, np.abs(S23), np.unwrap(np.angle(S23))))
+        S33_data = np.column_stack((f, np.abs(S33), np.unwrap(np.angle(S33))))
+        S43_data = np.column_stack((f, np.abs(S43), np.unwrap(np.angle(S43))))
+
+        S14_data = np.column_stack((f, np.abs(S14), np.unwrap(np.angle(S14))))
+        S24_data = np.column_stack((f, np.abs(S24), np.unwrap(np.angle(S24))))
+        S34_data = np.column_stack((f, np.abs(S34), np.unwrap(np.angle(S34))))
+        S44_data = np.column_stack((f, np.abs(S44), np.unwrap(np.angle(S44))))
+
+        # Define the file name and header information
+        filename = "ContraDC.dat"
+
+        # Save the data to file
+        with open(filename, "w") as f:
+            # Write header information
+
+            # Write S11 data
+            f.write(f"('port 1',{mode_label},{mode_ID},'port 1',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S11_data, fmt="%.6e", delimiter=" ")
+
+            # Write S21 data
+            f.write(f"('port 2',{mode_label},{mode_ID},'port 1',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S21_data, fmt="%.6e", delimiter=" ")
+
+            # Write S31 data
+            f.write(f"('port 3',{mode_label},{mode_ID},'port 1',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S31_data, fmt="%.6e", delimiter=" ")
+
+            # Write S41 data
+            f.write(f"('port 4',{mode_label},{mode_ID},'port 1',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S41_data, fmt="%.6e", delimiter=" ")
+
+            # Write S12 data
+            f.write(f"('port 1',{mode_label},{mode_ID},'port 2',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S12_data, fmt="%.6e", delimiter=" ")
+
+            # Write S22 data
+            f.write(f"('port 2',{mode_label},{mode_ID},'port 2',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S22_data, fmt="%.6e", delimiter=" ")
+
+            # Write S32 data
+            f.write(f"('port 3',{mode_label},{mode_ID},'port 2',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S32_data, fmt="%.6e", delimiter=" ")
+
+            # Write S42 data
+            f.write(f"('port 4',{mode_label},{mode_ID},'port 2',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S42_data, fmt="%.6e", delimiter=" ")
+
+            # Write S13 data
+            f.write(f"('port 1',{mode_label},{mode_ID},'port 3',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S13_data, fmt="%.6e", delimiter=" ")
+
+            # Write S23 data
+            f.write(f"('port 2',{mode_label},{mode_ID},'port 3',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S23_data, fmt="%.6e", delimiter=" ")
+
+            # Write S33 data
+            f.write(f"('port 3',{mode_label},{mode_ID},'port 3',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S33_data, fmt="%.6e", delimiter=" ")
+
+            # Write S43 data
+            f.write(f"('port 4',{mode_label},{mode_ID},'port 3',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S43_data, fmt="%.6e", delimiter=" ")
+
+            # Write S14 data
+            f.write(f"('port 1',{mode_label},{mode_ID},'port 4',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S14_data, fmt="%.6e", delimiter=" ")
+
+            # Write S24 data
+            f.write(f"('port 2',{mode_label},{mode_ID},'port 4',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S24_data, fmt="%.6e", delimiter=" ")
+
+            # Write S34 data
+            f.write(f"('port 3',{mode_label},{mode_ID},'port 4',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S34_data, fmt="%.6e", delimiter=" ")
+
+            # Write S44 data
+            f.write(f"('port 4',{mode_label},{mode_ID},'port 4',{mode_ID},'transmission')\n")
+            f.write(f"({FREQ_PTS},3)\n")
+            np.savetxt(f, S44_data, fmt="%.6e", delimiter=" ")
+        return
 
     def getGroupDelay(self):
         """Calculates the group delay of the device,
@@ -552,15 +760,16 @@ class ContraDC():
             self.thickness_device))
         script = script.replace('thickness_rib = 90e-9', 'thickness_rib = {:1.6g}'.format(
             self.thickness_rib))
-        script = script.replace("mat_device = 'Si (Silicon) - Dispersive & Lossless'", "mat_device = '" + self.mat_device+"'")
+        script = script.replace(
+            "mat_device = 'Si (Silicon) - Dispersive & Lossless'", "mat_device = '" + self.mat_device+"'")
         script = script.replace("pol = 'TE'", "pol = '"+self.pol.upper()+"'")
         script = script.replace('wl_min = 1.5e-6', 'wl_min = {:1.6g}'.format(
             self.wvl_range[0]))
         script = script.replace('wl_max = 1.6e-6', 'wl_max = {:1.6g}'.format(
             self.wvl_range[1]))
 
-        lumapi.evalScript(mode, script) #mode.eval(script)
-        self.kappa = lumapi.getVar(mode,"kappa")
+        lumapi.evalScript(mode, script)  # mode.eval(script)
+        self.kappa = lumapi.getVar(mode, "kappa")
         return self.kappa
 
     def simulate(self):

@@ -100,16 +100,17 @@ def examples(num):
         device.simulate()
         import plotly.graph_objs as go
         import plotly.offline as pyo
+        import plotly.io as pio
+        pio.renderers.default = "browser"
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
         thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
         layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
         fig = go.Figure(data=[thru, drop], layout=layout)
         fig.show()
-        print('aaaa')
 
 
         # Generate compact model for Lumerical INTERCONNECT
-        #device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
+        device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
 
     """Example 6: Complete Lumerical flow - simulate coupling coefficient (not simulating mode profiles)
     """
