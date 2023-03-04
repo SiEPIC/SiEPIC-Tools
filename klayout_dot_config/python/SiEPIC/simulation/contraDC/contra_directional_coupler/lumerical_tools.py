@@ -12,8 +12,8 @@ except:
     
 if isSiEPIC:
     # Load Lumerical INTERCONNECT and Python API: 
-    from .... import _globals
-    from ....lumerical.interconnect import run_INTC
+    from SiEPIC import _globals
+    from SiEPIC.lumerical.interconnect import run_INTC
     run_INTC()
     lumapi = _globals.LUMAPI
     if not lumapi:
