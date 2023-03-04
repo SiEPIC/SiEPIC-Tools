@@ -1,4 +1,11 @@
-"""Top-level package for OPICS."""
+"""Top-level package for OPICS.
+
+Frequency-domain Circuit simulator using S-Parameters
+
+Component library is pulled from each Technology PDK, from the sub-folders "CML/*"
+
+
+"""
 
 # Required packages:
 from SiEPIC.install import install

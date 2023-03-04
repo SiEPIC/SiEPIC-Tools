@@ -274,6 +274,8 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
                 # import the library named opics_xxx where xxx is the library name
                 import importlib
                 opics_lib = importlib.import_module(opics_lib_name)
+                from importlib import reload
+                opics_lib = reload(opics_lib)
                 globals()[opics_lib_name] = opics_lib
                 libs_comps[each_lib] = opics_lib.component_factory
             except:
@@ -283,13 +285,19 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
     for i in range(len(circuitData["compModels"])):
 
         # get component model
+        # check if the requested library is available
         if circuitData["compLibs"][i] in libs_comps:
-            comp_model = libs_comps[circuitData["compLibs"][i]][
-                circuitData["compModels"][i]
-            ]
+            # check if the requested component is available in the library
+            if circuitData["compModels"][i] in libs_comps[circuitData["compLibs"][i]]:
+                comp_model = libs_comps[circuitData["compLibs"][i]][
+                    circuitData["compModels"][i]
+                    ]
+            else:
+                # Missing component
+                raise Exception ('Missing OPICS compact model for component %s in library %s' % (circuitData["compModels"][i],circuitData["compLibs"][i]) ) 
         else:
-            # Missing component
-            raise Exception ('Missing OPICS compact model for component %s in library %s' % (circuitData["compModels"][i],circuitData["compLibs"][i]) ) 
+            # Missing library
+            raise Exception ('Missing OPICS compact model library for component %s in library %s' % (circuitData["compModels"][i],circuitData["compLibs"][i]) ) 
         # clean attributes
         cls_attrs = deepcopy(comp_model.cls_attrs)  # class attributes
         comp_attrs = circuitData["compAttrs"][i]  # component attributes

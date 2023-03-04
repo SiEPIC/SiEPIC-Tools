@@ -5,7 +5,7 @@
     jonathan.cauchon.2@ulaval.ca
 """
 
-from modules import *
+from .modules import *
 
 """
     Basic

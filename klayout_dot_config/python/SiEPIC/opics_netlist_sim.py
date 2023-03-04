@@ -99,13 +99,6 @@ def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], require_sav
         print(out.shape)       
         out = np.vstack((out, result['S_%s_0' %(i+1)]))
         columns = columns + ['Output %s' % (i+1) ]
-
-    # *** There is something wrong where the f vector has a different length
-    # than the results vector. This fixes it:
-    #import numpy as np
-    #freq = np.linspace(subckt.sim_result.f[0], subckt.sim_result.f[-1], len(result['S_0_0']))
-    #wavelengths = c_/freq
-
     
     # Single line:
     #df = pd.DataFrame(transmission, index=wavelengths, columns=['Transmission'])

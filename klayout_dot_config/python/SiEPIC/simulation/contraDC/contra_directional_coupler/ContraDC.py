@@ -15,8 +15,8 @@
 """
 
 
-from modules import *
-from utils import *
+from .modules import *
+from .utils import *
 
 import os
 filepath_ContraDC = os.path.dirname(os.path.realpath(__file__))
