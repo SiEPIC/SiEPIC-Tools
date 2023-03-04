@@ -1,0 +1,100 @@
+#
+#    Bragg grating Lumerical simulation flow
+#    see https://github.com/mustafacc/SiEPIC_Photonics_Package/ for documentation
+#
+#    Author: Mustafa Hammood   ; mustafa@siepic.com   ; mustafa@ece.ubc.ca
+#    SiEPIC Kits Ltd. 2020     ; University of British Columbia
+#
+#    (c)2020
+
+#############################
+# Simulate device           #
+#############################
+
+num_modes = 15;
+
+wl=linspace(wl_min,wl_max,res);
+T = matrix(res,1);
+R = matrix(res,1);
+D = matrix(res,1);
+A = matrix(res,1);
+
+W = (W1+W2);
+dW = (dW1+dW2);
+
+sim_y_span = W1*6 + dW*6;
+sim_z_span = thickness_device*15;
+
+# add fine mesh region
+addmesh;
+set('x min',-period);
+set('x max',period);
+set('y',0);
+set('y span',W+3*dW);
+set('z',thickness_device/2);
+set('z span',thickness_device*1.5 );
+set('dx',mesh_x);
+set('dy',mesh_y);
+set('dz',mesh_z);
+
+# add EME simulation region and configure
+addeme;
+setnamed('EME','wavelength',mean(wl));
+setnamed('EME',"energy conservation",3);
+setnamed('EME',"number of cell groups", 4);
+setnamed('EME',"start cell group", 2);
+setnamed('EME',"end cell group", 3);
+setnamed('EME',"periods",N_periods);
+setnamed('EME',"display cells",1);
+setnamed('EME',"number of modes for all cell groups",num_modes);
+
+setnamed('EME',"y", 0);
+setnamed('EME',"y span", sim_y_span);
+setnamed('EME',"z", thickness_device/2);
+setnamed('EME',"z span", sim_z_span );
+setnamed('EME',"x min", -period);
+setnamed('EME',"group spans",[period/2;period/2;period/2;period/2]);
+
+# select modes
+if( pol == 'TE'){
+    setnamed('EME::Ports::port_1','mode selection','user select');
+    setnamed('EME::Ports::port_2','mode selection','user select');
+    
+    select("EME::Ports::port_1");
+    updateportmodes(1:2);
+    select("EME::Ports::port_2");
+    updateportmodes(1:2);
+    if(sidewall_angle == 90){
+        setnamed('EME','z min bc','symmetric');
+    }
+}
+else{
+    setnamed('EME::Ports::port_1','mode selection','user select');
+    setnamed('EME::Ports::port_2','mode selection','user select');
+    select("EME::Ports::port_1");
+    updateportmodes(3:4);
+    select("EME::Ports::port_2");
+    updateportmodes(3:4);
+}
+
+run;
+
+setemeanalysis("update monitors",false); # saves time
+setemeanalysis("include slow diagnostics",false); # saves time
+setemeanalysis("include fast diagnostics",false); # saves time
+setemeanalysis("calculate group delays",false); # saves time
+setemeanalysis("override wavelength",true);
+
+for(i=1:res){
+    setemeanalysis('wavelength',wl(i));
+    emepropagate;
+    S = getresult('EME','user s matrix');
+
+    T(i,1) = abs(S(3,1))^2;
+    D(i,1) = abs(S(2,1))^2;
+    R(i,1) = abs(S(1,1))^2;
+    A(i,1) = abs(S(4,1))^2;
+}
+
+plot(wl*1e6,10*log10(T), 10*log10(D), 10*log10(R), 10*log10(A),'wavelength (um)','dB');
+legend("Through", "Drop", "Self-Reflection", "Add");

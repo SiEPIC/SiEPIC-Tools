@@ -1,0 +1,51 @@
+#
+#    Bragg grating Lumerical simulation flow
+#    see https://github.com/mustafacc/SiEPIC_Photonics_Package/ for documentation
+#
+#    Author: Mustafa Hammood   ; mustafa@siepic.com   ; mustafa@ece.ubc.ca
+#    SiEPIC Kits Ltd. 2020     ; University of British Columbia
+#
+#    (c)2020
+
+#############################
+# Device analysis           #
+#############################
+function find_bw(response, wavelength, limit){
+    
+    indexMax = find( response, max(response) );
+    lambda = wavelength( indexMax );
+    
+    responseCenter = response( indexMax );
+    responseBandwidth = max(response) - limit; # linear scale
+    
+    responsePoint = responseCenter;
+    ii = indexMax;
+    for(0; responsePoint > responseBandwidth; 0 ){
+        
+        responsePoint = response(ii);
+        ii = ii-1;
+    }    
+    indexLeft = ii;
+    
+    responsePoint = responseCenter;
+    ii = indexMax;
+    for(0; responsePoint > responseBandwidth; 0 ){
+        
+        responsePoint = response(ii);
+        ii = ii+1;
+    }
+    indexRight = ii;
+    
+    indexCenter = round((indexRight+indexLeft)/2);
+    
+    lambda = wavelength(indexCenter);
+    bandwidth = wavelength(indexRight) - wavelength(indexLeft);
+        
+    return [bandwidth, lambda];
+}
+
+out = find_bw( D, wl, max(D)/2);
+dropBandwidth_3dB = out(1);
+centralWavelength = out(2);
+
+kappa = n_g_avg*pi*dropBandwidth_3dB/(centralWavelength^2);
