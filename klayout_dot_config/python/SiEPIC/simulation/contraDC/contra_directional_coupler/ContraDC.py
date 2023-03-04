@@ -8,7 +8,9 @@
 
     Created by Jonathan Cauchon, September 2019
 
-    Last updated November 2020
+    Last updated November 2023 
+        by Mustafa Hammood and Lukas Chrostowski
+        - export S-Param for Lumerical INTERCONNECT and OPICS
 
 """
 
@@ -69,7 +71,7 @@ class ContraDC():
 
     :param a: Sepcifies the gaussian constant to be used in the apodization profile,
         if apod_shape is "gaussian".
-    :type a: int
+    :type a: float
 
     :param kappa: Maximum coupling power [1/m].
     :type kappa: float
@@ -84,6 +86,9 @@ class ContraDC():
 
     :param w_chirp_step: Chirp step of the waveguide widths [m].
     :type w_chirp_step: float
+    
+    :param sinusoidal: Sinusoidal versus Rectangular grating
+    :type sinusoidal: Bool
 
     :return: ContraDC object, not yet simulated.
 
@@ -99,11 +104,11 @@ class ContraDC():
 
     """
 
-    def __init__(self, N=1000, period=322e-9, polyfit_file=None, a=10, apod_shape="gaussian",
+    def __init__(self, N=1000, period=322e-9, polyfit_file=None, a=10.0, apod_shape="gaussian",
                  kappa=48000, T=300, resolution=500, N_seg=100, wvl_range=[1530e-9, 1580e-9],
                  central_wvl=1550e-9, alpha=10, w1=.56e-6, w2=.44e-6, dw1=50e-9, dw2=25e-9, gap=.1e-6,
                  w_chirp_step=1e-9, period_chirp_step=2e-9, angle=85, mat_device='Si (Silicon) - Dispersive & Lossless',
-                 thickness_device=.22e-6, thickness_rib=90e-9, rib=False, pol='TE'):
+                 thickness_device=.22e-6, thickness_rib=90e-9, rib=False, pol='TE', sinusoidal=False):
 
         # Class attributes
         self.N = N
@@ -116,6 +121,7 @@ class ContraDC():
         self.alpha = alpha
         self.wvl_range = wvl_range
         self.apod_shape = apod_shape
+        self.sinusoidal = sinusoidal
 
         # physical parameters
         self.period = period
@@ -429,7 +435,7 @@ class ContraDC():
 
         return self
 
-    def gen_sparams(self):
+    def gen_sparams(self, filepath='', make_plot=True):
 
         T = self.transfer_matrix
         lambda0 = self._wavelength
@@ -504,14 +510,18 @@ class ContraDC():
         S['S34'] = S34
         S['S44'] = np.matrix.transpose(S44)
         self.S = S
-        sio.savemat("ContraDC_sparams.mat", S)
+        
+        filename = "ContraDC_sparams.mat"
+        import os
+        path = os.path.join(filepath,filename)
+        sio.savemat(path, S)
 
         # from lumerical_tools import generate_dat
         # generate_dat()
-        self.generate_dat()
+        self.generate_dat(filepath=filepath, make_plot=make_plot)
         return self
 
-    def generate_dat(self, make_plot=1):
+    def generate_dat(self, filepath='', make_plot=True):
         import numpy as np
         import plotly.graph_objects as go
 
@@ -594,7 +604,6 @@ class ContraDC():
             print('******* S parameters are passive ********')
 
         # Make plots
-        make_plot = True
         if make_plot:
             import plotly.graph_objs as go
             import plotly.offline as pyo
@@ -634,9 +643,23 @@ class ContraDC():
 
         # Define the file name and header information
         filename = "ContraDC.dat"
+        if type(self.w1) == list:
+            w1=self.w1[0]
+            w2=self.w2[0]
+        else:
+            w1=self.w1
+            w2=self.w2
+        if type(self.period) == list:
+            period=self.period[0]
+        else:
+            period=self.period
+        filename =  "w1=" + "%.0f"%(w1*1e9) + ",w2=" + "%.0f"%(w2*1e9) + ",dW1=" + "%.0f"%(self.dw1*1e9) + ",dW2=" + "%.0f"%(self.dw2*1e9) +  ",gap=" + "%.0f"%(self.gap*1e9) + ",p=" + "%.1f"%(period*1e9) + ",N=" + str(self.N) + ",s=" + str(1 if self.sinusoidal else 0) +  ",a=" + "%.2f"%self.a +  ",rib=" + str(1 if self.rib else 0) + ",pol=" + str(0 if self.pol=='TE' else 1) + ",l1=" + "%.0f"%(self.wvl_range[0]*1e9) + ",l2=" + "%.0f"%(self.wvl_range[1]*1e9) + ",ln=" + str(self.resolution) + '.dat';
+        
+        import os
+        path = os.path.join(filepath,filename)
 
         # Save the data to file
-        with open(filename, "w") as f:
+        with open(path, "w") as f:
             # Write header information
 
             # Write S11 data
@@ -718,7 +741,7 @@ class ContraDC():
             f.write(f"('port 4',{mode_label},{mode_ID},'port 4',{mode_ID},'transmission')\n")
             f.write(f"({FREQ_PTS},3)\n")
             np.savetxt(f, S44_data, fmt="%.6e", delimiter=" ")
-        return
+        return path
 
     def getGroupDelay(self):
         """Calculates the group delay of the device,
