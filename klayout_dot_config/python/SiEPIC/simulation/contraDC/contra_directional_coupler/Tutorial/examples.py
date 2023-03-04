@@ -1,5 +1,9 @@
 #%% append Python path to code location
 import os,sys,inspect
+import plotly.graph_objs as go
+import plotly.offline as pyo
+import plotly.io as pio
+pio.renderers.default = "browser"
 
 # change directory for database
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -96,12 +100,8 @@ def examples(num):
         w2 = 440e-9
 
         device = ContraDC(w1= w1, w2=w2, apod_shape=apod_shape, period=period, kappa=25000)
-
         device.simulate()
-        import plotly.graph_objs as go
-        import plotly.offline as pyo
-        import plotly.io as pio
-        pio.renderers.default = "browser"
+
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
         thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
         layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
@@ -127,13 +127,15 @@ def examples(num):
         device = ContraDC(w1= w1, dw1=dw1, w2=w2, dw2=dw2, gap=gap, apod_shape=apod_shape, period=period)
 
         device.simulate_kappa()
-        device.simulate().displayResults()
-        plt.plot(device.wavelength*1e9, device.drop)
-        plt.plot(device.wavelength*1e9, device.thru)
-        plt.show()
+        device.simulate()
+        drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
+        thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+        fig = go.Figure(data=[thru, drop], layout=layout)
+        fig.show()
 
         # Generate compact model for Lumerical INTERCONNECT
-        #device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
+        device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
 
 
-examples(5)
+examples(6)
