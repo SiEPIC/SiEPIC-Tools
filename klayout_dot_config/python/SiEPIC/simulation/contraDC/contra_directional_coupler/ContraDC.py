@@ -18,6 +18,9 @@
 from modules import *
 from utils import *
 
+import os
+filepath_ContraDC = os.path.dirname(os.path.realpath(__file__))
+
 
 class ContraDC():
     """
@@ -228,9 +231,9 @@ class ContraDC():
 
         if self.polyfit_file is None:
             # Import simulation results to be used for interpolation
-            n1 = np.reshape(np.loadtxt(r"./Database/neff/neff_1.txt"), (5, 5, 5))
-            n2 = np.reshape(np.loadtxt(r"./Database/neff/neff_2.txt"), (5, 5, 5))
-            w1_w2_wvl = np.loadtxt(r"./Database/neff/w1_w2_lambda.txt")
+            n1 = np.reshape(np.loadtxt(os.path.join(filepath_ContraDC, "Database/neff/neff_1.txt")), (5, 5, 5))
+            n2 = np.reshape(np.loadtxt(os.path.join(filepath_ContraDC, "Database/neff/neff_2.txt")), (5, 5, 5))
+            w1_w2_wvl = np.loadtxt(os.path.join(filepath_ContraDC, "Database/neff/w1_w2_lambda.txt"))
 
             w1_tiled = np.tile(self.w1_profile, (self.resolution, 1))
             w2_tiled = np.tile(self.w2_profile, (self.resolution, 1))

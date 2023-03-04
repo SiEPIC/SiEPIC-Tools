@@ -6,13 +6,15 @@ The contraDC package was imported into SiEPIC-Tools using the following command:
 
 to do:
 - github
-- .dat export in python: mustafa
+- .dat export in python: mustafa - done
 - loaddesignkit in INTC using folder in the PDK: lukas - done
     - need to make OPICS use it
-- export into opics/INTC folder, update XML: lukas
-- INTC CML for contraDC: lukas
+- export into opics/INTC folder, update XML: lukas - done
+- INTC CML for contraDC: lukas - done
+- EBeam PCell SPICE param, that works with INTC CML
 - GUI, Keybindings, PDK integration: mustafa
 - slides: Lukas
+
 
 
 
