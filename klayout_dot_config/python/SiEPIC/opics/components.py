@@ -126,7 +126,13 @@ class componentModel:
                  over the target frequency range.
         """
 
-        func = interp1d(source_f, source_s, kind="cubic", axis=0, fill_value = "extrapolate")
+        fill1 = source_s[0]
+        fill2 = source_s[-1]
+#        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = 0) # results in a truncated spectrum
+#        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = (1e-3,1e-2))
+        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = (fill2,fill1))
+#        func = interp1d(source_f, source_s, kind="cubic", axis=0, fill_value = "extrapolate")
+#        func = interp1d(source_f, source_s, kind="cubic", axis=0, fill_value = 0)
         return func(target_f)
 
     def write_sparameters(
