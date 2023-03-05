@@ -144,11 +144,11 @@ class MyWindow(QWidget):
         layout_sim.addWidget(self.sim_pol_dropdown)
 
         # coupling coefficient
-        self.sim_kappa_label = QLabel('Coupling coefficient (κ): ')
+        self.sim_kappa_label = QLabel('Coupling coefficient (κ, /m): ')
         self.sim_kappa_dropdown = QComboBox()
         self.sim_kappa_dropdown.addItem("User defined")
         self.sim_kappa_dropdown.addItem("Simulate")
-        self.sim_kappa_fill = QLineEdit('?')
+        self.sim_kappa_fill = QLineEdit('24000')
         self.sim_kappa_fill.setReadOnly(True)
         self.sim_kappa_fill.setStyleSheet('color: gray')
         layout_sim.addWidget(self.sim_kappa_label)
@@ -238,7 +238,57 @@ class MyWindow(QWidget):
 
 
     def on_simulate_clicked(self):
-        self.label_tech.setText('Simulating...')
+        
+        import SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC as C
+
+        N = float(self.pcell_N_fill.text)        
+        period = float(self.pcell_period_fill.text)*1e-6
+        gap = float(self.pcell_gap_fill.text)*1e-6
+        w1 = float(self.pcell_w1_fill.text)*1e-6
+        w2 = float(self.pcell_w2_fill.text)*1e-6
+        dw1 = float(self.pcell_dw1_fill.text)*1e-6
+        dw2 = float(self.pcell_dw2_fill.text)*1e-6
+        a = float(self.pcell_apod_fill.text)
+        if self.sim_pol_dropdown.currentIndex == 0:
+          pol = 'TE'
+        else:
+          pol = 'TM'
+        if self.pcell_rib_fill.isChecked():
+          rib = True
+        else:
+          rib = False
+
+        thickness_device = float(self.tech_devthick_fill.text)*1e-6
+        thickness_rib = float(self.tech_ribthick_fill.text)*1e-6
+        wvl_range = [float(self.sim_wavlstart_fill.text)*1e-9, float(self.sim_wavlstop_fill.text)*1e-9]
+
+        device = C.ContraDC(w1= w1, dw1=dw1, w2=w2, dw2=dw2, gap=gap, a=a, period=period, rib=rib,
+        pol=pol, thickness_device=thickness_device, thickness_rib=thickness_rib, wvl_range=wvl_range)
+
+        if self.sim_kappa_dropdown.currentIndex == 0:
+          device.kappa = float(self.sim_kappa_fill.text)
+        else:
+          print('go and simulate kappa')
+
+        self.simulate.setText('Simulating...')
+        device.simulate()
+
+
+        if self.tech_plot_fill.isChecked():
+          import plotly.graph_objs as go
+          import plotly.offline as pyo
+          import plotly.io as pio
+          #pio.renderers.default = "browser"
+
+          drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
+          thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
+          layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+          fig = go.Figure(data=[thru, drop], layout=layout)
+          fig.show()
+
+        self.simulate.setText('Done simulating.')
+        
+
 
     def on_refresh_clicked(self):
         # fetch pcell parameters
@@ -255,6 +305,7 @@ class MyWindow(QWidget):
         self.pcell_rib_fill.setChecked(self.params['rib'])
 
         self.label_pcell.setText('Parameterized cell refreshed...')
+        self.simulate.setText('Simulate')
 
     def on_sim_import(self):
         if self.sim_import.currentIndex == 0:
