@@ -74,7 +74,13 @@ def examples(num):
         device.w1_profile = device.w1*np.cos(z/600)
         device.w2_profile = device.w2*np.cos(z/600)
 
-        device.simulate().displayResults()
+        device.simulate()
+
+        drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
+        thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+        fig = go.Figure(data=[thru, drop], layout=layout)
+        fig.show()
 
 
 
@@ -86,7 +92,14 @@ def examples(num):
     if num == 4:
 
         device = ContraDC(polyfit_file="Tutorial/SiN_1550_TE_w1_850nm_w2_1150nm_thickness_400nm.txt", period=335e-9)
-        device.simulate().displayResults()
+        device.simulate()
+
+        drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
+        thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+        fig = go.Figure(data=[thru, drop], layout=layout)
+        fig.show()
+
 
 
 
@@ -128,6 +141,7 @@ def examples(num):
 
         device.simulate_kappa()
         device.simulate()
+
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
         thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
         layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
@@ -138,4 +152,4 @@ def examples(num):
         device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
 
 
-examples(6)
+examples(3)
