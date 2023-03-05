@@ -762,11 +762,17 @@ class ContraDC():
             return self
 
     def simulate_kappa(self):
-        from lumerical_tools import lumapi
+        from .lumerical_tools import lumapi
         from lumopt.utilities.load_lumerical_scripts import load_from_lsf
 
+        import os
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+
         mode = lumapi.open('mode')
-        script = load_from_lsf('MAIN_EME.lsf')
+
+        lumapi.evalScript(mode, 'cd ("' + dir_path + '");')  # mode.eval(script)
+
+        script = load_from_lsf(os.path.join(dir_path, 'MAIN_EME.lsf'))
         script = script.replace('W1 = 560e-9', 'W1 = {:1.6g}'.format(
             self.w1))
         script = script.replace('W2 = 440e-9', 'W2 = {:1.6g}'.format(

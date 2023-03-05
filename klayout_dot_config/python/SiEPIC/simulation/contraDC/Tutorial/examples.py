@@ -97,7 +97,10 @@ def examples(num):
     """
     if num == 4:
 
-        device = ContraDC(polyfit_file="Tutorial/SiN_1550_TE_w1_850nm_w2_1150nm_thickness_400nm.txt", period=335e-9)
+        import os
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        
+        device = ContraDC(polyfit_file=os.path.join(dir_path,"SiN_1550_TE_w1_850nm_w2_1150nm_thickness_400nm.txt"), period=335e-9)
         device.simulate()
 
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
@@ -129,7 +132,10 @@ def examples(num):
 
 
         # Generate compact model for Lumerical INTERCONNECT
-        device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
+        import os
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        print(dir_path)
+        device.gen_sparams(filepath=dir_path) # this will create a ContraDC_sparams.dat file to import into INTC
 
     """Example 6: Complete Lumerical flow - simulate coupling coefficient (not simulating mode profiles)
     """
@@ -155,7 +161,10 @@ def examples(num):
         fig.show()
 
         # Generate compact model for Lumerical INTERCONNECT
-        device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
+        import os
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        print(dir_path)
+        device.gen_sparams(filepath=dir_path) # this will create a ContraDC_sparams.dat file to import into INTC
 
 
-examples(2)
+examples(6)
