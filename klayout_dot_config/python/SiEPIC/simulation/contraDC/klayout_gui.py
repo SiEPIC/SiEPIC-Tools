@@ -13,11 +13,12 @@ class MyWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Contra-directional coupler simulator')
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(200, 200)
 
         # fetch pcell parameters
         # fetch technology parameters
 
+        #******************************************************
         # Create the layout_pcell and add the UI elements to it
         layout_pcell = QVBoxLayout()
         self.button = QPushButton('Refresh PCell')
@@ -85,122 +86,185 @@ class MyWindow(QWidget):
 
         self.pcell_rib_label = QLabel('Rib waveguides? ')
         self.pcell_rib_fill = QCheckBox()
-        self.pcell_rib_fill.setChecked(True)
-        self.pcell_rib_fill.setDisabled(True)
+        self.pcell_rib_fill.setChecked(False)
         layout_pcell.addWidget(self.pcell_rib_label)
         layout_pcell.addWidget(self.pcell_rib_fill)
 
         layout_pcell.addWidget(self.button)
-        layout_pcell.addStretch()
 
+        #******************************************************
+        # add simulation box and add the UI elements to it
+        layout_sim = QVBoxLayout()
+        self.label_sim = QLabel('Simulation definitions:')
+        layout_sim.addWidget(self.label_sim)
+
+        # Create a dropdown menu to select simulation import type
+        self.sim_import_label = QLabel('Import simulation definitions from:')
+        self.sim_import = QComboBox()
+        self.sim_import.addItem("PDK definitions")
+        self.sim_import.addItem("Custom")
+        layout_sim.addWidget(self.sim_import_label)
+        layout_sim.addWidget(self.sim_import)
+
+        # Connect the dropdown menu to a slot function
+        self.sim_import.currentIndexChanged(self.on_sim_import)
+
+        self.sim_wavlstart_label = QLabel('Start wavelength: ')
+        self.sim_wavlstart_fill = QLineEdit('?')
+        self.sim_wavlstart_fill.setReadOnly(True)
+        self.sim_wavlstart_fill.setStyleSheet('color: gray')
+        layout_sim.addWidget(self.sim_wavlstart_label)
+        layout_sim.addWidget(self.sim_wavlstart_fill)
+
+        self.sim_wavlstop_label = QLabel('Stop wavelength: ')
+        self.sim_wavlstop_fill = QLineEdit('?')
+        self.sim_wavlstop_fill.setReadOnly(True)
+        self.sim_wavlstop_fill.setStyleSheet('color: gray')
+        layout_sim.addWidget(self.sim_wavlstop_label)
+        layout_sim.addWidget(self.sim_wavlstop_fill)
+
+        self.sim_wavlpts_label = QLabel('Wavelength points: ')
+        self.sim_wavlpts_fill = QLineEdit('?')
+        self.sim_wavlpts_fill.setReadOnly(True)
+        self.sim_wavlpts_fill.setStyleSheet('color: gray')
+        layout_sim.addWidget(self.sim_wavlpts_label)
+        layout_sim.addWidget(self.sim_wavlpts_fill)
+
+        # Polarization
+        self.sim_pol_label = QLabel('Polarization: ')
+        self.sim_pol_dropdown = QComboBox()
+        self.sim_pol_dropdown.addItem("TE")
+        self.sim_pol_dropdown.addItem("TM")
+        layout_sim.addWidget(self.sim_pol_label)
+        layout_sim.addWidget(self.sim_pol_dropdown)
+
+        # coupling coefficient
+        self.sim_kappa_label = QLabel('Coupling coefficient (κ): ')
+        self.sim_kappa_dropdown = QComboBox()
+        self.sim_kappa_dropdown.addItem("User defined")
+        self.sim_kappa_dropdown.addItem("Simulate")
+        self.sim_kappa_fill = QLineEdit('?')
+        self.sim_kappa_fill.setReadOnly(True)
+        self.sim_kappa_fill.setStyleSheet('color: gray')
+        layout_sim.addWidget(self.sim_kappa_label)
+        layout_sim.addWidget(self.sim_kappa_dropdown)
+        layout_sim.addWidget(self.sim_kappa_fill)
+
+        # Connect the dropdown menu to a slot function
+        self.sim_kappa_dropdown.currentIndexChanged(self.on_kappa_dropdown)
+
+        # waveguide models
+        self.sim_wg_label = QLabel('Waveguide models: ')
+        self.sim_wg_dropdown = QComboBox()
+        self.sim_wg_dropdown.addItem("Lookup table")
+        self.sim_wg_dropdown.addItem("Simulate")
+        layout_sim.addWidget(self.sim_wg_label)
+        layout_sim.addWidget(self.sim_wg_dropdown)
+
+        # Connect the dropdown menu to a slot function
+        self.sim_wg_dropdown.currentIndexChanged(self.on_wg_dropdown)
+
+        #******************************************************
         # add technology box and add the UI elements to it
         layout_tech = QVBoxLayout()
-        self.label_tech = QLabel('Simulation definitions:')
+        
+        self.label_tech = QLabel('Technology definitions:')
         layout_tech.addWidget(self.label_tech)
 
         # Create a dropdown menu to select simulation import type
-        self.tech_import_label = QLabel('Import simulation definitions from:')
+        self.tech_import_label = QLabel('Import techonology definitions from:')
         self.tech_import = QComboBox()
         self.tech_import.addItem("PDK definitions")
         self.tech_import.addItem("Custom")
         layout_tech.addWidget(self.tech_import_label)
         layout_tech.addWidget(self.tech_import)
 
-        # Connect the dropdown menu to a slot function
-        self.tech_import.currentIndexChanged(self.on_tech_import)
+        self.tech_devthick_label = QLabel('Waveguide thickness: ')
+        self.tech_devthick_fill = QLineEdit('?')
+        self.tech_devthick_fill.setReadOnly(True)
+        self.tech_devthick_fill.setStyleSheet('color: gray')
+        layout_tech.addWidget(self.tech_devthick_label)
+        layout_tech.addWidget(self.tech_devthick_fill)
 
-        self.tech_wavlstart_label = QLabel('Start wavelength: ')
-        self.tech_wavlstart_fill = QLineEdit('?')
-        self.tech_wavlstart_fill.setReadOnly(True)
-        self.tech_wavlstart_fill.setStyleSheet('color: gray')
-        layout_tech.addWidget(self.tech_wavlstart_label)
-        layout_tech.addWidget(self.tech_wavlstart_fill)
+        self.tech_ribthick_label = QLabel('Rib thickness: ')
+        self.tech_ribthick_fill = QLineEdit('?')
+        self.tech_ribthick_fill.setReadOnly(True)
+        self.tech_ribthick_fill.setStyleSheet('color: gray')
+        layout_tech.addWidget(self.tech_ribthick_label)
+        layout_tech.addWidget(self.tech_ribthick_fill)
 
-        self.tech_wavlstop_label = QLabel('Stop wavelength: ')
-        self.tech_wavlstop_fill = QLineEdit('?')
-        self.tech_wavlstop_fill.setReadOnly(True)
-        self.tech_wavlstop_fill.setStyleSheet('color: gray')
-        layout_tech.addWidget(self.tech_wavlstop_label)
-        layout_tech.addWidget(self.tech_wavlstop_fill)
+        self.tech_plot_label = QLabel('Plot result? ')
+        self.tech_plot_fill = QCheckBox()
+        self.tech_plot_fill.setChecked(True)
+        layout_tech.addWidget(self.tech_plot_label)
+        layout_tech.addWidget(self.tech_plot_fill)
 
-        self.tech_wavlpts_label = QLabel('Wavelength points: ')
-        self.tech_wavlpts_fill = QLineEdit('?')
-        self.tech_wavlpts_fill.setReadOnly(True)
-        self.tech_wavlpts_fill.setStyleSheet('color: gray')
-        layout_tech.addWidget(self.tech_wavlpts_label)
-        layout_tech.addWidget(self.tech_wavlpts_fill)
+        self.tech_cm_label = QLabel('Generate compact model? ')
+        self.tech_cm_fill = QCheckBox()
+        self.tech_cm_fill.setChecked(True)
+        layout_tech.addWidget(self.tech_cm_label)
+        layout_tech.addWidget(self.tech_cm_fill)
 
-        # Polarization
-        self.tech_pol_label = QLabel('Polarization: ')
-        self.tech_pol_dropdown = QComboBox()
-        self.tech_pol_dropdown.addItem("TE")
-        self.tech_pol_dropdown.addItem("TM")
-        layout_tech.addWidget(self.tech_pol_label)
-        layout_tech.addWidget(self.tech_pol_dropdown)
+        self.simulate = QPushButton('Run simulation')
+        layout_tech.addWidget(self.simulate)
 
-        # coupling coefficient
-        self.tech_kappa_label = QLabel('Coupling coefficient (κ): ')
-        self.tech_kappa_dropdown = QComboBox()
-        self.tech_kappa_dropdown.addItem("User defined")
-        self.tech_kappa_dropdown.addItem("Simulate")
-        self.tech_kappa_fill = QLineEdit('?')
-        self.tech_kappa_fill.setReadOnly(True)
-        self.tech_kappa_fill.setStyleSheet('color: gray')
-        layout_tech.addWidget(self.tech_kappa_label)
-        layout_tech.addWidget(self.tech_kappa_dropdown)
-        layout_tech.addWidget(self.tech_kappa_fill)
+        # Connect the button to a callback function
+        self.simulate.clicked(self.on_simulate_clicked)
 
-        # Connect the dropdown menu to a slot function
-        self.tech_kappa_dropdown.currentIndexChanged(self.on_kappa_dropdown)
-
-        # waveguide models
-        self.tech_wg_label = QLabel('Waveguide models: ')
-        self.tech_wg_dropdown = QComboBox()
-        self.tech_wg_dropdown.addItem("Lookup table")
-        self.tech_wg_dropdown.addItem("Simulate")
-        layout_tech.addWidget(self.tech_wg_label)
-        layout_tech.addWidget(self.tech_wg_dropdown)
-
-        # Connect the dropdown menu to a slot function
-        self.tech_wg_dropdown.currentIndexChanged(self.on_wg_dropdown)
-
+        #******************************************************
+        # assemble and order the menus
+        layout_pcell.addStretch()
+        layout_sim.addStretch()
+        layout_tech.addStretch()
         hbox = QHBoxLayout(self)
         hbox.addLayout(layout_pcell)
+        hbox.addSpacing(20)
+        hbox.addLayout(layout_sim)
+        hbox.addSpacing(20)
         hbox.addLayout(layout_tech)
-        self.setLayout(hbox)
+
+        vbox = QVBoxLayout(self)
+        vbox.addLayout(hbox)
+
+
+        self.setLayout(vbox)
+
+
+    def on_simulate_clicked(self):
+        self.label_tech.setText('Simulating...')
 
     def on_refresh_clicked(self):
         self.label_pcell.setText('Parameterized cell definitions: refreshed.')
 
-    def on_tech_import(self):
-        if self.tech_import.currentIndex == 0:
+    def on_sim_import(self):
+        if self.sim_import.currentIndex == 0:
             # import simulation parameters from DFT
-            self.tech_import_label.setText('Simulation definitions: PDK')
+            self.sim_import_label.setText('Simulation definitions: PDK')
         else:
             # let user pick and ungrey the boxes
-            self.tech_import_label.setText('Simulation definitions: Custom')
+            self.sim_import_label.setText('Simulation definitions: Custom')
 
     def on_kappa_dropdown(self):
-        if self.tech_kappa_dropdown.currentIndex == 0:
+        if self.sim_kappa_dropdown.currentIndex == 0:
             # query user for input
-            self.tech_kappa_label.setText('Coupling coefficient (κ): Custom')
-            self.tech_kappa_fill.setReadOnly(False)
-            self.tech_kappa_fill.setStyleSheet('color: black')
-            self.tech_kappa_fill.setText('Kappa (/m)')
+            self.sim_kappa_label.setText('Coupling coefficient (κ): Custom')
+            self.sim_kappa_fill.setReadOnly(False)
+            self.sim_kappa_fill.setStyleSheet('color: black')
+            self.sim_kappa_fill.setText('Kappa (/m)')
         else:
             # simulate kappa using Lumerical
-            self.tech_kappa_label.setText('Coupling coefficient (κ): Simulate')
-            self.tech_kappa_fill.setReadOnly(False)
-            self.tech_kappa_fill.setStyleSheet('color: gray')
-            self.tech_kappa_fill.setText('simulation')
+            self.sim_kappa_label.setText('Coupling coefficient (κ): Simulate')
+            self.sim_kappa_fill.setReadOnly(False)
+            self.sim_kappa_fill.setStyleSheet('color: gray')
+            self.sim_kappa_fill.setText('simulation')
 
     def on_wg_dropdown(self):
-        if self.tech_wg_dropdown.currentIndex == 0:
+        if self.sim_wg_dropdown.currentIndex == 0:
             # look up if value is within lookup table index
-            self.tech_wg_label.setText('Waveguide models: LUT')
+            self.sim_wg_label.setText('Waveguide models: LUT')
         else:
             # simulate modes using Lumerical
-            self.tech_wg_label.setText('Waveguide models: Simulate')
+            self.sim_wg_label.setText('Waveguide models: Simulate')
 
 
 # Create the application and the main window
