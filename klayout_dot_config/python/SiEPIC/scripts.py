@@ -3043,6 +3043,10 @@ def measurement_vs_simulation(verbose=None):
         print(' opt_in labels: %s' % opt_in_selection_text)
         print(' Begin looping through labels')
 
+    if not opt_in_selection_text:
+        raise Exception ('No opt_in labels were selected. \nCannot perform operation.')
+        return
+
     # Loop through the opt_in text labels
     for ot in opt_in_selection_text:
 
