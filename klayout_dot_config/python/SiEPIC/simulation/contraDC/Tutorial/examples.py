@@ -26,19 +26,15 @@ def examples(num):
     if num ==1:
 
         # instantiate, simulate and show result
-        device = ContraDC().simulate().displayResults()
+        device = ContraDC().simulate()
 
         # calculate thimpe group delay
         device.getGroupDelay()
 
-        # plot group delay
-        plt.figure()
-        plt.plot(device.wavelength*1e9, device.group_delay*1e12)
-        plt.xlabel("Wavelength (nm)")
-        plt.ylabel("Tg (ps)")
-
-        plt.show()
-
+        gd = go.Scatter(x=device.wavelength*1e9, y=device.group_delay*1e12, mode='lines', name='Group delay')
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='Wavelength (nm)'), yaxis=dict(title='Tg (ps)'))
+        fig = go.Figure(data=[gd], layout=layout)
+        fig.show()
 
 
     """ Example 2: Full chirped example.
@@ -64,7 +60,13 @@ def examples(num):
                          w_chirp_step=w_chirp_step, period=period, N_seg=1500,
                          kappa = 10000, a=0, alpha=1.5, wvl_range=[1500e-9,1600e-9])
 
-        device.simulate().displayResults()
+        device.simulate()
+
+        drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
+        thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='Wavelength (nm)'), yaxis=dict(title='Transmission [dB]'))
+        fig = go.Figure(data=[thru, drop], layout=layout)
+        fig.show()
 
 
 
@@ -82,7 +84,7 @@ def examples(num):
 
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
         thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
-        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='Wavelength (nm)'), yaxis=dict(title='Transmission [dB]'))
         fig = go.Figure(data=[thru, drop], layout=layout)
         fig.show()
 
@@ -100,7 +102,7 @@ def examples(num):
 
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
         thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
-        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='Wavelength (nm)'), yaxis=dict(title='Transmission [dB]'))
         fig = go.Figure(data=[thru, drop], layout=layout)
         fig.show()
 
@@ -121,7 +123,7 @@ def examples(num):
 
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
         thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
-        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='Wavelength (nm)'), yaxis=dict(title='Transmission [dB]'))
         fig = go.Figure(data=[thru, drop], layout=layout)
         fig.show()
 
@@ -148,7 +150,7 @@ def examples(num):
 
         drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
         thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
-        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+        layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='Wavelength (nm)'), yaxis=dict(title='Transmission [dB]'))
         fig = go.Figure(data=[thru, drop], layout=layout)
         fig.show()
 
@@ -156,4 +158,4 @@ def examples(num):
         device.gen_sparams() # this will create a ContraDC_sparams.dat file to import into INTC
 
 
-examples(3)
+examples(2)
