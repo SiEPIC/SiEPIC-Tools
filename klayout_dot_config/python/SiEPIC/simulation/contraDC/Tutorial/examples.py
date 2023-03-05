@@ -5,14 +5,18 @@ import plotly.offline as pyo
 import plotly.io as pio
 pio.renderers.default = "browser"
 
+'''
 # change directory for database
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir) 
 os.chdir(parent_dir) 
+'''
 
 # import ContraDC module
-from ContraDC import *
+# from .ContraDC import *
+
+from SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC import *
 
 
 def examples(num):
