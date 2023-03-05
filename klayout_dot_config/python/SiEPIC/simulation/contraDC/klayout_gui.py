@@ -28,49 +28,49 @@ class MyWindow(QWidget):
         self.label_pcell = QLabel('Parameterized cell definitions:')
         layout_pcell.addWidget(self.label_pcell)
 
-        self.pcell_N_label = QLabel('Number of gratings (N): ')
+        self.pcell_N_label = QLabel('Number of gratings (N) (µm): ')
         self.pcell_N_fill = QLineEdit('?')
         self.pcell_N_fill.setReadOnly(True)
         self.pcell_N_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_N_label)
         layout_pcell.addWidget(self.pcell_N_fill)
 
-        self.pcell_period_label = QLabel('Gratings period (Λ): ')
+        self.pcell_period_label = QLabel('Gratings period (Λ) (µm): ')
         self.pcell_period_fill = QLineEdit('?')
         self.pcell_period_fill.setReadOnly(True)
         self.pcell_period_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_period_label)
         layout_pcell.addWidget(self.pcell_period_fill)
 
-        self.pcell_gap_label = QLabel('Waveguides gap (G): ')
+        self.pcell_gap_label = QLabel('Waveguides gap (G) (µm): ')
         self.pcell_gap_fill = QLineEdit('?')
         self.pcell_gap_fill.setReadOnly(True)
         self.pcell_gap_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_gap_label)
         layout_pcell.addWidget(self.pcell_gap_fill)
 
-        self.pcell_w1_label = QLabel('Waveguide 1 width (W1): ')
+        self.pcell_w1_label = QLabel('Waveguide 1 width (W1) (µm): ')
         self.pcell_w1_fill = QLineEdit('?')
         self.pcell_w1_fill.setReadOnly(True)
         self.pcell_w1_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_w1_label)
         layout_pcell.addWidget(self.pcell_w1_fill)
 
-        self.pcell_dw1_label = QLabel('Waveguide 1 Δwidth (ΔW1): ')
+        self.pcell_dw1_label = QLabel('Waveguide 1 Δwidth (ΔW1) (µm): ')
         self.pcell_dw1_fill = QLineEdit('?')
         self.pcell_dw1_fill.setReadOnly(True)
         self.pcell_dw1_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_dw1_label)
         layout_pcell.addWidget(self.pcell_dw1_fill)
 
-        self.pcell_w2_label = QLabel('Waveguide 2 width (W2): ')
+        self.pcell_w2_label = QLabel('Waveguide 2 width (W2) (µm): ')
         self.pcell_w2_fill = QLineEdit('?')
         self.pcell_w2_fill.setReadOnly(True)
         self.pcell_w2_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_w2_label)
         layout_pcell.addWidget(self.pcell_w2_fill)
 
-        self.pcell_dw2_label = QLabel('Waveguide 2 Δwidth (ΔW2): ')
+        self.pcell_dw2_label = QLabel('Waveguide 2 Δwidth (ΔW2) (µm): ')
         self.pcell_dw2_fill = QLineEdit('?')
         self.pcell_dw2_fill.setReadOnly(True)
         self.pcell_dw2_fill.setStyleSheet('color: gray')
@@ -89,6 +89,7 @@ class MyWindow(QWidget):
         self.pcell_rib_fill.setChecked(False)
         layout_pcell.addWidget(self.pcell_rib_label)
         layout_pcell.addWidget(self.pcell_rib_fill)
+        self.pcell_rib_fill.clicked(self.on_rib_click)
 
         layout_pcell.addWidget(self.button)
 
@@ -109,14 +110,14 @@ class MyWindow(QWidget):
         # Connect the dropdown menu to a slot function
         self.sim_import.currentIndexChanged(self.on_sim_import)
 
-        self.sim_wavlstart_label = QLabel('Start wavelength: ')
+        self.sim_wavlstart_label = QLabel('Start wavelength (µm): ')
         self.sim_wavlstart_fill = QLineEdit('?')
         self.sim_wavlstart_fill.setReadOnly(True)
         self.sim_wavlstart_fill.setStyleSheet('color: gray')
         layout_sim.addWidget(self.sim_wavlstart_label)
         layout_sim.addWidget(self.sim_wavlstart_fill)
 
-        self.sim_wavlstop_label = QLabel('Stop wavelength: ')
+        self.sim_wavlstop_label = QLabel('Stop wavelength (µm): ')
         self.sim_wavlstop_fill = QLineEdit('?')
         self.sim_wavlstop_fill.setReadOnly(True)
         self.sim_wavlstop_fill.setStyleSheet('color: gray')
@@ -172,21 +173,20 @@ class MyWindow(QWidget):
         layout_tech.addWidget(self.label_tech)
 
         # Create a dropdown menu to select simulation import type
-        self.tech_import_label = QLabel('Import techonology definitions from:')
+        self.tech_import_label = QLabel('Import techonology definitions from: ')
         self.tech_import = QComboBox()
         self.tech_import.addItem("PDK definitions")
         self.tech_import.addItem("Custom")
         layout_tech.addWidget(self.tech_import_label)
         layout_tech.addWidget(self.tech_import)
 
-        self.tech_devthick_label = QLabel('Waveguide thickness: ')
-        self.tech_devthick_fill = QLineEdit('?')
-        self.tech_devthick_fill.setReadOnly(True)
-        self.tech_devthick_fill.setStyleSheet('color: gray')
+        self.tech_devthick_label = QLabel('Waveguide thickness (µm): ')
+        self.tech_devthick_fill = QLineEdit('0.22')
+        self.tech_devthick_fill.setReadOnly(False)
         layout_tech.addWidget(self.tech_devthick_label)
         layout_tech.addWidget(self.tech_devthick_fill)
 
-        self.tech_ribthick_label = QLabel('Rib thickness: ')
+        self.tech_ribthick_label = QLabel('Rib thickness (µm): ')
         self.tech_ribthick_fill = QLineEdit('?')
         self.tech_ribthick_fill.setReadOnly(True)
         self.tech_ribthick_fill.setStyleSheet('color: gray')
@@ -226,9 +226,7 @@ class MyWindow(QWidget):
         vbox = QVBoxLayout(self)
         vbox.addLayout(hbox)
 
-
         self.setLayout(vbox)
-
 
     def on_simulate_clicked(self):
         self.label_tech.setText('Simulating...')
@@ -254,7 +252,7 @@ class MyWindow(QWidget):
         else:
             # simulate kappa using Lumerical
             self.sim_kappa_label.setText('Coupling coefficient (κ): Simulate')
-            self.sim_kappa_fill.setReadOnly(False)
+            self.sim_kappa_fill.setReadOnly(True)
             self.sim_kappa_fill.setStyleSheet('color: gray')
             self.sim_kappa_fill.setText('simulation')
 
@@ -266,6 +264,15 @@ class MyWindow(QWidget):
             # simulate modes using Lumerical
             self.sim_wg_label.setText('Waveguide models: Simulate')
 
+    def on_rib_click(self):
+        if self.pcell_rib_fill.isChecked():
+            self.tech_ribthick_fill.setText('rib thickness (µm)')
+            self.tech_ribthick_fill.setStyleSheet('color: black')
+            self.tech_ribthick_fill.setReadOnly(False)
+        else:
+            self.tech_ribthick_fill.setText('0 nm')
+            self.tech_ribthick_fill.setReadOnly(True)
+            self.tech_ribthick_fill.setStyleSheet('color: gray')
 
 # Create the application and the main window
 app = pya.QApplication.instance()
