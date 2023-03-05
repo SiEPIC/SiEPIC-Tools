@@ -1661,6 +1661,11 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   if not(cellB):
     raise Exception("cellB not found")
 
+  # check cells
+  if type(cellB) != pya.Cell:
+      raise Exception("cellB needs to be a cell, not a cell index")
+  if type(instanceA) != pya.Instance:
+      raise Exception("instanceA needs to be an Instance, not an index")
 
   # Find the two components:
   componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
