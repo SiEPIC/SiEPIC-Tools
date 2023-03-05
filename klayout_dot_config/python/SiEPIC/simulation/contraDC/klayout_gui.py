@@ -1,3 +1,6 @@
+# $description: Contra Directional Coupler, Design
+# $show-in-menu
+# $menu-path: siepic_menu.simulation_components.end
 # -*- coding: utf-8 -*-
 """
 Created on Fri Mar  3 23:19:50 2023
@@ -254,13 +257,13 @@ class MyWindow(QWidget):
         dw2 = float(self.pcell_dw2_fill.text)*1e-6
         a = float(self.pcell_apod_fill.text)
         if self.sim_pol_dropdown.currentIndex == 0:
-          pol = 'TE'
+            pol = 'TE'
         else:
-          pol = 'TM'
+            pol = 'TM'
         if self.pcell_rib_fill.isChecked():
-          rib = True
+            rib = True
         else:
-          rib = False
+            rib = False
 
         thickness_device = float(self.tech_devthick_fill.text)*1e-6
         thickness_rib = float(self.tech_ribthick_fill.text)*1e-6
@@ -270,24 +273,46 @@ class MyWindow(QWidget):
         pol=pol, thickness_device=thickness_device, thickness_rib=thickness_rib, wvl_range=wvl_range)
 
         if self.sim_kappa_dropdown.currentIndex == 0:
-          device.kappa = float(self.sim_kappa_fill.text)
+            device.kappa = float(self.sim_kappa_fill.text)
         else:
-          device.simulate_kappa()
+            device.simulate_kappa()
 
         self.simulate.setText('Simulating...')
         device.simulate()
 
         if self.tech_plot_fill.isChecked():
-          import plotly.graph_objs as go
-          import plotly.offline as pyo
-          import plotly.io as pio
-          #pio.renderers.default = "browser"
+            import plotly.graph_objs as go
+            import plotly.offline as pyo
+            import plotly.io as pio
+            #pio.renderers.default = "browser"
+            
+            drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
+            thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
+            layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
+            fig = go.Figure(data=[thru, drop], layout=layout)
+            fig.show()
+        
+        if self.tech_cm_fill.isChecked():
+            # Check if there is a layout open, so we know which technology to install
+            lv = pya.Application.instance().main_window().current_view()
+            if lv == None:
+                raise UserWarning("To save data to the Compact Model Library, first, please create a new layout and select the desired technology:\n  Menu: File > New Layout, and a Technology.\nThen repeat.")
+            
+            # Get the Technology 
+            from SiEPIC.utils import get_layout_variables
+            TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
+            
+            # Check if there is a CML folder in the Technology folder
+            import os
+            base_path = ly.technology().base_path()    
+            folder_CML = os.path.join(base_path,'CML/%s/source_data/contraDC' % ly.technology().name)
+            if not os.path.exists(folder_CML):
+                raise UserWarning("The folder %s does not exist. \nCannot save to the Compact Model Library." %folder_CML)
+            
+            # Generate compact model for Lumerical INTERCONNECT
+            # return self.path_dat, .dat file that was created
+            device.gen_sparams(filepath=folder_CML, make_plot=False) # this will create a ContraDC_sparams.dat file to import into INTC
 
-          drop = go.Scatter(x=device.wavelength*1e9, y=device.drop, mode='lines', name='Through')
-          thru = go.Scatter(x=device.wavelength*1e9, y=device.thru, mode='lines', name='Drop')
-          layout = go.Layout(title='Contra-directional coupler device', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))
-          fig = go.Figure(data=[thru, drop], layout=layout)
-          fig.show()
 
         self.device = device
         self.simulate.setText('Done simulating.')
