@@ -2,14 +2,18 @@
 """
 Created on Fri Mar  3 23:19:50 2023
 
-@author: mustafa
+@author: mustafa hammood
 """
-
+from SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC import *
 import sys
 import pya
-
+import plotly.graph_objs as go
+import plotly.offline as pyo
+import plotly.io as pio
+pio.renderers.default = "browser"
 
 class MyWindow(QWidget):
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Contra-directional coupler simulator')
@@ -17,7 +21,7 @@ class MyWindow(QWidget):
 
         # fetch pcell parameters
         if self.load_pcell_params() == 0:
-            return
+            self.close()
         
         # fetch technology parameters
         self.load_DFT()
@@ -239,7 +243,7 @@ class MyWindow(QWidget):
 
     def on_simulate_clicked(self):
         
-        import SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC as C
+        
 
         N = float(self.pcell_N_fill.text)        
         period = float(self.pcell_period_fill.text)*1e-6
@@ -262,17 +266,16 @@ class MyWindow(QWidget):
         thickness_rib = float(self.tech_ribthick_fill.text)*1e-6
         wvl_range = [float(self.sim_wavlstart_fill.text)*1e-9, float(self.sim_wavlstop_fill.text)*1e-9]
 
-        device = C.ContraDC(w1= w1, dw1=dw1, w2=w2, dw2=dw2, gap=gap, a=a, period=period, rib=rib,
+        device = ContraDC(w1= w1, dw1=dw1, w2=w2, dw2=dw2, gap=gap, a=a, period=period, rib=rib,
         pol=pol, thickness_device=thickness_device, thickness_rib=thickness_rib, wvl_range=wvl_range)
 
         if self.sim_kappa_dropdown.currentIndex == 0:
           device.kappa = float(self.sim_kappa_fill.text)
         else:
-          print('go and simulate kappa')
+          device.simulate_kappa()
 
         self.simulate.setText('Simulating...')
         device.simulate()
-
 
         if self.tech_plot_fill.isChecked():
           import plotly.graph_objs as go
@@ -286,8 +289,8 @@ class MyWindow(QWidget):
           fig = go.Figure(data=[thru, drop], layout=layout)
           fig.show()
 
+        self.device = device
         self.simulate.setText('Done simulating.')
-        
 
 
     def on_refresh_clicked(self):
@@ -406,6 +409,11 @@ class MyWindow(QWidget):
             response = error.exec_()
             return 0
 
+    # Define the exit function
+    def exit(self):
+        self.close()
+
+        
 # Create the application and the main window
 app = pya.QApplication.instance()
 if app is None:
@@ -415,3 +423,4 @@ mw = MyWindow()
 # Show the main window and run the application
 mw.show()
 app.exec_()
+
