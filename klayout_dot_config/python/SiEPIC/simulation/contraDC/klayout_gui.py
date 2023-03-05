@@ -16,7 +16,11 @@ class MyWindow(QWidget):
         self.setMinimumSize(200, 200)
 
         # fetch pcell parameters
+        if self.load_pcell_params() == 0:
+            return
+        
         # fetch technology parameters
+        self.load_DFT()
 
         #******************************************************
         # Create the layout_pcell and add the UI elements to it
@@ -29,56 +33,56 @@ class MyWindow(QWidget):
         layout_pcell.addWidget(self.label_pcell)
 
         self.pcell_N_label = QLabel('Number of gratings (N) (µm): ')
-        self.pcell_N_fill = QLineEdit('?')
+        self.pcell_N_fill = QLineEdit(str(self.params['number_of_periods']))
         self.pcell_N_fill.setReadOnly(True)
         self.pcell_N_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_N_label)
         layout_pcell.addWidget(self.pcell_N_fill)
 
         self.pcell_period_label = QLabel('Gratings period (Λ) (µm): ')
-        self.pcell_period_fill = QLineEdit('?')
+        self.pcell_period_fill = QLineEdit(str(self.params['grating_period']))
         self.pcell_period_fill.setReadOnly(True)
         self.pcell_period_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_period_label)
         layout_pcell.addWidget(self.pcell_period_fill)
 
         self.pcell_gap_label = QLabel('Waveguides gap (G) (µm): ')
-        self.pcell_gap_fill = QLineEdit('?')
+        self.pcell_gap_fill = QLineEdit(str(self.params['gap']))
         self.pcell_gap_fill.setReadOnly(True)
         self.pcell_gap_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_gap_label)
         layout_pcell.addWidget(self.pcell_gap_fill)
 
         self.pcell_w1_label = QLabel('Waveguide 1 width (W1) (µm): ')
-        self.pcell_w1_fill = QLineEdit('?')
+        self.pcell_w1_fill = QLineEdit(str(self.params['wg1_width']))
         self.pcell_w1_fill.setReadOnly(True)
         self.pcell_w1_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_w1_label)
         layout_pcell.addWidget(self.pcell_w1_fill)
 
         self.pcell_dw1_label = QLabel('Waveguide 1 Δwidth (ΔW1) (µm): ')
-        self.pcell_dw1_fill = QLineEdit('?')
+        self.pcell_dw1_fill = QLineEdit(str(self.params['corrugation1_width']))
         self.pcell_dw1_fill.setReadOnly(True)
         self.pcell_dw1_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_dw1_label)
         layout_pcell.addWidget(self.pcell_dw1_fill)
 
         self.pcell_w2_label = QLabel('Waveguide 2 width (W2) (µm): ')
-        self.pcell_w2_fill = QLineEdit('?')
+        self.pcell_w2_fill = QLineEdit(str(self.params['wg2_width']))
         self.pcell_w2_fill.setReadOnly(True)
         self.pcell_w2_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_w2_label)
         layout_pcell.addWidget(self.pcell_w2_fill)
 
         self.pcell_dw2_label = QLabel('Waveguide 2 Δwidth (ΔW2) (µm): ')
-        self.pcell_dw2_fill = QLineEdit('?')
+        self.pcell_dw2_fill = QLineEdit(str(self.params['corrugation2_width']))
         self.pcell_dw2_fill.setReadOnly(True)
         self.pcell_dw2_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_dw2_label)
         layout_pcell.addWidget(self.pcell_dw2_fill)
 
         self.pcell_apod_label = QLabel('Apodization index (a): ')
-        self.pcell_apod_fill = QLineEdit('?')
+        self.pcell_apod_fill = QLineEdit(str(self.params['apodization_index']))
         self.pcell_apod_fill.setReadOnly(True)
         self.pcell_apod_fill.setStyleSheet('color: gray')
         layout_pcell.addWidget(self.pcell_apod_label)
@@ -86,7 +90,7 @@ class MyWindow(QWidget):
 
         self.pcell_rib_label = QLabel('Rib waveguides? ')
         self.pcell_rib_fill = QCheckBox()
-        self.pcell_rib_fill.setChecked(False)
+        self.pcell_rib_fill.setChecked(self.params['rib'])
         layout_pcell.addWidget(self.pcell_rib_label)
         layout_pcell.addWidget(self.pcell_rib_fill)
         self.pcell_rib_fill.clicked(self.on_rib_click)
@@ -111,21 +115,21 @@ class MyWindow(QWidget):
         self.sim_import.currentIndexChanged(self.on_sim_import)
 
         self.sim_wavlstart_label = QLabel('Start wavelength (µm): ')
-        self.sim_wavlstart_fill = QLineEdit('?')
+        self.sim_wavlstart_fill = QLineEdit(str(self.wavl_start))
         self.sim_wavlstart_fill.setReadOnly(True)
         self.sim_wavlstart_fill.setStyleSheet('color: gray')
         layout_sim.addWidget(self.sim_wavlstart_label)
         layout_sim.addWidget(self.sim_wavlstart_fill)
 
         self.sim_wavlstop_label = QLabel('Stop wavelength (µm): ')
-        self.sim_wavlstop_fill = QLineEdit('?')
+        self.sim_wavlstop_fill = QLineEdit(str(self.wavl_stop))
         self.sim_wavlstop_fill.setReadOnly(True)
         self.sim_wavlstop_fill.setStyleSheet('color: gray')
         layout_sim.addWidget(self.sim_wavlstop_label)
         layout_sim.addWidget(self.sim_wavlstop_fill)
 
         self.sim_wavlpts_label = QLabel('Wavelength points: ')
-        self.sim_wavlpts_fill = QLineEdit('?')
+        self.sim_wavlpts_fill = QLineEdit(str(self.wavl_pts))
         self.sim_wavlpts_fill.setReadOnly(True)
         self.sim_wavlpts_fill.setStyleSheet('color: gray')
         layout_sim.addWidget(self.sim_wavlpts_label)
@@ -187,9 +191,13 @@ class MyWindow(QWidget):
         layout_tech.addWidget(self.tech_devthick_fill)
 
         self.tech_ribthick_label = QLabel('Rib thickness (µm): ')
-        self.tech_ribthick_fill = QLineEdit('?')
-        self.tech_ribthick_fill.setReadOnly(True)
-        self.tech_ribthick_fill.setStyleSheet('color: gray')
+        if self.pcell_rib_fill.isChecked():
+          self.tech_ribthick_fill = QLineEdit('0.09')
+          self.tech_ribthick_fill.setReadOnly(False)
+        else:
+          self.tech_ribthick_fill = QLineEdit('0.0')
+          self.tech_ribthick_fill.setReadOnly(True)
+          self.tech_ribthick_fill.setStyleSheet('color: gray')
         layout_tech.addWidget(self.tech_ribthick_label)
         layout_tech.addWidget(self.tech_ribthick_fill)
 
@@ -228,19 +236,53 @@ class MyWindow(QWidget):
 
         self.setLayout(vbox)
 
+
     def on_simulate_clicked(self):
         self.label_tech.setText('Simulating...')
 
     def on_refresh_clicked(self):
-        self.label_pcell.setText('Parameterized cell definitions: refreshed.')
+        # fetch pcell parameters
+        if self.load_pcell_params() == 0:
+            return
+        self.pcell_N_fill.setText(str(self.params['number_of_periods']))
+        self.pcell_period_fill.setText(str(self.params['grating_period']))
+        self.pcell_gap_fill.setText(str(self.params['gap']))
+        self.pcell_w1_fill.setText(str(self.params['wg1_width']))
+        self.pcell_dw1_fill.setText(str(self.params['corrugation1_width']))
+        self.pcell_w2_fill.setText(str(self.params['wg2_width']))
+        self.pcell_dw2_fill.setText(str(self.params['corrugation2_width']))
+        self.pcell_apod_fill.setText(str(self.params['apodization_index']))
+        self.pcell_rib_fill.setChecked(self.params['rib'])
+
+        self.label_pcell.setText('Parameterized cell refreshed...')
 
     def on_sim_import(self):
         if self.sim_import.currentIndex == 0:
             # import simulation parameters from DFT
+            self.load_DFT()
             self.sim_import_label.setText('Simulation definitions: PDK')
+            self.sim_wavlstart_fill.setText(str(self.wavl_start))
+            self.sim_wavlstart_fill.setReadOnly(True)
+            self.sim_wavlstart_fill.setStyleSheet('color: gray')
+
+            self.sim_wavlstop_fill.setText(str(self.wavl_stop))
+            self.sim_wavlstop_fill.setReadOnly(True)
+            self.sim_wavlstop_fill.setStyleSheet('color: gray')
+
+            self.sim_wavlpts_fill.setText(str(self.wavl_pts))
+            self.sim_wavlpts_fill.setReadOnly(True)
+            self.sim_wavlpts_fill.setStyleSheet('color: gray')
         else:
             # let user pick and ungrey the boxes
             self.sim_import_label.setText('Simulation definitions: Custom')
+            self.sim_wavlstart_fill.setReadOnly(False)
+            self.sim_wavlstart_fill.setStyleSheet('color: black')
+
+            self.sim_wavlstop_fill.setReadOnly(False)
+            self.sim_wavlstop_fill.setStyleSheet('color: black')
+
+            self.sim_wavlpts_fill.setReadOnly(False)
+            self.sim_wavlpts_fill.setStyleSheet('color: black')
 
     def on_kappa_dropdown(self):
         if self.sim_kappa_dropdown.currentIndex == 0:
@@ -274,6 +316,45 @@ class MyWindow(QWidget):
             self.tech_ribthick_fill.setReadOnly(True)
             self.tech_ribthick_fill.setStyleSheet('color: gray')
 
+    def load_DFT(self):
+        from SiEPIC.utils import load_DFT
+        DFT = load_DFT()
+        self.wavl_start = DFT['design-for-test']['tunable-laser'][0]['wavelength-start']
+        self.wavl_stop = DFT['design-for-test']['tunable-laser'][0]['wavelength-stop']
+        self.wavl_pts = DFT['design-for-test']['tunable-laser'][0]['wavelength-points']
+        self.pol = DFT['design-for-test']['tunable-laser'][0]['polarization']
+
+    def load_pcell_params(self):
+        # get selected instances; only one
+        from SiEPIC.utils import select_instances, get_layout_variables
+        TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    
+        # print error message if no or more than one component selected
+        selected_instances = select_instances()
+        error = pya.QMessageBox()
+        error.setStandardButtons(pya.QMessageBox.Ok)
+        if len(selected_instances) != 1:
+            error.setText("Error: Need to have one component selected.")
+            response = error.exec_()
+            return 0
+    
+        for obj in selected_instances:
+            c = cell.find_components(cell_selected=[obj.inst().cell], verbose=True)
+    
+        # check if selected PCell is a contra DC
+        if c[0].cell.basic_name() != "contra_directional_coupler":
+            error.setText("Error: selected component must be a contra_directional_coupler PCell.")
+            response = error.exec_()
+            return 0
+    
+        # parse PCell parameters into params array
+        if c[0].cell.is_pcell_variant():
+            self.params = c[0].cell.pcell_parameters_by_name()
+        else:
+            error.setText("Error: selected component must be a contra-DC PCell.")
+            response = error.exec_()
+            return 0
+
 # Create the application and the main window
 app = pya.QApplication.instance()
 if app is None:
@@ -283,45 +364,3 @@ mw = MyWindow()
 # Show the main window and run the application
 mw.show()
 app.exec_()
-
-
-def contraDC_menu(verbose=True):
-    import pya
-    # get selected instances; only one
-    from SiEPIC.utils import select_instances, get_layout_variables, load_DFT
-    from SiEPIC import _globals
-
-    DFT = load_DFT()
-    wavl_start = DFT['design-for-test']['tunable-laser'][0]['wavelength-start']
-    wavl_stop = DFT['design-for-test']['tunable-laser'][0]['wavelength-stop']
-    wavl_pts = DFT['design-for-test']['tunable-laser'][0]['wavelength-points']
-    pol = DFT['design-for-test']['tunable-laser'][0]['polarization']
-
-    TECHNOLOGY, lv, ly, cell = get_layout_variables()
-
-    # print error message if no or more than one component selected
-    selected_instances = select_instances()
-    error = pya.QMessageBox()
-    error.setStandardButtons(pya.QMessageBox.Ok)
-    if len(selected_instances) != 1:
-        error.setText("Error: Need to have one component selected.")
-        response = error.exec_()
-        return
-
-    for obj in selected_instances:
-        c = cell.find_components(cell_selected=[obj.inst().cell], verbose=True)
-
-    # check if selected PCell is a contra DC
-    if c[0].cell.basic_name() != "contra_directional_coupler":
-        error.setText("Error: selected component must be a contra_directional_coupler PCell.")
-        response = error.exec_()
-        return
-
-    # parse PCell parameters into params array
-    if c[0].cell.is_pcell_variant():
-        params = c[0].cell.pcell_parameters_by_name()
-    else:
-        error.setText("Error: selected component must be a contra-DC PCell.")
-        response = error.exec_()
-        return
-    print(params)
