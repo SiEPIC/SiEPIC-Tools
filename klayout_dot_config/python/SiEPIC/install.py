@@ -216,10 +216,20 @@ def install_pyqt5():
 
 
 
-def install(package):
+def install(package, module=None):
+    '''Install the Python package, and import
+    package: the name you need to pass to pip import
+    module: some packages have a different name, e.g., 
+        import nextcloud, for pip install nextcloud-api-wrapper
+        import yaml, for pip install pyyaml
+
+    '''
     import importlib
     try:
-        importlib.import_module(package)
+        if module:
+            importlib.import_module(module)
+        else:
+            importlib.import_module(package)
     except ImportError:
         try:
             import pip
@@ -241,5 +251,8 @@ def install(package):
         except ImportError:
             return False
             
-    globals()[package] = importlib.import_module(package)
+    if module:
+        globals()[package] = importlib.import_module(module)
+    else:
+        globals()[package] = importlib.import_module(package)
     return globals()[package]
