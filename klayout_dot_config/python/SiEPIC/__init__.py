@@ -1,6 +1,13 @@
-__version__ = '0.3.92'
+__version__ = '0.4.0'
 #from . import install, extend, _globals, core, examples, github, lumerical, scripts, utils, setup
 # from . import install, extend, _globals, core, examples, github, scripts, utils, setup
 from . import extend, _globals, core, examples, github, scripts, utils, setup, install
 
+'''
+try:
+    from . import opics
+except:
+    print('Unable to import package opics')
+'''
+    
 print("KLayout SiEPIC-Tools version %s" %__version__)

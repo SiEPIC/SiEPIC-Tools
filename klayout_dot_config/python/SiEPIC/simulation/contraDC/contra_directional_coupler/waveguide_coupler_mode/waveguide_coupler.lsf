@@ -1,0 +1,79 @@
+#
+#    Waveguide compact model generator for a waveguide coupler
+#    see https://github.com/mustafacc/SiEPIC_Photonics_Package/ for documentation
+#
+#    Author: Mustafa Hammood   ; mustafa@siepic.com   ; mustafa@ece.ubc.ca
+#    SiEPIC Kits Ltd. 2020     ; University of British Columbia
+#
+#    (c)2021
+
+select('::model::');
+
+wavelength_start = get('wavelength_start');
+wavelength_stop = get('wavelength_stop');
+wavelength_pts = get('wavelength_pts');
+pol = get('pol');
+thickness_device = get('thickness_device');
+width1 = get('width1');
+width2 = get('width2');
+thickness_rib = get('thickness_rib');
+
+setnamed("::model",'wavelength_start', wavelength_start);
+setnamed("::model",'wavelength_stop', wavelength_stop);
+setnamed("::model",'pol', pol);
+setnamed("::model",'width1', width1);
+setnamed("::model",'width2', width2);
+
+run;
+
+if( pol == 'TE' ){
+    mode_number = 2;
+    j = 1; #select modes 1,2
+}
+else{ # else if pol is TM...
+    mode_number = 4;
+    j = 3; #select modes 3,4
+}
+
+polyfitorder = 1;
+
+n_eff = matrix(wavelength_pts, 2);
+n_g = matrix(wavelength_pts, 2);
+n_eff_fit = matrix(polyfitorder+1, 2);
+n_g_fit = matrix(polyfitorder+1,2);
+n_eff_data = matrix(wavelength_pts,2);
+n_g_data = matrix(wavelength_pts, 2);
+
+setanalysis('wavelength', wavelength_start);
+setanalysis('stop wavelength',wavelength_stop);
+setanalysis('number of points',wavelength_pts);
+setanalysis('number of trial modes', mode_number);
+setanalysis("track selected mode",1);
+setanalysis("detailed dispersion calculation",1);
+leg = cell(2);
+for(i=j:mode_number) {
+    n=findmodes;     # calculate the modes     
+    selectmode(i);
+    frequencysweep;  # run frequency sweep 
+    n_eff(:, i) = abs(getdata("frequencysweep","neff"));
+    n_g(:,i) = c/abs(getdata("frequencysweep","vg"));
+    f=getdata("frequencysweep","f");
+    plot(c/f*1e6,n_eff(:,i),"Wavelength (um)", "Effective Index");
+    n_eff_fit(:,i) = polyfit(c/f,n_eff(:,i),polyfitorder);
+    n_g_fit(:,i) = polyfit(c/f(1:wavelength_pts),n_g(:,i),polyfitorder);
+    lambda = c/f;
+    lambda_fit = linspace(wavelength_start,wavelength_stop,wavelength_pts);
+    n_eff_data(:,i) = n_eff_fit(1,i)+n_eff_fit(2,i)*lambda_fit;    
+    n_g_data(:,i) = n_g_fit(1,i)+n_g_fit(2,i)*lambda_fit;
+    leg{i} = "Waveguide "+num2str(i);
+    holdon;
+}
+legend(leg);
+
+# export data to matlab data file
+filename = pol+"_w1_"+num2str(width1*1e9)+"nm_w2_"+num2str(width2*1e9)+"nm_thickness_"+num2str(thickness_device*1e9)+"nm";
+matlabsave(filename,n_eff_fit,n_g_fit,n_eff,n_g,lambda);
+
+# data format: wavelength_start, wavelength_stop, waveguide1 fit (2 coeffs.), waveguide2 fit (2 coeffs.)
+data_str = num2str(c/f(1))+','+num2str(c/f(end))+','+num2str(n_eff_fit(1))+','+num2str(n_eff_fit(2))+','+num2str(n_eff_fit(3))+','+num2str(n_eff_fit(4));
+write(filename+'.txt', data_str);

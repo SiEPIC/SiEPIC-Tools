@@ -1,0 +1,59 @@
+What's new in h5py 2.6
+======================
+
+Support for HDF5 Virtual Dataset API
+------------------------------------
+Initial support for the HDF5 Virtual Dataset API, which was introduced in
+HDF5 1.10, was added to the low-level API. Ideas and input for how this should
+work as part of the high-level interface are welcome.
+
+This work was added in :pr:`663` by Aleksandar Jelenak.
+
+Add MPI Collective I/O Support
+------------------------------
+Support for using MPI Collective I/O in both low-level and high-level code has
+been added. See the collective_io.py example for a simple demonstration of how
+to use MPI Collective I/O with the high level API.
+
+This work was added in :pr:`648` by Jialin Liu.
+
+Numerous build/testing/CI improvements
+--------------------------------------
+There were a number of improvements to the setup.py file, which should mean that
+`pip install h5py` should work in most places. Work was also done to clean up
+the current testing system, using tox is the recommended way of testing h5py
+across different Python versions. See :pr:`576` by Jakob Lombacher, :pr:`640` by
+Lawrence Mitchell, and :pr:`650`, :pr:`651` and :pr:`658` by James Tocknell.
+
+Cleanup of codebase based on pylint
+-----------------------------------
+There was a large cleanup of pylint-identified problems by Andrew Collette
+(:pr:`578`, :pr:`579`).
+
+Fixes to low-level API
+----------------------
+Fixes to the typing of functions were added in :pr:`597` by Ulrik Kofoed
+Pedersen, :pr:`589` by Peter Chang, and :pr:`625` by Spaghetti Sort. A fix for
+variable-length arrays was added in :pr:`621` by Sam Mason. Fixes to compound
+types were added in :pr:`639` by @nevion and :pr:`606` by Yu Feng. Finally, a fix
+to type conversion was added in :pr:`614` by Andrew Collette.
+
+Documentation improvements
+--------------------------
+* Updates to FAQ by Dan Guest (:pr:`608`) and Peter Hill (:pr:`607`).
+* Updates MPI-related documentation by Jens Timmerman (:pr:`604`) and
+  Matthias König (:pr:`572`).
+* Fixes to documentation building by Ghislain Antony Vaillant (:pr:`562`,
+  :pr:`561`).
+* Update PyTables link (:pr:`574` by Dominik Kriegner)
+* Add File opening modes to docstring (:pr:`563` by Antony Lee)
+
+Other changes
+-------------
+* Add `Dataset.ndim` (:pr:`649`, :pr:`660` by @jakirkham, :pr:`661` by James Tocknell)
+* Fix import errors in IPython completer (:pr:`605` by Niru Maheswaranathan)
+* Turn off error printing in new threads (:pr:`583` by Andrew Collette)
+* Use item value in `KeyError` instead of error message (:pr:`642` by Matthias Geier)
+
+Acknowledgements
+----------------

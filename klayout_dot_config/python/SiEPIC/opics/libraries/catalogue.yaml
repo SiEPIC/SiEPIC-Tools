@@ -1,0 +1,6 @@
+ebeam:
+  dl_link: https://github.com/jaspreetj/opics_ebeam/archive/refs/tags/0.3.34.zip
+  installed: false
+  library_path:
+  name: ebeam
+  version: 0.3.34

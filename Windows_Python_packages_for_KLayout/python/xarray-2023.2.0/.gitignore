@@ -1,0 +1,81 @@
+*.py[cod]
+__pycache__
+.env
+.venv
+
+# example caches from Hypothesis
+.hypothesis/
+
+# temp files from docs build
+doc/*.nc
+doc/auto_gallery
+doc/rasm.zarr
+doc/savefig
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+.eggs
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+.tox
+nosetests.xml
+.cache
+.dmypy.json
+.mypy_cache
+.ropeproject/
+.tags*
+.testmon*
+.tmontmp/
+.pytest_cache
+dask-worker-space/
+
+# asv environments
+.asv
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# IDEs
+.idea
+*.swp
+.DS_Store
+.vscode/
+
+# xarray specific
+doc/_build
+generated/
+xarray/tests/data/*.grib.*.idx
+
+# Sync tools
+Icon*
+
+.ipynb_checkpoints
+doc/team-panel.txt
+doc/external-examples-gallery.txt
+doc/notebooks-examples-gallery.txt
+doc/videos-gallery.txt

@@ -142,6 +142,8 @@ def get_technology_by_name(tech_name, verbose=False):
     if KLAYOUT_VERSION > 24:
         lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()
         technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
+        if not technology['base_path']:
+            raise Exception('Cannot find the technology "%s"' % tech_name)
     else:
         import fnmatch
         dir_path = pya.Application.instance().application_data_path()
@@ -154,12 +156,12 @@ def get_technology_by_name(tech_name, verbose=False):
             lyp_file = matches[0]
         else:
             raise Exception('Cannot find technology layer properties file %s' % search_str)
-        # technology['base_path']
 
-    # Load CML file locations
-    head, tail = os.path.split(lyp_file)
-    technology['base_path'] = head
-    
+        # Load technology folder location
+        technology['base_path'] = os.path.dirname(lyp_file)
+        print('technology base path:%s' % technology['base_path'])
+
+    # Find the Compact Model Library files    
     cml_files = []
     cml_paths = []
     cml_versions = []
@@ -876,7 +878,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     from math import pi, cos, sin
     from . import points_per_circle
 
-    print("SiEPIC.utils arc_wg")
+    # print("SiEPIC.utils arc_wg")
     circle_fraction = abs(theta_stop - theta_start) / 360.0
     npoints = int(points_per_circle(radius/1000) * circle_fraction)
     if DevRec:
@@ -1027,19 +1029,31 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv=False):
     cell.insert(pya.CellInstArray(pcell.cell_index(), pya.Trans(pya.Trans.R0, x / dbu, y / dbu)))
 
 
-'''
-return all opt_in labels:
- text_out: HTML text
- opt_in: a Dictionary
-'''
 
 
-def find_automated_measurement_labels(topcell=None, LayerTextN=None):
-    # example usage:
-    # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
-    # LayerText = pya.LayerInfo(10, 0)
-    # LayerTextN = topcell.layout().layer(LayerText)
-    # find_automated_measurement_labels(topcell, LayerTextN)
+def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
+    """return all opt_in labels from a cell
+    requires a layout with Text labels on the layer LayerTextN
+    the format of the labels is
+       opt_in_<polarization>_<wavelength>_<type>_<deviceID>_<params>
+         or 
+       opt_<polarization>_<wavelength>_<type>_<deviceID>_<params>
+         or
+       elec_<deviceID>_<params>
+    for electrical-optical measurements, the deviceID on the electrical contact
+    needs to match that of the optical input
+       
+    returns:
+        text_out: HTML text
+        opt_in: a Dictionary
+
+    example usage:
+    topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    LayerText = pya.LayerInfo(10, 0)
+    LayerTextN = topcell.layout().layer(LayerText)
+    find_automated_measurement_labels(topcell, LayerTextN)
+    """
+    
     import string
     if not LayerTextN:
         from . import get_technology, find_paths
@@ -1076,32 +1090,39 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None):
                 i += 1
                 text2 = iter.shape().text.transformed(iter.itrans())
                 texts.append(text2)
-                fields = text.string.split("_")
+                if 'opt_in' in text.string:
+                    # allow for either opt_ or opt_in_ formats
+                    textlabel = text.string
+                else:
+                    textlabel = text.string.replace('opt_','opt_in_')
+                fields = textlabel.split("_")
                 while len(fields) < 7:
                     fields.append('comment')
-                if fields[5] in device_ids and not duplicate:
-                    error = pya.QDialog(pya.Application.instance().main_window())
-
-                    #        wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
-                    error.setAttribute = pya.Qt.WA_DeleteOnClose
-
-                    error.resize(200, 100)
-                    error.move(1, 1)
-                    grid = pya.QGridLayout(error)
-                    windowlabel = pya.QLabel(error)
-                    windowlabel.setText("Duplicate device-ids detected. Please make sure all device-ids are unique")
-                    grid.addWidget(windowlabel, 2, 2, 4, 4)
-                    error.show()
-                    duplicate = True
-                else:
-                    device_ids.add(fields[5])
-                opt_in.append({'opt_in': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[
-                              2], 'wavelength': fields[3], 'type': fields[4], 'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
+                if GUI == True:
+                    if fields[5] in device_ids and not duplicate:
+                        error = pya.QDialog(pya.Application.instance().main_window())
+    
+                        #        wdg.setAttribute(pya.Qt.WA_DeleteOnClose)
+                        error.setAttribute = pya.Qt.WA_DeleteOnClose
+    
+                        error.resize(200, 100)
+                        error.move(1, 1)
+                        grid = pya.QGridLayout(error)
+                        windowlabel = pya.QLabel(error)
+                        windowlabel.setText("Duplicate device-ids detected. Please make sure all device-ids are unique")
+                        grid.addWidget(windowlabel, 2, 2, 4, 4)
+                        error.show()
+                        duplicate = True
+                    else:
+                        device_ids.add(fields[5])
+                opt_in.append({'opt_in': textlabel, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu), 'pol': fields[2], 
+                        'wavelength': fields[3], 'type': fields[4], 
+                        'deviceID': fields[5], 'params': fields[6:], 'Text': text2})
                 params_txt = ''
                 for f in fields[6:]:
                     params_txt += ', ' + str(f)
-                text_out += "%s, %s, %s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
-                                                              2], fields[3], fields[4], fields[5], params_txt)
+                text_out += "%s, %s, %s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[2], 
+                        fields[3], fields[4], fields[5], params_txt)
         iter.next()
 
     text_out += "<br>"

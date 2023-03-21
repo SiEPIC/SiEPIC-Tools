@@ -1,0 +1,50 @@
+include AUTHORS
+include api_gen.py
+include dev-install.sh
+include LICENSE
+include MANIFEST.in
+include pylintrc
+include README.rst
+include setup_build.py
+include setup_configure.py
+include tox.ini
+include pytest.ini
+include *.toml
+
+recursive-include docs *
+prune docs/_build
+recursive-include docs_api *
+prune docs_api/_build
+recursive-include examples *.py
+
+recursive-include h5py *.h *.pyx *.pxd *.pxi *.py *.txt
+exclude h5py/config.pxi
+exclude h5py/defs.pxd
+exclude h5py/defs.pyx
+exclude h5py/_hdf5.pxd
+recursive-include h5py/tests *.h5
+
+recursive-include licenses *
+recursive-include lzf *
+
+recursive-exclude * .DS_Store
+
+exclude ci other .github
+recursive-exclude ci *
+recursive-exclude other *
+recursive-exclude .github *
+exclude *.yml
+exclude *.yaml
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+exclude .coveragerc
+exclude .coverage_dir
+recursive-exclude .coverage_dir *
+exclude .mailmap
+exclude github_deploy_key_h5py_h5py.enc
+
+exclude rever.xsh
+prune news
+
+include asv.conf.json
+recursive-include benchmarks *.py

@@ -69,15 +69,20 @@ def run_INTC(verbose=False):
     raise Exception ("Can't run Lumerical INTERCONNECT via Python integration.")
 
 
-def Setup_Lumerical_KLayoutPython_integration(verbose=False):
-  import sys, os, string, pya
+   
 
+def INTC_installdesignkit(verbose=False):
+  '''Install a Compact Model Library into Lumerical INTERCONNECT,
+  using a compressed (.cml) in the PDK, placing it in the KLayout folder.'''
+
+  import sys, os, string, pya
   from ..utils import get_technology, get_technology_by_name
+
   # get current technology
   TECHNOLOGY = get_technology(query_activecellview_technology=True)  
   # load more technology details (CML file location)
   TECHNOLOGY = get_technology_by_name(TECHNOLOGY['technology_name'])
-
+  
   # location for the where the CMLs will locally be installed:
   dir_path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
 
@@ -187,6 +192,82 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
     if (i+1) % int(num**0.5) == 0:
       x += 250
       y = 0
+
+def INTC_loaddesignkit(folder_CML, verbose=False):
+    '''Load a Compact Model Library into Lumerical INTERCONNECT,
+    using a folder in the PDK.'''
+
+    # Load Lumerical INTERCONNECT and Python API: 
+    from .. import _globals
+    run_INTC()
+    lumapi = _globals.LUMAPI
+    if not lumapi:
+        raise Exception ('SiEPIC.lumerical.interconnect.INTC_loaddesignkit: Cannot load Lumerical INTERCONNECT and Python integration (lumapi).')
+
+    # Read INTC element library
+    lumapi.evalScript(_globals.INTC, "out=library;")
+    _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
+
+    # Load all the subfolders of the CML folder into INTERCONNECT:
+    import os
+    folder_names = []
+    new_loaded = False
+    for folder_name in next(os.walk(folder_CML))[1]:
+        if not ("design kits::"+folder_name.lower()+"::" in _globals.INTC_ELEMENTS):
+            folder_path = os.path.join(folder_CML,folder_name)
+            lumapi.evalScript(_globals.INTC, "loaddesignkit ('%s', '%s');" % (folder_name, folder_path ) )
+            new_loaded = True
+        folder_names.append(folder_name)
+
+    # Close INTERCONNECT so that the library information is saved, then re-open
+    if new_loaded:
+        lumapi.close(_globals.INTC)
+        run_INTC()
+
+    # Read INTC element library
+    lumapi.evalScript(_globals.INTC, "out=library;")
+    _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
+    print('%s' % folder_names)
+
+    if "design kits::"+folder_name.lower()+"::" in _globals.INTC_ELEMENTS:
+        integration_success_message = "message('KLayout-Lumerical INTERCONNECT integration successful, for Compact Model Libraries installed in Element Library | Design kits: %s.\n" % (' '.join(map(str,folder_names)))
+        integration_success_message += "');switchtodesign;\n"
+        lumapi.evalScript(_globals.INTC, integration_success_message)
+
+
+def Setup_Lumerical_KLayoutPython_integration(verbose=False):
+    '''Setup Lumerical INTERCONNECT KLayout integration,
+    including loading/installing a Compact Model Library.
+    Requires:
+        - an open window with an active technology
+        - a compact model library, sourced from the Technology folder 
+            (where the *.lyt file is located)
+            either, and in priority:
+            - inside the folder "CML"
+            - *.CML files
+    '''
+
+    # Check if there is a layout open, so we know which technology to install
+    lv = pya.Application.instance().main_window().current_view()
+    if lv == None:
+        raise UserWarning("To install the Compact Model Library, first, please create a new layout and select the desired technology:\n  Menu: File > New Layout, and a Technology.\nThen repeat.")
+
+  
+    # Get the Technology 
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
+    
+    # Check if there is a CML folder in the Technology folder
+    import os
+    base_path = ly.technology().base_path()    
+    folder_CML = os.path.join(base_path,'CML')
+    if os.path.exists(folder_CML):
+        print('Setup_Lumerical_KLayoutPython_integration: Load design kit')
+        return INTC_loaddesignkit(folder_CML)
+    else:
+        print('Setup_Lumerical_KLayoutPython_integration: Install design kit')
+        return INTC_installdesignkit()
+    
 
 def INTC_commandline(filename2):
   print ("Running Lumerical INTERCONNECT using the command interface.")
@@ -581,83 +662,7 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
 def circuit_simulation_update_netlist():
   print('update netlist')
   
-  
-def circuit_simulation_opics(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True):
-  print ('*** circuit_simulation(), opt_in: %s' % opt_in_selection_text)
-  if verbose:
-    print('*** circuit_simulation()')
-  
-  # check for supported operating system, tested on:
-  # Windows 7, 10
-  # OSX Sierra, High Sierra
-  # Linux
-  import sys
-  if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
-    raise Exception("Unsupported operating system: %s" % sys.platform)
-  
-  from .. import _globals
-  from SiEPIC.utils import get_layout_variables
-  TECHNOLOGY, lv, layout, topcell = get_layout_variables()
-  
-  # Save the layout prior to running simulations, if there are changes.
-  mw = pya.Application.instance().main_window()
-  if mw.manager().has_undo():
-    mw.cm_save()
-  layout_filename = mw.current_view().active_cellview().filename()
-  if len(layout_filename) == 0:
-    raise Exception("Please save your layout before running the simulation")
     
-  # *** todo    
-  #   Add the "disconnected" component to all disconnected pins
-  #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
-
-  # Output the Spice netlist:
-  text_Spice, text_Spice_main, num_detectors, detector_list = \
-    topcell.spice_netlist_export(verbose=verbose, opt_in_selection_text=opt_in_selection_text)
-  if not text_Spice:
-    raise Exception("No netlist available. Cannot run simulation.")
-    return
-  if verbose:   
-    print(text_Spice)
-
-  circuit_name = topcell.name.replace('.','') # remove "."
-  if '_' in circuit_name[0]:
-    circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
-  
-  from .. import _globals
-  tmp_folder = _globals.TEMP_FOLDER
-  import os
-  filename = os.path.join(tmp_folder, '%s_main.spi' % circuit_name)
-  filename_subckt = os.path.join(tmp_folder,  '%s.spi' % circuit_name)
-  filename2 = os.path.join(tmp_folder, '%s.lsf' % circuit_name)
-  filename_icp = os.path.join(tmp_folder, '%s.icp' % circuit_name)
-  
-  text_Spice_main += '.INCLUDE "%s"\n\n' % (filename_subckt)
-  
-  # Write the Spice netlist to file
-  file = open(filename, 'w')
-  file.write (text_Spice)
-  file.write (text_Spice_main)
-  file.close()
-
-
-  if simulate:
-    # Run using OS systems module
-    try:
-        import pathlib
-        opics_script_path = pathlib.Path(__file__).parent.absolute()/"opics_netlist_sim.py"
-        os.system(f'python {opics_script_path} {filename} & pause')
-    except:
-        print('SiEPIC.lumerical.OPICS: circuit_simulation: error')
-        pass
-  else:
-    from .. import scripts
-    scripts.open_folder(tmp_folder)
-    
-  if verbose:
-    print('Done OPICS circuit simulation.')
-
-  
 def circuit_simulation_monte_carlo(params = None, topcell = None, verbose=True, opt_in_selection_text=[], matlab_data_files=[], simulate=True):
   print('*** circuit_simulation_monte_carlo()')
   from .. import _globals

@@ -42,7 +42,7 @@ acknowledgements: Diedrik Vermeulen for the code to place the taper in the corre
 '''
 
 
-def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
+def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
 
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide4: ')
@@ -66,10 +66,12 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
 
     # Load parameters for the chosen waveguide type
     params = [t for t in waveguide_types if t['name'] == waveguide_type]
+
     if type(params) == type([]) and len(params) > 0:
         params = params[0]
         if 'width' not in params and 'compound_waveguide' not in params:
             params['width'] = params['wg_width']
+        params['waveguide_type'] = waveguide_type
     else:
         print('error: waveguide type not found in PDK waveguides')
         raise Exception('error: waveguide type (%s) not found in PDK waveguides' %
@@ -92,11 +94,13 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
         params_multimode = [t for t in waveguide_types if t['name'] == multimode]
         if type(params_singlemode) == type([]) and len(params_singlemode) > 0:
             params_singlemode = params_singlemode[0]
+            params_singlemode['waveguide_type'] = singlemode
         else:
             raise Exception(
                 'error: waveguide type (%s) not found in PDK waveguides' % singlemode)
         if type(params_multimode) == type([]) and len(params_multimode) > 0:
             params_multimode = params_multimode[0]
+            params_multimode['waveguide_type'] = multimode
         else:
             raise Exception(
                 'error: waveguide type (%s) not found in PDK waveguides' % multimode)
@@ -141,7 +145,7 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
                     subcell = layout.create_cell("Waveguide_sm_%s" % ii)
                     cell.insert(CellInstArray(subcell.cell_index(), Trans()))
                     waveguide_length += layout_waveguide3(subcell,
-                                                          wg_sm_segment_pts, params_singlemode, debug=True)
+                                                          wg_sm_segment_pts, params_singlemode, debug=False)
             else:
                 # insert two tapers and multimode waveguide
                 angle = math.atan2((end_point.y-start_point.y),
@@ -182,21 +186,21 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=True):
                 subcell = layout.create_cell("Waveguide_mm_%s" % ii)
                 cell.insert(CellInstArray(subcell.cell_index(), Trans()))
                 waveguide_length += layout_waveguide3(subcell,
-                                                      [wg_start_pt, wg_end_pt], params_multimode, debug=True)
+                                                      [wg_start_pt, wg_end_pt], params_multimode, debug=False)
                 # compound segment
                 if ii > 1:
                     wg_sm_segment_pts.append(t.disp.to_p())
                     subcell = layout.create_cell("Waveguide_sm_%s" % ii)
                     cell.insert(CellInstArray(subcell.cell_index(), Trans()))
                     waveguide_length += layout_waveguide3(subcell,
-                                                          wg_sm_segment_pts, params_singlemode, debug=True)
+                                                          wg_sm_segment_pts, params_singlemode, debug=False)
                     wg_sm_segment_pts = [t2.disp.to_p(), pts[ii]]
                 else:
                     wg_sm_segment_pts = [t2.disp.to_p(), pts[ii]]
 
     else:
         # primitive waveguide type
-        waveguide_length = layout_waveguide3(cell, pts, params, debug=True)
+        waveguide_length = layout_waveguide3(cell, pts, params, debug=False)
 
     return waveguide_length
 
@@ -217,7 +221,7 @@ by Lukas Chrostowski
 '''
 
 
-def layout_waveguide3(cell, pts, params, debug=True):
+def layout_waveguide3(cell, pts, params, debug=False):
 
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide3: ')
@@ -232,8 +236,9 @@ def layout_waveguide3(cell, pts, params, debug=True):
     wg_width = to_itype(params['width'], dbu)
     radius = float(params['radius'])
     model = params['model']
-    cellName = 'Waveguide2'
+    cellName = 'Waveguide'
     CML = params['CML']
+    waveguide_type = params['waveguide_type']
 
     if debug:
         print(' - waveguide params: %s' % (params))
@@ -296,9 +301,13 @@ def layout_waveguide3(cell, pts, params, debug=True):
     pt3 = pts[0] - dpt
     pt4 = pts[0] - 6*dpt
     pt5 = pts[0] + 2*dpt
+    pt6 = pts[0] - 2*dpt
 
     t = Trans(angle, False, pt3)
-    text = Text('Lumerical_INTERCONNECT_library=%s' % CML, t, 0.1*wg_width, -1)
+    import re
+    CML = re.sub('design kits/', '', CML, flags=re.IGNORECASE)
+#    CML = CML.lower().replace('design kits/','') # lower: to make it case insensitive, in case WAVEGUIDES.XML contains "Design Kits/" rather than "Design kits/"
+    text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
     text.halign = halign
     shape = cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt2)
@@ -320,6 +329,10 @@ def layout_waveguide3(cell, pts, params, debug=True):
     t = Trans(angle, False, pt4)
     text = Text(
         'Length=%.3f (microns)' % (waveguide_length), t, 0.5*wg_width, -1)
+    text.halign = halign
+    shape = cell.shapes(LayerDevRecN).insert(text)
+    t = Trans(angle, False, pt6)
+    text = Text('waveguide_type=%s' % waveguide_type, t, 0.1*wg_width, -1)
     text.halign = halign
     shape = cell.shapes(LayerDevRecN).insert(text)
 
@@ -597,8 +610,8 @@ def layout_waveguide(cell, layer, points_list, width):
 
     # Append point only if change in direction is less than 120 degrees.
     def smooth_append(point_list, point):
-        if point_list is None:
-            print(point)
+#        if point_list is None:
+#            print(point)
         if len(point_list) < 1:
             point_list.append(point)
             return point_list
@@ -830,7 +843,7 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
     pt = pt1+pt2[::-1]
 
     poly = pya.DPolygon(pt)
-    print(poly)
+#    print(poly)
     poly_t = poly.transformed(trans)
     if insert == True:
         cell.shapes(layer).insert(poly_t)
@@ -934,8 +947,8 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
         else:
             return shape_bend
 
-    print('SBend: theta %s, x %s, straight_l %s, r %s, h %s, length %s' %
-          (theta, x, straight_l, r, h, length))
+#    print('SBend: theta %s, x %s, straight_l %s, r %s, h %s, length %s' %
+#          (theta, x, straight_l, r, h, length))
     return length
 
 
@@ -1003,7 +1016,7 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
         180: left
         270: down
 
-    Units: intput can be float for microns, or int for nm
+    Units: input can be float for microns, or int for nm
     '''
 
     from SiEPIC.extend import to_itype
@@ -1033,7 +1046,7 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
 
     direction = direction % 360
     if direction not in [0, 90, 180, 270]:
-        raise('error in make_pin: direction must be one of [0, 90, 180, 270]')
+        raise Exception('error in make_pin: direction (%s) must be one of [0, 90, 180, 270]' % direction )
 
     # text label
     t = pya.Trans(pya.Trans.R0, center[0], center[1])
@@ -1140,7 +1153,10 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
     cell_tree = ly.create_cell("y_splitter_tree")
 
     # load the y-splitter from the library
-    y_splitter = ly.create_cell(y_splitter_cell, library)
+    if type(y_splitter_cell)==pya.Cell:
+        y_splitter=y_splitter_cell
+    else:
+        y_splitter = ly.create_cell(y_splitter_cell, library)
     if not y_splitter:
         raise Exception('Cannot import cell %s:%s' % (library, y_splitter_cell))
 

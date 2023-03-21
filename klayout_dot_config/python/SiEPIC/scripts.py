@@ -82,7 +82,7 @@ def pointlist_to_turtle(pointlist):
   #  return pointlist
           
 
-def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True):
+def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True, relaxed_pinnames=True):
     '''
     Create a Path connecting instanceA:pinA to instanceB:pinB
         where instance = pya.Instance; pin = string, e.g. 'pin1'
@@ -198,13 +198,20 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     componentA = instanceA.parent_cell.find_components(inst=instanceA)
     componentB = instanceB.parent_cell.find_components(inst=instanceB)
 #    print('Time elapsed: %s' % (time() - t))    
-    if componentA==[] or componentB==[]:
-        print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-        print('componentA: %s, componentB: %s' % (componentA, componentB) )
-        print('parent_cell A: %s, parent_cell B: %s, cell A: %s, cell B: %s' % (instanceA.parent_cell, instanceB.parent_cell, instanceA.cell, instanceB.cell) )
-        print('all found components A: %s' %    instanceA.parent_cell.find_components() )
-        print('all found components B: %s' %    instanceB.parent_cell.find_components() )
-        raise Exception("Component not found")
+    if componentA==[]:
+        print('InstA: %s, %s' % (instanceA.cell.name, instanceA) )
+        print('componentA: %s' % (componentA) )
+        print('parent_cell A: %s, cell A: %s' % (instanceA.parent_cell, instanceA.cell) )
+        print('all found components A: instance variable: %s' %    ([n.instance for n in instanceA.parent_cell.find_components()]) )
+        print('all found components A: component variable: %s' %    ([n.component for n in instanceA.parent_cell.find_components()]) )
+        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceA.cell.name)
+    if componentB==[]:
+        print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
+        print('componentB: %s' % (componentB) )
+        print('parent_cell B: %s, cell B: %s' % (instanceB.parent_cell, instanceB.cell) )
+        print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
+        print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
+        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
 
     # if the instance had sub-cells, then there will be many components. Pick the first one.
     if type(componentA) == type([]):
@@ -221,6 +228,21 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # Find pinA and pinB
     cpinA = [p for p in componentA.pins if p.pin_name == pinA]
     cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
+
+    # relaxed_pinnames:  scan for only the number
+    if relaxed_pinnames==True:
+        import re
+        try:
+            if cpinA==[]:
+                if re.findall(r'\d+', pinA):
+                    cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+            if cpinB==[]:
+                if re.findall(r'\d+', pinB):
+                    cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+        except:
+            print('error in siepic.scripts.connect_cell, relaxed_pinnames')      
+
+
     if cpinA==[]:
         try:  
             # this checks if the cell (which could contain multiple components) 
@@ -285,9 +307,14 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 waveguide = waveguides[0]
                 print('error: waveguide type not found in PDK waveguides')
                 raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
+        # check if the waveguide type is compound waveguide
+        if 'compound_waveguide' in waveguide:
+            waveguide = [w for w in waveguides if w['name']==waveguide['compound_waveguide']['singlemode']]
+            waveguide = waveguide[0]
     if verbose:
         print('waveguide type: %s' % waveguide )    
     # Find the 'Waveguide' layer in the waveguide.XML definition, and use that for the width paramater.
+    
     waveguide_component = [c for c in waveguide['component'] if c['layer']=='Waveguide']
     if len(waveguide_component) > 0:
         width_um = waveguide_component[0]['width']
@@ -589,7 +616,8 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
         # Get user property #1: the waveguide type        
         prop1 = obj.shape.property(1)
         if prop1 and GUI==False:
-            print(' - user property: waveguide_type - %s' % (prop1) )
+            if verbose:
+                print(' - user property: waveguide_type - %s' % (prop1) )
             waveguide_type = prop1
         else:
             waveguide_type = params['waveguide_type']
@@ -605,8 +633,9 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
                 pcell=0
                 print("SiEPIC.scripts.path_to_waveguide2(): legacy waveguide PCell does not have 'waveguide_type' parameter")
             else:
-                print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
-                  (TECHNOLOGY['technology_name'], pcell))   
+                if verbose:
+                    print("SiEPIC.scripts.path_to_waveguide2(): Waveguide from %s, %s" %
+                      (TECHNOLOGY['technology_name'], pcell))   
         except:
             pass
         if not pcell:
@@ -1589,7 +1618,7 @@ def snap_component():
 def add_and_connect_cell(instanceA, pinA, cellB, pinB, verbose=False):
     return connect_cell(instanceA, pinA, cellB, pinB, verbose)
     
-def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, translation=pya.Trans.R0):
+def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, translation=pya.Trans.R0, relaxed_pinnames=False):
   '''
   Instantiate, Move & rotate cellB to connect to instanceA, 
    such that their pins (pinB, pinA) match
@@ -1627,6 +1656,16 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   
   '''
+  if not(instanceA):
+    raise Exception("instanceA not found")
+  if not(cellB):
+    raise Exception("cellB not found")
+
+  # check cells
+  if type(cellB) != pya.Cell:
+      raise Exception("cellB needs to be a cell, not a cell index")
+  if type(instanceA) != pya.Instance:
+      raise Exception("instanceA needs to be an Instance, not an index")
 
   # Find the two components:
   componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
@@ -1652,6 +1691,18 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   # Find pinA and pinB
   cpinA = [p for p in componentA.pins if p.pin_name == pinA]
   cpinB = [p for p in componentB.pins if p.pin_name == pinB]    
+
+  # relaxed_pinnames:  scan for only the number
+  if relaxed_pinnames==True:
+      import re
+      try:
+          if cpinA==[]:
+              cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+          if cpinB==[]:
+              cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+      except:
+          print('error in siepic.scripts.connect_cell')      
+
 
   # for cells with hierarchy
   if cpinA==[]:
@@ -2191,22 +2242,23 @@ def calculate_area():
         print(area / total)
 
 
-"""
-SiEPIC-Tools: Trim Netlist
-by Jaspreet Jhoja (c) 2016-2017
-
-This Python function facilitates trimming of netlist based on a selected component.
-Version history:
-
-Jaspreet Jhoja           2017/12/29
- - Initial version
-"""
-# Inputs, and example of how to generate them:
-# nets, components = topcell.identify_nets()
-# selected_component = components[5]   (elsewhere the desired component is selected)
 
 
 def trim_netlist(nets, components, selected_component, verbose=None):
+    """Trim Netlist
+    by Jaspreet Jhoja (c) 2016-2017
+    
+    This Python function facilitates trimming of netlist based on a selected component.
+    Version history:
+    
+    Jaspreet Jhoja           2017/12/29
+     - Initial version
+
+    Inputs, and example of how to generate them:
+        nets, components = topcell.identify_nets()
+        selected_component = components[5]   (elsewhere the desired component is selected)
+    """
+
     selected = selected_component
     #>17        <2
     # nets[0].pins[0].component.idx
@@ -2241,22 +2293,44 @@ def trim_netlist(nets, components, selected_component, verbose=None):
     return trimmed_nets, trimmed_components
 
 
-'''
-Verification:
-
-Limitations:
-- we assume that the layout was created by SiEPIC-Tools in KLayout, that PCells are there,
-  and that the layout hasn't been flattened. This allows us to isolate individual components,
-  and get their parameters. Working with a flattened layout would be harder, and require:
-   - reading parameters from the text labels (OK)
-   - find_components would need to look within the DevRec layer, rather than in the selected cell
-   - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
-     This could be solved by putting the pins inside the cells, rather than sticking out.
-
-'''
 
 
 def layout_check(cell=None, verbose=False):
+    '''Functional Verification:
+    
+    Verification of things that are specific to photonic integrated circuits, including
+    - Waveguides: paths, radius, bend points, Manhattan
+    - Component checking: overlapping, avoiding crosstalk
+    - Connectivity check: disconnected pins, mismatched pins
+    - Simulation model check
+    - Design for Test: Specific for each technology, check of optical IO position, direction, pitch, etc.
+
+    Description: https://github.com/SiEPIC/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#functional-layout-check
+
+    Tools that can create layouts that are compatible with this Verification:
+        - KLayout SiEPIC-Tools, and various PDKs such as
+            https://github.com/SiEPIC/SiEPIC_EBeam_PDK
+        - GDSfactory 
+            "UBCPDK" https://github.com/gdsfactory/ubc
+            based on https://github.com/SiEPIC/SiEPIC_EBeam_PDK
+        - Luceda
+            https://academy.lucedaphotonics.com/pdks/siepic/siepic.html
+            https://academy.lucedaphotonics.com/pdks/siepic_shuksan/siepic_shuksan.html
+    
+    Limitations:
+    - we assume that the layout was created based on the standard defined in SiEPIC-Tools in KLayout
+      https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout
+    - The layout can contain PCells, or with $$$CONTEXT_INFO$$$ removed, i.e., fixed cells
+    - The layout cannot have been flattened. This allows us to isolate individual components
+      by their instances and cells.
+    - Parameters from cells can be extracted from the PCell, or from the text labels in the cell
+    - Working with a flattened layout would be harder, and require:
+       - reading parameters from the text labels (OK)
+       - find_components would need to look within the DevRec layer, rather than in the selected cell
+       - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
+         This could be solved by putting the pins inside the cells, rather than sticking out.    
+    '''
+
     if verbose:
         print("*** layout_check()")
 
@@ -2515,93 +2589,95 @@ def layout_check(cell=None, verbose=False):
 
         # opt_in labels
         for ti1 in range(0, len(opt_in)):
-            t = opt_in[ti1]['Text']
-            box_s = 1000
-            box = pya.Box(t.x - box_s, t.y - box_s, t.x + box_s, t.y + box_s)
-            # opt_in labels check for unique
-            for ti2 in range(ti1 + 1, len(opt_in)):
-                if opt_in[ti1]['opt_in'] == opt_in[ti2]['opt_in']:
+            if 'opt_in' in opt_in[ti1]:
+                t = opt_in[ti1]['Text']
+                box_s = 1000
+                box = pya.Box(t.x - box_s, t.y - box_s, t.x + box_s, t.y + box_s)
+                # opt_in labels check for unique
+                for ti2 in range(ti1 + 1, len(opt_in)):
+                    if 'opt_in' in opt_in[ti2]:
+                        if opt_in[ti1]['opt_in'] == opt_in[ti2]['opt_in']:
+                            if verbose:
+                                print(" - Found DFT error, non unique text labels: %s, %s, %s" %
+                                      (t.string, t.x, t.y))
+                            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_unique.rdb_id())
+                            rdb_item.add_value(pya.RdbItemValue(t.string))
+                            rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
+    
+                # opt_in format check:
+                if not opt_in[ti1]['wavelength'] in DFT_wavelengths:
                     if verbose:
-                        print(" - Found DFT error, non unique text labels: %s, %s, %s" %
-                              (t.string, t.x, t.y))
-                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_unique.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(t.string))
+                        print(" - DFT error: wavelength")
+                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_wavelength.rdb_id())
                     rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-            # opt_in format check:
-            if not opt_in[ti1]['wavelength'] in DFT_wavelengths:
-                if verbose:
-                    print(" - DFT error: wavelength")
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_wavelength.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-            if not (opt_in[ti1]['pol'] in DFT_polarizations):
-                if verbose:
-                    print(" - DFT error: polarization")
-                rdb_item = rdb.create_item(
-                    rdb_cell.rdb_id(), rdb_cat_id_optin_polarization.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-            # find the GC closest to the opt_in label.
-            from ._globals import KLAYOUT_VERSION
-            components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
-                                       key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
-            # GC too far check:
-            if components_sorted:
-                dist_optin_c = components_sorted[0].trans.disp.to_p(
-                ).distance(pya.Point(t.x, t.y).to_dtype(1))
-                if verbose:
-                    print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in[ti1][
-                          'Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c * dbu))
-                if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']) * 1000:
+    
+                if not (opt_in[ti1]['pol'] in DFT_polarizations):
                     if verbose:
-                        print(" - opt_in label too far from the nearest grating coupler: %s, %s" %
-                              (components_sorted[0].instance, opt_in[ti1]['opt_in']))
-                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_toofar.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-                # starting with each opt_in label, identify the sub-circuit, then GCs, and
-                # check for GC spacing
-                trimmed_nets, trimmed_components = trim_netlist(
-                    nets, components, components_sorted[0])
-                components_connected_opt_in = components_connected_opt_in + trimmed_components
-                detector_GCs = [c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (
-                    c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0, 0)]
-                if verbose:
-                    print("   N=%s, detector GCs: %s" %
-                          (len(detector_GCs), [c.display() for c in detector_GCs]))
-                vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p()
-                                  for c in detector_GCs]
-                # for vi in range(0,len(detector_GCs)):
-                #  if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
-                #    if verbose:
-                #      print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
-                #    rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
-                #    rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
-
-                # find the GCs in the circuit that don't match the testing configuration
-                import numpy as np
-                array_angle = float(DFT['design-for-test']['grating-couplers']['gc-array-orientation'])
-                pitch = float(DFT['design-for-test']['grating-couplers']['gc-pitch'])
-                sx = np.round(np.cos(array_angle/180*np.pi))
-                sy = np.round(np.sin(array_angle/180*np.pi))
-                
-                for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
-                    if pya.DPoint(d * sx* pitch * 1000, d *sy* pitch * 1000) in vect_optin_GCs:
-                        del_index = vect_optin_GCs.index(pya.DPoint(
-                            d * sx* pitch * 1000, d *sy* pitch * 1000))
-                        del vect_optin_GCs[del_index]
-                        del detector_GCs[del_index]
-                for vi in range(0, len(vect_optin_GCs)):
-                    if verbose:
-                        print(" - DFT GC array config error: %s, %s" %
-                              (components_sorted[0].instance, opt_in[ti1]['opt_in']))
+                        print(" - DFT error: polarization")
                     rdb_item = rdb.create_item(
-                        rdb_cell.rdb_id(), rdb_cat_id_GCarrayconfig.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(
-                        "The label having the error is: " + opt_in[ti1]['opt_in']))
-                    rdb_item.add_value(pya.RdbItemValue(detector_GCs[vi].polygon.to_dtype(dbu)))
+                        rdb_cell.rdb_id(), rdb_cat_id_optin_polarization.rdb_id())
                     rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
+    
+                # find the GC closest to the opt_in label.
+                from ._globals import KLAYOUT_VERSION
+                components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
+                                           key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
+                # GC too far check:
+                if components_sorted:
+                    dist_optin_c = components_sorted[0].trans.disp.to_p(
+                    ).distance(pya.Point(t.x, t.y).to_dtype(1))
+                    if verbose:
+                        print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in[ti1][
+                              'Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c * dbu))
+                    if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']) * 1000:
+                        if verbose:
+                            print(" - opt_in label too far from the nearest grating coupler: %s, %s" %
+                                  (components_sorted[0].instance, opt_in[ti1]['opt_in']))
+                        rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_toofar.rdb_id())
+                        rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
+    
+                    # starting with each opt_in label, identify the sub-circuit, then GCs, and
+                    # check for GC spacing
+                    trimmed_nets, trimmed_components = trim_netlist(
+                        nets, components, components_sorted[0])
+                    components_connected_opt_in = components_connected_opt_in + trimmed_components
+                    detector_GCs = [c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (
+                        c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0, 0)]
+                    if verbose:
+                        print("   N=%s, detector GCs: %s" %
+                              (len(detector_GCs), [c.display() for c in detector_GCs]))
+                    vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p()
+                                      for c in detector_GCs]
+                    # for vi in range(0,len(detector_GCs)):
+                    #  if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
+                    #    if verbose:
+                    #      print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
+                    #    rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
+                    #    rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
+    
+                    # find the GCs in the circuit that don't match the testing configuration
+                    import numpy as np
+                    array_angle = float(DFT['design-for-test']['grating-couplers']['gc-array-orientation'])
+                    pitch = float(DFT['design-for-test']['grating-couplers']['gc-pitch'])
+                    sx = np.round(np.cos(array_angle/180*np.pi))
+                    sy = np.round(np.sin(array_angle/180*np.pi))
+                    
+                    for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
+                        if pya.DPoint(d * sx* pitch * 1000, d *sy* pitch * 1000) in vect_optin_GCs:
+                            del_index = vect_optin_GCs.index(pya.DPoint(
+                                d * sx* pitch * 1000, d *sy* pitch * 1000))
+                            del vect_optin_GCs[del_index]
+                            del detector_GCs[del_index]
+                    for vi in range(0, len(vect_optin_GCs)):
+                        if verbose:
+                            print(" - DFT GC array config error: %s, %s" %
+                                  (components_sorted[0].instance, opt_in[ti1]['opt_in']))
+                        rdb_item = rdb.create_item(
+                            rdb_cell.rdb_id(), rdb_cat_id_GCarrayconfig.rdb_id())
+                        rdb_item.add_value(pya.RdbItemValue(
+                            "The label having the error is: " + opt_in[ti1]['opt_in']))
+                        rdb_item.add_value(pya.RdbItemValue(detector_GCs[vi].polygon.to_dtype(dbu)))
+                        rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
 
         # subtract components connected to opt_in labels from all components to
         # find circuits with missing opt_in
@@ -2966,6 +3042,10 @@ def measurement_vs_simulation(verbose=None):
     if verbose:
         print(' opt_in labels: %s' % opt_in_selection_text)
         print(' Begin looping through labels')
+
+    if not opt_in_selection_text:
+        raise Exception ('No opt_in labels were selected. \nCannot perform operation.')
+        return
 
     # Loop through the opt_in text labels
     for ot in opt_in_selection_text:

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+# Required packages
+from SiEPIC.install import install
+install('matplotlib')
+install('tidy3d')
+install('urllib3')
+
+
+
+# https://docs.flexcompute.com/projects/tidy3d/en/stable/notebooks/ModeSolver.html
+
+import numpy as np
+import matplotlib.pylab as plt
+
+import tidy3d as td
+from tidy3d.constants import C_0
+import tidy3d.web as web
+
+from tidy3d.plugins import ModeSolver
+
+# size of simulation domain
+Lx, Ly, Lz = 6, 6, 6
+dl = 0.05
+
+# waveguide information
+wg_width = 1.5
+wg_height = 1.0
+wg_permittivity = 4.0
+
+# central frequency
+wvl_um = 2.0
+freq0 = C_0 / wvl_um
+fwidth = freq0 / 3
+
+# run_time in ps
+run_time = 1e-12
+
+# automatic grid specification
+grid_spec = td.GridSpec.auto(min_steps_per_wvl=20, wavelength=wvl_um)
+
+
+waveguide = td.Structure(
+    geometry=td.Box(size=(wg_width, td.inf, wg_height)),
+    medium=td.Medium(permittivity=wg_permittivity),
+)
+
+sim = td.Simulation(
+    size=(Lx, Ly, Lz),
+    grid_spec=grid_spec,
+    structures=[waveguide],
+    run_time=run_time,
+    boundary_spec=td.BoundarySpec.all_sides(boundary=td.Periodic()),
+)
+
+ax = sim.plot(z=0)
+
+plane = td.Box(center=(0, 0, 0), size=(4, 0, 3.5))
+
+
+mode_spec = td.ModeSpec(
+    num_modes=3,
+    target_neff=2.0,
+)
+
+num_freqs = 11
+f0_ind = num_freqs // 2
+freqs = np.linspace(freq0 - fwidth / 2, freq0 + fwidth / 2, num_freqs)
+
+mode_solver = ModeSolver(
+    simulation=sim,
+    plane=plane,
+    mode_spec=mode_spec,
+    freqs=freqs,
+)
+mode_data = mode_solver.solve()
+
+
+fig, ax = plt.subplots(1)
+n_eff = mode_data.n_eff  # real part of the effective mode index
+n_eff.plot.line(x="f")
+
+
+f, (ax1, ax2) = plt.subplots(1, 2, tight_layout=True, figsize=(10, 3))
+abs(mode_data.Ex.isel(mode_index=0, f=f0_ind)).plot(x="x", y="z", ax=ax1, cmap="magma")
+abs(mode_data.Ez.isel(mode_index=0, f=f0_ind)).plot(x="x", y="z", ax=ax2, cmap="magma")
+
+ax1.set_title("|Ex(x, y)|")
+ax1.set_aspect("equal")
+ax2.set_title("|Ez(x, y)|")
+ax2.set_aspect("equal")
+plt.show()
+
+</text>
+</klayout-macro>

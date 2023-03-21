@@ -338,7 +338,7 @@ def snap(self, pins):
       if len(pins_sorted):
           # pins_sorted[0] is the closest one
           dpt = pins_sorted[0].center - pts[0]
-          print(dpt)
+          # print(dpt)
           # check if the pin is close enough to the path endpoint
           if dpt.abs() <= d_min:
               # snap the endpoint to the pin
@@ -667,7 +667,7 @@ def print_parameter_values(self):
     print(self.pcell_parameters())
     params = self.pcell_parameters_by_name()
     for key in params.keys():
-        print("Parameter: %s, Value: %s") % (key, params[key])
+        print("Parameter: %s, Value: %s" % (key, params[key]) )
 
 '''
 Optical Pins have:
@@ -992,6 +992,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 iter2 = subcell.begin_shapes_rec(LayerDevRecN)
                 spice_params = ""
                 library, cellName = None, None
+                waveguide_type = None
                 while not(iter2.at_end()):
                     if iter2.shape().is_text():
                         text = iter2.shape().text
@@ -1011,6 +1012,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                                 component_ID = cID
                         if text.string.find("Spice_param:") > -1:
                             spice_params = text.string[len("Spice_param:"):]
+                        if text.string.find("waveguide_type=") > -1:
+                            waveguide_type = text.string[len("waveguide_type="):]
                     iter2.next()
                 if library == None:
                     if verbose:
@@ -1024,7 +1027,8 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                        trans=iter1.trans(), library=library, 
                        params=spice_params, polygon=polygon, 
                        DevRec_polygon=DevRec_polygon, cell=subcell, 
-                       basic_name=subcell.basic_name(), cellName=cellName))
+                       basic_name=subcell.basic_name(), cellName=cellName, 
+                       waveguide_type=waveguide_type))
 
                 # find the component pins, and Sort by pin text labels
                 pins = sorted(subcell.find_pins_component(
@@ -1299,7 +1303,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         # single tunable laser
         tunable_lasers = [tunable_lasers]
     for i in range(len(tunable_lasers)):
-        if tunable_lasers[i]['wavelength'] == opt_in_dict[0]['wavelength']:
+        if tunable_lasers[i]['wavelength'] == opt_in_dict[0]['wavelength'] and tunable_lasers[i]['polarization'] == opt_in_dict[0]['pol']:
             wavelength_start, wavelength_stop, wavelength_points = float(tunable_lasers[i]['wavelength-start']), float(
                 tunable_lasers[i]['wavelength-stop']), int(tunable_lasers[i]['wavelength-points'])
     if not('wavelength_start' in locals()):
@@ -1641,7 +1645,11 @@ def check_components_models():
 def pinPoint(self, pin_name, verbose=False):
     pins = self.find_pins()
     if pins:
-        return [p for p in pins if (p.pin_name==pin_name)][0].center
+        matched_pins = [p for p in pins if (p.pin_name==pin_name)]
+        if not matched_pins:
+            raise Exception("Did not find matching pin (%s), in the components list of pins (%s)." %(pin_name, [p.pin_name for p in pins]) )
+            return
+        return matched_pins[0].center
     else:
         pass
 

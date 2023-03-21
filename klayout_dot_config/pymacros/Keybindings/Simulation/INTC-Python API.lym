@@ -8,10 +8,11 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
- <group-name>Setup</group-name>
- <menu-path>siepic_menu.simulation_circuits.begin</menu-path>
+ <group-name>lumerical</group-name>
+ <menu-path>siepic_menu.simulation_circuits&gt;begin("lumerical").end</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Setup Lumerical INTERCONNECT-KLayout Python integration
@@ -21,6 +22,7 @@ import pya
 from SiEPIC import lumerical
 
 lumerical.interconnect.Setup_Lumerical_KLayoutPython_integration()    
-    
+  
+
 </text>
 </klayout-macro>

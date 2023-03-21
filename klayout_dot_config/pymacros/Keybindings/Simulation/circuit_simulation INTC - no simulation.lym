@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <klayout-macro>
- <description>Circuit Simulation: export files only</description>
+ <description>Export SPICE netlist for Lumerical INTERCONNECT</description>
  <version/>
  <category>pymacros</category>
  <prolog/>
@@ -8,10 +8,11 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
- <group-name>2 Circuit Simulation</group-name>
- <menu-path>siepic_menu.simulation_circuits.end</menu-path>
+ <group-name>lumerical</group-name>
+ <menu-path>siepic_menu.simulation_circuits&gt;begin("lumerical").end</menu-path>
  <interpreter>python</interpreter>
  <dsl-interpreter-name/>
  <text># Key binding for SiEPIC-Tools function

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>from SiEPIC.install import install_SiEPICLabTestParam3
+install_SiEPICLabTestParam3()
+from SiEPICLabTestParam import TestParameters as test
+test.run()
+
+</text>
+</klayout-macro>

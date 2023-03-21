@@ -1,0 +1,58 @@
+switchtolayout;
+
+W = (W1+W2);
+dW = (dW1+dW2);
+sim_y_span = W1*6 + dW*6;
+sim_z_span = thickness_device*15;
+wavl_pts = 3;
+
+# add fine mesh region
+addmesh;
+set('x min',-2*period);
+set('x max',2*period);
+set('y',0);
+set('y span',W+3*dW);
+set('z',thickness_device/2);
+set('z span',thickness_device*1.5 );
+set('dx',mesh_x);
+set('dy',mesh_y);
+set('dz',mesh_z);
+
+addfde;
+setnamed('FDE',"solver type", "2D X normal");
+setnamed('FDE',"y", 0);
+setnamed('FDE',"y span", sim_y_span);
+setnamed('FDE',"z", thickness_device/2);
+setnamed('FDE',"z span", sim_z_span );
+setnamed('FDE',"x", -period*1.5);
+
+run;
+if( pol == 'TE' ){
+    mode_number = 2;
+    j = 1; #select modes 1,2
+}
+else{ # else if pol is TM...
+    mode_number = 4;
+    j = 3; #select modes 3,4
+}
+
+n_eff = matrix(wavl_pts, 2);
+n_g = matrix(wavl_pts, 2);
+
+setanalysis('wavelength', wl_min);
+setanalysis('stop wavelength',wl_max);
+setanalysis('number of points',wavl_pts);
+setanalysis('number of trial modes', mode_number);
+setanalysis("track selected mode",1);
+setanalysis("detailed dispersion calculation",1);
+for(i=j:mode_number) {
+    n=findmodes;     # calculate the modes     
+    selectmode(i);
+    frequencysweep;  # run frequency sweep 
+    n_eff(:, i) = abs(getdata("frequencysweep","neff"));
+    n_g(:,i) = c/abs(getdata("frequencysweep","vg"));
+}
+n_g_avg = (sum(n_g(:,1))/wavl_pts + sum(n_g(:,2))/wavl_pts)/2;
+switchtolayout;
+deleteall;
+ContraDC_draw;

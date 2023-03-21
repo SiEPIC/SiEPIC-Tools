@@ -8,6 +8,7 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut/>
  <show-in-menu>false</show-in-menu>
  <group-name/>
@@ -51,6 +52,7 @@ if 1:
     SiEPIC.extend = reload(SiEPIC.extend)
     SiEPIC._globals = reload(SiEPIC._globals)
     SiEPIC.core = reload(SiEPIC.core)
+    SiEPIC.install = reload(SiEPIC.install)
     SiEPIC.examples = reload(SiEPIC.examples)
     SiEPIC.github = reload(SiEPIC.github)
     SiEPIC.lumerical = reload(SiEPIC.lumerical)
@@ -58,10 +60,23 @@ if 1:
     SiEPIC.lumerical.mode = reload(SiEPIC.lumerical.mode)
     SiEPIC.lumerical.interconnect = reload(SiEPIC.lumerical.interconnect)
     SiEPIC.scripts = reload(SiEPIC.scripts)
+    SiEPIC.install = reload(SiEPIC.install)
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.utils.layout = reload(SiEPIC.utils.layout)
     SiEPIC.utils.geometry = reload(SiEPIC.utils.geometry)
     SiEPIC.setup = reload(SiEPIC.setup)
+    import SiEPIC.opics_netlist_sim
+    SiEPIC.opics_netlist_sim = reload(SiEPIC.opics_netlist_sim)
+    import SiEPIC.opics
+    SiEPIC.opics.utils = reload(SiEPIC.opics.utils)
+    SiEPIC.opics.network = reload(SiEPIC.opics.network)
+    SiEPIC.opics.components = reload(SiEPIC.opics.components)
+    #SiEPIC.netlist = reload(SiEPIC.netlist)
+    import SiEPIC.simulation.contraDC.contra_directional_coupler
+    import SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC
+    SiEPIC.simulation.contraDC.contra_directional_coupler = reload(SiEPIC.simulation.contraDC.contra_directional_coupler)
+    SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC = reload(SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC)
+    
 #    SiEPIC.lumerical.contraDirectionalCoupler = reload(lumerical.contraDirectionalCoupler)
     print('Reloaded SiEPIC')
 

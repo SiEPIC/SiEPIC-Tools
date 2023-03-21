@@ -1,0 +1,245 @@
+#
+#    Bragg grating Lumerical simulation flow
+#    see https://github.com/mustafacc/SiEPIC_Photonics_Package/ for documentation
+#
+#    Author: Mustafa Hammood   ; mustafa@siepic.com   ; mustafa@ece.ubc.ca
+#    SiEPIC Kits Ltd. 2020     ; University of British Columbia
+#
+#    (c)2020
+
+#############################
+# Draw device               #
+#############################
+
+materials;
+# Create structure group
+addstructuregroup;
+set("name","ContraDC");
+adduserprop("W1",2,W1);
+adduserprop("dW1",2,dW1); # initially set dW as zero for modes calculation
+adduserprop("W2",2,W2);
+adduserprop("dW2",2,dW2); # initially set dW as zero for modes calculation
+adduserprop("gap",2,gap);
+adduserprop("period",2,period);
+adduserprop("N_periods",0,N_periods);
+adduserprop("rib",0,rib);
+adduserprop("sidewall_angle",0,sidewall_angle);
+adduserprop("AR",0,AR);
+adduserprop("thickness_device",2,thickness_device);
+adduserprop("thickness_superstrate",2,thickness_superstrate);
+adduserprop("thickness_substrate",2,thickness_substrate);
+adduserprop("thickness_handle",2,thickness_handle);
+adduserprop("thickness_rib",2,thickness_rib);
+adduserprop("mat_device",5,mat_device);
+adduserprop("mat_superstrate",5,mat_superstrate);
+adduserprop("mat_substrate",5,mat_substrate);
+adduserprop("mat_handle",5,mat_handle);
+
+set('script','
+deleteall;
+
+x_extra_length = 10e-6;
+y_extra_length = 4e-6;
+
+W = %W1% + %W2%;
+x_span =  %period% + x_extra_length;
+y_span = W + y_extra_length;
+
+# Draw structures
+
+# Superstrate
+addrect;
+set("name","superstrate");
+set("x",0);
+set("x span",x_span);
+set("y",0);
+set("y span",y_span);
+set("z min",0);
+set("z max",%thickness_superstrate%);
+set("alpha",0.3);
+
+# Substrate
+addrect;
+set("name","substrate");
+set("x",0);
+set("x span",x_span);
+set("y",0);
+set("y span",y_span);
+set("z min",-%thickness_substrate%);
+set("z max",0);
+
+# Handle
+addrect;
+set("name","handle");
+set("x",0);
+set("x span",x_span);
+set("y",0);
+set("y span",y_span);
+set("z min",-%thickness_substrate%-%thickness_handle%);
+set("z max",-%thickness_substrate%);
+set("alpha",0.1);
+
+x_max = get("x max");
+x_min = get("x min");
+y_max = get("y max");
+y_min = get("y min");
+if(%thickness_superstrate% != 0){
+    z_max = %thickness_superstrate%;
+}
+else{
+    z_max = %thickness_device%;
+}
+z_min = get("z min");
+
+
+if(%sidewall_angle% != 90){
+    angle_rad = %sidewall_angle% * pi / 180;
+    dx = %thickness_device%/tan(angle_rad);
+    width_waveguide1 = %W1%+dx;
+    width_waveguide2 = %W2%+dx;
+} else {
+    dx = 0;
+    width_waveguide1 = %W1%;
+    width_waveguide2 = %W2%;
+}
+
+# Draw waveguide1
+center_wg1 = width_waveguide1/2 + gap/2 - dx/2;
+addwaveguide;
+set("name","wg1_narrow");
+set("base height",%thickness_device%);
+if(AR){
+    set("base width",width_waveguide1); 
+    pole = [-%period%/2,center_wg1-%dW1%/2; 0,center_wg1-%dW1%/2];
+}
+else{
+    set("base width",width_waveguide1-%dW1%);
+    pole = [-%period%/2,center_wg1; 0,center_wg1];
+}
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+addwaveguide;
+set("name","wg1_wide");
+set("base height",%thickness_device%);
+if(AR){
+    set("base width",width_waveguide1); 
+    pole = [0,center_wg1+%dW1%/2; %period%/2,center_wg1+%dW1%/2];
+}
+else{
+    set("base width",width_waveguide1+%dW1%);
+    pole = [0,center_wg1; %period%/2,center_wg1];
+}
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+addwaveguide;
+set("name","wg1_right");
+set("base width",width_waveguide1);
+set("base height",%thickness_device%);
+pole = [%period%/2,center_wg1; x_max,center_wg1];
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+addwaveguide;
+set("name","wg1_left");
+set("base width",width_waveguide1);
+set("base height",%thickness_device%);
+pole = [x_min,center_wg1; -%period%/2,center_wg1];
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+# Draw waveguide2
+center_wg2 = -width_waveguide2/2 - gap/2 + dx/2;
+addwaveguide;
+set("name","wg2_narrow");
+set("base height",%thickness_device%);
+if(AR){
+    set("base width",width_waveguide2); 
+    pole = [-%period%/2,center_wg2+%dW2%/2; 0,center_wg2+%dW2%/2];
+}
+else{
+    set("base width",width_waveguide2-%dW2%);
+    pole = [-%period%/2,center_wg2; 0,center_wg2];
+}
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+addwaveguide;
+set("name","wg2_wide");
+set("base height",%thickness_device%);
+if(AR){
+    set("base width",width_waveguide2); 
+    pole = [0,center_wg2-%dW2%/2; %period%/2,center_wg2-%dW2%/2];
+}
+else{
+    set("base width",width_waveguide2+%dW2%);
+    pole = [0,center_wg2; %period%/2,center_wg2];
+}
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+addwaveguide;
+set("name","wg2_right");
+set("base width",width_waveguide2);
+set("base height",%thickness_device%);
+pole = [%period%/2,center_wg2; x_max,center_wg2];
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+addwaveguide;
+set("name","wg2_left");
+set("base width",width_waveguide2);
+set("base height",%thickness_device%);
+pole = [x_min,center_wg2; -%period%/2,center_wg2];
+set("poles",pole);
+set("z",%thickness_device%/2);
+set("base angle", %sidewall_angle%);
+
+if(rib==true){
+    addrect;
+    set("name","rib");
+    set("x",0);
+    set("x span",x_span);
+    set("y",0);
+    set("y span",y_span);
+    set("z min",0);
+    set("z max",%thickness_rib%);
+    set("alpha",0.2);
+}
+
+# Set material
+select("superstrate");
+set("material",mat_superstrate);
+
+select("substrate");
+set("material",mat_substrate);
+
+select("handle");
+set("material",mat_handle);
+
+select("wg1_narrow");
+shiftselect("wg1_wide");
+shiftselect("wg1_right");
+shiftselect("wg1_left");
+shiftselect("wg2_narrow");
+shiftselect("wg2_wide");
+shiftselect("wg2_right");
+shiftselect("wg2_left");
+if(rib==true){
+    shiftselect("rib");
+}
+set("material",mat_device);
+');
+
+select("ContraDC");
+set("x",0);
+set("y",0);
+set("z",0);

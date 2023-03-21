@@ -8,8 +8,9 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut/>
- <show-in-menu>true</show-in-menu>
+ <show-in-menu>false</show-in-menu>
  <group-name>2 Circuit Simulation</group-name>
  <menu-path>siepic_menu.simulation_circuits.end</menu-path>
  <interpreter>python</interpreter>
