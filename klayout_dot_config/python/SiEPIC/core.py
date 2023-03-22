@@ -189,8 +189,8 @@ class Component():
         self.basic_name = basic_name  # component's basic_name (especially for PCells)
         self.cellName = cellName  # component's Library Cell name
         from .utils import get_technology
-        TECHNOLOGY = get_technology()
-        self.Dcenter = self.center.to_dtype(TECHNOLOGY['dbu'])
+        self.TECHNOLOGY = get_technology()
+        self.Dcenter = self.center.to_dtype(self.TECHNOLOGY['dbu'])
 
     def display(self):
         from . import _globals
@@ -230,12 +230,76 @@ class Component():
             if '[' in string:
                 q=s.split('=')[1]
             else:            
-                string = string.replace('u','e-6').replace('n','e-9')
+                string = string.replace('u','e-6').replace('n','e-9').replace(';','')
                 # print (string)
                 q=float(Decimal(string)*Decimal('1e6'))  # in microns
             dictb[s.split('=')[0]]=q
       return dictb
+          
+    @staticmethod
+    def pdic2str(arg: dict): #A Dictionary of SPICE parameters to a string
+        def _isfloat(arg: str)-> bool:
+          try:
+              float(arg)
+              return True
+          except ValueError:
+              return False
+          
+        str_ = ''
+        keys = list(arg.keys())
+        for i in range(0, len(arg)):
+              value = str(arg[keys[i]])
+              if _isfloat(value):
+                 value = '%.4f'%(float(value)*1e6)+'u' if float(value)<1e-3 else value
+              if keys[i].find(' ',0)==-1:
+                str_ += keys[i] + '=' + value
+              else:
+                str_ += '"'+ keys[i] +'"'+ '=' + value
+              if i < len(arg) - 1: str_ +=  ' '
+        return str_
+    
+    def set_SPICE_params(self, arg, verbose = False):
+        if isinstance(arg, str):
+            spice_str = arg.replace('Spice_param:', '', 1)
+        elif isinstance(arg, dict):
+            spice_str = self.pdic2str(arg)
+        else:
+          return False
+        newSPICE_text =  'Spice_param:' + spice_str;  
+        
+        cell = self.cell
+        cell_idx = cell.cell_index()
+        
+        ly = cell.layout()
+        LayerDevRecN  = ly.layer(self.TECHNOLOGY['DevRec']) 
+        iter_sh = cell.begin_shapes_rec(LayerDevRecN)
 
+        while not(iter_sh.at_end()): # Find cell where SPICE params are stored
+            if iter_sh.shape().is_text():
+              shape = iter_sh.shape();
+              text = shape.text
+              if text.string.find("Spice_param:") > -1:
+                  new_text = pya.Text(newSPICE_text, shape.text_trans,shape.text_size ,-1);
+                  new_text.halign = text.halign
+                  shape.text = new_text
+                  self.params = spice_str
+                  return True
+            iter_sh.next()
+            
+        if cell._is_const_object():
+            cell_inst = cell.layout().cell(cell_idx) # Need to do this to avoid error (See KLayout issue #235)
+        else:
+            cell_inst = cell
+
+        t = pya.Trans(pya.Trans.R0,pya.Point(0,0)) # Coordinates are with respect to the cell center
+        new_text  = pya.Text(newSPICE_text, t,0.1/ly.dbu ,-1);
+        cell_inst.shapes(LayerDevRecN).insert(new_text)
+        self.params = spice_str
+        return True
+        
+    def get_SPICE_params(self): #Retturns a SPICE parameter string (without the 'Spice_param:' label)
+        return (self.params)
+      
     def find_pins(self):
         return self.cell.find_pins_component(self)
 

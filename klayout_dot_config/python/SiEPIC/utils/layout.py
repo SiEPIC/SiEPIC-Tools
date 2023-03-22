@@ -446,7 +446,7 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                         error_seg2 = True
                     pt_radius = min(dis1/2, dis2/2, pt_radius)
             if error_seg1 or error_seg2:
-                if not error_layer:
+                if error_layer == None:
                     # we have an error, but no Error layer
                     print('- SiEPIC:layout_waveguide2: missing Error layer')
                 # and pt_radius < to_itype(radius,dbu):
