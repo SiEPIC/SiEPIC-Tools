@@ -487,16 +487,35 @@ class WaveguideGUI():
                         'layer': component['layer'], 
                         'width': float(component['width']), 
                         'offset': float(component['offset'])})
-#                    w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2
-                    # parameters: CML and model to support multiple WG models
-                    if 'CML' in waveguide:
-                        params['CML'] = waveguide['CML']
+#                    w = (params['wgs'][-1]['width'] / 2 + params['wgs'][-1]['offset']) * 2               
+                # parameters: CML and model to support multiple WG models
+                if 'CML' in waveguide:
+                    params['CML'] = waveguide['CML']
+                else:
+                    params['CML'] = ''
+                if 'model' in waveguide:
+                    params['model'] = waveguide['model']
+                else:
+                    params['model'] = ''
+                    
+                if 'crossing' in waveguide:
+                    params['crossing_cell'] = waveguide['crossing']['crossing_cell']
+                    params['crossing_offset'] = waveguide['crossing']['crossing_offset']
+                    if 'crossing_library' in waveguide['crossing']:
+                        params['crossing_library'] = waveguide['crossing']['crossing_library']
                     else:
-                        params['CML'] = ''
-                    if 'model' in waveguide:
-                        params['model'] = waveguide['model']
+                        params['crossing_library'] = TECHNOLOGY['technology_name']
+                elif 'crossing_cell' in waveguide:
+                    params['crossing_cell'] = waveguide['crossing_cell']
+                    params['crossing_offset'] = '(0,0)'
+                    if 'crossing_library' in waveguide:
+                        params['crossing_library'] = waveguide['crossing_library']
                     else:
-                        params['model'] = ''
+                        params['crossing_library'] = TECHNOLOGY['technology_name']
+                else:
+                    params['crossing_cell'] = ''
+                    params['crossing_offset'] = '(0,0)'
+                    params['crossing_library'] = ''
             return params
         else:
             return None

@@ -533,6 +533,7 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
 
     from . import _globals
     from .utils import select_paths, get_layout_variables
+    from .utils.crossings import insert_crossing
     TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
     if not cell:
         cell = top_cell
@@ -579,6 +580,10 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
             return
             
     # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
+
+    # Insert crossings
+    selected_paths = insert_crossing(selected_paths, params, verbose= False)
+
     if snap:
         p=cell.find_pins()            
 

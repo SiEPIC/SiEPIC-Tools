@@ -3,6 +3,7 @@
 
   <waveguide>
     <name>Strip</name>
+    <crossing_cell>ebeam_crossing4</crossing_cell>
     <component>
       <layer>Si</layer>
       <width>0.5</width>
@@ -59,6 +60,7 @@
     <name>Strip TE 1550 nm</name>
     <bezier>0.35</bezier>
     <radius>5.0</radius>
+    <crossing_cell>ebeam_crossing4</crossing_cell>
     <component>
       <layer>Si</layer>
       <width>0.5</width>
