@@ -1054,7 +1054,7 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
     """
     
     import string
-    if not LayerTextN:
+    if LayerTextN == None:
         from . import get_technology, find_paths
         TECHNOLOGY = get_technology()
         dbu = TECHNOLOGY['dbu']
@@ -1076,7 +1076,10 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
 
     text_out = '% X-coord, Y-coord, Polarization, wavelength, type, deviceID, params <br>'
     dbu = topcell.layout().dbu
-    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
+
+    if not type(LayerTextN)==int:
+        LayerTextN = topcell.layout().layer(LayerTextN)
+    iter = topcell.begin_shapes_rec(LayerTextN)
     i = 0
     texts = []  # pya Text, for Verification
     opt_in = []  # dictionary containing everything extracted from the opt_in labels.
@@ -1127,7 +1130,8 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
     text_out += "<br>"
     text_out += '% X-coord, Y-coord, deviceID, padName, params <br>'
     dbu = topcell.layout().dbu
-    iter = topcell.begin_shapes_rec(topcell.layout().layer(LayerTextN))
+
+    iter = topcell.begin_shapes_rec(LayerTextN)
     i = 0
     while not (iter.at_end()):
         if iter.shape().is_text():
