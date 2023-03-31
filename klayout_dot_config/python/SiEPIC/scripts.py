@@ -1780,23 +1780,35 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   
   return instanceB
   # end of def connect_cell
-  
 
-# keep the selected top cell; delete everything else
-def delete_top_cells():
 
-    def delete_cells(ly, cell):
-        if cell in ly.top_cells():
-            ly.delete_cells([tcell for tcell in ly.each_top_cell() if tcell != cell.cell_index()])
+def delete_extra_topcells(ly, keep_topcell):
+    '''
+    Delete extra top cells
+    Input: 
+    keep_topcell: a top cell that you want to keep
+    ly: pya.Layout
+    '''
+    if keep_topcell in ly.top_cells():
+        ly.delete_cells([tcell for tcell in ly.each_top_cell() if tcell != keep_topcell.cell_index()])
         if len(ly.top_cells()) > 1:
-            delete_cells(ly, cell)
+            print(ly.top_cells())
+            delete_extra_topcells(ly, keep_topcell)
+
+
+def delete_top_cells():
+    '''
+    Delete extra top cells
+    Input: 
+      a layout open in the GUI with an actively selected top cells
+    '''
 
     from .utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
     if cell in ly.top_cells():
         lv.transaction("Delete extra top cells")
-        delete_cells(ly, cell)
+        delete_extra_topcells(ly, cell)
         lv.commit()
     else:
         v = pya.MessageBox.warning(
