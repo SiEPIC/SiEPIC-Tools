@@ -48,9 +48,9 @@ if 1:
     print (sys.version[0])
     if int(sys.version[0]) &gt; 2:
       from importlib import reload
+    SiEPIC._globals = reload(SiEPIC._globals)
     SiEPIC = reload(SiEPIC)
     SiEPIC.extend = reload(SiEPIC.extend)
-    SiEPIC._globals = reload(SiEPIC._globals)
     SiEPIC.core = reload(SiEPIC.core)
     SiEPIC.install = reload(SiEPIC.install)
     SiEPIC.examples = reload(SiEPIC.examples)
@@ -84,7 +84,7 @@ if 1:
 print ("*** SiEPIC test environment ***")
 
 # find pins from a component
-if 1:
+if 0:
     from SiEPIC.utils import get_layout_variables, load_Waveguides_by_Tech
     TECHNOLOGY, lv, layout, cell = get_layout_variables()
     taper = layout.create_cell('taper_si_simm_1550','SiEPIC_AMF_Beta')
@@ -179,7 +179,7 @@ if 0:
 #    print(n.pins[1].component.instance)
 
 
-if 1:
+if 0:
   from SiEPIC import scripts  
   from SiEPIC.utils import get_layout_variables
   TECHNOLOGY, lv, ly, cell = get_layout_variables()

@@ -49,7 +49,9 @@ pointlist_to_path
 
 '''
 
-import pya
+from .. import _globals
+if _globals.Python_Env == "KLayout":
+    import pya
 
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html
@@ -1365,9 +1367,11 @@ def svg_from_component(component, filename, verbose=False):
     dwg.save()
 
 
-from .._globals import MODULE_NUMPY
-if MODULE_NUMPY:
-    from .sampling import sample_function
+from .. import _globals
+if _globals.Python_Env == "KLayout_GUI":
+    from .._globals import MODULE_NUMPY
+    if MODULE_NUMPY:
+        from .sampling import sample_function
 
 
 def pointlist_to_path(pointlist, dbu):

@@ -1,13 +1,14 @@
-__version__ = '0.4.0'
-#from . import install, extend, _globals, core, examples, github, lumerical, scripts, utils, setup
-# from . import install, extend, _globals, core, examples, github, scripts, utils, setup
-from . import extend, _globals, core, examples, github, scripts, utils, setup, install
+'''
+SiEPIC-Tools package for KLayout
+'''
 
-'''
-try:
-    from . import opics
-except:
-    print('Unable to import package opics')
-'''
-    
+__version__ = '0.4.1'
+
 print("KLayout SiEPIC-Tools version %s" %__version__)
+
+from . import _globals
+
+if _globals.Python_Env == "KLayout_GUI":
+    from . import extend, _globals, core, examples, github, scripts, utils, setup, install
+
+
