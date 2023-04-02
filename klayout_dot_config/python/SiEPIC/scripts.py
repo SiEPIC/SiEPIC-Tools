@@ -35,7 +35,7 @@ svg_from_cell
 
 
 from . import _globals
-if _globals.Python_Env == "KLayout":
+if _globals.Python_Env == "KLayout_GUI":
     import pya
 
 class Turtle:
