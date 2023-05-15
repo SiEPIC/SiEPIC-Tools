@@ -197,6 +197,13 @@ def INTC_loaddesignkit(folder_CML, verbose=False):
     '''Load a Compact Model Library into Lumerical INTERCONNECT,
     using a folder in the PDK.'''
 
+    import os
+
+    # check if there are CML folders:
+    if not next(os.walk('/Users/lukasc/Documents/GitHub/SiEPIC_EBeam_PDK/klayout/EBeam/CML'))[1]:
+        raise Exception ('SiEPIC.lumerical.interconnect.INTC_loaddesignkit: Cannot find Lumerical INTERCONNECT Compact Model Library (CML) folder, which should be in the PDK folder under the CML subfolder.')
+        
+
     # Load Lumerical INTERCONNECT and Python API: 
     from .. import _globals
     run_INTC()
@@ -209,7 +216,6 @@ def INTC_loaddesignkit(folder_CML, verbose=False):
     _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
 
     # Load all the subfolders of the CML folder into INTERCONNECT:
-    import os
     folder_names = []
     new_loaded = False
     for folder_name in next(os.walk(folder_CML))[1]:
@@ -229,7 +235,7 @@ def INTC_loaddesignkit(folder_CML, verbose=False):
     _globals.INTC_ELEMENTS=lumapi.getVar(_globals.INTC, "out")
     print('%s' % folder_names)
 
-    if "design kits::"+folder_name.lower()+"::" in _globals.INTC_ELEMENTS:
+    if  "design kits::"+folder_name.lower()+"::" in _globals.INTC_ELEMENTS:
         integration_success_message = "message('KLayout-Lumerical INTERCONNECT integration successful, for Compact Model Libraries installed in Element Library | Design kits: %s.\n" % (' '.join(map(str,folder_names)))
         integration_success_message += "');switchtodesign;\n"
         lumapi.evalScript(_globals.INTC, integration_success_message)

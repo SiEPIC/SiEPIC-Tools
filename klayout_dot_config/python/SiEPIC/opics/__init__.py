@@ -19,6 +19,9 @@ if not install('scipy'):
 if not install('yaml'):
     pya.MessageBox.warning(
     "Missing package", "The OPICS circuit simulator does not function without the package 'yaml'.",  pya.MessageBox.Ok)    
+if not install('defusedxml'):
+    pya.MessageBox.warning(
+    "Missing package", "The OPICS circuit simulator does not function without the package 'defusedxml'.",  pya.MessageBox.Ok)    
 
 
 from SiEPIC.opics import libraries
