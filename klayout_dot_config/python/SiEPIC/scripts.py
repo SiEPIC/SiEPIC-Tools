@@ -2849,7 +2849,7 @@ def user_select_opt_in(verbose=None, option_all=True, opt_in_selection_text=[]):
                 print(' starting GUI to select opt_in labels')
 
             # GUI to ask which opt_in measurement to fetch
-            opt_in_labels = [o['opt_in'] for o in opt_in]
+            opt_in_labels = [o['opt_in'] for o in opt_in if 'opt_in' in o.keys()]
             if option_all:
                 opt_in_labels.insert(0, 'All opt-in labels')
             opt_in_selection_text = pya.InputDialog.ask_item(
@@ -2869,8 +2869,9 @@ def user_select_opt_in(verbose=None, option_all=True, opt_in_selection_text=[]):
     opt_in_dict = []
     for o in opt_in:
         for t in opt_in_selection_text:
-            if o['opt_in'] == t:
-                opt_in_dict.append(o)
+            if 'opt_in' in o.keys():
+                if o['opt_in'] == t:
+                    opt_in_dict.append(o)
 
     return opt_in_selection_text, opt_in_dict
 
