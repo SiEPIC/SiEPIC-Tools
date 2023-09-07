@@ -1039,6 +1039,8 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
        opt_<polarization>_<wavelength>_<type>_<deviceID>_<params>
          or
        elec_<deviceID>_<params>
+         or
+       pwb_<recipeID>_<params>
     for electrical-optical measurements, the deviceID on the electrical contact
     needs to match that of the optical input
        
@@ -1145,6 +1147,32 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
                     fields.append('comment')
                 opt_in.append({'elec': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu),
                                'deviceID': fields[1], 'params': fields[2:], 'Text': text2})
+                params_txt = ''
+                for f in fields[3:]:
+                    params_txt += ', ' + str(f)
+                text_out += "%s, %s, %s, %s%s<br>" % (int(text2.x * dbu), int(text2.y * dbu), fields[
+                    1], fields[2], params_txt)
+        iter.next()
+
+
+    text_out += "<br>"
+    text_out += '% X-coord, Y-coord, recipeID, params <br>'
+    dbu = topcell.layout().dbu
+
+    iter = topcell.begin_shapes_rec(LayerTextN)
+    i = 0
+    while not (iter.at_end()):
+        if iter.shape().is_text():
+            text = iter.shape().text
+            if text.string.find("pwb") > -1:
+                i += 1
+                text2 = iter.shape().text.transformed(iter.itrans())
+                texts.append(text2)
+                fields = text.string.split("_")
+                while len(fields) < 4:
+                    fields.append('comment')
+                opt_in.append({'pwb': text.string, 'x': int(text2.x * dbu), 'y': int(text2.y * dbu),
+                               'recipeID': fields[1], 'params': fields[2:], 'Text': text2})
                 params_txt = ''
                 for f in fields[3:]:
                     params_txt += ', ' + str(f)
