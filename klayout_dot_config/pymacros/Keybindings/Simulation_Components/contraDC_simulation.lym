@@ -8,6 +8,7 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut/>
  <show-in-menu>false</show-in-menu>
  <group-name>pcell</group-name>
@@ -17,8 +18,14 @@
  <text># Key binding for SiEPIC-Tools function
 # SiEPIC Update Netlist in Lumerical
 
+
+'''
+# No longer used.  Now in SiEPIC/simulation/contraDC/klayout_gui
+
 import pya
 from SiEPIC import lumerical
 
-lumerical.contraDirectionalCoupler.cdc_simulation()</text>
+lumerical.contraDirectionalCoupler.cdc_simulation()
+
+'''</text>
 </klayout-macro>

@@ -7,6 +7,19 @@ Created on Fri Mar  3 23:19:50 2023
 
 @author: mustafa hammood
 """
+
+# Required packages
+from SiEPIC.install import install
+if not install('scipy'):
+  pya.MessageBox.warning(
+  "Missing package", "The simulator does not function without the package 'scipy'.",  pya.MessageBox.Ok)    
+if not install('plotly'):
+  pya.MessageBox.warning(
+  "Missing package", "The simulator does not function without the package 'plotly'.",  pya.MessageBox.Ok)    
+
+
+
+
 from SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC import *
 import sys
 import pya
