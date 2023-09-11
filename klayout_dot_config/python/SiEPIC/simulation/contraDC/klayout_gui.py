@@ -1,12 +1,3 @@
-# $description: Contra Directional Coupler, Design
-# $show-in-menu
-# $menu-path: siepic_menu.simulation_components.end
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Mar  3 23:19:50 2023
-
-@author: mustafa hammood
-"""
 
 # Required packages
 from SiEPIC.install import install
@@ -19,7 +10,6 @@ if not install('plotly', requested_by='Contra Directional Coupler design'):
 
 
 
-
 from SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC import *
 import sys
 import pya
@@ -28,7 +18,7 @@ import plotly.offline as pyo
 import plotly.io as pio
 pio.renderers.default = "browser"
 
-class MyWindow(QWidget):
+class MyWindow(pya.QWidget):
 
     def __init__(self):
         super().__init__()
@@ -44,6 +34,7 @@ class MyWindow(QWidget):
 
         #******************************************************
         # Create the layout_pcell and add the UI elements to it
+        from pya import QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox, QComboBox, QHBoxLayout
         layout_pcell = QVBoxLayout()
         self.button = QPushButton('Refresh PCell')
         # Connect the button to a callback function
@@ -451,14 +442,18 @@ class MyWindow(QWidget):
     def exit(self):
         self.close()
 
-        
-# Create the application and the main window
-app = pya.QApplication.instance()
-if app is None:
-    app = pya.QApplication([])
-mw = MyWindow()
+def cdc_gui():
+    app = pya.QApplication.instance()
+    if app is None:
+        app = pya.QApplication([])
 
-# Show the main window and run the application
-mw.show()
-app.exec_()
+#    import SiEPIC._globals
+#    SiEPIC._globals.GUI_cdc = MyWindow()
+#    print(SiEPIC._globals.GUI_cdc)
+#    SiEPIC._globals.GUI_cdc.show()
+    GUI_cdc.show()
+    
+    app.exec_()
 
+GUI_cdc = MyWindow()
+print('CDC Gui: %s' % GUI_cdc)
