@@ -10,10 +10,10 @@ Created on Fri Mar  3 23:19:50 2023
 
 # Required packages
 from SiEPIC.install import install
-if not install('scipy'):
+if not install('scipy', requested_by='Contra Directional Coupler design'):
   pya.MessageBox.warning(
   "Missing package", "The simulator does not function without the package 'scipy'.",  pya.MessageBox.Ok)    
-if not install('plotly'):
+if not install('plotly', requested_by='Contra Directional Coupler design'):
   pya.MessageBox.warning(
   "Missing package", "The simulator does not function without the package 'plotly'.",  pya.MessageBox.Ok)    
 
