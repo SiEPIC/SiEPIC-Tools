@@ -3,7 +3,6 @@ from SiEPIC.install import install
 if not install('defusedxml'):
     pya.MessageBox.warning(
     "Missing package", "The OPICS circuit simulator does not function without the package 'defusedxml'.",  pya.MessageBox.Ok)    
-    return None
 
 
 
