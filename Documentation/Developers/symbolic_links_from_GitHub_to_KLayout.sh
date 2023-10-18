@@ -14,7 +14,7 @@ export DEST=$HOME/.klayout
 export INTC=$HOME/.config/Lumerical
 
 #mkdir $DEST/pymacros/SiEPIC-Tools
-ln -s $SRC/SiEPIC-Tools/klayout_dot_config/pymacros/ $DEST/pymacros/SiEPIC-Tools
+ln -s $SRC/SiEPIC-Tools/klayout_dot_config/pymacros $DEST/pymacros/SiEPIC-Tools
 ln -s $SRC/SiEPIC-Tools/klayout_dot_config/python/* $DEST/python/
 ln -s $SRC/SiEPIC-Tools/Python_packages_for_KLayout/python/* $DEST/python/
 mkdir $DEST/tech
