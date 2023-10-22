@@ -77,8 +77,8 @@ if 1:
     SiEPIC.simulation = reload(SiEPIC.simulation)
     SiEPIC.simulation.contraDC = reload(SiEPIC.simulation.contraDC)
     SiEPIC.simulation.contraDC.contra_directional_coupler = reload(SiEPIC.simulation.contraDC.contra_directional_coupler)
-    SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC = reload(SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC)
-    SiEPIC.simulation.contraDC.contraDC_gui = reload(SiEPIC.simulation.contraDC.contraDC_gui)
+#    SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC = reload(SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC)
+#    SiEPIC.simulation.contraDC.contraDC_gui = reload(SiEPIC.simulation.contraDC.contraDC_gui)
     print('Reloaded SiEPIC')
 
 

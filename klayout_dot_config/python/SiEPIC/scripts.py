@@ -1788,15 +1788,20 @@ def delete_extra_topcells(ly, keep_topcell):
     '''
     Delete extra top cells
     Input: 
-    keep_topcell: a top cell that you want to keep
     ly: pya.Layout
+    keep_topcell: a top cell that you want to keep
+        can be either a pya.Cell or a string cell name
     '''
+    if type(keep_topcell) == str:
+        keep_topcell = ly.cell(keep_topcell)    
+    if type(keep_topcell) != pya.Cell:
+        raise Exception("SiEPIC.scripts.delete_extra_topcells: keep_topcell argument was not a cell")
     if keep_topcell in ly.top_cells():
         ly.delete_cells([tcell for tcell in ly.each_top_cell() if tcell != keep_topcell.cell_index()])
         if len(ly.top_cells()) > 1:
             print(ly.top_cells())
             delete_extra_topcells(ly, keep_topcell)
-
+        
 
 def delete_top_cells():
     '''
