@@ -37,6 +37,7 @@ svg_from_cell
 from . import _globals
 if _globals.Python_Env == "KLayout_GUI":
     import pya
+import pya
 
 class Turtle:
     '''
@@ -1799,7 +1800,7 @@ def delete_extra_topcells(ly, keep_topcell):
     if keep_topcell in ly.top_cells():
         ly.delete_cells([tcell for tcell in ly.each_top_cell() if tcell != keep_topcell.cell_index()])
         if len(ly.top_cells()) > 1:
-            print(ly.top_cells())
+            #print(ly.top_cells())
             delete_extra_topcells(ly, keep_topcell)
         
 
