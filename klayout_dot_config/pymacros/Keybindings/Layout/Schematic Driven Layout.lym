@@ -8,6 +8,7 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut>Shift+Q</shortcut>
  <show-in-menu>true</show-in-menu>
  <group-name/>
@@ -23,7 +24,14 @@ User steps:
 - Select one component in INTERCONNECT
 - press Shift+Q in Klayout to place the current component on the layout
 
+
+Updated by Lukas Chrostowski, 2023
+- use the Instance GUI functionality to place the component
+    Mode_instantiation = "Mouse_position" or "Instance_GUI"
+
 '''
+Mode_instantiation = "Mouse_position"
+Mode_instantiation = "Instance_GUI"
 
 def schematic_driven_layout():
     import pya
@@ -48,7 +56,10 @@ def schematic_driven_layout():
         lumapi.evalScript(_globals.INTC, "cname = get('name');")
         name = lumapi.getVar(_globals.INTC, "cname")
         
-        if name != 'Root Element':
+        if name == 'Root Element':
+          pya.MessageBox.warning(
+           "Select component", "Schematic Driven Layout: Select a component in the Lumerical INTERCONNECT schematic, then try again.", pya.MessageBox.Ok)
+        else:
         
           lumapi.evalScript(_globals.INTC, "cmodel = get('model');")
           model = lumapi.getVar(_globals.INTC, "cmodel")
@@ -56,9 +67,7 @@ def schematic_driven_layout():
           lumapi.evalScript(_globals.INTC, "clibrary = get('library');")
           library = lumapi.getVar(_globals.INTC, "clibrary")
           library = library.split("::")[-1]
-            
-          #lumapi.close(_globals.INTC)
-        
+                    
           # Import functions from SiEPIC-Tools, and get technology details
           from SiEPIC.utils import select_paths, get_layout_variables
           TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -70,39 +79,58 @@ def schematic_driven_layout():
           # Layer mapping:
           LayerSiN = ly.layer(TECHNOLOGY['Si'])
     
-          
-          #fetch mouse coordinates
-          #I'm currently trying to figure out but the current cursor event gives you the mouse coordinates relative to your screen size rather than relative to gds coordinates.
-          cursor = pya.Application.instance().main_window().cursor
-          cursorpos=Point(cursor.pos.x, cursor.pos.y)
-    
-          # Get the transformation from GDS coordinates to screen pixels
-          # https://www.klayout.de/doc-qt4/code/class_LayoutView.html#method182
-          # not working: Does seem like the point/screen coordinates are consistent. 
-          t = lv.viewport_trans().inverted()
-          point = DVector(t.trans(cursorpos))
-          print("Cursor pixel: %s, transformation: %s, GDS point: %s" % (cursorpos,t,point))
-          t = Trans(point.to_itype(dbu))
      
           # Import cells from the SiEPIC GDS Library, and instantiate them
           newcell = ly.create_cell(model, library)
+          if not(newcell):
+              newcell = ly.create_cell(model, library,{})          
           if newcell:
+              if Mode_instantiation == "Mouse_position":  
+          
+                  #fetch mouse coordinates
+                  #I'm currently trying to figure out but the current cursor event gives you the mouse coordinates relative to your screen size rather than relative to gds coordinates.
+                  cursor = pya.Application.instance().main_window().cursor
+                  cursorpos=Point(cursor.pos.x, cursor.pos.y)
+            
+                  # Get the transformation from GDS coordinates to screen pixels
+                  # https://www.klayout.de/doc-qt4/code/class_LayoutView.html#method182
+                  # not working: Does seem like the point/screen coordinates are consistent. 
+                  t = lv.viewport_trans().inverted()
+                  point = DVector(t.trans(cursorpos))
+                  # print("Cursor pixel: %s, transformation: %s, GDS point: %s" % (cursorpos,t,point))
+                  t = Trans(point.to_itype(dbu))
 
-              # Record actions for Undo functionality
-              lv.transaction("Schematic Driven Layout: place %s" % model)
-                
-              element_imported = newcell.cell_index()
-              cell.insert(CellInstArray(element_imported, t))
-    
-              # Stop recording actions for Undo functionality
-              lv.commit()
-              
-              #lv.clear_object_selection()
-              #lv.zoom_fit()
-              lv.max_hier()
+                  # Record actions for Undo functionality
+                  lv.transaction("Schematic Driven Layout: place %s" % model)
+                    
+                  element_imported = newcell.cell_index()
+                  cell.insert(CellInstArray(element_imported, t))
+        
+                  # Stop recording actions for Undo functionality
+                  lv.commit()
+                  
+                  #lv.clear_object_selection()
+                  #lv.zoom_fit()
+                  lv.max_hier()
+              if Mode_instantiation == "Instance_GUI":
+                  # based on https://www.klayout.de/forum/discussion/1106/instance-gui-invoked-from-a-script
+                  app = pya.Application.instance()
+                  mw = app.main_window()
+                  # if instance mode is already on, cancel so we start fresh
+                  mw.cancel()
+                  # configure instance dialog:
+                  app.set_config("edit-inst-cell-name", model)
+                  app.set_config("edit-inst-lib-name", library)
+                  # PCell parameters
+                  if model == "ebeam_bragg_te1550":
+                     # specific case to try it out
+                     #app.set_config("edit-inst-pcell-parameters", "layer:[layer:1/0];radius:##10;handle:[dpoint:-10,0];npoints:#16;actual_radius:##10;")
+                     app.set_config("edit-inst-pcell-parameters", "number_of_periods:#20;")
+                  mw.menu().action("edit_menu.mode_menu.instance").trigger()
+                  
           else:
               pya.MessageBox.warning(
-                "Missing componenet", "Missing component (%s) in the library (%s). Cannot perform Schematic Driven Layout" % (model,library), pya.MessageBox.Ok)
+                "Missing component", "Schematic Driven Layout\nMissing component: name (%s), model (%s), library (%s). \nCannot perform Schematic Driven Layout" % (name,model,library), pya.MessageBox.Ok)
               return
     
     except Exception as e:
