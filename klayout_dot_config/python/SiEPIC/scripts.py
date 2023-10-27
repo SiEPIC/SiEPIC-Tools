@@ -1123,11 +1123,12 @@ def waveguide_to_path(cell=None, save_waveguide_type=True):
     # Select the newly added objects
     if not save_waveguide_type:
         lv.object_selection = selection
-    # Record a transaction, to enable "undo"
-    lv.commit()
 
     pya.Application.instance().main_window().redraw()
     ly.cleanup([])  
+
+    # Record a transaction, to enable "undo"
+    lv.commit()
 
 def waveguide_length():
 
