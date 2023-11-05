@@ -138,7 +138,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
   file_sparam = os.path.join(_globals.TEMP_FOLDER, '%s.dat' % component.instance)
 
   # get Component pins
-  pins = component.find_pins()
+  pins,_ = component.find_pins()
   pins = sorted(pins, key=lambda  p: p.pin_name)
   for p in pins:
     p.pin_name = p.pin_name.replace(' ','')  # remove spaces in pin names

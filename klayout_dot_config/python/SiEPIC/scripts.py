@@ -804,7 +804,7 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
             
     # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
     if snap:
-        p=cell.find_pins()            
+        p,_=cell.find_pins()            
 
     for obj in selected_paths:
         path = obj.shape.path
@@ -829,7 +829,7 @@ def path_to_waveguide(params=None, cell=None, snap=True, lv_commit=True, GUI=Fal
                 return
 
         # a slow function - needs fixing:
-#        p=cell.find_pins()
+#        p,_=cell.find_pins()
 #        if verbose:
 #          print("SiEPIC.scripts path_to_waveguide(); cell.find_pins(); time = %s" % (time.perf_counter()-time0))
 
@@ -2429,6 +2429,8 @@ def layout_check(cell=None, verbose=False):
     rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
     rdb_cat_id_comp_overlap = rdb.create_category(rdb_cat_id_comp, "Overlapping component")
     rdb_cat_id_comp_overlap.description = "Overlapping components (defined as overlapping DevRec layers; touching is ok)"
+    rdb_cat_id_comp_shapesoutside = rdb.create_category(rdb_cat_id_comp, "Shapes outside component")
+    rdb_cat_id_comp_shapesoutside.description = "Shapes need to be inside a component. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout"
 
     # Connectivity checking
     rdb_cell = next(rdb.each_cell())
@@ -2516,6 +2518,19 @@ def layout_check(cell=None, verbose=False):
         if Dpath.num_points() > 2:
             rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_path.rdb_id())
             rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
+
+    '''
+    Shapes need to be inside a component. 
+    Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout
+    Method:
+        - find all shapes
+        - find all components, and their shapes
+        - substract the two, and produce errors        
+    rdb_cat_id_comp_shapesoutside
+    '''
+    for i in range(0, len(components)):
+        c = components[i]
+
 
     for i in range(0, len(components)):
         c = components[i]

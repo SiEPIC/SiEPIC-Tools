@@ -232,7 +232,8 @@ def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguide
             if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
                 return
 
-        path.snap_m(cell.find_pins())
+        pins,_ = cell.find_pins()
+        path.snap_m(pins)
         Dpath = path.to_dtype(TECHNOLOGY['dbu'])
         width_devrec = params['width'] + _globals.WG_DEVREC_SPACE * 2 # get DevRec width based on the wireguide width found earlier
         try:
