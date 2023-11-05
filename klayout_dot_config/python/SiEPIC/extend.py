@@ -674,12 +674,18 @@ Optical Pins have:
  1) path on layer PinRec, indicating direction (out of component)
  2) text on layer PinRec, inside the path
 Electrical Pins have:
+ 1) path on layer PinRecM, indicating direction (out of component)
+ 2) text on layer PinRecM, inside the path
+
+Old version:
+Electrical Pins have:
  1) box on layer PinRec
  2) text on layer PinRec, inside the box
+
 '''
 
 
-def find_pins(self, verbose=False, polygon_devrec=None):
+def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     if verbose:
         print("SiEPIC.extend.find_pins()")
 
@@ -693,12 +699,17 @@ def find_pins(self, verbose=False, polygon_devrec=None):
 
     # Pin Recognition layer
     if not 'PinRec' in TECHNOLOGY:
-        pya.MessageBox.warning(
-            "Problem with Technology", "Problem with active Technology %s: missing layer PinRec" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
-        return
+        if GUI:
+            pya.MessageBox.warning(
+                "Problem with Technology", "Problem with active Technology %s: missing layer PinRec" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
+            return
+        else:
+            raise Exception("Problem with active Technology %s: missing layer PinRec" % (TECHNOLOGY['technology_name']))
+            
     LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
 
     error_text = ''
+    pin_errors = []
 
     # iterate through all the PinRec shapes in the cell
     it = self.begin_shapes_rec(LayerPinRecN)
@@ -724,6 +735,7 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                 print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
                 error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name.\n" %
                                (pin_path, subcell.name))
+                pin_errors.append ([pin_path, subcell]) 
 #        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
             else:
               # Store the pin information in the pins array
@@ -759,9 +771,12 @@ def find_pins(self, verbose=False, polygon_devrec=None):
 
     # Optical IO (Fibre) Recognition layer
     if not 'FbrTgt' in TECHNOLOGY:
-        pya.MessageBox.warning(
-            "Problem with Technology", "Problem with active Technology %s: missing layer FbrTgt"% (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
-        return
+        if GUI:
+            pya.MessageBox.warning(
+                "Problem with Technology", "Problem with active Technology %s: missing layer FbrTgt"% (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
+            return
+        else:
+            raise Exception("Problem with active Technology %s: missing layer FbrTgt" % (TECHNOLOGY['technology_name']))
 
     LayerFbrTgtN = self.layout().layer(TECHNOLOGY['FbrTgt'])
 
@@ -791,22 +806,19 @@ def find_pins(self, verbose=False, polygon_devrec=None):
                             pin_name=pin_name))
         it.next()
 
-    if error_text:
-        pya.MessageBox.warning("Problem with component pin", error_text, pya.MessageBox.Ok)
-
     # Metal Pin Recognition layer 
-    if not 'PinRec' in TECHNOLOGY:
-        pya.MessageBox.warning(
-            "Problem with Technology", "Problem with active Technology %s: missing layer PinRec" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
-        return
+    if not 'PinRecM' in TECHNOLOGY:
+        if GUI:
+            pya.MessageBox.warning(
+                "Problem with Technology", "Problem with active Technology %s: missing layer PinRecM" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
+            return
+        else:
+            raise Exception("Problem with active Technology %s: missing layer PinRecM" % (TECHNOLOGY['technology_name']))
 
     try:    
         LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRecM'])
     except:
         LayerPinRecN = self.layout().layer(TECHNOLOGY['PinRec'])
-
-
-    error_text = ''
 
     # Metal Pin recognition by Karl McNulty (RIT)
     # iterate through all the PinRec shapes in the cell
@@ -839,9 +851,12 @@ def find_pins(self, verbose=False, polygon_devrec=None):
               pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.ELECTRICAL, pin_name=pin_name))
         it.next()
 
+    if error_text:
+        if GUI:
+            pya.MessageBox.warning("Problem with component pin:\n", error_text, pya.MessageBox.Ok)
 
     # return the array of pins
-    return pins
+    return pins, pin_errors
 
 
 def find_pin(self, name):
@@ -873,7 +888,7 @@ def find_pin(self, name):
 
 
 def find_pins_component(self, component):
-    pins = self.find_pins()
+    pins, _ = self.find_pins()
     for p in pins:
         # add component to the pin
         p.component = component
@@ -1078,7 +1093,7 @@ def identify_nets(self, verbose=False):
 
     # find components and pins in the cell layout
     components = self.find_components()
-    pins = self.find_pins()
+    pins, _ = self.find_pins()
 
     # Optical Pins:
     optical_pins = [p for p in pins if p.type == _globals.PIN_TYPES.OPTICAL]
@@ -1643,7 +1658,7 @@ def check_components_models():
 
 # find the Pin's Point, whose name matches the input, for the given Cell
 def pinPoint(self, pin_name, verbose=False):
-    pins = self.find_pins()
+    pins, _ = self.find_pins()
     if pins:
         matched_pins = [p for p in pins if (p.pin_name==pin_name)]
         if not matched_pins:
@@ -1685,7 +1700,7 @@ def find_pins(self, verbose=False):
 # find the Pin's Point, whose name matches the input, for the given Instance
 def pinPoint(self, pin_name, verbose=False):
     from pya import Point
-    pins = self.find_pins()
+    pins, _ = self.find_pins()
     if pins:
         p = [ p for p in pins if (p.pin_name==pin_name)]
         if p:
@@ -1697,7 +1712,7 @@ def pinPoint(self, pin_name, verbose=False):
         return Point(0,0)
 
 def find_pin(self, pin_name, verbose=False):
-    pins = self.find_pins()
+    pins, _ = self.find_pins()
     if pins:
         p = [ p for p in pins if (p.pin_name==pin_name)]
         if p:

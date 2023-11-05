@@ -8,6 +8,7 @@
  <doc/>
  <autorun>false</autorun>
  <autorun-early>false</autorun-early>
+ <priority>0</priority>
  <shortcut>V</shortcut>
  <show-in-menu>true</show-in-menu>
  <group-name/>
@@ -18,8 +19,8 @@
 # SiEPIC Graphical Layout Check
 
 import pya
-from SiEPIC import scripts
+from SiEPIC import verification
 
-scripts.layout_check(verbose=True)
+verification.layout_check(verbose=True, GUI=True)
 </text>
 </klayout-macro>

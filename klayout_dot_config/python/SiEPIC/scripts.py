@@ -545,9 +545,6 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
         print("SiEPIC.scripts path_to_waveguide2(); start")
 #        print("SiEPIC.scripts path_to_waveguide(); start; time = %s" % (time.perf_counter()-time0))
 
-    if lv_commit:
-        lv.transaction("Path to Waveguide2")
-
     if params is None:
         params = _globals.WG_GUI.get_parameters(GUI)
     if params is None:
@@ -582,14 +579,6 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
             pya.QMessageBox_StandardButton(warning.exec_())
             return
             
-    # can this be done once instead of each time?  Moved here, by Lukas C, 2020/05/04
-
-    # Insert crossings
-    selected_paths = insert_crossing(selected_paths, params, verbose= False)
-
-    if snap:
-        p=cell.find_pins()            
-
     for obj in selected_paths:
         path = obj.shape.path
         path.unique_points()
@@ -612,8 +601,22 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
             if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
                 return
 
+    if lv_commit:
+        lv.transaction("Path to Waveguide")
+
+    # Insert crossings
+    # this function unfortunately contains a GUI, so can mess up the undo transaction GUI.
+    selected_paths2 = insert_crossing(selected_paths, params, verbose= False)
+
+    for obj in selected_paths:
+        path = obj.shape.path
+        path.unique_points()
+
+        # Snap waveguides to pins of nearby components
         if snap:
+            p,_=cell.find_pins()            
             path.snap(p)
+            
 #        if verbose:
 #          print("SiEPIC.scripts path_to_waveguide(); path.snap(...); time = %s" % (time.perf_counter()-time0))
 
@@ -720,6 +723,9 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
             except:
                 pass
         if not pcell:
+            # Record a transaction, to enable "undo"
+            if lv_commit:
+                lv.commit()
             raise Exception(
                 "'Waveguide' is not available. Check that the library was loaded successfully.")
         selection.append(pya.ObjectInstPath())
@@ -732,10 +738,12 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
     lv.clear_object_selection()
     if select_waveguides:
         lv.object_selection = selection
-    if lv_commit:
-        lv.commit()
     pya.Application.instance().main_window().redraw()  
     ly.cleanup([])  
+
+    # Record a transaction, to enable "undo"
+    if lv_commit:
+        lv.commit()
     
     if verbose:
         print("SiEPIC.scripts path_to_waveguide2(); done" )

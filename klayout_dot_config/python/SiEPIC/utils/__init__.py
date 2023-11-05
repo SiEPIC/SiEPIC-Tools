@@ -464,13 +464,56 @@ def load_Monte_Carlo():
                 montecarlo = [montecarlo]
     return montecarlo if montecarlo else None
 
-'''
-Load Design-for-Test (DFT) rules
-These are technology specific, and located in the tech folder, named DFT.xml
-'''
+
+
+def load_Verification(debug=True):
+    '''
+    Load Verification rules
+    These are technology specific, and located in the tech folder, named Verification.xml
+    '''
+    from .._globals import KLAYOUT_VERSION
+    from . import get_technology
+    TECHNOLOGY = get_technology()
+    tech_name = TECHNOLOGY['technology_name']
+
+    import os
+    import fnmatch
+
+    # then check for Verification.xml in the PDK Technology folder
+    search_str = 'Verification.xml'
+    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
+        # Find the path for the technology
+        # and find DFT.xml file
+        tech=pya.Technology.technology_by_name(tech_name)
+        dir_path = tech.base_path()
+    else:
+        dir_path = pya.Application.instance().application_data_path()
+    if debug:
+        print(' - load_Verification, path: %s' %dir_path ) 
+    matches = []
+    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+        for filename in fnmatch.filter(filenames, search_str):
+            if tech_name in root:
+                matches.append(os.path.join(root, filename))
+    if matches:
+        if debug:
+            print(' - load_Verification, matches: %s' %matches ) 
+        Verification_file = matches[0]
+        file = open(Verification_file, 'r')
+        Verification = xml_to_dict(file.read())
+        file.close()
+        return Verification
+    else:
+        return None
+
+
 
 
 def load_DFT(debug=True):
+    '''
+    Load Design-for-Test (DFT) rules
+    These are technology specific, and located in the tech folder, named DFT.xml
+    '''
     from .._globals import KLAYOUT_VERSION
     from . import get_technology
     TECHNOLOGY = get_technology()

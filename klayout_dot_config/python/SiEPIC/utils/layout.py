@@ -126,7 +126,8 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
         from SiEPIC.extend import to_itype
         from pya import Point
         radius = to_itype(params_singlemode['radius'], dbu)
-        taper_length = taper.find_pins()[0].center.distance(taper.find_pins()[1].center)
+        pins, _ = taper.find_pins()
+        taper_length = pins[0].center.distance(pins[1].center)
         min_length = 2*radius + 2*taper_length
         offset = radius
         wg_sm_segment_pts = []
