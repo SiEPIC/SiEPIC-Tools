@@ -331,7 +331,15 @@ def cross_2paths(oip_path1, oip_path2, xcell, offset = 0, origin = pya.Trans(0,0
     
     if verbose:
       print("Found %s crossings between paths %s and %s"%(len(list_inter),oip_path1, oip_path2))
-      
+    
+    '''
+    Problem identified by Lukas Chrostowski:
+      Since this function is called by scripts.path_to_waveguide2, 
+      and that function has a transaction / commit, we cannot have a GUI inside here
+      It would be nice if there was a separate function that checked to see
+      if there were crossing paths, then brought up the GUI. Then the implementation
+      would be split
+        
     # Ask the user before insertion of waveguide crossings. Made global so that
     # it can be updated outside of utils.crossings
     
@@ -347,6 +355,7 @@ def cross_2paths(oip_path1, oip_path2, xcell, offset = 0, origin = pya.Trans(0,0
             SiEPIC_crossings_UI_insertcrossing_flag = True
             return [], [], False
         SiEPIC_crossings_UI_insertcrossing_flag = False
+    '''
     
     new_path1 = (breakPath(path1, list_inter,x_bbox, oip_path1, verbose))
     new_path2 = (breakPath(path2, list_inter,x_bbox, oip_path2, verbose))
