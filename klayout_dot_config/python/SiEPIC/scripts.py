@@ -585,15 +585,15 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
         if not path.is_manhattan_endsegments():
             warning.setText(
                 "Warning: Waveguide segments (first, last) are not Manhattan (vertical, horizontal).")
-            warning.setInformativeText("Do you want to Proceed?")
-            if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
-                return
+            warning.setInformativeText("Cannot Proceed")
+            pya.QMessageBox_StandardButton(warning.exec_())
+            return
         if not path.is_manhattan():
             warning.setText(
                 "Error: Waveguide segments are not Manhattan (vertical, horizontal). This is not supported in SiEPIC-Tools.")
-            warning.setInformativeText("Do you want to Proceed?")
-            if(pya.QMessageBox_StandardButton(warning.exec_()) == pya.QMessageBox.Cancel):
-                return
+            warning.setInformativeText("Cannot Proceed")
+            pya.QMessageBox_StandardButton(warning.exec_())
+            return
         if not path.radius_check(params['radius'] / TECHNOLOGY['dbu']):
             warning.setText(
                 "Warning: One of the waveguide segments has insufficient length to accommodate the desired bend radius.")
@@ -604,23 +604,27 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
     if lv_commit:
         lv.transaction("Path to Waveguide")
 
-    # Insert crossings
-    # this function unfortunately contains a GUI, so can mess up the undo transaction GUI.
-    selected_paths2 = insert_crossing(selected_paths, params, verbose= False)
-
-    for obj in selected_paths:
-        path = obj.shape.path
+    # Snapping first
+    for i in range(len(selected_paths)):
+        path = selected_paths[i].shape.path
         path.unique_points()
 
         # Snap waveguides to pins of nearby components
         if snap:
             p,_=cell.find_pins()            
             path.snap(p)
-            
-#        if verbose:
-#          print("SiEPIC.scripts path_to_waveguide(); path.snap(...); time = %s" % (time.perf_counter()-time0))
 
+        selected_paths[i].shape.path = path
 
+    # Insert crossings
+    # this function unfortunately contains a GUI, so can mess up the undo transaction GUI.
+    selected_paths = insert_crossing(selected_paths, params, verbose= False)
+
+    # Make waveguides
+    for obj in selected_paths:
+        path = obj.shape.path
+        path.unique_points()
+          
         # get path info
         Dpath = path.to_dtype(TECHNOLOGY['dbu'])
         
