@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+'''
+PCell created using geometries from GDSfactory
+by: Lukas Chrostowski, 2023
+
+- query the GDSfactory PCell to find out the parameters and defaults
+  use those to populate the GUI
+- pass on the KLayout parameters to GDSfactory
+- generates the GDSfactory layout, and load it into the KLayout PCell
+
+'''
+
+# klayout api
+import pya
+import gdsfactory as gf
+import inspect
+from SiEPIC.utils.layout import make_pin
+from SiEPIC.utils import get_technology_by_name
+from gdsfactory.add_padding import get_padding_points
+
+class mmi1x2(pya.PCellDeclarationHelper):
+
+  def __init__(self):
+
+    # Important: initialize the super class
+    super(mmi1x2, self).__init__()
+
+    # query the GDSfactory PCell to get parameters and add to KLayout
+    #import gdsfactory as gf
+    #import inspect
+    sig = inspect.signature(gf.components.mmi1x2)
+    params = sig.parameters
+    for p in params.values():
+        if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
+            param_name = p.name
+            param_default = p.default
+            param_type = type(param_default)
+            if param_type is type(1.0):
+                self.param(param_name, self.TypeDouble, param_name, default = param_default)
+            if param_type is type(1):
+                self.param(param_name, self.TypeInt, param_name, default = param_default)
+            if param_type is type(True):
+                self.param(param_name, self.TypeBoolean, param_name, default = param_default)
+            # self.TypeLayer, TypeList, TypeNone, TypeShape, TypeString
+            # no layer parameters
+            
+    # add layer parameters
+    # TO DO: lots of this code is duplicate with the code in produce_impl()
+    #        - create a function to take in the gdsfactory component name and return 
+    #          the labels, layers, ports
+    
+    # extracting all pcell information from gdsfactory pcell
+    pcell = gf.components.mmi1x2()
+
+    # get dictionary mapping layers to the polygons (represented by points) contained within
+    layer_to_polygonpts = pcell.get_polygons(by_spec=True)
+
+    # get ports 
+    ports = pcell.get_ports()
+
+    # get gdsfactory layer information
+    layers = pcell.get_layers()
+    layer_names = pcell.get_layer_names()
+
+    # get labels
+    labels = pcell.get_labels()
+    
+    # get bounding box points from gdsfactory
+    bbox_points = get_padding_points(pcell)
+    #bbox = gf.components.bbox(bbox=points, layer=(68,0))
+
+    # translate extracted information into klayout pcell
+    
+    # add layer parameters to pcell decl
+    layers = list(layer_to_polygonpts.keys())
+
+    # include layers for pins (get them from the ports)
+    for port in ports:
+      if port.layer not in layers:
+        layers.append(port.layer)
+
+    # include layers for labels
+    for label in labels:
+      layer = label.layer
+      if layer not in layers:
+        layers.append(layer)
+
+    for l in layers:
+      # how to get the name?
+      # use the layer map?
+      PDK = gf.get_active_pdk()
+      name_to_layer = PDK.layers
+      layer_to_name = {v: k for k, v in name_to_layer.items()}
+      name = layer_to_name[l]
+
+      self.param(name, self.TypeLayer, "{} Layer".format(name), default = LayerInfo(l[0], l[1]))
+
+    # create devrec layer, what about pin rec layers?
+    # for pin layers: checked the layers for each port and created layer parameters for them
+    self.technology_name = 'EBeam'
+    TECHNOLOGY = get_technology_by_name(self.technology_name)
+    self.param("devrec", self.TypeLayer, "DevRec Layer", default = TECHNOLOGY['DevRec'])
+            
+  def display_text_impl(self):
+    # Provide a descriptive text for the cell
+
+    param_list = ''
+    for p in self.get_parameters():
+        param_list += '_' + p.name + '_' + str(eval('self.%s' % p.name))
+
+    return "mmi1x2" + param_list
+    
+  def produce_impl(self):
+
+    # extracting all pcell information from gdsfactory pcell
+    pcell = gf.components.mmi1x2()
+
+    # get dictionary mapping layers to the polygons (represented by points) contained within
+    layer_to_polygonpts = pcell.get_polygons(by_spec=True)
+
+    # get ports 
+    ports = pcell.get_ports()
+
+    # get gdsfactory layer information
+    layers = pcell.get_layers()
+    layer_names = pcell.get_layer_names()
+
+    # get labels
+    labels = pcell.get_labels()
+    
+    # get bounding box points from gdsfactory
+    bbox_points = get_padding_points(pcell)
+
+    # translate extracted information into klayout pcell
+    
+    # add layer parameters to pcell decl
+    layers = list(layer_to_polygonpts.keys())
+
+    # include layers for pins (get them from the ports)
+    for port in ports:
+      if port.layer not in layers:
+        layers.append(port.layer)
+
+    # include layers for labels
+    for label in labels:
+      layer = label.layer
+      if layer not in layers:
+        layers.append(layer)
+
+    # map layer numbers to their name
+    PDK = gf.get_active_pdk()
+    name_to_layer = PDK.layers
+    layer_to_name = {v: k for k, v in name_to_layer.items()}
+    
+    
+    # add polygons to pcell in correct layer 
+    for l in layer_to_polygonpts.keys():
+      polygonpts = layer_to_polygonpts[l]
+      layer_name = layer_to_name[l]
+      
+      layer = self.layout.layer(getattr(self, layer_name))
+
+      # need to convert to a Point array since this is how points are passed into Polygons
+      for pts in polygonpts:
+        klayout_points = []
+        for p in pts:
+          klayout_points.append(Point(p[0],p[1]))
+
+        self.cell.shapes(layer).insert(Polygon(klayout_points))
+      
+    # add pins: get the appropriate port information, then call make_pin() 
+    for port in ports:
+      port_layer_name = layer_to_name[port.layer]
+      port_layer = self.layout.layer(getattr(self, port_layer_name))
+      make_pin(self.cell, port.name, port.center, port.width, port_layer, port.orientation)
+
+    # insert labels into correct layer and position
+    for label in labels:
+      layer_name = layer_to_name[label.layer]
+      klayout_label = Text(label.text, label.origin)
+      self.cell.shapes(self.layout.layer(self.layer_name)).insert(klayout_label)
+
+    # add bounding box to dev rec layer
+    # using bbox points make simple polygon to represent bbox
+    # convert points to a klayout Points array
+    bbox_klayout_points = []
+    for p in bbox_points:
+      bbox_klayout_points.append(Point(p[0],p[1]))
+
+    bbox = SimplePolygon(bbox_klayout_points)
+
+    self.cell.shapes(self.layout.layer(self.devrec)).insert(bbox)
+    
+class GDSfactory_PCellLib(pya.Library):
+
+  def __init__(self):
+  
+    # TODO: change the description
+    self.description = "Generic library"
+    
+    # register the PCell declarations
+    self.layout().register_pcell("mmi1x2", mmi1x2())
+    
+    # register our library
+    self.register("GDSfactory PCells")
+
+    
+# instantiate and register the library
+GDSfactory_PCellLib()
+
+
+
+</text>
+</klayout-macro>
