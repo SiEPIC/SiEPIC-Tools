@@ -200,7 +200,7 @@ def INTC_loaddesignkit(folder_CML, verbose=False):
     import os
 
     # check if there are CML folders:
-    if not next(os.walk('/Users/lukasc/Documents/GitHub/SiEPIC_EBeam_PDK/klayout/EBeam/CML'))[1]:
+    if not next(os.walk(folder_CML))[1]:
         raise Exception ('SiEPIC.lumerical.interconnect.INTC_loaddesignkit: Cannot find Lumerical INTERCONNECT Compact Model Library (CML) folder, which should be in the PDK folder under the CML subfolder.')
         
 
