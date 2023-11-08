@@ -246,7 +246,6 @@ def layout_check(cell=None, verbose=False, GUI=False):
         - substract the two lists, and produce errors
     rdb_cat_id_comp_shapesoutside
     '''
-    
     from SiEPIC.utils import load_Verification
     verification = load_Verification()
     if verification:
@@ -257,34 +256,40 @@ def layout_check(cell=None, verbose=False, GUI=False):
         except:
             deviceonly_layers = [ [1,0] ]
         deviceonly_layers_ids = [ly.find_layer(*l) for l in deviceonly_layers if ly.find_layer(*l) is not None]
-
-    if verbose:
-        print(" - checking that shapes are inside components" )
-
-
-    # get cells for all components
-    cells_components = []
-    for i in range(0, len(components)):
-        cells_components.append ( components[i].cell )
-    
-    # get shapes from layout that aren't part of the component cells
-    # layout.layer_indexes() 
-    iter1 = pya.RecursiveShapeIterator(ly, cell, deviceonly_layers_ids )
-    iter1.unselect_cells([c.cell_index() for c in cells_components if c is not None] )
-    extra_shapes = []
-    while not iter1.at_end():
-        extra_shapes.append([iter1.shape(), iter1.itrans()])
-        iter1.next()
-    if verbose:
-        print(" - found %s shape(s) not belonging to components " % len(extra_shapes) )
+        # print(deviceonly_layers_ids)
+        if verbose:
+            print(" - checking that shapes are inside components" )
+      
+        # get cells for all components
+        cells_components = []
+        for i in range(0, len(components)):
+            cells_components.append ( components[i].cell )
+        
+        # get shapes from layout that aren't part of the component cells
+        if verbose:
+            # display all shapes
+            iter1 = pya.RecursiveShapeIterator(ly, cell, deviceonly_layers_ids )
+            while not iter1.at_end():
+                print("   - %s" % iter1.shape())
+                iter1.next()        
+        iter1 = pya.RecursiveShapeIterator(ly, cell, deviceonly_layers_ids )
+        iter1.unselect_cells([c.cell_index() for c in cells_components if c is not None] )
+        extra_shapes = []
+        while not iter1.at_end():
+            # make sure the list has unique elements
+            if [iter1.shape(), iter1.itrans()] not in extra_shapes:
+                extra_shapes.append([iter1.shape(), iter1.itrans()])
+            iter1.next()
+        if verbose:
+            print(" - found %s shape(s) not belonging to components " % len(extra_shapes) )
+            for e in extra_shapes:
+                print( "   - %s, %s" % (e[0], e[1]) )
+        # add shapes into the results database
         for e in extra_shapes:
-            print( "   - %s, %s" % (e[0], e[1]) )
-
-    for e in extra_shapes:
-        if e[0].dpolygon:
-            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_shapesoutside.rdb_id())
-            rdb_item.add_value(pya.RdbItemValue(e[0].dpolygon.transformed(e[1].to_trans().to_itrans(dbu))))
-    
+            if e[0].dpolygon:
+                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_shapesoutside.rdb_id())
+                rdb_item.add_value(pya.RdbItemValue(e[0].dpolygon.transformed(e[1].to_trans().to_itrans(dbu))))
+        
     '''
     Component checks:
     '''
