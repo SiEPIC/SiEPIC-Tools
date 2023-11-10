@@ -65,10 +65,11 @@ pya.Point Extensions:
 
 import pya
 
-warning = pya.QMessageBox()
-warning.setStandardButtons(pya.QMessageBox.Ok)
-warning.setDefaultButton(pya.QMessageBox.Ok)
-
+from SiEPIC._globals import Python_Env
+if Python_Env == "KLayout_GUI":
+    warning = pya.QMessageBox()
+    warning.setStandardButtons(pya.QMessageBox.Ok)
+    warning.setDefaultButton(pya.QMessageBox.Ok)
 
 #################################################################################
 #                SiEPIC Class Extension of Layout Class                         #

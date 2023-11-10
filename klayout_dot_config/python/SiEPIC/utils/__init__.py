@@ -49,10 +49,13 @@ pointlist_to_path
 
 '''
 
+import pya
+
+'''
 from .. import _globals
 if _globals.Python_Env == "KLayout_GUI":
     import pya
-
+'''
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html
 # Python 2: iterator.next()
@@ -275,10 +278,13 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
-    lv = pya.Application.instance().main_window().current_view()
+    try:
+        lv = pya.Application.instance().main_window().current_view()
+    except:
+        lv = None
+
     if lv == None:
         # no layout open; return a default technology
-        print("No view selected")
         technology['dbu'] = 0.001
         technology['technology_name'] = technology_name
         
