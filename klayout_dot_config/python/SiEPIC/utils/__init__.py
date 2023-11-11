@@ -658,6 +658,7 @@ def get_layout_variables():
     if cell == None:
         raise UserWarning("No cell. Make sure you have an open layout.")
 
+    ly.TECHNOLOGY = TECHNOLOGY
     return TECHNOLOGY, lv, ly, cell
 
 

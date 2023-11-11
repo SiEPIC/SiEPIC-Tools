@@ -1020,6 +1020,7 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
     Units: input can be float for microns, or int for nm
     '''
 
+
     from SiEPIC.extend import to_itype
     from pya import Point, DPoint
     import numpy
@@ -1034,6 +1035,10 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
 #    print(type(center[0]))
     if type(center) == type(Point()) or type(center) == type(DPoint()):
         center = [center.x, center.y]
+
+    if type(w) != type(center[0]):
+        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
+
     if type(center[0]) == type(float()) or type(center[0]) == type(numpy.float64()):
         center[0] = to_itype(center[0], dbu)
         center[1] = to_itype(center[1], dbu)
