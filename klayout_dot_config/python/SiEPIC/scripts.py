@@ -31,6 +31,8 @@ measurement_vs_simulation
 resize waveguide
 replace_cell
 svg_from_cell
+zoom_out: When running in the GUI, Zoom out and show full hierarchy
+
 '''
 
 
@@ -3533,3 +3535,18 @@ def svg_from_cell(verbose=True):
   response = message.exec_()
   
 
+def zoom_out(topcell):
+    '''When running in the GUI, Zoom out and show full hierarchy
+    '''
+    from SiEPIC._globals import Python_Env
+    if Python_Env == "KLayout_GUI":   
+        # get the Layout View
+        mw = pya.Application().instance().main_window()
+        lv = mw.current_view()
+        # Zoom out
+        lv.clear_object_selection()
+        lv.zoom_fit()
+        # Show all cell hierarchy
+        lv.max_hier()
+    else:
+        return
