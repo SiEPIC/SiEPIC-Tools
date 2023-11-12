@@ -688,7 +688,7 @@ Electrical Pins have:
 
 def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     if verbose:
-        print("SiEPIC.extend.find_pins()")
+        print("SiEPIC.extend(cell).find_pins()")
 
     from .core import Pin
     from . import _globals
@@ -1696,12 +1696,18 @@ def find_pins(self, verbose=False):
     if verbose:
         print("Instance.find_pins, self: %s" % self)
         print("Instance.find_pins, cplx_trans: %s" % self.cplx_trans)
+    found_pins, _ = self.cell.find_pins(verbose)
     return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)[0]]
 
 # find the Pin's Point, whose name matches the input, for the given Instance
 def pinPoint(self, pin_name, verbose=False):
     from pya import Point
-    pins, _ = self.find_pins()
+    import SiEPIC.core
+    pins, _ = self.find_pins(verbose)
+    if verbose:
+        print("Instance.pinPoint, pins: %s" % pins)
+    if type(pins) == SiEPIC.core.Pin:
+        pins = [pins]
     if pins:
         p = [ p for p in pins if (p.pin_name==pin_name)]
         if p:
