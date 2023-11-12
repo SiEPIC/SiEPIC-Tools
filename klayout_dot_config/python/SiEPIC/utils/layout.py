@@ -13,6 +13,7 @@ layout_waveguide
 layout_waveguide_sbend_bezier
 make_pin
 y_splitter_tree
+floorplan(topcell, x, y)
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -1210,3 +1211,17 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
         dy = dy * 2
 
     return inst_in, inst_out, cell_tree
+
+
+
+def floorplan(topcell, x, y):
+    '''Create a FloorPlan, from (0,0) to (x,y)
+    by Lukas Chrostowski, 2023, SiEPIC-Tools
+    '''
+    ly = topcell.layout()
+    cell = ly.create_cell('FloorPlan')
+    topcell.insert(pya.CellInstArray(cell.cell_index(), pya.Vector(0,0)))
+    box = pya.Box(0,0,x,y)
+    cell.shapes(ly.layer(ly.TECHNOLOGY['FloorPlan'])).insert(box)
+
+
