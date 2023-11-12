@@ -14,6 +14,8 @@ layout_waveguide_sbend_bezier
 make_pin
 y_splitter_tree
 floorplan(topcell, x, y)
+new_layout(tech, topcell_name, overwrite = False)
+
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -1225,3 +1227,41 @@ def floorplan(topcell, x, y):
     cell.shapes(ly.layer(ly.TECHNOLOGY['FloorPlan'])).insert(box)
 
 
+def new_layout(tech, topcell_name, GUI=True, overwrite = False):
+    '''Create a new layout
+    runs in GUI mode (GUI=True) or in memory only (GUI=False)    
+    in headless mode, it creates a layout object
+    in GUI mode, 
+      (overwrite = False): it creates a new Layout View
+      (overwrite = True): it clears the existing layout, 
+            only if the topcell_name matches the existing one
+    by Lukas Chrostowski, 2023, SiEPIC-Tools
+    '''
+    
+    from SiEPIC.utils import get_layout_variables, get_technology_by_name
+    from SiEPIC._globals import Python_Env
+
+    # this script can be run inside KLayout's GUI application, or
+    # or from the command line: klayout -zz -r H3LoQP.py
+    if Python_Env == "KLayout_GUI" and GUI:
+        mw = pya.Application().instance().main_window()
+        if overwrite and mw.current_view() \
+                and mw.current_view().active_cellview().layout().top_cells():
+            TECHNOLOGY, lv, ly, cell = get_layout_variables()
+            if topcell_name in [n.name for n in ly.top_cells()]:
+                # only overwrite if the layout has a matching topcell name
+                ly.delete_cells([c.cell_index() for c in ly.cells('*')])
+            else:
+                ly = mw.create_layout(tech, 1).layout()
+        else:
+            ly = mw.create_layout(tech, 1).layout()
+        topcell = ly.create_cell(topcell_name)
+        lv = mw.current_view()
+        lv.select_cell(topcell.cell_index(), 0)
+    else:
+        ly = pya.Layout()
+        ly.technology_name = tech
+        topcell = ly.create_cell(topcell_name)
+    ly.TECHNOLOGY = get_technology_by_name(tech)
+
+    return topcell, ly
