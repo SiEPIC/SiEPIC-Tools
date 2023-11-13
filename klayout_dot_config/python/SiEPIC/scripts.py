@@ -3543,10 +3543,11 @@ def zoom_out(topcell):
         # get the Layout View
         mw = pya.Application().instance().main_window()
         lv = mw.current_view()
-        # Zoom out
-        lv.clear_object_selection()
-        lv.zoom_fit()
-        # Show all cell hierarchy
-        lv.max_hier()
+        if lv:
+            # Zoom out
+            lv.clear_object_selection()
+            lv.zoom_fit()
+            # Show all cell hierarchy
+            lv.max_hier()
     else:
         return
