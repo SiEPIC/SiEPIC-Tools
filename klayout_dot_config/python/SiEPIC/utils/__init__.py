@@ -322,8 +322,8 @@ These are technology specific, and located in the tech folder, named WAVEGUIDES.
 For KLayout <0.27, Look for this file for folders that contain 'tech_name'.lyt
 For KLayout 0.27+, Look in the technology folder, plus each library's folder.
 '''
-#from functools import lru_cache
-#@lru_cache(maxsize=32)
+from functools import lru_cache
+@lru_cache(maxsize=32)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     import os
     import fnmatch

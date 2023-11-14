@@ -32,6 +32,7 @@ resize waveguide
 replace_cell
 svg_from_cell
 zoom_out: When running in the GUI, Zoom out and show full hierarchy
+export_layout
 
 '''
 

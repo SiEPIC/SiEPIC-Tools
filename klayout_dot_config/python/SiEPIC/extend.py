@@ -231,15 +231,25 @@ def remove_colinear_points(self, verbose=False):
 
 
 def unique_points(self):
+    '''
+    Check the path and return only the unique points,
+    namely eliminate any duplicate points.
+
+    Lukas 2023/11: found using cProfile that previous implementation was very slow,
+    which caused waveguide generation to be slow.
+        previous: 25 ms per call
+        now: 1 ms per call
+    '''
+    
     if self.__class__ == pya.Path:
         pts = self.get_points()
     else:
         pts = self.get_dpoints()
 
     # only keep unique path points:
-    output = []
-    for pt in pts:
-        if pt not in output:
+    output = [pts[0]]
+    for pt in pts[1:]:
+        if pt != output[-1]:
             output.append(pt)
     self.points = output
     return self
