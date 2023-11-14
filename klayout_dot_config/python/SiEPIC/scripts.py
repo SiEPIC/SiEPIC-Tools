@@ -3551,3 +3551,61 @@ def zoom_out(topcell):
             lv.max_hier()
     else:
         return
+
+
+    
+def export_layout(topcell, path, filename, relative_path = '', format='oas', screenshot=False):
+    '''Export the layout, as a static file without PCells
+    runs in GUI mode or in headless mode
+    format = 'oas' for compressed OASIS, or 'gds' for GDSII
+    optionally save a screenshot
+    by Lukas Chrostowski, 2023, SiEPIC-Tools
+    '''
+
+    # Save the layout, without PCell info, for fabrication
+    save_options = pya.SaveLayoutOptions()
+    save_options.write_context_info=False  
+    if format == 'oas':
+        save_options.format='OASIS' # smaller file size
+        save_options.oasis_compression_level=10
+        save_options.oasis_permissive=True
+        extension = '.oas'
+    else:
+        save_options.format='GDS2' 
+        extension = '.gds'
+    layout = topcell.layout()
+
+    # output file
+    import os
+    file_out = os.path.join(path, relative_path, filename+extension)
+    
+    # Save the layout, from the GUI
+    success = False
+    from SiEPIC._globals import Python_Env
+    if Python_Env == "KLayout_GUI":
+        mw = pya.Application().instance().main_window()
+        lv = mw.current_view()
+        if lv:
+            cv = mw.current_view().active_cellview().index()
+            active_layout = pya.CellView.active().layout()
+            if active_layout == layout:
+                try:
+                    lv.save_as(cv, file_out, save_options)
+                    success = True
+                except:
+                    raise Exception("Problem exporting your layout, %s." % file_out)
+            if screenshot:
+                png_out = os.path.join(path, relative_path, filename+'.png')
+                try:
+                    lv.save_screenshot(png_out)
+                except:
+                    raise Exception("Problem creating screenshot, %s." % png_out)
+            
+    if not success:
+        try:
+            layout.write(file_out,save_options)
+        except:
+            try:
+                layout.write(file_out)
+            except:
+                raise Exception("Problem exporting your layout, %s." % file_out)
