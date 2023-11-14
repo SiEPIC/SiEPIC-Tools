@@ -310,10 +310,15 @@ class Component():
         if self.library and self.component:
             return (self.library.lower().replace('/','::') + "::" + self.component.lower()) in INTC_ELEMENTS
         else:
-            from .utils import get_layout_variables
-            TECHNOLOGY, lv, ly, cell = get_layout_variables()
-            return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
-          
+            from SiEPIC._globals import Python_Env
+            if Python_Env == "KLayout_GUI":
+                from .utils import get_layout_variables
+                TECHNOLOGY, lv, ly, cell = get_layout_variables()
+                return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
+            else:
+                if 'TECHNOLOGY' in dir(self.cell.layout()):
+                    TECHNOLOGY = self.cell.layout().TECHNOLOGY
+                    return ("design kits::" + TECHNOLOGY['technology_name'].lower() + "::" + self.component.lower()) in INTC_ELEMENTS
 
     def get_polygons(self, include_pins=True):
         from .utils import get_layout_variables

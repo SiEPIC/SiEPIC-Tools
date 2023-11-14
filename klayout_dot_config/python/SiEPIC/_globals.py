@@ -72,12 +72,12 @@ WG_DEVREC_SPACE = 1
 PATH_SNAP_PIN_MAXDIST = 20
 
     
+INTC_ELEMENTS = ''
 if Python_Env == "KLayout_GUI":
     # Load INTC element library details KLayout application data path
     import os
     path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
     path = os.path.join(path, "Lumerical_INTC_CMLs.txt")
-    INTC_ELEMENTS = ''
     if os.path.exists(path):
         print('loading Lumerical_INTC_CMLs.txt')
         fh = open(path, "r")
