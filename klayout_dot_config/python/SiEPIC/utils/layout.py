@@ -1029,8 +1029,8 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
     import numpy
     dbu = cell.layout().dbu
 
-    if type(w) != type(center[0]):
-        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
+#    if type(w) != type(center[0]):
+#        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
 
     if type(w) == type(float()):
         w = to_itype(w, dbu)
