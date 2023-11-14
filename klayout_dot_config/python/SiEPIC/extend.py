@@ -680,23 +680,24 @@ def print_parameter_values(self):
     for key in params.keys():
         print("Parameter: %s, Value: %s" % (key, params[key]) )
 
-'''
-Optical Pins have:
- 1) path on layer PinRec, indicating direction (out of component)
- 2) text on layer PinRec, inside the path
-Electrical Pins have:
- 1) path on layer PinRecM, indicating direction (out of component)
- 2) text on layer PinRecM, inside the path
-
-Old version:
-Electrical Pins have:
- 1) box on layer PinRec
- 2) text on layer PinRec, inside the box
-
-'''
 
 
 def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
+    '''
+    Find Pins in a Cell.
+    Optical Pins have:
+     1) path on layer PinRec, indicating direction (out of component)
+     2) text on layer PinRec, inside the path
+    Electrical Pins have:
+     1) path on layer PinRecM, indicating direction (out of component)
+     2) text on layer PinRecM, inside the path
+    
+    Old version:
+    Electrical Pins have:
+     1) box on layer PinRec
+     2) text on layer PinRec, inside the box
+    '''
+
     if verbose:
         print("SiEPIC.extend(cell).find_pins()")
 
@@ -729,6 +730,10 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
         #      print(it.shape().to_s())
         # Assume a PinRec Path is an optical pin
         if it.shape().is_path():
+            
+            if it.shape().cell.name != self.name:
+                if verbose:
+                    print('%s not %s' % (it.shape().cell.name, self.name) )
             if verbose:
                 print("Path: %s" % it.shape())
             # get the pin path
@@ -742,15 +747,15 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
                 if iter2.shape().is_text():
                     pin_name = iter2.shape().text.string
                 iter2.next()
+                if pin_name and pin_path.num_points()==2:
+                  # Store the pin information in the pins array
+                  pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
             if pin_name == None or pin_path.num_points()!=2:
                 print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
                 error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name.\n" %
                                (pin_path, subcell.name))
                 pin_errors.append ([pin_path, subcell]) 
-#        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
-            else:
-              # Store the pin information in the pins array
-              pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+                #        raise Exception("Invalid pin Path detected: %s, in Cell: %s.\nOptical Pins must have a pin name." % (pin_path, subcell.name))
 
         # Assume a PinRec Box is an electrical pin
         # similar to optical pin
@@ -993,11 +998,11 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                 iter3.next()
                 
             if num_devrec > 1:
-                print(' * Warning: cell (%s) contains multiple (%s) DevRec layers, suggesting that a cell was flattened or contains subcells with DevRec layers.' % (instance, num_devrec))
-                # Save the flattened component into the components list
-                components.append(Component(component="Flattened", basic_name="Flattened",
-                                            idx=idx, polygon=polygon, trans=iter1.trans()))
-            else:
+                print(' * Warning: cell (%s) contains multiple (%s) DevRec layers, suggesting that a cell contains subcells with DevRec layers.' % (instance, num_devrec))
+#                # Save the flattened component into the components list
+#                components.append(Component(component="Flattened", basic_name="Flattened",
+#                                            idx=idx, polygon=polygon, trans=iter1.trans()))
+            if 1:
                 '''
                 # the following doesn't work hierarchically... problem:
                 print('inst:')
@@ -1706,8 +1711,8 @@ def find_pins(self, verbose=False):
     if verbose:
         print("Instance.find_pins, self: %s" % self)
         print("Instance.find_pins, cplx_trans: %s" % self.cplx_trans)
-    found_pins, _ = self.cell.find_pins(verbose)
-    return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)[0]]
+    found_pins, errors = self.cell.find_pins(verbose)
+    return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)[0]], errors
 
 # find the Pin's Point, whose name matches the input, for the given Instance
 def pinPoint(self, pin_name, verbose=False):
@@ -1729,7 +1734,9 @@ def pinPoint(self, pin_name, verbose=False):
         return Point(0,0)
 
 def find_pin(self, pin_name, verbose=False):
+
     pins, _ = self.find_pins()
+
     if pins:
         p = [ p for p in pins if (p.pin_name==pin_name)]
         if p:

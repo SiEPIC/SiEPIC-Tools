@@ -49,6 +49,10 @@ pointlist_to_path
 
 '''
 
+from SiEPIC._globals import Python_Env
+if Python_Env == "KLayout_GUI":
+    from . import components
+
 import pya
 
 '''

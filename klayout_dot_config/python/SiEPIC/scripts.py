@@ -1591,8 +1591,8 @@ def snap_component():
                 # we have two instances, we can snap them together:
 
                 # Find the pins within the two cell instances:
-                pins_transient = o_transient.inst().find_pins(verbose=True)
-                pins_selection = o_selection.inst().find_pins(verbose=True)
+                pins_transient = o_transient.inst().find_pins(verbose=True)[0]
+                pins_selection = o_selection.inst().find_pins(verbose=True)[0]
                 print("all pins_transient (x,y): %s" %
                       [[point.x, point.y] for point in [pin.center for pin in pins_transient]])
                 print("all pins_selection (x,y): %s" %
