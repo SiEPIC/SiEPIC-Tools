@@ -200,6 +200,8 @@ def curve_length(curve, t0=0, t1=1):
             return 0
 
 
+from functools import lru_cache
+@lru_cache(maxsize=None)
 def _bezier_optimal(angle0, angle3):
     """ This is a reduced problem of the bezier connection.
 

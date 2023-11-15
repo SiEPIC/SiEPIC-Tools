@@ -21,6 +21,15 @@
 import pya
 from SiEPIC import verification
 
-verification.layout_check(verbose=True, GUI=True)
+#verification.layout_check(verbose=True, GUI=True)
+
+import cProfile
+cProfile.run('verification.layout_check(verbose=False, GUI=True)','/tmp/restats')
+import pstats
+from pstats import SortKey
+p = pstats.Stats('/tmp/restats')
+p.sort_stats(SortKey.CUMULATIVE).print_stats(20)
+p.sort_stats(SortKey.TIME).print_stats(20)
+
 </text>
 </klayout-macro>
