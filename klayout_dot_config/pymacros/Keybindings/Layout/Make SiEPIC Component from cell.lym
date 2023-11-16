@@ -93,6 +93,7 @@ if Python_Env == "KLayout_GUI":
             v = pya.MessageBox.warning(
                 "No selection", "The selected object must be an instance of a cell (not primitive polygons)", pya.MessageBox.Ok)
         else:    
+            app = pya.QApplication.instance()
             window = Window()
             window.show()
         
