@@ -98,7 +98,7 @@ def create_device_PinRec(cell, ports, devrec, verbose=False):
     from SiEPIC.utils.layout import make_pin
 
     deviceonly_layers_ids = get_deviceonly_layers(cell, verbose)
-    LayerPinRecN = cell.layout().layer(layout.TECHNOLOGY['PinRec'])
+    LayerPinRecN = cell.layout().layer(cell.layout().TECHNOLOGY['PinRec'])
 
     # make Region from all device shapes
     region = pya.Region()
@@ -108,7 +108,8 @@ def create_device_PinRec(cell, ports, devrec, verbose=False):
             print("   - Shape: %s" % iter1.shape())
         region += pya.Region(iter1)
         iter1.next()        
-
+    region = region.merged()
+    
     if verbose:
         print("   - Region: %s" % region)
 
@@ -157,9 +158,19 @@ def cell_to_component(cell, ports = ['L','R'], verbose=False):
         print('SiEPIC.utils.components.cell_to_component')
         print(' cell: %s' % cell.name)
         print(' ports: %s' % ports)
+
+    # this script can be run inside KLayout's GUI application, or
+    # or from the command line: klayout -zz -r H3LoQP.py
+    from SiEPIC._globals import Python_Env
+    if Python_Env == "KLayout_GUI":
+        lv = pya.Application.instance().main_window().current_view()
+        lv.transaction("Cell to SiEPIC Component")        
         
     devrec = create_device_DevRec(cell, ports, verbose)
     pinrec = create_device_PinRec(cell, ports, devrec, verbose)
+
+    if Python_Env == "KLayout_GUI":
+        lv.commit()
 
 
 if __name__ == "__main__":
