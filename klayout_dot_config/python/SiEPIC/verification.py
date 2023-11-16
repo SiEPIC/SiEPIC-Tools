@@ -7,7 +7,7 @@ by Lukas Chrostowski, 2023
 '''
 
 
-def layout_check(cell=None, verbose=False, GUI=False):
+def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     '''Functional Verification:
     Verification of things that are specific to photonic integrated circuits, including
     - Waveguides: paths, radius, bend points, Manhattan
@@ -44,6 +44,13 @@ def layout_check(cell=None, verbose=False, GUI=False):
 
     if verbose:
         print("*** layout_check()")
+
+    if timing:
+        print("*** layout_check(), timing. ")
+        from time import time
+        t = time()
+        # print('Time elapsed: %s' % (time() - t))    
+
         
     import pya
     try:
@@ -97,6 +104,10 @@ def layout_check(cell=None, verbose=False, GUI=False):
             return
         else:
             raise Exception("No components found (using SiEPIC-Tools DevRec and PinRec definitions). Cannot perform Verification.")
+
+    if timing:
+        print("*** layout_check(), timing; done nets (%s), components (%s) " % (len(nets), len(components)))
+        print('    Time elapsed: %s' % (time() - t))    
 
 
     # Create a Results Database
@@ -207,6 +218,10 @@ def layout_check(cell=None, verbose=False, GUI=False):
         if verbose:
             print('  No DFT rules found.')
 
+    if timing:
+        print("*** layout_check(), timing; done DFT")
+        print('    Time elapsed: %s' % (time() - t))    
+
     paths = find_paths(TECHNOLOGY['Waveguide'], cell=cell)
     for p in paths:
         if verbose:
@@ -216,6 +231,10 @@ def layout_check(cell=None, verbose=False, GUI=False):
         if Dpath.num_points() > 2:
             rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_path.rdb_id())
             rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
+
+    if timing:
+        print("*** layout_check(), timing; done invalid Waveguide paths")
+        print('    Time elapsed: %s' % (time() - t))    
 
     '''
     check for invalid pins
@@ -230,6 +249,10 @@ def layout_check(cell=None, verbose=False, GUI=False):
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_pinerrors.rdb_id())
                 rdb_item.add_value(pya.RdbItemValue(p[0].polygon().to_dtype(dbu)))
                 # .transformed(p[1].to_trans().to_itrans(dbu))
+
+    if timing:
+        print("*** layout_check(), timing; done invalid pins ")
+        print('    Time elapsed: %s' % (time() - t))    
 
     
 
@@ -246,7 +269,6 @@ def layout_check(cell=None, verbose=False, GUI=False):
         - substract the two lists, and produce errors
     rdb_cat_id_comp_shapesoutside
     '''
-    
     from SiEPIC.utils import load_Verification
     verification = load_Verification()
     if verification:
@@ -257,34 +279,61 @@ def layout_check(cell=None, verbose=False, GUI=False):
         except:
             deviceonly_layers = [ [1,0] ]
         deviceonly_layers_ids = [ly.find_layer(*l) for l in deviceonly_layers if ly.find_layer(*l) is not None]
-
-    if verbose:
-        print(" - checking that shapes are inside components" )
-
-
-    # get cells for all components
-    cells_components = []
-    for i in range(0, len(components)):
-        cells_components.append ( components[i].cell )
-    
-    # get shapes from layout that aren't part of the component cells
-    # layout.layer_indexes() 
-    iter1 = pya.RecursiveShapeIterator(ly, cell, deviceonly_layers_ids )
-    iter1.unselect_cells([c.cell_index() for c in cells_components if c is not None] )
-    extra_shapes = []
-    while not iter1.at_end():
-        extra_shapes.append([iter1.shape(), iter1.itrans()])
-        iter1.next()
-    if verbose:
-        print(" - found %s shape(s) not belonging to components " % len(extra_shapes) )
+        # print(deviceonly_layers_ids)
+        if verbose:
+            print(" - checking that shapes are inside components" )
+      
+        # get cells for all components
+        cells_components = []
+        for i in range(0, len(components)):
+            cells_components.append ( components[i].cell )
+        
+        # get shapes from layout that aren't part of the component cells
+        if verbose:
+            # display all shapes
+            iter1 = pya.RecursiveShapeIterator(ly, cell, deviceonly_layers_ids )
+            while not iter1.at_end():
+                print("   - %s" % iter1.shape())
+                iter1.next()        
+        iter1 = pya.RecursiveShapeIterator(ly, cell, deviceonly_layers_ids )
+        iter1.unselect_cells([c.cell_index() for c in cells_components if c is not None] )
+        extra_shapes = []
+        while not iter1.at_end():
+            # make sure the list has unique elements
+            if [iter1.shape(), iter1.itrans()] not in extra_shapes:
+                extra_shapes.append([iter1.shape(), iter1.itrans()])
+            iter1.next()
+        if verbose:
+            print(" - found %s shape(s) not belonging to components " % len(extra_shapes) )
+            for e in extra_shapes:
+                print( "   - %s, %s" % (e[0], e[1]) )
+        # add shapes into the results database
         for e in extra_shapes:
-            print( "   - %s, %s" % (e[0], e[1]) )
+            if e[0].dpolygon:
+                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_shapesoutside.rdb_id())
+                rdb_item.add_value(pya.RdbItemValue(e[0].dpolygon.transformed(e[1].to_trans().to_itrans(dbu))))
 
-    for e in extra_shapes:
-        if e[0].dpolygon:
-            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_shapesoutside.rdb_id())
-            rdb_item.add_value(pya.RdbItemValue(e[0].dpolygon.transformed(e[1].to_trans().to_itrans(dbu))))
-    
+    if timing:
+        print("*** layout_check(), timing; done shapes in component ")
+        print('    Time elapsed: %s' % (time() - t))    
+
+
+    # Experimental, attempt to break up the circuit into regions connected by DevRec layers
+    region = pya.Region()
+    for i in range(0, len(components)):
+        c = components[i]
+        region += pya.Region(c.polygon)
+    print ('DevRec Regions: original %s, merged %s' % (region.count(), region.merge().count()))
+    '''
+    Approach: create lists of components for each merged region, then do the verification on a per-merged-region basis
+    reduce the O(n**2) to O((n/10)**2)  (assuming on average 10 components per circuit)
+    '''
+
+    if timing:
+        print("*** layout_check(), timing; counting merged DevRec regions")
+        print('    Time elapsed: %s' % (time() - t))    
+
+        
     '''
     Component checks:
     '''
@@ -337,6 +386,7 @@ def layout_check(cell=None, verbose=False, GUI=False):
         # Region: put in two DevRec polygons (in raw), measure area, merge, check if are is the same
         #  checks for touching but not overlapping DevRecs
         for i2 in range(i + 1, len(components)):
+            
             c2 = components[i2]
             r1 = pya.Region(c.polygon)
             r2 = pya.Region(c2.polygon)
@@ -369,11 +419,15 @@ def layout_check(cell=None, verbose=False, GUI=False):
 
         # Pre-simulation check: do components have models?
         # disabled by lukasc, 2021/05
-        if not c.has_model() and 0:
+        if 0 and not c.has_model():
             if verbose:
                 print(" - Missing compact model, for component: %s" % (c.component))
             rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_sim_nomodel.rdb_id())
             rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
+
+    if timing:
+        print("*** layout_check(), timing; done components check ")
+        print('    Time elapsed: %s' % (time() - t))    
 
     if DFT:
         # DFT verification
@@ -512,6 +566,10 @@ def layout_check(cell=None, verbose=False, GUI=False):
 
         # GC spacing between separate GC circuits (to avoid measuring the wrong one)
 
+    if timing:
+        print("*** layout_check(), timing; done DFT ")
+        print('    Time elapsed: %s' % (time() - t))    
+
     for n in nets:
         # Verification: optical pin width mismatches
         if n.type == _globals.PIN_TYPES.OPTICAL and not n.idx == None:
@@ -525,6 +583,10 @@ def layout_check(cell=None, verbose=False, GUI=False):
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_mismatchedpin.rdb_id())
                 rdb_item.add_value(pya.RdbItemValue( "Pin widths: %s, %s" % (pin_paths[0].width, pin_paths[-1].width)  ))
                 rdb_item.add_value(pya.RdbItemValue(polygon_merged.to_dtype(dbu)))
+
+    if timing:
+        print("*** layout_check(), timing; done pin mismatch ")
+        print('    Time elapsed: %s' % (time() - t))    
 
     # displays results in Marker Database Browser, using Results Database (rdb)
     if rdb.num_items() > 0:
@@ -557,6 +619,9 @@ def layout_check(cell=None, verbose=False, GUI=False):
     shape = cell.shapes(LayerTextN).insert(text)
     shape.text_size = 0.1 / dbu
 
+    if timing:
+        print("*** layout_check(), timing; all done. ")
+        print('    Time elapsed: %s' % (time() - t))    
 
 if __name__ == "__main__":
     print('SiEPIC-Tools functional verification')

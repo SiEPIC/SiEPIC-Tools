@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <salt-grain>
  <name>siepic_tools</name>
- <version>0.4.3</version>
+ <version>0.4.7</version>
  <api-version>0.27</api-version>
  <title>SiEPIC Tools</title>
  <doc>Tools for designing Silicon Photonic Integrated Circuits, including waveguides, component simulations, functional verification, Calibre DRC verification, netlist extraction, circuit simulations. Framework and examples for creating layouts using scripts. Includes a generic PDK (GSiP). Other PDKs are installed separately, and depend on SiEPIC-Tools.</doc>

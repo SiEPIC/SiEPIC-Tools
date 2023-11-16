@@ -13,6 +13,9 @@ layout_waveguide
 layout_waveguide_sbend_bezier
 make_pin
 y_splitter_tree
+floorplan(topcell, x, y)
+new_layout(tech, topcell_name, overwrite = False)
+
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -374,7 +377,7 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
     if 'Errors' in TECHNOLOGY:
         error_layer = layout.layer(TECHNOLOGY['Errors'])
     else:
-        error_layer = None
+        error_layer = layout.layer('999/0')
 
     width = widths[0]
     turn = 0
@@ -388,8 +391,8 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
         it = iter(range(1, len(pts)-1))
         for i in it:
             turn = ((angle_b_vectors(pts[i]-pts[i-1], pts[i+1]-pts[i])+90) % 360-90)/90
-            dis1 = pts[i].distance(pts[i-1])
-            dis2 = pts[i].distance(pts[i+1])
+            dis1 = pts[i].distance(pts[i-1]) # before the "jog"
+            dis2 = pts[i].distance(pts[i+1]) # the "jog"
             angle = angle_vector(pts[i]-pts[i-1])/90
             pt_radius = to_itype(radius, dbu)
             error_seg1 = False
@@ -399,14 +402,15 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             if (sbends) and i < len(pts)-2:
                 angle2 = angle_vector(pts[i+2]-pts[i+1])/90
                 if angle == angle2 and dis2<2*pt_radius:  # An SBend may be inserted
-                    dis3 = pts[i+2].distance(pts[i+1])
+                    dis3 = pts[i+2].distance(pts[i+1]) # after the "jog"
                     h = pts[i+1].y- pts[i].y if not (angle%2) else pts[i+1].x- pts[i].x
                     theta = m.acos(float(pt_radius-abs(h/2))/pt_radius)*180/pi
-                    curved_l = int(2*pt_radius*sin(theta/180.0*pi))                  
-                    if (i > len(pts)-3 or i<3) and (dis1 < curved_l/2 or dis3 < curved_l/2): pass# Check if there is partial clearance for the bend when there is an end near
-                    elif (dis1 - pt_radius) < curved_l/2 or (dis3 - pt_radius) < curved_l/2: pass # Check if there is full clearance for the bend
+                    curved_l = int(2*pt_radius*sin(theta/180.0*pi))  
+                    if (i < 3 and dis1 < curved_l/2) or (i > len(pts)-4 and dis3 < curved_l/2): 
+                        pass    # Check if there is partial clearance for the bend when there is an end near
+                    elif (i >= 3 and (dis1 - pt_radius < curved_l/2)) or (i <= len(pts)-4 and (dis3 - pt_radius < curved_l/2)): 
+                        pass    # Check if there is full clearance for the bend
                     else:
-                      
                       if not (angle%2):
                         t = pya.Trans(angle, (angle == 2), pts[i].x+(angle-1)*int(curved_l/2), pts[i].y)  
                       else:
@@ -414,7 +418,21 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                       bend_pts = pya.DPath(bezier_parallel(pya.DPoint(0, 0), pya.DPoint(curved_l*dbu, h*dbu), 0),0).to_itype(dbu).transformed(t)
                       wg_pts += bend_pts.each_point()
                       turn = 0
-                      i = next(it) #skip the step that was replaced by the SBend
+                      
+                      # Mark the start of the SBend with an "s"
+                      tt = pya.Trans(pya.Trans.R0, 0,0)
+                      text = pya.Text ("s", tt).transformed(t)
+                      text.halign = pya.HAlign(1)
+                      text.valign = pya.VAlign(1)
+                      cell.shapes(layout.layer(TECHNOLOGY['Text'])).insert(text).text_size = 3/dbu
+                      # Mark the start of the SBend with an "s"
+                      tt = pya.Trans(pya.Trans.R0, curved_l, h)
+                      text = pya.Text ("s", tt).transformed(t)
+                      text.halign = pya.HAlign(1)
+                      text.valign = pya.VAlign(1)
+                      cell.shapes(layout.layer(TECHNOLOGY['Text'])).insert(text).text_size = 3/dbu
+                      
+                      i = next(it) # skip the step that was replaced by the SBend
                       continue
                         
             # determine the radius, based on how much space is available
@@ -806,7 +824,7 @@ def layout_taper(cell, layer, trans, w1, w2, length, insert=True):
         return shape_taper
 
 
-def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True):
+def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True, debug=False):
     """ Creates a waveguide s-bend using a bezier curve
     Author: Lukas Chrostowski
     Args:
@@ -1020,10 +1038,15 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
     Units: input can be float for microns, or int for nm
     '''
 
+
     from SiEPIC.extend import to_itype
     from pya import Point, DPoint
     import numpy
     dbu = cell.layout().dbu
+
+#    if type(w) != type(center[0]):
+#        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
+
     if type(w) == type(float()):
         w = to_itype(w, dbu)
         if debug:
@@ -1034,6 +1057,7 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
 #    print(type(center[0]))
     if type(center) == type(Point()) or type(center) == type(DPoint()):
         center = [center.x, center.y]
+
     if type(center[0]) == type(float()) or type(center[0]) == type(numpy.float64()):
         center[0] = to_itype(center[0], dbu)
         center[1] = to_itype(center[1], dbu)
@@ -1205,3 +1229,55 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
         dy = dy * 2
 
     return inst_in, inst_out, cell_tree
+
+
+
+def floorplan(topcell, x, y):
+    '''Create a FloorPlan, from (0,0) to (x,y)
+    by Lukas Chrostowski, 2023, SiEPIC-Tools
+    '''
+    ly = topcell.layout()
+    cell = ly.create_cell('FloorPlan')
+    topcell.insert(pya.CellInstArray(cell.cell_index(), pya.Vector(0,0)))
+    box = pya.Box(0,0,x,y)
+    cell.shapes(ly.layer(ly.TECHNOLOGY['FloorPlan'])).insert(box)
+
+
+def new_layout(tech, topcell_name, GUI=True, overwrite = False):
+    '''Create a new layout
+    runs in GUI mode (GUI=True) or in memory only (GUI=False)    
+    in headless mode, it creates a layout object
+    in GUI mode, 
+      (overwrite = False): it creates a new Layout View
+      (overwrite = True): it clears the existing layout, 
+            only if the topcell_name matches the existing one
+    by Lukas Chrostowski, 2023, SiEPIC-Tools
+    '''
+    
+    from SiEPIC.utils import get_layout_variables, get_technology_by_name
+    from SiEPIC._globals import Python_Env
+
+    # this script can be run inside KLayout's GUI application, or
+    # or from the command line: klayout -zz -r H3LoQP.py
+    if Python_Env == "KLayout_GUI" and GUI:
+        mw = pya.Application().instance().main_window()
+        if overwrite and mw.current_view() \
+                and mw.current_view().active_cellview().layout().top_cells():
+            TECHNOLOGY, lv, ly, cell = get_layout_variables()
+            if topcell_name in [n.name for n in ly.top_cells()]:
+                # only overwrite if the layout has a matching topcell name
+                ly.delete_cells([c.cell_index() for c in ly.cells('*')])
+            else:
+                ly = mw.create_layout(tech, 1).layout()
+        else:
+            ly = mw.create_layout(tech, 1).layout()
+        topcell = ly.create_cell(topcell_name)
+        lv = mw.current_view()
+        lv.select_cell(topcell.cell_index(), 0)
+    else:
+        ly = pya.Layout()
+        ly.technology_name = tech
+        topcell = ly.create_cell(topcell_name)
+    ly.TECHNOLOGY = get_technology_by_name(tech)
+
+    return topcell, ly

@@ -155,7 +155,7 @@ def registerKeyBindings():
     pya.Application.instance().set_config('edit-snap-to-objects', 'true')
     pya.Application.instance().set_config('grid-micron', '0.01')
     pya.Application.instance().set_config('edit-top-level-selection', 'true')
-    pya.Application.instance().set_config('inst-color', '#ffcdcd')
+    pya.Application.instance().set_config('inst-color', '#800000')
     pya.Application.instance().set_config('text-font', '3')
     pya.Application.instance().set_config('guiding-shape-line-width', '0')
     pya.Application.instance().set_config('rdb-marker-color', '#ff0000')

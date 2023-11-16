@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Make SiEPIC Component from cell</description>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name/>
+ <menu-path>siepic_menu.layout.end</menu-path>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text># Make SiEPIC Component from cell
+
+from SiEPIC._globals import Python_Env
+if Python_Env == "KLayout_GUI":
+    
+    
+    from SiEPIC.utils.components import cell_to_component
+    
+    from SiEPIC.utils import get_layout_variables
+    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    print(ly.TECHNOLOGY)
+    
+    class Window(pya.QWidget):
+        def __init__(self, parent=None):
+            super(Window, self).__init__()
+            
+            mainLayout = pya.QVBoxLayout(self)
+            self.setLayout(mainLayout)
+        
+    #        info = QVBoxLayout(self)
+    #        i = QGraphicsTextItem("info", self)
+            
+            layout = QVBoxLayout(self)
+            self.ckBox_left = QCheckBox("Ports on the left side", self)
+            layout.addWidget(self.ckBox_left)
+            self.ckBox_right = QCheckBox("Ports on the right side", self)
+            layout.addWidget(self.ckBox_right)
+            self.ckBox_top = QCheckBox("Ports on the top side", self)
+            layout.addWidget(self.ckBox_top)
+            self.ckBox_bottom = QCheckBox("Ports on the bottom side", self)
+            layout.addWidget(self.ckBox_bottom)
+    
+            buttonsLayout = QHBoxLayout(self);
+            ok = pya.QPushButton("OK",self)
+            ok.clicked(self.ok)
+            cancel = pya.QPushButton("Cancel",self)
+            cancel.clicked(self.cancel)
+            buttonsLayout.addWidget(cancel)
+            buttonsLayout.addWidget(ok)
+        
+    #        mainLayout.addLayout(info)
+            mainLayout.addLayout(layout)
+            mainLayout.addLayout(buttonsLayout)
+    
+        def cancel(self, val):
+            self.close()
+    
+        def ok(self, val):
+            self.close()
+            ports=[]
+            if self.ckBox_left.checkState == Qt_CheckState(2):
+                ports.append('L')
+            if self.ckBox_right.checkState == Qt_CheckState(2):
+                ports.append('R')
+            if self.ckBox_top.checkState == Qt_CheckState(2):
+                ports.append('T')
+            if self.ckBox_bottom.checkState == Qt_CheckState(2):
+                ports.append('B')
+    
+    
+            cell = o_selection.inst().cell
+            print(' cell: %s' % cell.name)
+            print(' ports: %s' % ports)
+            cell_to_component(cell, ports, verbose=True)
+    
+    
+    # Find the selected objects
+    o_selection = lv.object_selection   # returns ObjectInstPath[].
+    
+    if len(o_selection) != 1:
+        v = pya.MessageBox.warning(
+            "No selection", "Select one cell you wish to have turned into a SiEPIC Component, with the DevRec and PinRec layers added.\nRead more about component requirements: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout.", pya.MessageBox.Ok)
+    else:
+        o_selection = o_selection[0]
+        if o_selection.is_cell_inst() == False:
+            v = pya.MessageBox.warning(
+                "No selection", "The selected object must be an instance of a cell (not primitive polygons)", pya.MessageBox.Ok)
+        else:    
+            window = Window()
+            window.show()
+        
+    
+</text>
+</klayout-macro>

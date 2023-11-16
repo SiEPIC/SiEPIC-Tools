@@ -49,10 +49,17 @@ pointlist_to_path
 
 '''
 
+from SiEPIC._globals import Python_Env
+if Python_Env == "KLayout_GUI":
+    from . import components
+
+import pya
+
+'''
 from .. import _globals
 if _globals.Python_Env == "KLayout_GUI":
     import pya
-
+'''
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html
 # Python 2: iterator.next()
@@ -86,7 +93,7 @@ SiEPIC.utils.get_technology_by_name('EBeam')
 
 # Returns a list of library names associated to the given technology name
 #from functools import lru_cache
-#@lru_cache(maxsize=32)
+#@lru_cache(maxsize=None)
 def get_library_names(tech_name, verbose=False):
     if verbose:
         print("get_library_names()")
@@ -122,7 +129,7 @@ def get_library_names(tech_name, verbose=False):
     return library_names
 
 from functools import lru_cache
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=None)
 def get_technology_by_name(tech_name, verbose=False):
     if verbose:
         print("get_technology_by_name()")
@@ -275,10 +282,13 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
-    lv = pya.Application.instance().main_window().current_view()
+    try:
+        lv = pya.Application.instance().main_window().current_view()
+    except:
+        lv = None
+
     if lv == None:
         # no layout open; return a default technology
-        print("No view selected")
         technology['dbu'] = 0.001
         technology['technology_name'] = technology_name
         
@@ -316,8 +326,8 @@ These are technology specific, and located in the tech folder, named WAVEGUIDES.
 For KLayout <0.27, Look for this file for folders that contain 'tech_name'.lyt
 For KLayout 0.27+, Look in the technology folder, plus each library's folder.
 '''
-#from functools import lru_cache
-#@lru_cache(maxsize=32)
+from functools import lru_cache
+@lru_cache(maxsize=None)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     import os
     import fnmatch
@@ -652,6 +662,7 @@ def get_layout_variables():
     if cell == None:
         raise UserWarning("No cell. Make sure you have an open layout.")
 
+    ly.TECHNOLOGY = TECHNOLOGY
     return TECHNOLOGY, lv, ly, cell
 
 
@@ -838,7 +849,7 @@ def angle_trunc(a, trunc):
 # Calculate the recommended number of points in a circle, based on
 # http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
 from functools import lru_cache
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=None)
 def points_per_circle(radius, dbu=None):
     # radius in microns
     from math import acos, pi, ceil
@@ -855,7 +866,7 @@ def points_per_circle(radius, dbu=None):
 
 
 from functools import lru_cache
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=None)
 def arc(r, theta_start, theta_stop):
     # function to draw an arc of waveguide
     # radius: radius
@@ -880,7 +891,7 @@ def arc(r, theta_start, theta_stop):
     return pts
 
 from functools import lru_cache
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=None)
 def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # radius: radius
@@ -908,7 +919,7 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
 
 
 from functools import lru_cache
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=None)
 def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # radius: radius
@@ -940,7 +951,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
 
 
 from functools import lru_cache
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=None)
 def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     # function to draw an arc of waveguide
     # x, y: location of the origin
@@ -975,7 +986,7 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 # degrees, this is currently only implemented for 90 degree bends
 # Radius in Database units (dbu)
 from functools import lru_cache
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=None)
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle

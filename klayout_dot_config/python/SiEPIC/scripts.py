@@ -31,6 +31,9 @@ measurement_vs_simulation
 resize waveguide
 replace_cell
 svg_from_cell
+zoom_out: When running in the GUI, Zoom out and show full hierarchy
+export_layout
+
 '''
 
 
@@ -225,6 +228,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     if verbose:
         print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
         print('componentA: %s, componentB: %s' % (componentA, componentB) )
+
         componentA.display()
         componentB.display()
         
@@ -252,14 +256,30 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
             cpinA = [instanceA.find_pin(pinA)]
         except:
-            raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
+              error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentA (%s). Available pins: %s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins])
+              if _globals.Python_Env == "KLayout_GUI":
+                question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
+                question.setText("SiEPIC-Tools scripted layout, requested pin not found")
+                question.setInformativeText(error_message)
+                pya.QMessageBox_StandardButton(question.exec_())
+                return
+              else:          
+                raise Exception(error_message)
     if cpinB==[]:
         try:  
             # this checks if the cell (which could contain multiple components) 
             # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
             cpinB = [instanceB.find_pin(pinB)]
         except:
-            raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinB,componentB.component))
+              error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentB (%s). Available pins: %s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins])
+              if _globals.Python_Env == "KLayout_GUI":
+                question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
+                question.setText("SiEPIC-Tools scripted layout, requested pin not found")
+                question.setInformativeText(error_message)
+                pya.QMessageBox_StandardButton(question.exec_())
+                return
+              else:          
+                raise Exception(error_message)
 
     cpinA=cpinA[0]
     cpinB=cpinB[0]
@@ -485,19 +505,23 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     if not path.is_manhattan():
         print('Turtle directions: %s, %s' % (directionB, directionA))
         print('Points A, B: %s, %s' % (pya.DPath(points_fromA,0).to_s(), pya.DPath(points_fromB,0).to_s()))
-        cell.shapes(1).insert(path)
+        cell.shapes(ly.layer(TECHNOLOGY['Errors'])).insert(path)
         print("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
 #        raise Exception("Error. Generated Path is non-Manhattan. \nTurtles are moving away from each other; can't automatically route the path.")
         return False
-    
+
+    '''
+    The Waveguide PCell's functions now return a Path on layer Error, which highlights the error
     if not path.radius_check(radius_um):
         print('Path: %s' % path)
         # draw a path for debugging purposes
-        cell.shapes(ly.layer(TECHNOLOGY['Errors'])).insert(path)
+        cell.shapes(ly.layer(TECHNOLOGY['Text'])).insert(path)
         if error_min_bend_radius:
+            cell.shapes(ly.layer(TECHNOLOGY['Errors'])).insert(path)
             raise Exception("Error. Generated Path does not meet minimum bend radius requirements.")
         else:
             pass
+    '''
     
     # generate the Waveguide PCell, and instantiate
     # Backwards compatible with Waveguides that don't use "waveguide_types"
@@ -1588,8 +1612,8 @@ def snap_component():
                 # we have two instances, we can snap them together:
 
                 # Find the pins within the two cell instances:
-                pins_transient = o_transient.inst().find_pins(verbose=True)
-                pins_selection = o_selection.inst().find_pins(verbose=True)
+                pins_transient = o_transient.inst().find_pins(verbose=True)[0]
+                pins_selection = o_selection.inst().find_pins(verbose=True)[0]
                 print("all pins_transient (x,y): %s" %
                       [[point.x, point.y] for point in [pin.center for pin in pins_transient]])
                 print("all pins_selection (x,y): %s" %
@@ -1677,6 +1701,10 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   
   '''
+  # print('SiEPIC-Tools, connect_cell: verbose = %s' %verbose)
+  
+  from . import _globals
+
   if not(instanceA):
     raise Exception("instanceA not found")
   if not(cellB):
@@ -1694,9 +1722,23 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
   if componentA==[]:
     componentA = instanceA.parent_cell.find_components(inst=instanceA)
     if componentA==[]:
-      raise Exception("Component instanceA not found")
+      if _globals.Python_Env == "KLayout_GUI":
+        question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
+        question.setText("SiEPIC-Tools scripted layout, requested component not found")
+        question.setInformativeText("Component instanceA not found: %s, %s" % (instanceA, instanceA.cell.name))
+        pya.QMessageBox_StandardButton(question.exec_())
+        return
+      else:          
+        raise Exception("Component instanceA not found")
   if componentB==[]:
-    raise Exception("Component cellB not found")
+      if _globals.Python_Env == "KLayout_GUI":
+        question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
+        question.setText("SiEPIC-Tools scripted layout, requested component not found")
+        question.setInformativeText("Component instanceA not found: %s, %s" % (instanceB, instanceB.cell.name))
+        pya.QMessageBox_StandardButton(question.exec_())
+        return
+      else:          
+        raise Exception("Component cellB not found")
 
 #  for c in componentA:
 #    if c.trans.s_trans() == instanceA.trans:
@@ -1732,14 +1774,30 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
         # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
         cpinA = [instanceA.find_pin(pinA)]
     except:
-        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinA,componentA.component))
+          error_message = "SiEPIC-Tools, in function connect_cell: Pin (%s) not found in componentA (%s). Available pins: %s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins])
+          if _globals.Python_Env == "KLayout_GUI":
+            question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
+            question.setText("SiEPIC-Tools scripted layout, requested pin not found")
+            question.setInformativeText(error_message)
+            pya.QMessageBox_StandardButton(question.exec_())
+            return
+          else:          
+            raise Exception(error_message)
   if cpinB==[]:
     try:  
         # this checks if the cell (which could contain multiple components) 
         # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
         cpinB = [cellB.find_pin(pinB)]
     except:
-        raise Exception("in function connect_cell: Pin (%s) not found in componentA (%s)" % (pinB,componentB.component))
+          error_message = "SiEPIC-Tools, in function connect_cell: Pin (%s) not found in componentB (%s). Available pins: %s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins])
+          if _globals.Python_Env == "KLayout_GUI":
+            question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
+            question.setText("SiEPIC-Tools scripted layout, requested pin not found")
+            question.setInformativeText(error_message)
+            pya.QMessageBox_StandardButton(question.exec_())
+            return
+          else:          
+            raise Exception(error_message)
 
 
   if cpinA==[]:
@@ -3533,3 +3591,77 @@ def svg_from_cell(verbose=True):
   response = message.exec_()
   
 
+def zoom_out(topcell):
+    '''When running in the GUI, Zoom out and show full hierarchy
+    '''
+    from SiEPIC._globals import Python_Env
+    if Python_Env == "KLayout_GUI":   
+        # get the Layout View
+        mw = pya.Application().instance().main_window()
+        lv = mw.current_view()
+        if lv:
+            # Zoom out
+            lv.clear_object_selection()
+            lv.zoom_fit()
+            # Show all cell hierarchy
+            lv.max_hier()
+    else:
+        return
+
+
+    
+def export_layout(topcell, path, filename, relative_path = '', format='oas', screenshot=False):
+    '''Export the layout, as a static file without PCells
+    runs in GUI mode or in headless mode
+    format = 'oas' for compressed OASIS, or 'gds' for GDSII
+    optionally save a screenshot
+    by Lukas Chrostowski, 2023, SiEPIC-Tools
+    '''
+
+    # Save the layout, without PCell info, for fabrication
+    save_options = pya.SaveLayoutOptions()
+    save_options.write_context_info=False  
+    if format == 'oas':
+        save_options.format='OASIS' # smaller file size
+        save_options.oasis_compression_level=10
+        save_options.oasis_permissive=True
+        extension = '.oas'
+    else:
+        save_options.format='GDS2' 
+        extension = '.gds'
+    layout = topcell.layout()
+
+    # output file
+    import os
+    file_out = os.path.join(path, relative_path, filename+extension)
+    
+    # Save the layout, from the GUI
+    success = False
+    from SiEPIC._globals import Python_Env
+    if Python_Env == "KLayout_GUI":
+        mw = pya.Application().instance().main_window()
+        lv = mw.current_view()
+        if lv:
+            cv = mw.current_view().active_cellview().index()
+            active_layout = pya.CellView.active().layout()
+            if active_layout == layout:
+                try:
+                    lv.save_as(cv, file_out, save_options)
+                    success = True
+                except:
+                    raise Exception("Problem exporting your layout, %s." % file_out)
+            if screenshot:
+                png_out = os.path.join(path, relative_path, filename+'.png')
+                try:
+                    lv.save_screenshot(png_out)
+                except:
+                    raise Exception("Problem creating screenshot, %s." % png_out)
+            
+    if not success:
+        try:
+            layout.write(file_out,save_options)
+        except:
+            try:
+                layout.write(file_out)
+            except:
+                raise Exception("Problem exporting your layout, %s." % file_out)
