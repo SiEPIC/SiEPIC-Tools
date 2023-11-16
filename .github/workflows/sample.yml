@@ -1,6 +1,6 @@
 # Sample Github Action that sets up docker container using image in this repo 
 
-name: EBeam Tests 
+name: Sample Github Action 
 
 # Specify this github action to run on (i) a push to master or any branch, and (ii) a pull request to master
 on:
@@ -23,7 +23,7 @@ jobs:
         run:  docker pull ghcr.io/jasminabrar/siepic-tools/klayout:master-1.0
 
       - name: Run docker container from image
-        run: docker run -itd --name sample_test --security-opt label=type:container_runtime_t ghcr.io/jasminabrar/siepic-tools/klayout:master-1.0
+        run: docker run -itd --name sample --security-opt label=type:container_runtime_t ghcr.io/jasminabrar/siepic-tools/klayout:master-1.0
 
         # input code to run tests in klayout docker container 
 
@@ -31,14 +31,14 @@ jobs:
         # - name: Copy pymacros folder to docker container (needed to run EBeam_Lib_PCellTests.py)
         #   run: docker cp $GITHUB_WORKSPACE/klayout/EBeam/pymacros ebeam_test:/home/pymacros
         # - name: Run EBeam Library Pcell Test Script
-        #   run: docker exec -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ebeam_test klayout -zz -r pymacros/EBeam_Lib_PCellTests.py || echo "KLAYOUT_EXIT_CODE=$?" >> $GITHUB_ENV
+        #   run: docker exec -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix sample klayout -zz -r pymacros/EBeam_Lib_PCellTests.py || echo "KLAYOUT_EXIT_CODE=$?" >> $GITHUB_ENV
         #   continue-on-error: true 
         #      -> IMPORTANT COMMAND: needed so rest of github action runs if an error occurs when running the script
 
       - name: Stop container and remove it 
         run: |
-                docker stop ebeam_test
-                docker rm ebeam_test
+                docker stop sample
+                docker rm sample
 
       - name: Fail job if exit code is non-zero
         run: |
