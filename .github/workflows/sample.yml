@@ -1,0 +1,48 @@
+# Sample Github Action that sets up docker container using image in this repo 
+
+name: EBeam Tests 
+
+# Specify this github action to run on (i) a push to master or any branch, and (ii) a pull request to master
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  ebeam-lib-pcell-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull klayout image
+        run:  docker pull ghcr.io/jasminabrar/siepic-tools/klayout:master-1.0
+
+      - name: Run docker container from image
+        run: docker run -itd --name sample_test --security-opt label=type:container_runtime_t ghcr.io/jasminabrar/siepic-tools/klayout:master-1.0
+
+        # input code to run tests in klayout docker container 
+
+        # e.g 
+        # - name: Copy pymacros folder to docker container (needed to run EBeam_Lib_PCellTests.py)
+        #   run: docker cp $GITHUB_WORKSPACE/klayout/EBeam/pymacros ebeam_test:/home/pymacros
+        # - name: Run EBeam Library Pcell Test Script
+        #   run: docker exec -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ebeam_test klayout -zz -r pymacros/EBeam_Lib_PCellTests.py || echo "KLAYOUT_EXIT_CODE=$?" >> $GITHUB_ENV
+        #   continue-on-error: true 
+        #      -> IMPORTANT COMMAND: needed so rest of github action runs if an error occurs when running the script
+
+      - name: Stop container and remove it 
+        run: |
+                docker stop ebeam_test
+                docker rm ebeam_test
+
+      - name: Fail job if exit code is non-zero
+        run: |
+                if [ $KLAYOUT_EXIT_CODE -ne 0 ]; then
+                        echo "KLayout exited with non-zero exit code"
+                        exit 1
+                fi
