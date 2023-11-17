@@ -91,10 +91,10 @@ import SiEPIC.utils
 SiEPIC.utils.get_technology_by_name('EBeam')
 '''
 
-# Returns a list of library names associated to the given technology name
 #from functools import lru_cache
 #@lru_cache(maxsize=None)
 def get_library_names(tech_name, verbose=False):
+    '''Returns a list of library names associated to the given technology name'''
     if verbose:
         print("get_library_names()")
     
@@ -131,6 +131,7 @@ def get_library_names(tech_name, verbose=False):
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def get_technology_by_name(tech_name, verbose=False):
+    '''Get the SiEPIC-Tools technology associated to the given technology name'''
     if verbose:
         print("get_technology_by_name()")
 
@@ -264,10 +265,10 @@ def get_technology_by_name(tech_name, verbose=False):
 # print(get_technology_by_name('EBeam'))
 # print(get_technology_by_name('GSiP'))
 
-# Get the current Technology
 
 
 def get_technology(verbose=False, query_activecellview_technology=False):
+    '''Get the current Technology'''
     if verbose:
         print("get_technology()")
     from .._globals import KLAYOUT_VERSION
@@ -282,9 +283,9 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
-    try:
+    if Python_Env == 'KLayout_GUI':
         lv = pya.Application.instance().main_window().current_view()
-    except:
+    else:
         lv = None
 
     if lv == None:
@@ -304,12 +305,12 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     return get_technology_by_name(technology_name)
 
 
-'''
-Load Waveguide configuration
-determine the technology from the layout
-These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
-'''
 def load_Waveguides():
+    '''
+    Load Waveguide configuration
+    determine the technology from the layout
+    These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
+    '''
     import os
     import fnmatch
     from . import get_technology
@@ -320,15 +321,15 @@ def load_Waveguides():
 
     return waveguides if waveguides else None
 
-'''
-Load Waveguide configuration for specific technology
-These are technology specific, and located in the tech folder, named WAVEGUIDES.xml
-For KLayout <0.27, Look for this file for folders that contain 'tech_name'.lyt
-For KLayout 0.27+, Look in the technology folder, plus each library's folder.
-'''
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def load_Waveguides_by_Tech(tech_name, debug=False):
+    '''
+    Load Waveguide configuration for specific technology
+    These are technology specific, and located in the tech folder, named WAVEGUIDES.xml, and WAVEGUIDES_*.xml
+    For KLayout <0.27, Look for this file for folders that contain 'tech_name'.lyt
+    For KLayout 0.27+, Look in the technology folder, plus each library's folder.
+    '''
     import os
     import fnmatch
 
@@ -345,7 +346,9 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
             if debug:
                 print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
             [paths.append(os.path.join(root, filename))
-             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
+             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
+            [paths.append(os.path.join(root, filename))
+             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
 
         # Find the paths for each Library that matches technology
         # and find WAVEGUIDE.xml and WAVEGUIDE_*.xml files
@@ -356,7 +359,9 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
                 if debug:
                     print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
                 [paths.append(os.path.join(root, filename))
-                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))  ] 
+                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml'))  ] 
+                [paths.append(os.path.join(root, filename))
+                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))  ] 
              
 
     if KLAYOUT_VERSION < 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
@@ -366,8 +371,10 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
         for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
             if debug:
                 print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
-            [paths.append(os.path.join(root, filename))
-             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]  # this version requires .lyt file to match tech_name
+                [paths.append(os.path.join(root, filename))
+                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml'))  ] 
+                [paths.append(os.path.join(root, filename))
+                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))  ] 
 
     if debug:
         print(paths)
@@ -411,13 +418,13 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
         print('- done: load_Waveguides_by_Tech.  Technology: %s' %(tech_name) )
     return waveguides if waveguides else None
 
-'''
-Load Calibre configuration
-These are technology specific, and located in the tech folder, named CALIBRE.xml
-'''
 
 
 def load_Calibre():
+    '''
+    Load Calibre configuration
+    These are technology specific, and located in the tech folder, named CALIBRE.xml
+    '''
     from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
@@ -450,13 +457,13 @@ def load_Calibre():
     else:
         return None
 
-'''
-Load Monte Carlo configuration
-These are technology specific, and located in the tech folder, named MONTECARLO.xml
-'''
 
 
 def load_Monte_Carlo():
+    '''
+    Load Monte Carlo configuration
+    These are technology specific, and located in the tech folder, named MONTECARLO.xml
+    '''
     import os
     import fnmatch
     from . import get_technology
@@ -568,13 +575,13 @@ def load_DFT(debug=True):
     else:
         return None
 
-'''
-Load FDTD settings
-These are technology specific, and located in the tech folder, named FDTD.xml
-'''
 
 
 def load_FDTD_settings():
+    '''
+    Load FDTD settings
+    These are technology specific, and located in the tech folder, named FDTD.xml
+    '''
     from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
@@ -605,13 +612,13 @@ def load_FDTD_settings():
         return None
 
 
-'''
-Load GC settings
-These are technology specific, and located in the tech folder, named GC.xml
-'''
 
 
 def load_GC_settings():
+    '''
+    Load GC settings
+    These are technology specific, and located in the tech folder, named GC.xml
+    '''
     from . import get_technology
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
@@ -644,6 +651,7 @@ def load_GC_settings():
 
 
 def get_layout_variables():
+    '''For KLayout Application use only; gets TECHNOLOGY, Layout View, Layout, and current Cell'''
     from . import get_technology
     TECHNOLOGY = get_technology()
 
@@ -666,11 +674,11 @@ def get_layout_variables():
     return TECHNOLOGY, lv, ly, cell
 
 
-# Find all paths, full hierarachy scan, return polygons on top cell.
-# for Verfication
 
 
 def find_paths(layer, cell=None):
+    '''Find all paths, full hierarachy scan, return polygons on top cell, for Verfication'''
+
     lv = pya.Application.instance().main_window().current_view()
     if lv == None:
         raise Exception("No view selected")
@@ -693,11 +701,11 @@ def find_paths(layer, cell=None):
 
     return selection
 
-# Return all selected opt_in Text labels.
-# example usage: selected_opt_in_text()[0].shape.text.string
 
 
 def selected_opt_in_text():
+    '''KLayout Application use. Return all selected opt_in Text labels.
+    # example usage: selected_opt_in_text()[0].shape.text.string'''
     from . import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
@@ -707,8 +715,9 @@ def selected_opt_in_text():
     return selection
 
 
-# Return all selected paths. If nothing is selected, select paths automatically
+
 def select_paths(layer, cell=None, verbose=None):
+    '''# KLayout Application use. Return all selected paths. If nothing is selected, select paths automatically'''
     if verbose:
         print("SiEPIC.utils.select_paths: layer: %s" % layer)
 
@@ -755,11 +764,13 @@ def select_paths(layer, cell=None, verbose=None):
         print("SiEPIC.utils.select_paths: selection, after: %s" % lv.object_selection)
     return lv.object_selection
 
-# Return all selected waveguides. If nothing is selected, select waveguides automatically
-# Returns all cell_inst
 
 
 def select_waveguides(cell=None):
+    '''KLayout Application use. 
+    Return all selected waveguides. If nothing is selected, select waveguides automatically
+    Returns all cell_inst'''
+
     lv = pya.Application.instance().main_window().current_view()
     if lv == None:
         raise Exception("No view selected")
@@ -788,11 +799,12 @@ def select_waveguides(cell=None):
 
     return lv.object_selection
 
-# Return all selected instances.
-# Returns all cell_inst
 
 
 def select_instances(cell=None):
+    '''# Return all selected instances.
+    # Returns all cell_inst'''
+
     lv = pya.Application.instance().main_window().current_view()
     if lv == None:
         raise Exception("No view selected")
@@ -819,38 +831,40 @@ def select_instances(cell=None):
     return lv.object_selection
 
 
-# Find the angle between two vectors (not necessarily the smaller angle)
 def angle_b_vectors(u, v):
+    '''Find the angle between two vectors (not necessarily the smaller angle)'''
     from math import atan2, pi
     return (atan2(v.y, v.x) - atan2(u.y, u.x)) / pi * 180
 
-# Find the angle between two vectors (will always be the smaller angle)
+
 def inner_angle_b_vectors(u, v):
+    '''Find the angle between two vectors (will always be the smaller angle)'''
     from math import acos, pi
     if (u.abs() * v.abs()) > 0:
         return acos((u.x * v.x + u.y * v.y) / (u.abs() * v.abs())) / pi * 180
     else:
         return 0
         
-# Find the angle of a vector
-
 
 def angle_vector(u):
+    '''Find the angle of a vector'''
     from math import atan2, pi
     return (atan2(u.y, u.x)) / pi * 180
 
-# Truncate the angle
+
 
 
 def angle_trunc(a, trunc):
+    '''Truncate the angle'''
     return ((a % trunc) + trunc) % trunc
 
 
-# Calculate the recommended number of points in a circle, based on
-# http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible
+
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def points_per_circle(radius, dbu=None):
+    '''Calculate the recommended number of points in a circle, based on
+    http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible'''
     # radius in microns
     from math import acos, pi, ceil
     if dbu == None:
@@ -868,12 +882,12 @@ def points_per_circle(radius, dbu=None):
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def arc(r, theta_start, theta_stop):
-    # function to draw an arc of waveguide
+    '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
     # length units in dbu
     # theta_start, theta_stop: angles for the arc
-    # angles in degrees
+    # angles in degrees'''
 
     from math import pi, cos, sin
     from . import points_per_circle
@@ -893,12 +907,12 @@ def arc(r, theta_start, theta_stop):
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
-    # function to draw an arc of waveguide
+    '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
     # length units in dbu
     # theta_start, theta_stop: angles for the arc
-    # angles in degrees
+    # angles in degrees'''
 
     from math import pi, cos, sin
     from . import points_per_circle
@@ -921,12 +935,12 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
-    # function to draw an arc of waveguide
+    '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
     # length units in dbu
     # theta_start, theta_stop: angles for the arc
-    # angles in degrees
+    # angles in degrees'''
 
     from math import pi, cos, sin
     from . import points_per_circle
@@ -953,13 +967,13 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
-    # function to draw an arc of waveguide
+    '''function to draw an arc of waveguide
     # x, y: location of the origin
     # r: radius
     # w: waveguide width
     # length units in dbu
     # theta_start, theta_stop: angles for the arc
-    # angles in degrees
+    # angles in degrees'''
 
     from math import pi, cos, sin
     from . import points_per_circle
@@ -982,12 +996,13 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     return pya.Polygon(pts)
 
 
-# Create a bezier curve. While there are parameters for start and stop in
-# degrees, this is currently only implemented for 90 degree bends
-# Radius in Database units (dbu)
+
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def arc_bezier(radius, start, stop, bezier, DevRec=None):
+    '''Create a bezier curve. While there are parameters for start and stop in
+    degrees, this is currently only implemented for 90 degree bends
+    Radius in Database units (dbu)'''
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
     N = points_per_circle(radius/1000)/4
@@ -1019,12 +1034,14 @@ def arc_bezier(radius, start, stop, bezier, DevRec=None):
     pts.extend([pya.Point(0, L - 1), pya.Point(0, L)])
     return pts
 
-# Take a list of points and create a polygon of width 'width'
+
 def arc_to_waveguide(pts, width):
+    '''Take a list of points and create a polygon of width 'width' '''
     return pya.Polygon(translate_from_normal(pts, -width / 2.) + translate_from_normal(pts, width / 2.)[::-1])
 
-# Translate each point by its normal a distance 'trans'
+
 def translate_from_normal(pts, trans):
+    '''Translate each point by its normal a distance 'trans' '''
     #  pts = [pya.DPoint(pt) for pt in pts]
     pts = [pt.to_dtype(1) for pt in pts]
     if len(pts) < 2:
@@ -1053,10 +1070,11 @@ def translate_from_normal(pts, trans):
 #  return [pya.Point(pt) for pt in tpts]
     return [pt.to_itype(1) for pt in tpts]
 
-# Check if point c intersects the segment defined by pts a and b
+
 
 def pt_intersects_segment(a, b, c):
-    """ How can you determine a point is between two other points on a line segment?
+    """ Check if point c intersects the segment defined by pts a and b
+    How can you determine a point is between two other points on a line segment?
     http://stackoverflow.com/questions/328107/how-can-you-determine-a-point-is-between-two-other-points-on-a-line-segment
     by Cyrille Ka.  Check if c is between a and b? """
     cross = abs((c.y - a.y) * (b.x - a.x) - (c.x - a.x) * (b.y - a.y))
@@ -1069,11 +1087,12 @@ def pt_intersects_segment(a, b, c):
     return False if dot > (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y) else True
 
 
-# Add bubble to a cell
-# Example
-# cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-# layout_pgtext(cell, LayerInfo(10, 0), 0, 0, "test", 1)
+
 def layout_pgtext(cell, layer, x, y, text, mag, inv=False):
+    '''Add bubble to a cell
+    Example
+    cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    layout_pgtext(cell, LayerInfo(10, 0), 0, 0, "test", 1)'''
     pcell = cell.layout().create_cell("TEXT", "Basic", {"text": text,
                                                         "layer": layer,
                                                         "mag": mag,
@@ -1246,11 +1265,11 @@ except NameError:
         return it.next()
 
 def find_SEM_labels(topcell=None, LayerSEMN=None):
-    # example usage:
+    '''example usage:
     # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
     # LayerSEM = pya.LayerInfo(200, 0)
     # LayerSEMN = topcell.layout().layer(LayerSEM)
-    # find_SEM_labels(topcell, LayerSEMN)
+    # find_SEM_labels(topcell, LayerSEMN)'''
     import string
     if not LayerSEMN:
         from . import get_technology, find_paths
@@ -1292,11 +1311,11 @@ def find_SEM_labels(topcell=None, LayerSEMN=None):
 
 
 def find_siepictools_debug_text(topcell=None, LayerTextN=None):
-    # example usage:
+    '''example usage:
     # topcell = pya.Application.instance().main_window().current_view().active_cellview().cell
     # LayerText = pya.LayerInfo(10, 0)
     # LayerTextN = topcell.layout().layer(LayerText)
-    # find_siepictools_debug_text(topcell, LayerTextN)
+    # find_siepictools_debug_text(topcell, LayerTextN)'''
     import string
     if not LayerTextN:
         from . import get_technology, find_paths
@@ -1338,9 +1357,10 @@ def find_siepictools_debug_text(topcell=None, LayerTextN=None):
 
 
 
-# XML to Dict parser, from:
-# https://stackoverflow.com/questions/2148119/how-to-convert-an-xml-string-to-a-dictionary-in-python/10077069
+
 def etree_to_dict(t):
+    '''XML to Dict parser, from:
+    https://stackoverflow.com/questions/2148119/how-to-convert-an-xml-string-to-a-dictionary-in-python/10077069'''
     from collections import defaultdict
     d = {t.tag: {} if t.attrib else None}
     children = list(t)
@@ -1372,10 +1392,10 @@ def xml_to_dict(t):
 
 
 def eng_str(x):
-    import math
-    # x input in meters
-    # output in meters, engineering notation, rounded to 1 nm
+    '''x input in meters
+    output in meters, engineering notation, rounded to 1 nm'''
 
+    import math
     EngExp_notation = 1  # 1 = "1.0e-6", 0 = "1.0u"
     x = round(x * 1E9) / 1E9
     y = abs(x)
@@ -1404,8 +1424,9 @@ def eng_str(x):
             return sign + str(round(z,11)) + str(str_engr_exponent)
 
 
-# Save an SVG file for the component, for INTC icons
+
 def svg_from_component(component, filename, verbose=False):
+    '''Save an SVG file for the component, for INTC icons'''
     #  from utils import get_technology
     TECHNOLOGY = get_technology()
 
@@ -1461,8 +1482,8 @@ if _globals.Python_Env == "KLayout_GUI":
 
 
 def pointlist_to_path(pointlist, dbu):
-    # convert [[230.175,169.18],[267.0,169.18],[267.0,252.0],[133.0,252.0],[133.0,221.82],[140.175,221.82]]
-    # to pya.Path
+    '''convert [[230.175,169.18],[267.0,169.18],[267.0,252.0],[133.0,252.0],[133.0,221.82],[140.175,221.82]]
+    to pya.Path'''
     
     points = []
     for p in points:

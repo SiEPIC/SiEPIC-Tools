@@ -10,5 +10,7 @@ from . import _globals
 
 if _globals.Python_Env == "KLayout_GUI":
     from . import extend, _globals, core, examples, github, scripts, utils, setup, install
-
+else:
+    from . import extend, _globals
+    
 

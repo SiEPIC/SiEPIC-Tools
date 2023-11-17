@@ -1,17 +1,19 @@
 
+import pya
 Python_Env = "" # tag which defines whether we are loading library in script or GUI env
-try:
-    # import pya, which is available when running within KLayout
-    import pya
-    if pya.Application.instance().main_window():
-        Python_Env = "KLayout_GUI"
-        print('Python Environment: KLayout GUI')
-    else:
-        Python_Env = "KLayout_batch"
-        print('Python Environment: KLayout batch mode')
-except:
+if 'Application' in dir(pya):
+    try:
+        # import pya, which is available when running within KLayout
+        if pya.Application.instance().main_window():
+            Python_Env = "KLayout_GUI"
+            print('Python Environment: KLayout GUI')
+        else:
+            Python_Env = "KLayout_batch"
+            print('Python Environment: KLayout batch mode')
+    except:
+        Python_Env = "Script"
+else:
     Python_Env = "Script"
-
 
 # Netlist extraction will merge straight+bend sections into waveguide (1),
 # or extract each bend, straight section, etc. (0)
@@ -108,9 +110,6 @@ if Python_Env == "KLayout_GUI":
         LUMAPI = None
         print('resetting Lumerical Python integration')
     
-    
-try:
-    TEMP_FOLDER
-except:
+if 'TEMP_FOLDER' not in locals(): 
     import tempfile
     TEMP_FOLDER = tempfile.mkdtemp()
