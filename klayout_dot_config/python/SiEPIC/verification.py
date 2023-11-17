@@ -48,8 +48,8 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     if timing:
         print("*** layout_check(), timing. ")
         from time import time
-        t = time()
-        # print('Time elapsed: %s' % (time() - t))    
+        time1 = time()
+        # print('Time elapsed: %s' % (time() - time1))    
 
         
     import pya
@@ -107,7 +107,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done nets (%s), components (%s) " % (len(nets), len(components)))
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
 
     # Create a Results Database
@@ -220,7 +220,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done DFT")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
     paths = find_paths(TECHNOLOGY['Waveguide'], cell=cell)
     for p in paths:
@@ -234,7 +234,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done invalid Waveguide paths")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
     '''
     check for invalid pins
@@ -252,7 +252,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done invalid pins ")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
     
 
@@ -315,7 +315,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done shapes in component ")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
 
     # Experimental, attempt to break up the circuit into regions connected by DevRec layers
@@ -331,7 +331,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; counting merged DevRec regions")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
         
     '''
@@ -427,7 +427,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done components check ")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
     if DFT:
         # DFT verification
@@ -568,7 +568,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done DFT ")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
     for n in nets:
         # Verification: optical pin width mismatches
@@ -586,7 +586,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; done pin mismatch ")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
     # displays results in Marker Database Browser, using Results Database (rdb)
     if rdb.num_items() > 0:
@@ -621,7 +621,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     if timing:
         print("*** layout_check(), timing; all done. ")
-        print('    Time elapsed: %s' % (time() - t))    
+        print('    Time elapsed: %s' % (time() - time1))    
 
 if __name__ == "__main__":
     print('SiEPIC-Tools functional verification')
