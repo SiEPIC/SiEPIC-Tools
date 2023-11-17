@@ -1803,11 +1803,10 @@ pya.Point.to_dtype = to_dtype
 pya.Point.to_itype = to_itype
 
 # in v > 0.24, these are built-in to KLayout
-if int(pya.Application.instance().version().split('.')[1]) < 25:
-
+from SiEPIC._globals import KLAYOUT_VERSION
+if KLAYOUT_VERSION < 25:
     def to_p(self):
         return self
-
     pya.Point.to_dtype = to_dtype
     pya.DPoint.to_itype = to_itype
     pya.Point.to_p = to_p
