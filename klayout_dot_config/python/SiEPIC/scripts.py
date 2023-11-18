@@ -3681,3 +3681,102 @@ def export_layout(topcell, path, filename, relative_path = '', format='oas', scr
                 layout.write(file_out)
             except:
                 raise Exception("Problem exporting your layout, %s." % file_out)
+
+def instantiate_all_library_cells(topcell, progress_bar = True):
+    '''
+    Load all cells (fixed and PCells) and instantiate them on the layout. 
+    One column per library, one column for fixed and PCells.
+    topcell: is a cell in a pya.Layout that has already configured with Layout.technology_name 
+    progress_bar: True displays percentage
+    '''
+    
+    
+    from SiEPIC._globals import Python_Env
+    if True or Python_Env == "KLayout_GUI":
+        # Count all the cells for the progress bar
+        count = 0
+        ly = topcell.layout()
+        for lib in pya.Library().library_ids():
+            li = pya.Library().library_by_id(lib)
+            if not li.is_for_technology(ly.technology_name) or li.name() == 'Basic':
+                continue
+            # all the pcells
+            count += len(li.layout().pcell_names())
+            # all the fixed cells
+            for c in li.layout().each_top_cell():
+                if not li.layout().cell(c).is_pcell_variant():
+                    count += 1
+        p = pya.RelativeProgress("Instantiate all libraries' cells", count)
+
+    # all the libraries
+    ly = topcell.layout()
+    x,y,xmax=0,0,0
+    for lib in pya.Library().library_ids():
+        li = pya.Library().library_by_id(lib)
+        if not li.is_for_technology(ly.technology_name) or li.name() == 'Basic':
+            print(' - skipping: %s' % li.name())
+            continue
+
+        # all the pcells
+        print('All PCells: %s' % li.layout().pcell_names())
+        for n in li.layout().pcell_names():
+            print(" - PCell: ", li.name(), n)
+            pcell = ly.create_cell(n,li.name(), {})
+            if pcell:
+                t = pya.Trans(pya.Trans.R0, x-pcell.bbox().left, y-pcell.bbox().bottom)
+                topcell.insert(pya.CellInstArray(pcell.cell_index(), t))
+                y += pcell.bbox().height()+2000
+                xmax = max(xmax, x+pcell.bbox().width()+2000)
+            else:
+                print('Error in: %s' % n)
+            p.inc()
+        x, y = xmax, 0
+        
+        # all the fixed cells
+        for c in li.layout().each_top_cell():
+            # instantiate
+            if not li.layout().cell(c).is_pcell_variant():
+                print(" - Fixed cell: ", li.name(), li.layout().cell(c).name)
+                pcell = ly.create_cell(li.layout().cell(c).name,li.name(), {})
+                if not pcell:
+                    pcell = ly.create_cell(li.layout().cell(c).name,li.name())
+                if pcell:
+                    t = pya.Trans(pya.Trans.R0, x-pcell.bbox().left, y-pcell.bbox().bottom)
+                    topcell.insert(pya.CellInstArray(pcell.cell_index(), t))
+                    y += pcell.bbox().height()+2000
+                    xmax = max(xmax, x+pcell.bbox().width()+2000)
+                else:
+                    print('Error in: %s' % li.layout().cell(c).name)
+            p.inc()
+        x, y = xmax, 0
+
+    if True or Python_Env == "KLayout_GUI":
+        p.destroy
+
+
+def load_klayout_technology(techname, path_module, path_lyt_file):
+    '''
+    techname: <string> name of the technology
+    path_module: <string> where the Python module is loaded from, e.g., import EBeam
+    path_lyt_file: <string> where the KLayout technology (.lyt) is located
+    returns: <pya.Technology>
+    '''
+    import sys
+    
+    # if running in KLayout Application mode, the technology is loaded
+    # automatically via the Technology Manager
+    if techname in pya.Technology().technology_names():
+        return pya.Technology().technology_by_name(techname)
+
+    # if running in KLayout in PyPI mode, the technology needs to be
+    # loaded separately
+    if techname not in sys.modules:
+        if not path_module in sys.path:
+            sys.path.append(path_module)
+        tech = pya.Technology().create_technology('EBeam')
+        tech = tech.load(path_lyt_file)
+        # technology needs to be defined and loaded first, before importing
+        import importlib
+        importlib.import_module(techname)
+        return tech
+

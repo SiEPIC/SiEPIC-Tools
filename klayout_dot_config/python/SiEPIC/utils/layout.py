@@ -1244,13 +1244,12 @@ def floorplan(topcell, x, y):
 
 
 def new_layout(tech, topcell_name, GUI=True, overwrite = False):
-    '''Create a new layout
-    runs in GUI mode (GUI=True) or in memory only (GUI=False)    
-    in headless mode, it creates a layout object
-    in GUI mode, 
-      (overwrite = False): it creates a new Layout View
-      (overwrite = True): it clears the existing layout, 
-            only if the topcell_name matches the existing one
+    '''Create a new layout either in KLayout Application mode or in PyPI mode.
+    Create the layout in the Application MainWindow (GUI=True) or in memory only (GUI=False)
+    in Application mode, 
+      (overwrite = False): creates a new Layout View
+      (overwrite = True): clears the existing layout, 
+        only if the topcell_name matches the existing one
     by Lukas Chrostowski, 2023, SiEPIC-Tools
     '''
     
