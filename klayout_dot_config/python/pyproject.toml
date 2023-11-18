@@ -1,0 +1,18 @@
+[project]
+name = "SiEPIC"
+version = "0.5.0"
+authors = [
+  { name="Lukas Chrostowski", email="lukasc@ece.ubc.ca" },
+]
+description = "SiEPIC-Tools: for silicon photonics layout, design, verification and circuit simulation"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/SiEPIC/SiEPIC-Tools"
+Issues = "https://github.com/SiEPIC/SiEPIC-Tools/issues"
