@@ -874,7 +874,6 @@ def points_per_circle(radius, dbu=None):
     http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible'''
     # radius in microns
     from math import acos, pi, ceil
-    print(dbu)
     if dbu == None:
         from . import get_technology
         TECHNOLOGY = get_technology()
@@ -982,7 +981,6 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None, dbu=None):
     # length units in dbu
     # theta_start, theta_stop: angles for the arc
     # angles in degrees'''
-    print(dbu)
 
     from math import pi, cos, sin
     from . import points_per_circle
@@ -1008,13 +1006,13 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None, dbu=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_bezier(radius, start, stop, bezier, DevRec=None):
+def arc_bezier(radius, start, stop, bezier, DevRec=None, dbu=None):
     '''Create a bezier curve. While there are parameters for start and stop in
     degrees, this is currently only implemented for 90 degree bends
     Radius in Database units (dbu)'''
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
-    N = points_per_circle(radius/1000)/4
+    N = points_per_circle(radius/1000, dbu=dbu)/4
     bezier=float(bezier) # in case the input was a string
     if DevRec:
         N = int(N / 3)

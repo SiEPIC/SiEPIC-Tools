@@ -2,13 +2,14 @@
 #                SiEPIC Tools - verification                                    #
 #################################################################################
 '''
-by Lukas Chrostowski, 2023
+by Lukas Chrostowski, 2016-2023
 
 '''
 
 
-def layout_check(cell=None, verbose=False, GUI=False, timing=True):
+def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = None):
     '''Functional Verification:
+    cell=pya.cell, file_rbd=<str> path.
     Verification of things that are specific to photonic integrated circuits, including
     - Waveguides: paths, radius, bend points, Manhattan
     - Component checking: overlapping, avoiding crosstalk
@@ -40,6 +41,8 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
        - find_components would need to look within the DevRec layer, rather than in the selected cell
        - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
          This could be solved by putting the pins inside the cells, rather than sticking out.    
+    Deprecated:
+    - Arg GUI is no longer used.
     '''
 
     if verbose:
@@ -102,7 +105,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
 
     if not TECHNOLOGY['technology_name']:
-        if GUI:
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning("Errors", "SiEPIC-Tools verification requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
             return
         else:
@@ -116,7 +119,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
         [c.display() for c in components]
 
     if not components:
-        if GUI:
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning(
                 "Errors", "No components found (using SiEPIC-Tools DevRec and PinRec definitions). Cannot perform Verification.", pya.MessageBox.Ok)
             return
@@ -639,6 +642,9 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
                                                                                                                              SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.__version__), pya.DTrans(cell.dbbox().p1))
     shape = cell.shapes(LayerTextN).insert(text)
     shape.text_size = 0.1 / dbu
+
+    if file_rdb:
+        rdb.save(file_rdb)
 
     if timing:
         print("*** layout_check(), timing; all done. ")
