@@ -93,8 +93,11 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
 
     if 'TECHNOLOGY' in dir(cell.layout()):
-        TECHNOLOGY = cell.layout()
-    TECHNOLOGY = get_technology()
+        # get technology from the layout
+        TECHNOLOGY = cell.layout().TECHNOLOGY
+    else:
+        # get the technology from the presently opened window
+        TECHNOLOGY = get_technology()
     dbu = TECHNOLOGY['dbu']
 
 
@@ -174,7 +177,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     # Design for Test checking
     from SiEPIC.utils import load_DFT
-    DFT = load_DFT()
+    DFT = load_DFT(TECHNOLOGY=TECHNOLOGY)
     if DFT:
         if verbose:
             print(DFT)
@@ -285,7 +288,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     rdb_cat_id_comp_shapesoutside
     '''
     from SiEPIC.utils import load_Verification
-    verification = load_Verification()
+    verification = load_Verification(TECHNOLOGY=TECHNOLOGY)
     if verification:
         print(verification)
         # define device-only layers
@@ -447,7 +450,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     if DFT:
         # DFT verification
 
-        text_out, opt_in = find_automated_measurement_labels(cell)
+        text_out, opt_in = find_automated_measurement_labels(cell, TECHNOLOGY=TECHNOLOGY)
 
         '''
     # opt_in labels missing: 0 labels found. draw box around the entire circuit.
@@ -605,12 +608,15 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     # displays results in Marker Database Browser, using Results Database (rdb)
     if rdb.num_items() > 0:
-        if GUI:
+        msg = "%s layout errors detected.  \nPlease review errors using the 'Marker Database Browser'." % rdb.num_items()
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning(
-                "Errors", "%s layout errors detected.  \nPlease review errors using the 'Marker Database Browser'." % rdb.num_items(), pya.MessageBox.Ok)
+                "Errors", msg, pya.MessageBox.Ok)
             lv.show_rdb(rdb_i, cv.cell_index)
+        else: 
+            print(msg)
     else:
-        if GUI:
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
 
     # Save results of verification as a Text label on the cell. Include OS,
