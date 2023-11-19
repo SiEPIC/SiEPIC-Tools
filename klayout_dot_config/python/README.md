@@ -4,7 +4,13 @@
 - Developed within the <a href="http://www.siepic.ubc.ca">SiEPIC</a> program, by <a href="https://ca.linkedin.com/in/chrostowski">Lukas Chrostowski</a>, with contributions from many others.
 - This is a package implemented using Python in <a href="http://www.klayout.de">KLayout</a>.
 - Instruction on design, layout, fabrication, test, data analysis for silicon photonics provided in the edX course: <a href="http://edx.org/course/silicon-photonics-design-fabrication-ubcx-phot1x">Silicon Photonics Design, Fabrication and Data Analysis</a> and textbook <a href="http://www.cambridge.org/ca/academic/subjects/engineering/electronic-optoelectronic-devices-and-nanotechnology/silicon-photonics-design-devices-systems">Silicon Photonics Design: From Devices to Systems</a> by Lukas Chrostowski and Michael Hochberg.
-- Process Design Kits that use KLayout SiEPIC-Tools are available for multiple foundries including <a href="https://www.cmc.ca/amf-silicon-photonics-general-purpose/">AMF</a>, <a href="https://www.aimphotonics.com/">AIM Photonics</a>, <a href="https://www.appliednt.com/nanosoi-fabrication-service">Applied Nanotools Inc.</a>, and <a href="https://www.siepic.ca/fabrication">SiEPICfab</a>.
+- Process Design Kits that use KLayout SiEPIC-Tools are available for multiple foundries including 
+<a href="https://www.cmc.ca/amf-silicon-photonics-general-purpose/">AMF</a>, 
+<a href="https://www.aimphotonics.com/">AIM Photonics</a>, 
+<a href="https://www.towersemi.com/">Tower Semiconductor</a>, 
+<a href="https://www.ligentec.com//">Ligentec</a>, 
+<a href="https://www.appliednt.com/nanosoi-fabrication-service">Applied Nanotools Inc.</a>, and 
+<a href="https://www.siepic.ca/fabrication">SiEPICfab</a>.
 - Citing this work:  
   - Lukas Chrostowski, Zeqin Lu, Jonas Flueckiger, Xu Wang, Jackson Klein, Amy Liu, Jaspreet Jhoja, James Pond,
 "<a href=https://doi.org/10.1117/12.2230376>Design and simulation of silicon photonic schematics and layouts</a>," Proc. SPIE 9891, Silicon Photonics and Photonic Integrated Circuits V, 989114 (May 13, 2016); doi:10.1117/12.2230376.

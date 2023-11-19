@@ -2,13 +2,14 @@
 #                SiEPIC Tools - verification                                    #
 #################################################################################
 '''
-by Lukas Chrostowski, 2023
+by Lukas Chrostowski, 2016-2023
 
 '''
 
 
-def layout_check(cell=None, verbose=False, GUI=False, timing=True):
+def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = None):
     '''Functional Verification:
+    cell=pya.cell, file_rbd=<str> path.
     Verification of things that are specific to photonic integrated circuits, including
     - Waveguides: paths, radius, bend points, Manhattan
     - Component checking: overlapping, avoiding crosstalk
@@ -40,6 +41,8 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
        - find_components would need to look within the DevRec layer, rather than in the selected cell
        - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
          This could be solved by putting the pins inside the cells, rather than sticking out.    
+    Deprecated:
+    - Arg GUI is no longer used.
     '''
 
     if verbose:
@@ -65,26 +68,44 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
         from SiEPIC.utils import advance_iterator
         from SiEPIC._globals import KLAYOUT_VERSION
         from SiEPIC.scripts import trim_netlist
-        
-    TECHNOLOGY = get_technology()
-    dbu = TECHNOLOGY['dbu']
+    
+    from SiEPIC._globals import Python_Env
+    if verbose:
+            print('KLayout running as %s' % Python_Env)
+    if Python_Env == 'KLayout_GUI':
+        try:
+            lv = pya.Application.instance().main_window().current_view()
+            cv = lv.active_cellview()
+        except:
+            pass
+    if 'lv' not in locals() or lv == None:
+        lv = pya.LayoutView()
+        cv = pya.CellView()
 
-    lv = pya.Application.instance().main_window().current_view()
-    if lv == None:
-        raise Exception("No view selected")
     if cell is None:
-        ly = lv.active_cellview().layout()
-        if ly == None:
+        try:
+            ly = lv.active_cellview().layout()
+        except:
             raise Exception("No active layout")
-        cell = lv.active_cellview().cell
-        if cell == None:
+        try:
+            cell = lv.active_cellview().cell
+        except:
             raise Exception("No active cell")
     else:
         ly = cell.layout()
-    cv = lv.active_cellview()
+
+
+    if 'TECHNOLOGY' in dir(cell.layout()):
+        # get technology from the layout
+        TECHNOLOGY = cell.layout().TECHNOLOGY
+    else:
+        # get the technology from the presently opened window
+        TECHNOLOGY = get_technology()
+    dbu = TECHNOLOGY['dbu']
+
 
     if not TECHNOLOGY['technology_name']:
-        if GUI:
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning("Errors", "SiEPIC-Tools verification requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
             return
         else:
@@ -98,7 +119,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
         [c.display() for c in components]
 
     if not components:
-        if GUI:
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning(
                 "Errors", "No components found (using SiEPIC-Tools DevRec and PinRec definitions). Cannot perform Verification.", pya.MessageBox.Ok)
             return
@@ -159,7 +180,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     # Design for Test checking
     from SiEPIC.utils import load_DFT
-    DFT = load_DFT()
+    DFT = load_DFT(TECHNOLOGY=TECHNOLOGY)
     if DFT:
         if verbose:
             print(DFT)
@@ -270,7 +291,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     rdb_cat_id_comp_shapesoutside
     '''
     from SiEPIC.utils import load_Verification
-    verification = load_Verification()
+    verification = load_Verification(TECHNOLOGY=TECHNOLOGY)
     if verification:
         print(verification)
         # define device-only layers
@@ -432,7 +453,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     if DFT:
         # DFT verification
 
-        text_out, opt_in = find_automated_measurement_labels(cell)
+        text_out, opt_in = find_automated_measurement_labels(cell, TECHNOLOGY=TECHNOLOGY)
 
         '''
     # opt_in labels missing: 0 labels found. draw box around the entire circuit.
@@ -590,12 +611,15 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
 
     # displays results in Marker Database Browser, using Results Database (rdb)
     if rdb.num_items() > 0:
-        if GUI:
+        msg = "%s layout errors detected.  \nPlease review errors using the 'Marker Database Browser'." % rdb.num_items()
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning(
-                "Errors", "%s layout errors detected.  \nPlease review errors using the 'Marker Database Browser'." % rdb.num_items(), pya.MessageBox.Ok)
+                "Errors", msg, pya.MessageBox.Ok)
             lv.show_rdb(rdb_i, cv.cell_index)
+        else: 
+            print(msg)
     else:
-        if GUI:
+        if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
 
     # Save results of verification as a Text label on the cell. Include OS,
@@ -615,9 +639,12 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     import sys
     from time import strftime
     text = pya.DText("SiEPIC-Tools verification: %s errors\n%s\nSiEPIC-Tools v%s\ntechnology: %s\n%s\nPython: %s, %s\n%s" % (rdb.num_items(), strftime("%Y-%m-%d %H:%M:%S"),
-                                                                                                                             SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.Application.instance().version()), pya.DTrans(cell.dbbox().p1))
+                                                                                                                             SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.__version__), pya.DTrans(cell.dbbox().p1))
     shape = cell.shapes(LayerTextN).insert(text)
     shape.text_size = 0.1 / dbu
+
+    if file_rdb:
+        rdb.save(file_rdb)
 
     if timing:
         print("*** layout_check(), timing; all done. ")

@@ -268,41 +268,42 @@ def get_technology_by_name(tech_name, verbose=False):
 
 
 def get_technology(verbose=False, query_activecellview_technology=False):
-    '''Get the current Technology'''
+    '''Get the current Technology for the layout in the MainWindow LayoutView '''
+
     if verbose:
         print("get_technology()")
-    from .._globals import KLAYOUT_VERSION
-    technology = {}
 
-    # defaults:
-    technology['DevRec'] = pya.LayerInfo(68, 0)
-    technology['Waveguide'] = pya.LayerInfo(1, 0)
-    technology['Si'] = pya.LayerInfo(1, 0)
-    technology['PinRec'] = pya.LayerInfo(69, 0)
-    technology['Lumerical'] = pya.LayerInfo(733, 0)
-    technology['Text'] = pya.LayerInfo(10, 0)
-    technology_name = 'EBeam'
-
-    if Python_Env == 'KLayout_GUI':
-        lv = pya.Application.instance().main_window().current_view()
+    from .. import _globals
+    if _globals.Python_Env != "KLayout_GUI":
+        raise Exception('SiEPIC.utils.get_technology: this function can only be used in KLayout Application graphical interface mode.')
     else:
-        lv = None
+        try:
+            lv = pya.Application.instance().main_window().current_view()
+            technology_name = lv.active_cellview().technology
+            return get_technology_by_name(technology_name)
+        except:
+            lv = None
 
     if lv == None:
         # no layout open; return a default technology
+        technology = {}
         technology['dbu'] = 0.001
         technology['technology_name'] = technology_name
         
         # Get library names
         technology['libraries'] = get_library_names(technology_name)
-        
+
+        # defaults:
+        technology['DevRec'] = pya.LayerInfo(68, 0)
+        technology['Waveguide'] = pya.LayerInfo(1, 0)
+        technology['Si'] = pya.LayerInfo(1, 0)
+        technology['PinRec'] = pya.LayerInfo(69, 0)
+        technology['Lumerical'] = pya.LayerInfo(733, 0)
+        technology['Text'] = pya.LayerInfo(10, 0)
+        technology_name = 'EBeam'
+
         return technology
 
-    # "lv.active_cellview().technology" crashes in KLayout 0.24.10 when loading a GDS file (technology not defined yet?) but works otherwise
-    if KLAYOUT_VERSION > 24 or query_activecellview_technology or lv.title != '<empty>':
-        technology_name = lv.active_cellview().technology
-    
-    return get_technology_by_name(technology_name)
 
 
 def load_Waveguides():
@@ -483,28 +484,28 @@ def load_Monte_Carlo():
 
 
 
-def load_Verification(debug=True):
+def load_Verification(TECHNOLOGY=None, debug=True):
     '''
     Load Verification rules
     These are technology specific, and located in the tech folder, named Verification.xml
     '''
-    from .._globals import KLAYOUT_VERSION
-    from . import get_technology
-    TECHNOLOGY = get_technology()
+    from SiEPIC._globals import Python_Env
+    if not TECHNOLOGY:
+        if Python_Env == 'KLayout_GUI':
+            # get the technology from the Currently open layout in the KLayout Application
+            from . import get_technology
+            TECHNOLOGY = get_technology()
+        else:
+            raise Exception('SiEPIC.utils.load_DFT: TECHNOLOGY not specified.')
     tech_name = TECHNOLOGY['technology_name']
 
-    import os
-    import fnmatch
+    import os, fnmatch
 
     # then check for Verification.xml in the PDK Technology folder
     search_str = 'Verification.xml'
-    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-        # Find the path for the technology
-        # and find DFT.xml file
-        tech=pya.Technology.technology_by_name(tech_name)
-        dir_path = tech.base_path()
-    else:
-        dir_path = pya.Application.instance().application_data_path()
+    # Find the path for the technology, and find DFT.xml file
+    tech=pya.Technology.technology_by_name(tech_name)
+    dir_path = tech.base_path()
     if debug:
         print(' - load_Verification, path: %s' %dir_path ) 
     matches = []
@@ -526,37 +527,43 @@ def load_Verification(debug=True):
 
 
 
-def load_DFT(debug=True):
+def load_DFT(TECHNOLOGY=None, debug=True):
     '''
     Load Design-for-Test (DFT) rules
-    These are technology specific, and located in the tech folder, named DFT.xml
+    These are technology specific (SiEPIC definition, TECHNOLOGY), and located in the technology's folder, named DFT.xml. 
+    Alternatively, there can be a per-design DFT.xml file, filename_DFT.xml, where filename.gds or filename.oas is the design.
     '''
-    from .._globals import KLAYOUT_VERSION
-    from . import get_technology
-    TECHNOLOGY = get_technology()
+    from SiEPIC._globals import Python_Env
+
+    if not TECHNOLOGY:
+        if Python_Env == 'KLayout_GUI':
+            # get the technology from the Currently open layout in the KLayout Application
+            from . import get_technology
+            TECHNOLOGY = get_technology()
+        else:
+            raise Exception('SiEPIC.utils.load_DFT: TECHNOLOGY not specified.')
     tech_name = TECHNOLOGY['technology_name']
 
-    import os
-    import fnmatch
+    import os, fnmatch
 
     # first check for filename_DFT.xml file in local directory
-    mw = pya.Application.instance().main_window()
-    layout_filename = mw.current_view().active_cellview().filename()
-    filename = os.path.splitext(os.path.basename(layout_filename))[0]
-    local_DFT_path = os.path.join(os.path.dirname(os.path.realpath(layout_filename)), filename+'_DFT.xml')
-    print(' - checking local DFT path: %s' %local_DFT_path ) 
-    if os.path.exists(local_DFT_path):
-        matches = [local_DFT_path]
-    else:
+    matches = None
+    if Python_Env == 'KLayout_GUI':
+        mw = pya.Application.instance().main_window()
+        layout_filename = mw.current_view().active_cellview().filename()
+        filename = os.path.splitext(os.path.basename(layout_filename))[0]
+        local_DFT_path = os.path.join(os.path.dirname(os.path.realpath(layout_filename)), filename+'_DFT.xml')
+        print(' - checking local DFT path: %s' %local_DFT_path ) 
+        if os.path.exists(local_DFT_path):
+            matches = [local_DFT_path]
+    
     # then check for DFT.xml in the PDK Technology folder
+    if not matches:
         search_str = 'DFT.xml'
-        if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-            # Find the path for the technology
-            # and find DFT.xml file
-            tech=pya.Technology.technology_by_name(tech_name)
-            dir_path = tech.base_path()
-        else:
-            dir_path = pya.Application.instance().application_data_path()
+        # Find the path for the technology
+        # and find DFT.xml file
+        tech=pya.Technology.technology_by_name(tech_name)
+        dir_path = tech.base_path()
         if debug:
             print(' - load_DFT, path: %s' %dir_path ) 
         matches = []
@@ -679,10 +686,10 @@ def get_layout_variables():
 def find_paths(layer, cell=None):
     '''Find all paths, full hierarachy scan, return polygons on top cell, for Verfication'''
 
-    lv = pya.Application.instance().main_window().current_view()
-    if lv == None:
-        raise Exception("No view selected")
     if cell is None:
+        lv = pya.Application.instance().main_window().current_view()
+        if lv == None:
+            raise Exception("No view selected")
         ly = lv.active_cellview().layout()
         if ly == None:
             raise Exception("No active layout")
@@ -870,7 +877,7 @@ def points_per_circle(radius, dbu=None):
     if dbu == None:
         from . import get_technology
         TECHNOLOGY = get_technology()
-        err = TECHNOLOGY['dbu'] / 2  # in nm  (there was an error here for a few years: a 1000X factor)
+        err = TECHNOLOGY['dbu'] / 2  # in nm
     else:
         err = dbu / 2  # in nm 
         
@@ -881,7 +888,7 @@ def points_per_circle(radius, dbu=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc(r, theta_start, theta_stop):
+def arc(r, theta_start, theta_stop, dbu=None):
     '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
@@ -893,7 +900,7 @@ def arc(r, theta_start, theta_stop):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r/1000) * circle_fraction)
+    npoints = int(points_per_circle(r/1000, dbu=dbu) * circle_fraction)
     if npoints == 0:
         npoints = 1
     da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -906,7 +913,7 @@ def arc(r, theta_start, theta_stop):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
+def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None, dbu=None):
     '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
@@ -918,7 +925,7 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r/1000) * circle_fraction)
+    npoints = int(points_per_circle(r/1000, dbu=dbu) * circle_fraction)
     if DevRec:
         npoints = int(npoints / 3)
     if npoints == 0:
@@ -966,7 +973,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
+def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None, dbu=None):
     '''function to draw an arc of waveguide
     # x, y: location of the origin
     # r: radius
@@ -979,7 +986,7 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
     from . import points_per_circle
 
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(r/1000) * circle_fraction)
+    npoints = int(points_per_circle(r/1000, dbu=dbu) * circle_fraction)
     if DevRec:
         npoints = int(npoints / 3)
     if npoints == 0:
@@ -999,13 +1006,13 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_bezier(radius, start, stop, bezier, DevRec=None):
+def arc_bezier(radius, start, stop, bezier, DevRec=None, dbu=None):
     '''Create a bezier curve. While there are parameters for start and stop in
     degrees, this is currently only implemented for 90 degree bends
     Radius in Database units (dbu)'''
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
-    N = points_per_circle(radius/1000)/4
+    N = points_per_circle(radius/1000, dbu=dbu)/4
     bezier=float(bezier) # in case the input was a string
     if DevRec:
         N = int(N / 3)
@@ -1103,7 +1110,7 @@ def layout_pgtext(cell, layer, x, y, text, mag, inv=False):
 
 
 
-def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
+def find_automated_measurement_labels(topcell=None, LayerTextN=None, TECHNOLOGY=None, GUI=False):
     """return all opt_in labels from a cell
     requires a layout with Text labels on the layer LayerTextN
     the format of the labels is
@@ -1129,10 +1136,11 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, GUI=False):
     """
     
     import string
-    if LayerTextN == None:
+    if TECHNOLOGY == None:
         from . import get_technology, find_paths
         TECHNOLOGY = get_technology()
-        dbu = TECHNOLOGY['dbu']
+    dbu = TECHNOLOGY['dbu']
+    if LayerTextN == None:
         LayerTextN = TECHNOLOGY['Text']
     if not topcell:
         lv = pya.Application.instance().main_window().current_view()

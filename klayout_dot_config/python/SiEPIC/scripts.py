@@ -3682,6 +3682,8 @@ def export_layout(topcell, path, filename, relative_path = '', format='oas', scr
             except:
                 raise Exception("Problem exporting your layout, %s." % file_out)
 
+    return file_out
+
 def instantiate_all_library_cells(topcell, progress_bar = True):
     '''
     Load all cells (fixed and PCells) and instantiate them on the layout. 
