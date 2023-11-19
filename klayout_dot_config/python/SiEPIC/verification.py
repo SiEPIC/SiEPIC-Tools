@@ -65,23 +65,38 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
         from SiEPIC.utils import advance_iterator
         from SiEPIC._globals import KLAYOUT_VERSION
         from SiEPIC.scripts import trim_netlist
-        
-    TECHNOLOGY = get_technology()
-    dbu = TECHNOLOGY['dbu']
+    
+    from SiEPIC._globals import Python_Env
+    if verbose:
+            print('KLayout running as %s' % Python_Env)
+    if Python_Env == 'KLayout_GUI':
+        try:
+            lv = pya.Application.instance().main_window().current_view()
+            cv = lv.active_cellview()
+        except:
+            pass
+    if 'lv' not in locals() or lv == None:
+        lv = pya.LayoutView()
+        cv = pya.CellView()
 
-    lv = pya.Application.instance().main_window().current_view()
-    if lv == None:
-        raise Exception("No view selected")
     if cell is None:
-        ly = lv.active_cellview().layout()
-        if ly == None:
+        try:
+            ly = lv.active_cellview().layout()
+        except:
             raise Exception("No active layout")
-        cell = lv.active_cellview().cell
-        if cell == None:
+        try:
+            cell = lv.active_cellview().cell
+        except:
             raise Exception("No active cell")
     else:
         ly = cell.layout()
-    cv = lv.active_cellview()
+
+
+    if 'TECHNOLOGY' in dir(cell.layout()):
+        TECHNOLOGY = cell.layout()
+    TECHNOLOGY = get_technology()
+    dbu = TECHNOLOGY['dbu']
+
 
     if not TECHNOLOGY['technology_name']:
         if GUI:
@@ -615,7 +630,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=True):
     import sys
     from time import strftime
     text = pya.DText("SiEPIC-Tools verification: %s errors\n%s\nSiEPIC-Tools v%s\ntechnology: %s\n%s\nPython: %s, %s\n%s" % (rdb.num_items(), strftime("%Y-%m-%d %H:%M:%S"),
-                                                                                                                             SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.Application.instance().version()), pya.DTrans(cell.dbbox().p1))
+                                                                                                                             SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.__version__), pya.DTrans(cell.dbbox().p1))
     shape = cell.shapes(LayerTextN).insert(text)
     shape.text_size = 0.1 / dbu
 
