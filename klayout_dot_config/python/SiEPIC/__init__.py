@@ -7,8 +7,13 @@ __version__ = '0.5.3'
 print("KLayout SiEPIC-Tools version %s" %__version__)
 
 import pya
-KLAYOUT_VERSION = int(pya.__version__.split('.')[1])
-
+if '__version__' in dir(pya):
+    # pya.__version__ was introduced in KLayout version 0.28.6
+    KLAYOUT_VERSION = int(pya.__version__.split('.')[1])
+else:
+    KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
+    KLAYOUT_VERSION_3 = int(pya.Application.instance().version().split('.')[2])
+    
 if KLAYOUT_VERSION < 28:  
     # pya.Technologies was introduced in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
     # SiEPIC-Tools is being updated to use this functionality, hence will no longer be supported for KLayout 0.26
@@ -20,5 +25,3 @@ else:
         from . import extend, _globals, core, examples, github, scripts, utils, setup, install, verification
     else:
         from . import extend, _globals, verification
-    
-

@@ -64,8 +64,13 @@ except ImportError:
 
 #ACTIONS = []
 
-KLAYOUT_VERSION = int(pya.__version__.split('.')[1])
-KLAYOUT_VERSION_3 = int(pya.__version__.split('.')[2])
+if '__version__' in dir(pya):
+    # pya.__version__ was introduced in KLayout version 0.28.6
+    KLAYOUT_VERSION = int(pya.__version__.split('.')[1])
+    KLAYOUT_VERSION_3 = int(pya.__version__.split('.')[2])
+else:
+    KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
+    KLAYOUT_VERSION_3 = int(pya.Application.instance().version().split('.')[2])
 
 # Waveguide DevRec: space between the waveguide and the DevRec polygon
 WG_DEVREC_SPACE = 1
