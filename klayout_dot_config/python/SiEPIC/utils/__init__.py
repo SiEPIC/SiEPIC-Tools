@@ -890,7 +890,7 @@ def angle_trunc(a, trunc):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def points_per_circle(radius, dbu=None):
+def points_per_circle(radius, dbu=0.001):
     '''Calculate the recommended number of points in a circle, based on
     http://stackoverflow.com/questions/11774038/how-to-render-a-circle-with-as-few-vertices-as-possible'''
     # radius in microns
@@ -909,7 +909,7 @@ def points_per_circle(radius, dbu=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc(r, theta_start, theta_stop, dbu=None):
+def arc(r, theta_start, theta_stop, dbu=0.001):
     '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
@@ -934,7 +934,7 @@ def arc(r, theta_start, theta_stop, dbu=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None, dbu=None):
+def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None, dbu=0.001):
     '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
@@ -962,7 +962,7 @@ def arc_xy(x, y, r, theta_start, theta_stop, DevRec=None, dbu=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
+def arc_wg(radius, w, theta_start, theta_stop, DevRec=None, dbu=0.001):
     '''function to draw an arc of waveguide
     # radius: radius
     # w: waveguide width
@@ -975,7 +975,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
 
     # print("SiEPIC.utils arc_wg")
     circle_fraction = abs(theta_stop - theta_start) / 360.0
-    npoints = int(points_per_circle(radius/1000) * circle_fraction)
+    npoints = int(points_per_circle(radius/1000, dbu=dbu) * circle_fraction)
     if DevRec:
         npoints = int(npoints / 3)
     if npoints == 0:
@@ -994,7 +994,7 @@ def arc_wg(radius, w, theta_start, theta_stop, DevRec=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None, dbu=None):
+def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None, dbu=0.001):
     '''function to draw an arc of waveguide
     # x, y: location of the origin
     # r: radius
@@ -1027,7 +1027,7 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None, dbu=None):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_bezier(radius, start, stop, bezier, DevRec=None, dbu=None):
+def arc_bezier(radius, start, stop, bezier, DevRec=None, dbu=0.001):
     '''Create a bezier curve. While there are parameters for start and stop in
     degrees, this is currently only implemented for 90 degree bends
     Radius in Database units (dbu)'''

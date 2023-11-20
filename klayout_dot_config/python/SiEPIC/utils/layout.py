@@ -871,7 +871,7 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
         return poly_t
 
 
-def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000, insert=True):
+def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000, insert=True, dbu=0.001):
     """ Lays out an s-bend
 
     Args:
@@ -904,7 +904,7 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
 
     if (straight_l >= 0):
         circle_fraction = abs(theta) / 360.0
-        npoints = int(points_per_circle(r*cell.layout().dbu) * circle_fraction)
+        npoints = int(points_per_circle(r*cell.layout().dbu, dbu=dbu) * circle_fraction)
         if npoints == 0:
             npoints = 1
         da = 2 * pi / npoints * circle_fraction  # increment, in radians
