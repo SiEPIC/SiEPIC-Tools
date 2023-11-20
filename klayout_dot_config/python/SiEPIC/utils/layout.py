@@ -1275,7 +1275,10 @@ def new_layout(tech, topcell_name, GUI=True, overwrite = False):
         lv.select_cell(topcell.cell_index(), 0)
     else:
         ly = pya.Layout()
-        ly.technology_name = tech
+        if type(tech)==str:
+            ly.technology_name = tech
+        elif type(tech) == pya.Technology():
+            ly.technology_name = tech.name            
         topcell = ly.create_cell(topcell_name)
     ly.TECHNOLOGY = get_technology_by_name(tech)
 

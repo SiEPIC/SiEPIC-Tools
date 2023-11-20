@@ -704,7 +704,10 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     from .core import Pin
     from . import _globals
     from .utils import get_technology_by_name
-    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
+    if 'TECHNOLOGY' in dir(self.layout()):
+        TECHNOLOGY = self.layout().TECHNOLOGY
+    else:
+        TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
 
     # array to store Pin objects
     pins = []
@@ -943,7 +946,10 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     from .core import Component
     from . import _globals
     from .utils import get_technology_by_name
-    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
+    if 'TECHNOLOGY' in dir(self.layout()):
+        TECHNOLOGY = self.layout().TECHNOLOGY
+    else:
+        TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
     dbu = TECHNOLOGY['dbu']
 
     # Find all the DevRec shapes

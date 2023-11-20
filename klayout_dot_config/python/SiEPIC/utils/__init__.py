@@ -52,8 +52,9 @@ pointlist_to_path
 from SiEPIC._globals import Python_Env
 if Python_Env == "KLayout_GUI":
     from . import components
-
+from . import *
 import pya
+import os
 
 '''
 from .. import _globals
@@ -128,6 +129,48 @@ def get_library_names(tech_name, verbose=False):
     
     return library_names
 
+
+def load_klayout_technology(techname, path_module, path_lyt_file=None):
+    '''
+    techname: <string> name of the technology
+    path_module: <string> where the Python module is loaded from, e.g., import EBeam
+    path_lyt_file: <string> where the KLayout technology (.lyt) is located
+    returns: <pya.Technology>
+    '''
+    import sys
+    
+    # if running in KLayout Application mode, the technology is loaded
+    # automatically via the Technology Manager
+    if techname in pya.Technology().technology_names():
+        return pya.Technology().technology_by_name(techname)
+
+    # if running in KLayout in PyPI mode, the technology needs to be
+    # loaded separately
+    if techname not in sys.modules:
+        if not path_module in sys.path:
+            sys.path.append(path_module)
+        tech = pya.Technology().create_technology('EBeam')
+        if path_lyt_file:
+            tech = tech.load(path_lyt_file)
+        else:
+            import fnmatch, os
+            search_str = techname + '.lyt'
+            matches = []
+            for root, dirnames, filenames in os.walk(path_module, followlinks=True):
+                for filename in fnmatch.filter(filenames, search_str):
+                    matches.append(os.path.join(root, filename))
+            if matches:
+                tech = tech.load(matches[0])
+            else:
+                raise Exception ('SiEPIC.load_klayout_technology: could not load KLayout technology %s within folder %s' % (techname, path_module))
+
+        # technology needs to be defined and loaded first, before importing
+        import importlib
+        importlib.import_module(techname)
+        return tech
+
+
+
 from functools import lru_cache
 @lru_cache(maxsize=None)
 def get_technology_by_name(tech_name, verbose=False):
@@ -136,40 +179,18 @@ def get_technology_by_name(tech_name, verbose=False):
         print("get_technology_by_name()")
 
     if not tech_name:
-        pya.MessageBox.warning(
+        raise Exception(
             "Problem with Technology", "Problem with active Technology: please activate a technology (not Default)", pya.MessageBox.Ok)
-        return
 
     from .._globals import KLAYOUT_VERSION
     technology = {}
     technology['technology_name'] = tech_name
-    if KLAYOUT_VERSION > 24:
-        technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
-    else:
-        technology['dbu'] = 0.001
+    technology['dbu'] = pya.Technology.technology_by_name(tech_name).dbu
 
-    import os
-    if KLAYOUT_VERSION > 24:
-        lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()
-        technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
-        if not technology['base_path']:
-            raise Exception('Cannot find the technology "%s"' % tech_name)
-    else:
-        import fnmatch
-        dir_path = pya.Application.instance().application_data_path()
-        search_str = '*' + tech_name + '.lyp'
-        matches = []
-        for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
-            for filename in fnmatch.filter(filenames, search_str):
-                matches.append(os.path.join(root, filename))
-        if matches:
-            lyp_file = matches[0]
-        else:
-            raise Exception('Cannot find technology layer properties file %s' % search_str)
-
-        # Load technology folder location
-        technology['base_path'] = os.path.dirname(lyp_file)
-        print('technology base path:%s' % technology['base_path'])
+    lyp_file = pya.Technology.technology_by_name(tech_name).eff_layer_properties_file()
+    technology['base_path'] = pya.Technology.technology_by_name(tech_name).base_path()
+    if not technology['base_path']:
+        raise Exception('Cannot find the technology "%s"' % tech_name)
 
     # Find the Compact Model Library files    
     cml_files = []

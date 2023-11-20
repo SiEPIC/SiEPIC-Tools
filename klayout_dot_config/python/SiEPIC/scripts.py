@@ -3755,30 +3755,3 @@ def instantiate_all_library_cells(topcell, progress_bar = True):
     if True or Python_Env == "KLayout_GUI":
         p.destroy
 
-
-def load_klayout_technology(techname, path_module, path_lyt_file):
-    '''
-    techname: <string> name of the technology
-    path_module: <string> where the Python module is loaded from, e.g., import EBeam
-    path_lyt_file: <string> where the KLayout technology (.lyt) is located
-    returns: <pya.Technology>
-    '''
-    import sys
-    
-    # if running in KLayout Application mode, the technology is loaded
-    # automatically via the Technology Manager
-    if techname in pya.Technology().technology_names():
-        return pya.Technology().technology_by_name(techname)
-
-    # if running in KLayout in PyPI mode, the technology needs to be
-    # loaded separately
-    if techname not in sys.modules:
-        if not path_module in sys.path:
-            sys.path.append(path_module)
-        tech = pya.Technology().create_technology('EBeam')
-        tech = tech.load(path_lyt_file)
-        # technology needs to be defined and loaded first, before importing
-        import importlib
-        importlib.import_module(techname)
-        return tech
-

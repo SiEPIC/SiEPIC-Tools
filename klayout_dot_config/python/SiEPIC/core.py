@@ -189,8 +189,11 @@ class Component():
         self.basic_name = basic_name  # component's basic_name (especially for PCells)
         self.cellName = cellName  # component's Library Cell name
         if cell:
-            from .utils import get_technology_by_name
-            self.TECHNOLOGY = get_technology_by_name(cell.layout().technology_name)
+            if 'TECHNOLOGY' in dir(cell.layout()):
+                self.TECHNOLOGY = cell.layout().TECHNOLOGY
+            else:
+                from .utils import get_technology_by_name
+                self.TECHNOLOGY = get_technology_by_name(cell.layout().technology_name)
         # from .utils import get_technology
         # self.TECHNOLOGY = get_technology()
         self.Dcenter = self.center.to_dtype(self.TECHNOLOGY['dbu'])

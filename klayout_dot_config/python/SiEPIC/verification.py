@@ -118,14 +118,6 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
         print("* Display list of components:")
         [c.display() for c in components]
 
-    if not components:
-        if Python_Env == 'KLayout_GUI':
-            v = pya.MessageBox.warning(
-                "Errors", "No components found (using SiEPIC-Tools DevRec and PinRec definitions). Cannot perform Verification.", pya.MessageBox.Ok)
-            return
-        else:
-            raise Exception("No components found (using SiEPIC-Tools DevRec and PinRec definitions). Cannot perform Verification.")
-
     if timing:
         print("*** layout_check(), timing; done nets (%s), components (%s) " % (len(nets), len(components)))
         print('    Time elapsed: %s' % (time() - time1))    
@@ -138,6 +130,30 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     rdb.top_cell_name = cell.name
     rdb_cell = rdb.create_cell(cell.name)
 
+    # Component checking
+    rdb_cell = next(rdb.each_cell())
+    rdb_cat_id_comp = rdb.create_category("Component")
+    rdb_cat_id_comp_none = rdb.create_category(rdb_cat_id_comp, "No components found")
+    rdb_cat_id_comp_none.description = "At minimum, shapes must be inside a cell and inside a DevRec shape. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout"
+    rdb_cat_id_comp_shapesoutside = rdb.create_category(rdb_cat_id_comp, "Shapes outside component")
+    rdb_cat_id_comp_shapesoutside.description = "Shapes for device layers need to be inside a component. At minimum, they must be inside a cell and inside a DevRec shape. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout"
+    rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
+    rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
+    rdb_cat_id_comp_overlap = rdb.create_category(rdb_cat_id_comp, "Overlapping component")
+    rdb_cat_id_comp_overlap.description = "Overlapping components (defined as overlapping DevRec layers; touching is ok)"
+    rdb_cat_id_comp_pinerrors = rdb.create_category(rdb_cat_id_comp, "Invalid Pin")
+    rdb_cat_id_comp_pinerrors.description = "Invalid pin found. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout"
+    # Major error - no components found
+    if not components:
+        if Python_Env == 'KLayout_GUI':
+            v = pya.MessageBox.warning(
+                "Errors", "No components found (using SiEPIC-Tools DevRec and PinRec definitions). Cannot perform Verification.", pya.MessageBox.Ok)
+            return
+        else:
+            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_none.rdb_id())
+            rdb_item.add_value(pya.RdbItemValue(pya.Polygon(cell.bbox()).to_dtype(dbu)))
+             
+
     # Waveguide checking
     rdb_cell = next(rdb.each_cell())
     rdb_cat_id_wg = rdb.create_category("Waveguide")
@@ -149,18 +165,6 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     rdb_cat_id_wg_bendpts.description = "Waveguide bend should have more points per circle."
     rdb_cat_id_wg_manhattan = rdb.create_category(rdb_cat_id_wg, "Manhattan")
     rdb_cat_id_wg_manhattan.description = "The first and last waveguide segment need to be Manhattan (vertical or horizontal) so that they can connect to device pins."
-
-    # Component checking
-    rdb_cell = next(rdb.each_cell())
-    rdb_cat_id_comp = rdb.create_category("Component")
-    rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
-    rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
-    rdb_cat_id_comp_overlap = rdb.create_category(rdb_cat_id_comp, "Overlapping component")
-    rdb_cat_id_comp_overlap.description = "Overlapping components (defined as overlapping DevRec layers; touching is ok)"
-    rdb_cat_id_comp_shapesoutside = rdb.create_category(rdb_cat_id_comp, "Shapes outside component")
-    rdb_cat_id_comp_shapesoutside.description = "Shapes for device layers need to be inside a component. At minimum, they must be inside a cell and inside a DevRec shape. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout"
-    rdb_cat_id_comp_pinerrors = rdb.create_category(rdb_cat_id_comp, "Invalid Pin")
-    rdb_cat_id_comp_pinerrors.description = "Invalid pin found. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout"
 
     # Connectivity checking
     rdb_cell = next(rdb.each_cell())
@@ -455,14 +459,6 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
 
         text_out, opt_in = find_automated_measurement_labels(cell, TECHNOLOGY=TECHNOLOGY)
 
-        '''
-    # opt_in labels missing: 0 labels found. draw box around the entire circuit.
-    # replaced with code below that finds each circuit separately
-    if len(opt_in) == 0:
-      rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
-      rdb_item.add_value(pya.RdbItemValue( pya.Polygon(cell.bbox()).to_dtype(dbu) ) )
-    '''
-
         # dataset for all components found connected to opt_in labels; later
         # subtract from all components to find circuits with missing opt_in
         components_connected_opt_in = []
@@ -649,9 +645,11 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     if timing:
         print("*** layout_check(), timing; all done. ")
         print('    Time elapsed: %s' % (time() - time1))    
+    return rdb.num_items()
 
 if __name__ == "__main__":
     print('SiEPIC-Tools functional verification')
-    from SiEPIC.utils import get_layout_variables, load_Waveguides_by_Tech
+    from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, layout, cell = get_layout_variables()  
-    layout_check(cell=cell, verbose=True)
+    num_errors = layout_check(cell=cell, verbose=True)
+    
