@@ -64,7 +64,7 @@ if 1:
     SiEPIC.utils = reload(SiEPIC.utils)
     SiEPIC.utils.layout = reload(SiEPIC.utils.layout)
     SiEPIC.utils.geometry = reload(SiEPIC.utils.geometry)
-    SiEPIC.utils.components = reload(SiEPIC.utils.components)
+#   SiEPIC.utils.components = reload(SiEPIC.utils.components)
     # SiEPIC.utils.crossings = reload(SiEPIC.utils.crossings)
     SiEPIC.setup = reload(SiEPIC.setup)
     SiEPIC.verification = reload(SiEPIC.verification)
