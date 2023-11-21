@@ -132,6 +132,7 @@ def get_library_names(tech_name, verbose=False):
 
 def load_klayout_technology(techname, path_module, path_lyt_file=None):
     '''
+    deprecated: use an __init__.py in the PDK instead. See SiEPIC_EBeam_PDK for example.
     techname: <string> name of the technology
     path_module: <string> where the Python module is loaded from, e.g., import EBeam
     path_lyt_file: <string> where the KLayout technology (.lyt) is located
@@ -349,60 +350,46 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
     '''
     Load Waveguide configuration for specific technology
     These are technology specific, and located in the tech folder, named WAVEGUIDES.xml, and WAVEGUIDES_*.xml
-    For KLayout <0.27, Look for this file for folders that contain 'tech_name'.lyt
     For KLayout 0.27+, Look in the technology folder, plus each library's folder.
     '''
     import os
     import fnmatch
 
-    paths = []
 
     from .._globals import KLAYOUT_VERSION
 
-    if KLAYOUT_VERSION >= 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-        # Find the path for the technology
-        # and find WAVEGUIDE.xml and WAVEGUIDE_*.xml files
-        tech=pya.Technology.technology_by_name(tech_name)
-        folder = tech.base_path()
-        for root, dirnames, filenames in os.walk(folder, followlinks=True):
+    paths = []
+    # Find the path for the technology
+    # and find WAVEGUIDE.xml and WAVEGUIDE_*.xml files
+    tech=pya.Technology.technology_by_name(tech_name)
+    folder = tech.base_path()
+    for root, dirnames, filenames in os.walk(folder, followlinks=True):
+        [paths.append(os.path.join(root, filename))
+         for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
+        [paths.append(os.path.join(root, filename))
+         for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
+        if debug:
+            print(' - %s, %s, %s, %s' % (root, dirnames, filenames, paths))        
+
+    # Find the paths for each Library that matches technology
+    # and find WAVEGUIDE.xml and WAVEGUIDE_*.xml files
+    libs = [pya.Library.library_by_id(lib) for lib in pya.Library.library_ids() if tech_name in pya.Library.library_by_id(lib).technologies()]
+    libs = [lib for lib in libs if 'path' in dir(lib)]
+    for lib in libs:
+        for root, dirnames, filenames in os.walk(lib.path, followlinks=True):
             if debug:
                 print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
             [paths.append(os.path.join(root, filename))
-             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
+             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml'))  ] 
             [paths.append(os.path.join(root, filename))
-             for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml')) if fnmatch.filter(filenames, tech_name + '.lyt') ]
-
-        # Find the paths for each Library that matches technology
-        # and find WAVEGUIDE.xml and WAVEGUIDE_*.xml files
-        libs = [pya.Library.library_by_id(lib) for lib in pya.Library.library_ids() if tech_name in pya.Library.library_by_id(lib).technologies()]
-        libs = [lib for lib in libs if 'path' in dir(lib)]
-        for lib in libs:
-            for root, dirnames, filenames in os.walk(lib.path, followlinks=True):
-                if debug:
-                    print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
-                [paths.append(os.path.join(root, filename))
-                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml'))  ] 
-                [paths.append(os.path.join(root, filename))
-                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))  ] 
+         for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))  ] 
              
-
-    if KLAYOUT_VERSION < 27:  #  technologies in 0.27: https://www.klayout.de/doc-qt5/code/class_Library.html#method24
-        # Search all the sub-folders in KLayout
-        # look for WAVEGUIDE xml files to find tech_name.lyt file
-        # not very efficient.
-        for root, dirnames, filenames in os.walk(pya.Application.instance().application_data_path(), followlinks=True):
-            if debug:
-                print(' - %s, %s, %s, %s' % (root, dirnames, filenames, (fnmatch.filter(filenames, 'WAVEGUIDES.xml')+fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))))        
-                [paths.append(os.path.join(root, filename))
-                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES.xml'))  ] 
-                [paths.append(os.path.join(root, filename))
-                 for filename in (fnmatch.filter(filenames, 'WAVEGUIDES_*.xml'))  ] 
-
     if debug:
         print(paths)
 
-    # remove duplicates; keep unique paths
-    paths = list(set(paths))
+    # remove duplicates; keep unique paths; without changing the order
+    # list(set(paths)) -- this changes the order
+    paths = list(dict.fromkeys(paths)) 
 
     if debug:
         print(paths)
