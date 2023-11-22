@@ -11,7 +11,7 @@ try:
         print('Python Environment: KLayout batch mode')
 except:
     Python_Env = "Script"
-
+'''
 if Python_Env == "KLayout_GUI":
     # Netlist extraction will merge straight+bend sections into waveguide (1),
     # or extract each bend, straight section, etc. (0)
@@ -30,9 +30,9 @@ if Python_Env == "KLayout_GUI":
     from .core import WaveguideGUI, MonteCarloGUI
     WG_GUI = WaveguideGUI()
     MC_GUI = MonteCarloGUI()
-'''   
+ 
 
-'''
+
 # ******** lukasc
 # don't use a global one.. based on cells
 # Define global Net object that implements netlists and pin searching/connecting
@@ -65,6 +65,7 @@ try:
 except ImportError:
     from .install import install_numpy
 
+
 '''
     # ******** lukasc
     # don't use a global one.. based on cells
@@ -91,7 +92,9 @@ except ImportError:
 
 
     MODULE_NUMPY = False
+'''
     try:
+        '''
         import numpy
         MODULE_NUMPY = True
     except ImportError:
@@ -127,10 +130,10 @@ WG_DEVREC_SPACE = 1
 
 # Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
 PATH_SNAP_PIN_MAXDIST = 20
-'''
+
     
 INTC_ELEMENTS = ''
-#if Python_Env == "KLayout_GUI":
+if Python_Env == "KLayout_GUI":
     # Load INTC element library details KLayout application data path
     import os
     path = os.path.join(pya.Application.instance().application_data_path(), 'Lumerical_CMLs')
@@ -166,8 +169,8 @@ INTC_ELEMENTS = ''
         print('resetting Lumerical Python integration')
     
     
-    try:
-        TEMP_FOLDER
-    except:
-        import tempfile
-        TEMP_FOLDER = tempfile.mkdtemp()
+try:
+    TEMP_FOLDER
+except:
+    import tempfile
+    TEMP_FOLDER = tempfile.mkdtemp()
