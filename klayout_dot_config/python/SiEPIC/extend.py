@@ -65,12 +65,17 @@ pya.Point Extensions:
 
 import pya
 
+warning = pya.QMessageBox()
+warning.setStandardButtons(pya.QMessageBox.Ok)
+warning.setDefaultButton(pya.QMessageBox.Ok)
+
+'''
 from SiEPIC._globals import Python_Env
 if Python_Env == "KLayout_GUI":
     warning = pya.QMessageBox()
     warning.setStandardButtons(pya.QMessageBox.Ok)
     warning.setDefaultButton(pya.QMessageBox.Ok)
-
+'''
 #################################################################################
 #                SiEPIC Class Extension of Layout Class                         #
 #################################################################################
@@ -1712,7 +1717,8 @@ def find_pins(self, verbose=False):
         print("Instance.find_pins, self: %s" % self)
         print("Instance.find_pins, cplx_trans: %s" % self.cplx_trans)
     found_pins, errors = self.cell.find_pins(verbose)
-    return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)[0]], errors
+    return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)]
+    #return [pin.transform(self.cplx_trans) for pin in self.cell.find_pins(verbose)[0]], errors
 
 # find the Pin's Point, whose name matches the input, for the given Instance
 def pinPoint(self, pin_name, verbose=False):
