@@ -824,8 +824,8 @@ def layout_taper(cell, layer, trans, w1, w2, length, insert=True):
         return shape_taper
 
 
-def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True):
-#def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True, debug=False):
+#def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True):
+def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True, debug=False):
     """ Creates a waveguide s-bend using a bezier curve
     Author: Lukas Chrostowski
     Args:
@@ -1045,8 +1045,8 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
     import numpy
     dbu = cell.layout().dbu
 
-#    if type(w) != type(center[0]):
-#        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
+    if type(w) != type(center[0]):
+        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
 
     if type(w) == type(float()):
         w = to_itype(w, dbu)
