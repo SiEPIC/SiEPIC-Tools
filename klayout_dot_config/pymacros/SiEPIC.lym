@@ -8,7 +8,6 @@
  <doc/>
  <autorun>true</autorun>
  <autorun-early>false</autorun-early>
- <priority>0</priority>
  <shortcut/>
  <show-in-menu>true</show-in-menu>
  <group-name/>
@@ -21,12 +20,15 @@ SiEPIC installation and initalization
 
 '''#################################################################################
 
+pya.Application.instance().main_window().message('SiEPIC initialization',5000)
+print(pya.Application.instance().version())
+'''
 try: # only works in GUI mode
     pya.Application.instance().main_window().message('SiEPIC initialization',5000)
 except:
     pass
-
 print(pya.Application.instance().version())
+'''
     
 # import xml before lumapi (SiEPIC.lumerical), otherwise XML doesn't work:
 from xml.etree import cElementTree
@@ -100,6 +102,12 @@ else:
     SiEPIC.install = reload(SiEPIC.install)
     print('Reloaded SiEPIC')
 
+
+SiEPIC.setup.registerMenuItems()
+SiEPIC.setup.registerKeyBindings()
+SiEPIC.setup.register_auto_cleanup()
+pya.Application.instance().main_window().message('SiEPIC - Initialization complete.',5000)
+'''
 try: # only works in GUI mode
     SiEPIC.setup.registerMenuItems()
     SiEPIC.setup.registerKeyBindings()
@@ -111,6 +119,6 @@ try: # only works in GUI mode
     pya.Application.instance().main_window().message('SiEPIC - Initialization complete.',5000)
 except:
     pass
-    
+'''    
 </text>
 </klayout-macro>
