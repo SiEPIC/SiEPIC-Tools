@@ -52,10 +52,10 @@ pointlist_to_path
 from SiEPIC._globals import Python_Env
 if Python_Env == "KLayout_GUI":
     from . import components
-'''
+
 import pya
 
-'''
+
 from .. import _globals
 if _globals.Python_Env == "KLayout_GUI":
     import pya
@@ -282,13 +282,13 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
 
-    lv = pya.Application.instance().main_window().current_view()
-'''
+    #lv = pya.Application.instance().main_window().current_view()
+
     try:
         lv = pya.Application.instance().main_window().current_view()
     except:
         lv = None
-'''
+
     if lv == None:
         # no layout open; return a default technology
         technology['dbu'] = 0.001
@@ -664,7 +664,7 @@ def get_layout_variables():
     if cell == None:
         raise UserWarning("No cell. Make sure you have an open layout.")
 
-    #ly.TECHNOLOGY = TECHNOLOGY
+    ly.TECHNOLOGY = TECHNOLOGY
     return TECHNOLOGY, lv, ly, cell
 
 
