@@ -21,10 +21,6 @@ SiEPIC installation and initalization
 
 '''#################################################################################
 
-'''
-pya.Application.instance().main_window().message('SiEPIC initialization',5000)
-print(pya.Application.instance().version())
-'''
 try: # only works in GUI mode
     pya.Application.instance().main_window().message('SiEPIC initialization',5000)
 except:
@@ -104,12 +100,6 @@ else:
     SiEPIC.install = reload(SiEPIC.install)
     print('Reloaded SiEPIC')
 
-'''
-SiEPIC.setup.registerMenuItems()
-SiEPIC.setup.registerKeyBindings()
-SiEPIC.setup.register_auto_cleanup()
-pya.Application.instance().main_window().message('SiEPIC - Initialization complete.',5000)
-'''
 try: # only works in GUI mode
     SiEPIC.setup.registerMenuItems()
     SiEPIC.setup.registerKeyBindings()
