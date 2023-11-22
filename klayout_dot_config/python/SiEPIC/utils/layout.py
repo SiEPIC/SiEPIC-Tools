@@ -824,7 +824,8 @@ def layout_taper(cell, layer, trans, w1, w2, length, insert=True):
         return shape_taper
 
 
-def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True, debug=False):
+def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True):
+#def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True, debug=False):
     """ Creates a waveguide s-bend using a bezier curve
     Author: Lukas Chrostowski
     Args:
