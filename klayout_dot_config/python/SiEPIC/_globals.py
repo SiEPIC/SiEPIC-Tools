@@ -1,7 +1,7 @@
 
 Python_Env = "" # tag which defines whether we are loading library in script or GUI env
 try:
-    # import pya, which is available when running within KLayout
+    # import pya, which is available  running within KLayout
     import pya
     if pya.Application.instance().main_window():
         Python_Env = "KLayout_GUI"
@@ -64,37 +64,8 @@ try:
     MODULE_NUMPY = True
 except ImportError:
     from .install import install_numpy
-
-
-'''
-    # ******** lukasc
-    # don't use a global one.. based on cells
-    # Define global Net object that implements netlists and pin searching/connecting
-    # NET = Net()
-
-    NET_DISCONNECTED = Net()
-
-    # don't use a global one.. based on cells
-    # Define global Component object
-    #COMPONENT = Component()
-
-
-    # Define an Enumeration type for Python
-    # TODO: maybe move to standard enum for python3
-    # https://docs.python.org/3/library/enum.html
-    def enum(*sequential, **named):
-        enums = dict(zip(sequential, range(len(sequential))), **named)
-        return type('Enum', (), enums)
-
-    # Define enumeration for pins
-    PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
-    PIN_LENGTH = 20  # 10 nm on each side. Previous was 2x50 nm, but shorter works well for Waveguide DRC checking
-
-
-    MODULE_NUMPY = False
-'''
     try:
-        '''
+        
         import numpy
         MODULE_NUMPY = True
     except ImportError:
@@ -103,22 +74,6 @@ except ImportError:
             MODULE_NUMPY = install_numpy()
         except Exception as e:
             print("Could not install numpy with pip. ERROR:", e)
-
-    #ACTIONS = []
-
-    KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
-    KLAYOUT_VERSION_3 = int(pya.Application.instance().version().split('.')[2])
-
-    # Waveguide DevRec: space between the waveguide and the DevRec polygon
-    WG_DEVREC_SPACE = 1
-
-    # Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
-    PATH_SNAP_PIN_MAXDIST = 20
-
-'''
-        MODULE_NUMPY = install_numpy()
-    except Exception as e:
-        print("Could not install numpy with pip. ERROR:", e)
 
 #ACTIONS = []
 
@@ -130,7 +85,6 @@ WG_DEVREC_SPACE = 1
 
 # Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
 PATH_SNAP_PIN_MAXDIST = 20
-
     
 INTC_ELEMENTS = ''
 if Python_Env == "KLayout_GUI":
