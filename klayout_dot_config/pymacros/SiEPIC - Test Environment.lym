@@ -67,7 +67,7 @@ if 1:
     SiEPIC.utils.components = reload(SiEPIC.utils.components)
     # SiEPIC.utils.crossings = reload(SiEPIC.utils.crossings)
     SiEPIC.setup = reload(SiEPIC.setup)
-    SiEPIC.verification = reload(SiEPIC.verification)
+    #SiEPIC.verification = reload(SiEPIC.verification)
 #    import SiEPIC.opics_netlist_sim
 #    SiEPIC.opics_netlist_sim = reload(SiEPIC.opics_netlist_sim)
 #    import SiEPIC.opics
