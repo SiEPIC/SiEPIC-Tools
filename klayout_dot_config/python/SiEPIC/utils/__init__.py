@@ -54,12 +54,11 @@ if Python_Env == "KLayout_GUI":
     from . import components
 
 import pya
-
-
+'''
 from .. import _globals
 if _globals.Python_Env == "KLayout_GUI":
     import pya
-
+'''
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html
 # Python 2: iterator.next()
@@ -281,8 +280,6 @@ def get_technology(verbose=False, query_activecellview_technology=False):
     technology['Lumerical'] = pya.LayerInfo(733, 0)
     technology['Text'] = pya.LayerInfo(10, 0)
     technology_name = 'EBeam'
-
-    #lv = pya.Application.instance().main_window().current_view()
 
     try:
         lv = pya.Application.instance().main_window().current_view()
@@ -1471,6 +1468,5 @@ def pointlist_to_path(pointlist, dbu):
         points.append(pya.Point(p[0],p[1]))
     path = pya.Path(points)
     return path
-
 
     
