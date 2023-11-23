@@ -56,11 +56,22 @@ try:
     import numpy
     MODULE_NUMPY = True
 except ImportError:
-    from .install import install_numpy
+    from .install import install
     try:
-        MODULE_NUMPY = install_numpy()
+        MODULE_NUMPY = install('numpy')
     except Exception as e:
         print("Could not install numpy with pip. ERROR:", e)
+
+# scipy
+try:
+    import scipy
+except ImportError:
+    from .install import install
+    try:
+        install('scipy')
+    except Exception as e:
+        print("Could not install scipy with pip. ERROR:", e)
+
 
 #ACTIONS = []
 
