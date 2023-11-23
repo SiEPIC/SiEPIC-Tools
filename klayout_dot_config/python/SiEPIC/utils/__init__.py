@@ -54,6 +54,7 @@ if Python_Env == "KLayout_GUI":
     from . import components
 
 import pya
+
 '''
 from .. import _globals
 if _globals.Python_Env == "KLayout_GUI":
@@ -1469,4 +1470,8 @@ def pointlist_to_path(pointlist, dbu):
     path = pya.Path(points)
     return path
 
-    
+
+
+
+
+
