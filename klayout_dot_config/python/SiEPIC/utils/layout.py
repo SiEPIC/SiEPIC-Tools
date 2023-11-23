@@ -483,10 +483,10 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             if abs(turn) == 1:
                 if(adiab):
                     wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), float(
-                        bezier), DevRec='DevRec' in layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+                        bezier), DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
                 else:
                     wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(
-                        pts[i-1]-pts[i], pts[i+1]-pts[i]), DevRec='DevRec' in layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+                        pts[i-1]-pts[i], pts[i+1]-pts[i]), DevRec='DevRec' in layers[lr]), 0, dbu=dbu).transformed(Trans(angle, turn < 0, pts[i])).get_points()
 
         wg_pts += [pts[-1]]
         wg_pts = pya.Path(wg_pts, 0).unique_points().get_points()
@@ -824,7 +824,6 @@ def layout_taper(cell, layer, trans, w1, w2, length, insert=True):
         return shape_taper
 
 
-#def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True):
 def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, length=15.0, insert=True, debug=False):
     """ Creates a waveguide s-bend using a bezier curve
     Author: Lukas Chrostowski
@@ -872,7 +871,7 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
         return poly_t
 
 
-def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000, insert=True):
+def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15000, insert=True, dbu=0.001):
     """ Lays out an s-bend
 
     Args:
@@ -905,7 +904,7 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
 
     if (straight_l >= 0):
         circle_fraction = abs(theta) / 360.0
-        npoints = int(points_per_circle(r*cell.layout().dbu) * circle_fraction)
+        npoints = int(points_per_circle(r*cell.layout().dbu, dbu=dbu) * circle_fraction)
         if npoints == 0:
             npoints = 1
         da = 2 * pi / npoints * circle_fraction  # increment, in radians
@@ -1045,8 +1044,8 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
     import numpy
     dbu = cell.layout().dbu
 
-    if type(w) != type(center[0]):
-        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
+#    if type(w) != type(center[0]):
+#        raise Exception('SiEPIC.utils.layout.make_pin: mismatch in input types. center (%s) is %s, width (%s) is %s' % (center[0], type(center[0]), w, type(w)))
 
     if type(w) == type(float()):
         w = to_itype(w, dbu)
@@ -1245,13 +1244,12 @@ def floorplan(topcell, x, y):
 
 
 def new_layout(tech, topcell_name, GUI=True, overwrite = False):
-    '''Create a new layout
-    runs in GUI mode (GUI=True) or in memory only (GUI=False)    
-    in headless mode, it creates a layout object
-    in GUI mode, 
-      (overwrite = False): it creates a new Layout View
-      (overwrite = True): it clears the existing layout, 
-            only if the topcell_name matches the existing one
+    '''Create a new layout either in KLayout Application mode or in PyPI mode.
+    Create the layout in the Application MainWindow (GUI=True) or in memory only (GUI=False)
+    in Application mode, 
+      (overwrite = False): creates a new Layout View
+      (overwrite = True): clears the existing layout, 
+        only if the topcell_name matches the existing one
     by Lukas Chrostowski, 2023, SiEPIC-Tools
     '''
     
@@ -1277,8 +1275,12 @@ def new_layout(tech, topcell_name, GUI=True, overwrite = False):
         lv.select_cell(topcell.cell_index(), 0)
     else:
         ly = pya.Layout()
-        ly.technology_name = tech
+        if type(tech)==str:
+            ly.technology_name = tech
+        elif type(tech) == pya.Technology():
+            ly.technology_name = tech.name            
         topcell = ly.create_cell(topcell_name)
     ly.TECHNOLOGY = get_technology_by_name(tech)
 
     return topcell, ly
+
