@@ -57,35 +57,35 @@ def enum(*sequential, **named):
 PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 20  # 10 nm on each side. Previous was 2x50 nm, but shorter works well for Waveguide DRC checking
 
-if Python_Env == "KLayout_GUI":
-    MODULE_NUMPY = False
+
+MODULE_NUMPY = False
+try:
+    import numpy
+    MODULE_NUMPY = True
+except ImportError:
+    from .install import install_numpy
     try:
+        
         import numpy
         MODULE_NUMPY = True
     except ImportError:
         from .install import install_numpy
         try:
-            
-            import numpy
-            MODULE_NUMPY = True
-        except ImportError:
-            from .install import install_numpy
-            try:
-                MODULE_NUMPY = install_numpy()
-            except Exception as e:
-                print("Could not install numpy with pip. ERROR:", e)
+            MODULE_NUMPY = install_numpy()
+        except Exception as e:
+            print("Could not install numpy with pip. ERROR:", e)
 
-    #ACTIONS = []
-    
-    
-    KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
-    KLAYOUT_VERSION_3 = int(pya.Application.instance().version().split('.')[2])
-    
-    # Waveguide DevRec: space between the waveguide and the DevRec polygon
-    WG_DEVREC_SPACE = 1
-    
-    # Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
-    PATH_SNAP_PIN_MAXDIST = 20
+#ACTIONS = []
+
+
+KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
+KLAYOUT_VERSION_3 = int(pya.Application.instance().version().split('.')[2])
+
+# Waveguide DevRec: space between the waveguide and the DevRec polygon
+WG_DEVREC_SPACE = 1
+
+# Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
+PATH_SNAP_PIN_MAXDIST = 20
     
 INTC_ELEMENTS = ''
 if Python_Env == "KLayout_GUI":
