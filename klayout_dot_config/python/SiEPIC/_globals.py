@@ -37,25 +37,25 @@ if Python_Env == "KLayout_GUI":
 # don't use a global one.. based on cells
 # Define global Net object that implements netlists and pin searching/connecting
 # NET = Net()
-if Python_Env == "KLayout_GUI":
-    from .core import Net, Component
-    NET_DISCONNECTED = Net()
+
+from .core import Net, Component
+NET_DISCONNECTED = Net()
 
 # don't use a global one.. based on cells
 # Define global Component object
 #COMPONENT = Component()
 
-
-# Define an Enumeration type for Python
-# TODO: maybe move to standard enum for python3
-# https://docs.python.org/3/library/enum.html
-def enum(*sequential, **named):
-    enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
-
-# Define enumeration for pins
-PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
-PIN_LENGTH = 20  # 10 nm on each side. Previous was 2x50 nm, but shorter works well for Waveguide DRC checking
+if Python_Env == "KLayout_GUI":
+    # Define an Enumeration type for Python
+    # TODO: maybe move to standard enum for python3
+    # https://docs.python.org/3/library/enum.html
+    def enum(*sequential, **named):
+        enums = dict(zip(sequential, range(len(sequential))), **named)
+        return type('Enum', (), enums)
+    
+    # Define enumeration for pins
+    PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
+    PIN_LENGTH = 20  # 10 nm on each side. Previous was 2x50 nm, but shorter works well for Waveguide DRC checking
 
 
 MODULE_NUMPY = False
