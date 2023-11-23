@@ -1508,4 +1508,3 @@ def pointlist_to_path(pointlist, dbu):
     return path
 
 
-    

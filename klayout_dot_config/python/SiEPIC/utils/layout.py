@@ -1283,3 +1283,4 @@ def new_layout(tech, topcell_name, GUI=True, overwrite = False):
     ly.TECHNOLOGY = get_technology_by_name(tech)
 
     return topcell, ly
+

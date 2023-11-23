@@ -1,0 +1,54 @@
+# Sample Github Action that sets up docker container using image in this repo 
+
+name: Sample Github Action 
+
+# Specify this github action to run on (i) a push to master or any branch, and (ii) a pull request to master
+# Note: Since this is a sample action we don't want it to run. We cannot leave this empty and have put 
+#       a placeholder to ensure it doesn't run. Delete the current code and uncomment the commented code when you
+#       want this action to run.
+on:
+  #push:
+    #branches:
+      #- '**'
+  #pull_request:
+    #branches:
+      #- master
+  push:
+    branches:
+      - v0.1.4
+
+jobs:
+  ebeam-lib-pcell-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull klayout image
+        run:  docker pull ghcr.io/jasminabrar/siepic-tools/klayout:master-latest
+
+      - name: Run docker container from image
+        run: docker run -itd --name sample --security-opt label=type:container_runtime_t ghcr.io/jasminabrar/siepic-tools/klayout:master-latest
+
+        # input code to run tests in klayout docker container 
+
+        # e.g 
+        # - name: Copy pymacros folder to docker container (needed to run EBeam_Lib_PCellTests.py)
+        #   run: docker cp $GITHUB_WORKSPACE/klayout/EBeam/pymacros ebeam_test:/home/pymacros
+        # - name: Run EBeam Library Pcell Test Script
+        #   run: docker exec -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix sample klayout -zz -r pymacros/EBeam_Lib_PCellTests.py || echo "KLAYOUT_EXIT_CODE=$?" >> $GITHUB_ENV
+        #   continue-on-error: true 
+        #      -> IMPORTANT COMMAND: needed so rest of github action runs if an error occurs when running the script
+
+      - name: Stop container and remove it 
+        run: |
+                docker stop sample
+                docker rm sample
+
+      - name: Fail job if exit code is non-zero
+        run: |
+                if [ $KLAYOUT_EXIT_CODE -ne 0 ]; then
+                        echo "KLayout exited with non-zero exit code"
+                        exit 1
+                fi
