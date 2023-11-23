@@ -20,13 +20,13 @@ if Python_Env == "KLayout_GUI":
 
     from .core import WaveguideGUI, MonteCarloGUI, Net, Component
 '''
-
+# Netlist extraction will merge straight+bend sections into waveguide (1),
+# or extract each bend, straight section, etc. (0)
+#WAVEGUIDE_extract_simple = 1
+SIMPLIFY_NETLIST_EXTRACTION = True
     
 if Python_Env == "KLayout_GUI":
-    # Netlist extraction will merge straight+bend sections into waveguide (1),
-    # or extract each bend, straight section, etc. (0)
-    #WAVEGUIDE_extract_simple = 1
-    SIMPLIFY_NETLIST_EXTRACTION = True
+
     # Create GUI's
     from .core import WaveguideGUI, MonteCarloGUI
     WG_GUI = WaveguideGUI()
@@ -57,23 +57,23 @@ def enum(*sequential, **named):
 PIN_TYPES = enum('OPTICALIO', 'OPTICAL', 'ELECTRICAL')
 PIN_LENGTH = 20  # 10 nm on each side. Previous was 2x50 nm, but shorter works well for Waveguide DRC checking
 
-
-MODULE_NUMPY = False
-try:
-    import numpy
-    MODULE_NUMPY = True
-except ImportError:
-    from .install import install_numpy
+if Python_Env == "KLayout_GUI":
+    MODULE_NUMPY = False
     try:
-        
         import numpy
         MODULE_NUMPY = True
     except ImportError:
         from .install import install_numpy
         try:
-            MODULE_NUMPY = install_numpy()
-        except Exception as e:
-            print("Could not install numpy with pip. ERROR:", e)
+            
+            import numpy
+            MODULE_NUMPY = True
+        except ImportError:
+            from .install import install_numpy
+            try:
+                MODULE_NUMPY = install_numpy()
+            except Exception as e:
+                print("Could not install numpy with pip. ERROR:", e)
 
 #ACTIONS = []
 
