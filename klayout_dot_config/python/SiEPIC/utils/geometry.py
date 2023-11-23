@@ -10,7 +10,6 @@ translate_from_normal2: curve translation
 """
 import numpy as np
 from numpy import sqrt
-from . import sample_function
 from .sampling import sample_function
 
 MAGIC_NUMBER = 15.0
@@ -302,7 +301,7 @@ def _bezier_optimal(angle0, angle3):
     # print("{:.3f}<{:.3f} {:.3f}<{:.3f}".format(a, a_bound, b, b_bound))
     return a, b
 
-#def bezier_optimal(P0, P3, angle0, angle3):
+
 def bezier_optimal(P0, P3, angle0, angle3, debug=False):
     """ Computes the optimal bezier curve from P0 to P3 with angles 0 and 3
 
@@ -324,14 +323,9 @@ def bezier_optimal(P0, P3, angle0, angle3, debug=False):
         P2 = P3 - b * scaling * Point(np.cos(angle3), np.sin(angle3))
         curve_func = bezier_line(P0, P1, P2, P3)
         with np.errstate(divide='ignore'):
-          '''
-            print("Min radius: {:.2f} um".format(np.true_divide(1, max_curvature(P0, P1, P2, P3))))
-            print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
-          '''
             if debug:
                 print("Min radius: {:.2f} um".format(np.true_divide(1, max_curvature(P0, P1, P2, P3))))
                 print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
-          
         return curve_func
     else:
         raise GeometryError(str("Error: calling bezier between two identical points: {%s}, {%s}" % (P0, P3)))
