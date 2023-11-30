@@ -2315,15 +2315,78 @@ def find_SEM_labels_gui(topcell=None, LayerSEMN=None, MarkersInTopCell=False):
     pya.Application.instance().main_window().redraw()    
 
 
-def calculate_area():
+def calculate_area(ly=None, cell=None):
+    '''Calculate the area of all layers'''
+    
     from .utils import get_layout_variables
-    TECHNOLOGY, lv, ly, cell = get_layout_variables()
+    from SiEPIC.utils import get_technology_by_name
+    from SiEPIC._globals import Python_Env
+
+    if ly == None and cell == None:
+        if Python_Env == 'KLayout_GUI':
+            TECHNOLOGY, lv, ly, cell = get_layout_variables()
+        else:
+            raise Exception ('not running in GUI mode. Need layout or cell as input')
+    elif cell == None and ly:
+        cell = ly.top_cell()
+    elif cell:
+        ly = cell.layout
+    TECHNOLOGY = get_technology_by_name(ly.technology().name)
     dbu = TECHNOLOGY['dbu']
 
+    text = 'Cell: %s\n' % cell.name
+
+    # Progress bar
+    if Python_Env == 'KLayout_GUI':
+        p = pya.RelativeProgress("Flattening layout", 0)
+        p.inc()
+
+    # Flatten
+    cell2 = ly.create_cell('flattened')
+    ly.flatten_into(cell.cell_index(), cell2.cell_index(), pya.Trans(0), -1)
+
+    # Progress bar
+    if Python_Env == 'KLayout_GUI':
+        p.destroy()
+        count = 0
+        for l in ly.layer_indexes():
+            count += cell2.shapes(l).size()
+        p = pya.RelativeProgress("Calculating the area", count)
+        text += 'Number of shapes: %s\n' % count
+
+    print (text)
+    
     try:
-      total = cell.each_shape(ly.layer(TECHNOLOGY['FloorPlan'])).__next__().polygon.area()
+        total = cell.each_shape(ly.layer(TECHNOLOGY['FloorPlan'])).__next__().polygon.area()
     except:
-      total = 1e99
+        total = 1e99
+
+    for l in ly.layer_indexes():
+        area = 0
+        it = cell.begin_shapes_rec(l)
+        while not(it.at_end()):
+            if Python_Env == 'KLayout_GUI':
+                p.inc()
+            if it.shape().simple_polygon:
+                area += it.shape().simple_polygon.area()
+            it.next()
+
+        # area = cell.each_shape(l).__next__().polygon.area()
+        if total == 1e99:
+            text += "Layer: %s, area: %.5g mm^2 (%.5g micron^2)\n" % (ly.get_info(l).to_s(), area/1e6*dbu*dbu, area/1e6)
+        else:
+            text += "Layer: %s, area: %.5g mm^2 (%.5g micron^2), Percentage of floorplan: %.3g %%\n" % (ly.get_info(l).to_s(), area/1e6*dbu*dbu, area/1e6, area/total*100)
+#        except:
+#                text += "Layer: %s, empty\n" % (ly.get_info(l).to_s())
+
+    print (text)
+
+    if Python_Env == 'KLayout_GUI':
+        p.destroy
+        v = pya.MessageBox.warning(
+            "Waveguide area.", text, pya.MessageBox.Ok)
+    
+    '''
     area = 0
     itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['Waveguide']))
     while not itr.at_end():
@@ -2337,24 +2400,7 @@ def calculate_area():
     else:
       v = pya.MessageBox.warning(
         "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2),\nChip Floorplan: %.5g mm^2, \nPercentage: %.3g %%" % (area/1e6*dbu*dbu, area/1e6, total/1e6*dbu*dbu, area/total*100), pya.MessageBox.Ok)
-
-    if 0:
-        area = 0
-        itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch1']))
-        while not itr.at_end():
-            area += itr.shape().area()
-            itr.next()
-        print(area / total)
-
-        area = 0
-        itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['SiEtch2']))
-        while not itr.at_end():
-            area += itr.shape().area()
-            itr.next()
-        print(area / total)
-
-
-
+    '''
 
 def trim_netlist(nets, components, selected_component, verbose=None):
     """Trim Netlist

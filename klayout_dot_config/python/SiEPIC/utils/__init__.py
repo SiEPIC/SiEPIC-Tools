@@ -351,6 +351,7 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
     Load Waveguide configuration for specific technology
     These are technology specific, and located in the tech folder, named WAVEGUIDES.xml, and WAVEGUIDES_*.xml
     For KLayout 0.27+, Look in the technology folder, plus each library's folder.
+    Also when running in KLayout Application, check in the folder of the design file.
     '''
     import os
     import fnmatch
