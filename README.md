@@ -1,3 +1,10 @@
+[![pypi](https://img.shields.io/pypi/v/SiEPIC)](https://pypi.org/project/SiEPIC/)
+[![codecov](https://codecov.io/gh/SiEPIC/SiEPIC-Tools/graph/badge.svg?token=MD7OI5BGZ3)](https://codecov.io/gh/SiEPIC/SiEPIC-Tools)
+[![issues](https://img.shields.io/github/issues/SiEPIC/SiEPIC-Tools)](https://github.com/SiEPIC/SiEPIC-Tools/issues)
+![forks](https://img.shields.io/github/forks/SiEPIC/SiEPIC-Tools)
+![Stars](https://img.shields.io/github/stars/SiEPIC/SiEPIC-Tools)
+
+
 # SiEPIC-Tools
 
 - <a href="http://www.siepic.ubc.ca">SiEPIC</a>-Tools - for silicon photonics layout, design, verification and circuit simulation
