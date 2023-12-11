@@ -4,6 +4,8 @@
   <waveguide>
     <name>Strip</name>
     <crossing_cell>ebeam_crossing4</crossing_cell>
+    <bezier>0.35</bezier>
+    <radius>5.0</radius>
     <component>
       <layer>Si</layer>
       <width>0.5</width>
@@ -12,6 +14,7 @@
   </waveguide>
   <waveguide>
     <name>Slot</name>
+    <radius>20.0</radius>
     <component>
       <layer>Si</layer>
       <width>0.2</width>
@@ -22,9 +25,15 @@
       <width>0.2</width>
       <offset>0.15</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide>
   <waveguide>
     <name>Ridge</name>
+    <radius>15.0</radius>
     <component>
       <layer>Si</layer>
       <width>0.5</width>
@@ -35,6 +44,11 @@
       <width>2.0</width>
       <offset>0.0</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide>
   <waveguide>
     <name>Strip TE 1310 nm</name>
@@ -45,6 +59,11 @@
       <width>0.35</width>
       <offset>0.0</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide>
   <waveguide>
     <name>Strip TE 2900 nm</name>
@@ -55,6 +74,11 @@
       <width>1.00</width>
       <offset>0.0</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide>
   <waveguide>
     <name>Strip TE 1550 nm</name>
@@ -66,6 +90,11 @@
       <width>0.5</width>
       <offset>0.0</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide>
   <waveguide>
     <name>Rib with 90 nm slab</name>
@@ -80,6 +109,11 @@
       <width>2.0</width>
       <offset>0.0</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide>
   <waveguide>
     <name>Double Rib with 150 nm step and 90 nm slab</name>
@@ -99,5 +133,10 @@
       <width>2.0</width>
       <offset>0.0</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide> 
 </waveguides>
