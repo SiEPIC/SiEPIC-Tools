@@ -31,5 +31,10 @@ jobs:
           pip install klayout numpy scipy pytest
 
       - name: Test with pytest
-        run: pytest klayout_dot_config/tech
+        run: pytest --cov=klayout_dot_config/python/SiEPIC klayout_dot_config/tech
   
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
