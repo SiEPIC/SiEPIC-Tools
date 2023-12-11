@@ -98,7 +98,7 @@ def test_example_circuit():
     import os
     path = os.path.dirname(os.path.realpath(__file__))
     import sys
-    sys.path.insert(0,os.path.abspath(os.path.join(path, '../../../python')))
+    sys.path.insert(0,os.path.abspath(os.path.join(path, '../../../../python')))
     import SiEPIC
 
     assert example_circuit() == 0
