@@ -95,6 +95,10 @@
 
 ## Contributing to this project:
 
+Thank you to the contributors!
+
+[![Contributors!](https://contrib.rocks/image?repo=SiEPIC/SiEPIC-Tools)](https://github.com/SiEPIC/SiEPIC-Tools/graphs/contributors)
+
 You can download the latest development version (master) of the PDK: <a href="https://github.com/siepic/SiEPIC-Tools/archive/master.zip">Zip file download of the PDK</a>
 
 It is posted on GitHub for 1) revision control, 2) so that others can contribute to it, find bugs, 3) easy download of the latest version.
