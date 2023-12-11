@@ -95,6 +95,12 @@ def example_circuit():
     return num_errors
 
 def test_example_circuit():
+    import os
+    path = os.path.dirname(os.path.realpath(__file__))
+    import sys
+    sys.path.insert(0,os.path.abspath(os.path.join(path, '../../../python')))
+    import SiEPIC
+
     assert example_circuit() == 0
 
 if __name__ == "__main__":
