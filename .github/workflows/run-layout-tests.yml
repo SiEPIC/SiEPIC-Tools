@@ -28,7 +28,7 @@ jobs:
       - name: install python packages
         run: |
           python -m pip install --upgrade pip
-          pip install klayout numpy scipy pytest
+          pip install klayout numpy scipy pytest pytest-cov
 
       - name: Test with pytest
         run: pytest --cov=klayout_dot_config/python/SiEPIC klayout_dot_config/tech
