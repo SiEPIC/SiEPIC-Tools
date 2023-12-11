@@ -80,6 +80,9 @@ def example_circuit():
     connect_pins_with_waveguide(instGC2, 'opt_wg', instY2, 'opt1', waveguide_type=waveguide_type)
     connect_pins_with_waveguide(instY1, 'opt2', instY2, 'opt3', waveguide_type=waveguide_type)
     connect_pins_with_waveguide(instY1, 'opt3', instY2, 'opt2', waveguide_type=waveguide_type,turtle_B=[25,-90])
+    
+    # error
+    instY2.transform(Trans(20000,0))
 
     # Zoom out
     zoom_out(cell)

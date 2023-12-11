@@ -33,9 +33,3 @@ jobs:
       - name: Test with pytest
         run: pytest klayout_dot_config/tech
   
-      - name: run python test script
-        run: |
-          python $GITHUB_WORKSPACE/klayout_dot_config/tech/GSiP/pymacros/tests/example_circuit.py
-          
-
-
