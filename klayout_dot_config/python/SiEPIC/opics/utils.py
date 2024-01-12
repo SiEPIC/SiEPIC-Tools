@@ -292,6 +292,9 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
     # add circuit components
     for i in range(len(circuitData["compModels"])):
         if len(circuitData["compModels"]) != len(circuitData["compLibs"]):
+            print (circuitData["compModels"])
+            print (circuitData["compLibs"])
+
             raise Exception ('Unknown problem in OPICS and the compact model library. \nThe circuitData component model and component library lists have different lengths.')
 
         # get component model
