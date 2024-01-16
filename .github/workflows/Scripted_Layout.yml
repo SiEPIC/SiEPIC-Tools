@@ -1,0 +1,96 @@
+# Test that a SiEPIC EBeam PDK scripted layout successfully runs in Klayout using SiEPIC Tools code from the repo.
+name: KLayout Scripted Layout Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  run-scripted-layout:
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository_owner }}/SiEPIC-Tools
+          ref: ${{ github.ref }}
+
+      - name: Connect to Container Registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull siepic_klayout image
+        run: docker pull ghcr.io/jasminabrar/siepic-tools/siepic_klayout:match-ebeam-latest
+     
+      - name: Run docker container from image
+        run: docker run -itd --name scripted_layout -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --security-opt label=type:container_runtime_t ghcr.io/jasminabrar/siepic-tools/siepic_klayout:match-ebeam-latest
+
+      - name: Fetch changes from main repository
+        run: git fetch https://github.com/SiEPIC/SiEPIC-Tools.git master
+
+      - name: Find files that are different 
+        id: changed-files
+        run: |
+
+          if [ "${{ github.repository }}" == "${{ env.GITHUB_REPOSITORY }}" ]; then
+            # If we are in the main repository, remove existing siepic tools & copy this siepic tools to the docker container
+            docker exec scripted_layout rm -r /root/.klayout/salt/SiEPIC-Tools
+            docker cp $GITHUB_WORKSPACE scripted_layout:/root/.klayout/salt
+          else 
+            # If we are in a forked repository or another branch, copy changed files to scripted_layout
+            changed_files=$(git diff --name-only FETCH_HEAD)
+
+            IFS=$'\n' # Set Internal Field Separator to newline to handle multiple files
+
+            for file in $changed_files; do
+              # Determine the library folder based on the file path
+              folder=$(dirname "$file")
+
+              # Extract the last part of the path (directory name)
+              folder=$(basename "$folder")
+
+              # Extract the filename
+              filename=$(basename "$file")
+
+              # Define the destination path in the Docker container
+              destination_path="/root/.klayout/salt/SiEPIC-Tools"
+
+              echo "Copy $GITHUB_WORKSPACE/$file to $destination_path/$file"
+
+              # Perform docker cp for each file
+              docker cp "$GITHUB_WORKSPACE/$file" scripted_layout:"$destination_path/$file"
+
+              echo "Copied $file to $destination_path/$file"
+            done
+          fi
+
+      - name: Run scripted layout inside container and capture exit code
+        run: docker exec scripted_layout klayout -zz -r /root/.klayout/salt/SiEPIC_EBeam_PDK/klayout/EBeam/pymacros/Example_scripted_layouts/"Example - Ring_resonator_sweep.py" || echo "KLAYOUT_EXIT_CODE=$?" >> $GITHUB_ENV
+        continue-on-error: true
+  
+      - name: Stop container and remove it 
+        run: |
+                docker stop scripted_layout
+                docker rm scripted_layout
+
+      - name: Fail job if exit code is non-zero
+        run: |
+                if [ $KLAYOUT_EXIT_CODE -ne 0 ]; then
+                        echo "KLayout exited with non-zero exit code"
+                        exit 1
+                fi
+        
+        
+
+          
+
