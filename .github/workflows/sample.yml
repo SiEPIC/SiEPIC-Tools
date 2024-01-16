@@ -26,10 +26,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Pull klayout image
-        run:  docker pull ghcr.io/jasminabrar/siepic-tools/klayout:master-latest
+        run:  docker pull ghcr.io/siepic/siepic-tools/klayout:master-latest
 
       - name: Run docker container from image
-        run: docker run -itd --name sample --security-opt label=type:container_runtime_t ghcr.io/jasminabrar/siepic-tools/klayout:master-latest
+        run: docker run -itd --name sample --security-opt label=type:container_runtime_t ghcr.io/siepic/siepic-tools/klayout:master-latest
 
         # input code to run tests in klayout docker container 
 
