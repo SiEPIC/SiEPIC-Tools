@@ -257,14 +257,16 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             cpinA = [instanceA.find_pin(pinA)]
         except:
               error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentA (%s). Available pins: %s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins])
+              '''
               if _globals.Python_Env == "KLayout_GUI":
                 question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
                 question.setText("SiEPIC-Tools scripted layout, requested pin not found")
                 question.setInformativeText(error_message)
                 pya.QMessageBox_StandardButton(question.exec_())
                 return
-              else:          
-                raise Exception(error_message)
+              else:
+              '''          
+              raise Exception(error_message)
     if cpinB==[]:
         try:  
             # this checks if the cell (which could contain multiple components) 
@@ -272,6 +274,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             cpinB = [instanceB.find_pin(pinB)]
         except:
               error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentB (%s). Available pins: %s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins])
+              '''
               if _globals.Python_Env == "KLayout_GUI":
                 question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
                 question.setText("SiEPIC-Tools scripted layout, requested pin not found")
@@ -279,7 +282,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 pya.QMessageBox_StandardButton(question.exec_())
                 return
               else:          
-                raise Exception(error_message)
+              '''
+              raise Exception(error_message)
 
     cpinA=cpinA[0]
     cpinB=cpinB[0]
@@ -1731,6 +1735,7 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
       else:          
         raise Exception("Component instanceA not found")
   if componentB==[]:
+      '''
       if _globals.Python_Env == "KLayout_GUI":
         question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
         question.setText("SiEPIC-Tools scripted layout, requested component not found")
@@ -1738,7 +1743,8 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
         pya.QMessageBox_StandardButton(question.exec_())
         return
       else:          
-        raise Exception("Component cellB not found")
+      '''
+      raise Exception("Component cellB not found")
 
 #  for c in componentA:
 #    if c.trans.s_trans() == instanceA.trans:
@@ -1768,7 +1774,8 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   def error_pinA(pinA,componentA):
     from inspect import getframeinfo, stack
-    error_message = "SiEPIC-Tools, in function connect_cell: PinA (%s) not found in componentA (%s). Available pins: %s.\n%s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins], getframeinfo(stack()[2][0]))
+    error_message = "SiEPIC-Tools, in function connect_cell: PinA (%s) not found in componentA (%s). Available pins: %s.\n%s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins], str(getframeinfo(stack()[2][0])).replace(',','\n'))
+    '''
     if _globals.Python_Env == "KLayout_GUI":
         question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
         question.setText("SiEPIC-Tools scripted layout, requested pin not found")
@@ -1776,10 +1783,13 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
         pya.QMessageBox_StandardButton(question.exec_())
         return
     else:          
-        raise Exception(error_message)
+    '''
+    raise Exception(error_message)
+    
   def error_pinB(pinB,componentB):
     from inspect import getframeinfo, stack
-    error_message = "SiEPIC-Tools, in function connect_cell: PinB (%s) not found in componentB (%s). Available pins: %s.\n%s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins], getframeinfo(stack()[2][0]))
+    error_message = "SiEPIC-Tools, in function connect_cell: PinB (%s) not found in componentB (%s). Available pins: %s.\n%s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins], str(getframeinfo(stack()[2][0])).replace(',','\n'))
+    '''
     if _globals.Python_Env == "KLayout_GUI":
         question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
         question.setText("SiEPIC-Tools scripted layout, requested pin not found")
@@ -1787,7 +1797,8 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
         pya.QMessageBox_StandardButton(question.exec_())
         return
     else:          
-        raise Exception(error_message)
+    '''
+    raise Exception(error_message)
 
 
   # for cells with hierarchy
