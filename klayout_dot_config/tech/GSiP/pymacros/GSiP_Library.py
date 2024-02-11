@@ -38,7 +38,16 @@ verbose = False
 
 import os, sys, pathlib
 
-import SiEPIC
+dir_path = os.path.dirname(os.path.realpath(__file__))
+if dir_path not in sys.path:
+    sys.path.append(dir_path)
+
+try:
+    import SiEPIC
+except:
+    dir_path_SiEPIC = os.path.join(dir_path, '../../../python')
+    sys.path.append(dir_path_SiEPIC)
+    import SiEPIC
 
 from SiEPIC._globals import KLAYOUT_VERSION, KLAYOUT_VERSION_3
 if KLAYOUT_VERSION < 28:
@@ -48,11 +57,6 @@ if KLAYOUT_VERSION < 28:
     KLayout_link0='https://www.klayout.de/build.html'
     question.setInformativeText("\nThis PDK is not compatible with older versions (<0.28) of KLayout.\nPlease download an install the latest version, from %s" % (KLayout_link0))
     pya.QMessageBox_StandardButton(question.exec_())
-
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-if dir_path not in sys.path:
-    sys.path.append(dir_path)
 
 files = [f for f in os.listdir(os.path.join(os.path.dirname(
     os.path.realpath(__file__)),folder)) if '.py' in pathlib.Path(f).suffixes  and '__init__' not in f]
