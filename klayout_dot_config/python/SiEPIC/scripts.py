@@ -88,7 +88,7 @@ def pointlist_to_turtle(pointlist):
   #  return pointlist
           
 
-def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True, relaxed_pinnames=True):
+def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = None, waveguide_type = None, turtle_A=None, turtle_B=None, verbose=False, debug_path=False, r=None, error_min_bend_radius=True, relaxed_pinnames=True, parent_cell=None):
     '''
     Create a Path connecting instanceA:pinA to instanceB:pinB
         where instance = pya.Instance; pin = string, e.g. 'pin1'
@@ -107,6 +107,15 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 
     * works for instances that are individual components
     * works for instances that are sub-circuits with many components, but one unique pin name
+
+     - waveguide_type = string, name from WAVEGUIDES.XML
+     - verbose=False
+     - debug_path=False
+     - r=None
+     - error_min_bend_radius=True
+     - relaxed_pinnames=True: finds 'opt' if the pin is called 'opt1'
+     - parent_cell = None: move the waveguide into a specific cell
+        default is the common parent of instanceA and instanceB
      
     originally thought about implementing the following, but perhaps not useful: 
      - absolute_vertices: list of Points, except for the first and last
@@ -196,7 +205,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 
     else:
         cell=instanceA.parent_cell
-    
+            
     # Find the two components:
     from time import time
     t = time()
@@ -505,6 +514,10 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # generate the path
     path = pya.Path(points,width).to_dtype(dbu).remove_colinear_points()
 
+    # put the waveguide in the parent_cell specified by the input parameter
+    if parent_cell:
+        cell = parent_cell
+
     # Check if the path is Manhattan (it should be)
     if not path.is_manhattan():
         print('Turtle directions: %s, %s' % (directionB, directionA))
@@ -544,6 +557,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     
     if wg_pcell==None:
         raise Exception("problem! cannot create Waveguide PCell from library: %s" % technology_name)
+
     inst = cell.insert(pya.CellInstArray(wg_pcell.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))
 
     if verbose:
@@ -551,6 +565,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
 
     if debug_path:
         cell.shapes(1).insert(path)
+        print('Error path, added to cell %s' % (cell.name) )
         
     return inst
     # end of def connect_pins_with_waveguide
