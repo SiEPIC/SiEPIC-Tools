@@ -1163,9 +1163,8 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
     - cell_tree: new cell created
     This is useful for subsequent routing
 
-    Limitations:
-    - the design uses regular 90 degree bends, rather than S-bends.
-      hence it could be made more compact
+    SBends:
+    - the design uses either regular 90 degree bends, or S-bends if the Waveguides.xml allows for it
     '''
 
     from SiEPIC.scripts import connect_pins_with_waveguide
@@ -1194,13 +1193,17 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
         return
     wg_width = to_itype(float(wg['width']), ly.dbu)
     wg_radius = to_itype(float(wg['radius']), ly.dbu)
+    sbends = bool(wg['sbends'])
 
     # build the tree, using measurements from the cell and waveguide parameters
     x = 0
     dx = y_splitter.bbox().width() + wg_radius*2
     # calculate the spacing for the y-splitters based on waveguide radius and 90 degree bends
     y_wg_offset = (y_splitter.pinPoint("opt2").y-y_splitter.pinPoint("opt3").y)
-    dy = max(y_splitter.bbox().height(), wg_radius*4 + y_wg_offset)
+    if sbends:
+        dy = max(y_splitter.bbox().height(), 2 * y_wg_offset)
+    else:   
+        dy = max(y_splitter.bbox().height(), wg_radius*4 + y_wg_offset)
     # intialize loop
     inst_out = []
     y0 = 0
@@ -1228,20 +1231,26 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
         y0 = y0 + dy/2
         dy = dy * 2
 
+    # Adjust origin so that (0,0) is the input to the tree
+    cell_tree.transform(pya.Trans(-inst_in.pinPoint('opt1').x, -inst_in.pinPoint('opt1').y ))
+
     return inst_in, inst_out, cell_tree
 
 
 
-def floorplan(topcell, x, y):
-    '''Create a FloorPlan, from (0,0) to (x,y)
+def floorplan(topcell, x, y, centered=False):
+    '''Create a FloorPlan, from (0,0) to (x,y), or centered
     by Lukas Chrostowski, 2023, SiEPIC-Tools
     '''
     ly = topcell.layout()
     cell = ly.create_cell('FloorPlan')
-    topcell.insert(pya.CellInstArray(cell.cell_index(), pya.Vector(0,0)))
-    box = pya.Box(0,0,x,y)
+    inst = topcell.insert(pya.CellInstArray(cell.cell_index(), pya.Vector(0,0)))
+    if centered==False:
+        box = pya.Box(0,0,x,y)
+    else:
+        box = pya.Box(-x/2,-y/2,x/2,y/y)
     cell.shapes(ly.layer(ly.TECHNOLOGY['FloorPlan'])).insert(box)
-
+    return inst
 
 def new_layout(tech, topcell_name, GUI=True, overwrite = False):
     '''Create a new layout either in KLayout Application mode or in PyPI mode.
