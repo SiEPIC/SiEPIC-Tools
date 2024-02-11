@@ -38,6 +38,8 @@ verbose = False
 
 import os, sys, pathlib
 
+import SiEPIC
+
 from SiEPIC._globals import KLAYOUT_VERSION, KLAYOUT_VERSION_3
 if KLAYOUT_VERSION < 28:
     question = pya.QMessageBox()
