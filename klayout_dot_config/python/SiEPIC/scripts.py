@@ -3535,13 +3535,17 @@ def resize_waveguide():
             wdg.show()
 
 
-def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True, debug = False):
+def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True, RequiredCharacter = '$', debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
     useful for blackbox IP cell replacement
     - load layout containing cell_y_name from cell_y_file or cell_y_library
     - replace all cell_x_name* instances with cell_y
+    - Exact = True: the cell name must match exactly
+            = False: the cell_y_name appears at the beginning of the cells to be replaced
+                     and RequiredCharacter appears directly after, e.g,. '$' as KLayout appends during merging
+              (exact match is still included)
     
     Black box                   True geometry
     Basename_BB, Basename_BB*   YES: Basename
@@ -3556,15 +3560,14 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
     log += "- cell replacement for: %s, with cell %s (%s)\n"  % (cell_x_name, cell_y_name, os.path.basename(cell_y_file))
 
     # Find the cells that need replacement (cell_x)
-    if Exact:
-        # find cell name exactly matching cell_x_name
-        cells_x = [layout.cell(cell_x_name)]
-    else:
+    # find cell name exactly matching cell_x_name
+    cells_x = [layout.cell(cell_x_name)]
+    if not Exact:
         # replacement for all cells that:
         # 1) cell name exact matching cell_x_name, OR
         # 2) that begin with the cell name, i.e., xxx* is matched
         #    i.e., xxx and xxx* are matched
-        cells_x = [cell for cell in layout.each_cell() if cell.name.find(cell_x_name) == 0]
+        cells_x += [cell for cell in layout.each_cell() if cell.name.find(cell_x_name+RequiredCharacter) == 0]
 
         # replacement for all cells that:
         # 1) cell name exact matching cell_x_name, OR
@@ -3572,10 +3575,24 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
         #    i.e., xxx and xxx$* are matched  (was used for the Phot1x 2022/06 tapeout)
         #cells_x = [cell for cell in layout.each_cell() if cell.name == cell_x_name or cell.name.find(cell_x_name) == 0 and '$' in cell.name]
 
+
+    if not cells_x or not cells_x[0]:
+        if debug:
+            print("  - none found: %s" % cell_x_name)
+        log += " - none found: %s" % cell_x_name
+        return
+
+    if Exact:
+        if debug:
+            print("  - exact match: %s" % cells_x[0].name)
+        log += "  - exact match: %s" % cells_x[0].name
+    else:
+        if debug:
+            print("  - non-exact match: %s" % ([c.name for c in cells_x]) )
+        log += "  - non-exact match: %s" % ([c.name for c in cells_x]) 
+    
     # Load the new cell:   
     if cell_y_file:
-        # find cell name CELL_Y
-#        print(layout.top_cell())
         cell_y = layout.cell(cell_y_name)
         if debug:
             print(" - checking for cell %s in current layout: %s" % (cell_y_name, cell_y))
@@ -3600,7 +3617,7 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
         
     for cell_x in cells_x:
         if debug:
-            print(" - replace_cell: found cells to be replaced: %s"  % (cell_x.name))
+            print("   - replace_cell: found cells to be replaced: %s"  % (cell_x.name))
     
         # find caller cells
         caller_cells = cell_x.caller_cells()
@@ -3612,15 +3629,12 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
             itr = cc.each_inst()
             inst = next(itr)
             while inst:
-#                if debug:
-#                    print("   - found inst: %s, %s" % (inst, inst.cell.name))
                 if inst.cell.name == cell_x.name:
                     if cell_y.destroyed():
                         print('   - Warning: cell_y (%s) destroyed, skipping replacement' % (cell_y_name))
                         print("   - destroyed status: cell_y - %s, cell_x - %s, cc - %s" % (cell_y.destroyed(), cell_x.destroyed(), cc.destroyed()))
                         print('   - looking for cell. %s, %s, %s' % (cell_y_name, cell_y, layout.cell(cell_y_name)))
                         log += '   - Warning: cell destroyed, skipping replacement\n'
-#                        continue # skip this inst, continue to next; stays in an infinite loop
                         break  # skip this cell
                     # replace with CELL_Y
                     if inst.is_regular_array():
@@ -3634,10 +3648,7 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
                         cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans))
                 inst = next(itr, None)
 
-
     return log
-
-
 
 
 def svg_from_cell(verbose=True):
