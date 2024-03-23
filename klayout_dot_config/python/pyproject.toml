@@ -1,6 +1,6 @@
 [project]
 name = "SiEPIC"
-version = "0.5.5"
+version = "0.5.6"
 authors = [
   { name="Lukas Chrostowski", email="lukasc@ece.ubc.ca" },
 ]
@@ -14,7 +14,8 @@ classifiers = [
 ]
 dependencies = [
   "numpy", 
-  "scipy"] 
+  "scipy",
+  "pandas"] 
 
 [project.urls]
 Homepage = "https://github.com/SiEPIC/SiEPIC-Tools"

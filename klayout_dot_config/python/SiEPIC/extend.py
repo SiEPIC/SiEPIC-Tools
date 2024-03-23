@@ -933,13 +933,23 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     cell_selected: only find components that match this specific cell.
     
     inst: return only the component that matches the instance inst
+    
+    limitation:
+     - flat components only. doesn't find the component if it is buried in a hierarchy
+     - no function for instance.find_components.  Instead we find based on cell, then try to match it to the requested instance.
 
     '''
-    if verbose:
-        print('*** Cell.find_components:')
-
+    
     if cell_selected != None and type(cell_selected) != type([]):
           cell_selected=[cell_selected]
+
+    if verbose:
+        print('*** Cell.find_components:')
+        if cell_selected[0]:
+          print('  - cell_selected=%s' % (cell_selected[0].name if cell_selected[0] else None))
+        if inst:
+          print('  - inst=%s' % (inst.cell.name))
+
 
     components = []
 
@@ -968,8 +978,12 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
         idx = len(components)  # component index value to be assigned to Component.idx
         component_ID = idx
         subcell = iter1.cell()  # cell (component) to which this shape belongs
+        if verbose:
+          print(' - looking at shape in cell %s. ' % subcell.name)
         if cell_selected and not subcell in cell_selected:
             # check if subcell is one of the arguments to this function: cell_selected
+            if verbose:
+              print(' - cell_selected and not subcell (%s) in cell_selected (%s). ' % (subcell.name, cell_selected[0].name))
             iter1.next()
             continue
         component = subcell.basic_name().replace(' ', '_')   # name library component
@@ -1095,6 +1109,9 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     if component_matched:
         return component_matched
     
+    if components == []:
+        raise Exception ('SiEPIC.extend.find_components: No component found for cell_selected=%s' % (cell_selected[0].name if cell_selected else None))
+
     return components
 # end def find_components
 
