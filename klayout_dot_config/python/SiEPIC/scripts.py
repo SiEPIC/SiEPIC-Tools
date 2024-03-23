@@ -1736,9 +1736,15 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
       raise Exception("instanceA needs to be an Instance, not an index")
 
   # Find the two components:
-  componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
+  componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA, verbose=verbose)
   componentB = cellB.find_components()
   if componentA==[]:
+    if verbose:
+      print('*** WARNING: componentA not found, looking lower in the hierarchy')
+    componentA = instanceA.cell.find_components(inst=instanceA, verbose=verbose)
+  if componentA==[]:
+    if verbose:
+      print('*** WARNING: componentA not found, looking higher in the hierarchy which may not work correctly: instanceA.parent_cell.find_components(inst=instanceA)')
     componentA = instanceA.parent_cell.find_components(inst=instanceA)
     if componentA==[]:
       if _globals.Python_Env == "KLayout_GUI":
