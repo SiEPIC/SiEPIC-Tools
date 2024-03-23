@@ -939,15 +939,17 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
      - no function for instance.find_components.  Instead we find based on cell, then try to match it to the requested instance.
 
     '''
+    
+    if cell_selected != None and type(cell_selected) != type([]):
+          cell_selected=[cell_selected]
+
     if verbose:
         print('*** Cell.find_components:')
-        if cell_selected:
-          print('  - cell_selected=%s' % (cell_selected.name if cell_selected else None))
+        if cell_selected[0]:
+          print('  - cell_selected=%s' % (cell_selected[0].name if cell_selected[0] else None))
         if inst:
           print('  - inst=%s' % (inst.cell.name))
 
-    if cell_selected != None and type(cell_selected) != type([]):
-          cell_selected=[cell_selected]
 
     components = []
 
