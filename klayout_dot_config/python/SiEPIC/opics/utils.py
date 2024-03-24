@@ -192,9 +192,24 @@ def LUT_reader(filedir: PosixPath, lutfilename: str, lutdata: List[List[str]]):
         print(1)
 
     for node in root.iter("association"):
-#        sample = [[each.attrib["name"], each.text] for each in node.iter("value")]
-        sample = [[each.attrib["name"], float(each.text) if each.attrib["type"]=='double' else int(each.text) if each.attrib["type"]=='int' else bool(each.text) if each.attrib["type"]=='bool' else  each.text] for each in node.iter("value")]    
+        sample = [[each.attrib["name"], each.text] for each in node.iter("value")]
+        '''
+        Look-up is not working. returns the last one each time.
+        Attempt to fix it.. gave up...
+        
+        sample = [[each.attrib["name"], float(each.text) if each.attrib["type"]=='double' else int(each.text) if each.attrib["type"]=='int' else bool(each.text) if each.attrib["type"]=='bool' else  each.text, each.attrib["type"]] for each in node.iter("value")]    
 
+        # Make sure the two data sets have the same datatypes
+        for q in lutdata:
+            w = [r for r in sample if r[0]==q[0]] [0]
+            if w[2] == 'double':
+                q[1] = float(q[1])
+            if w[2] == 'bool':
+                q[1] = bool(q[1])
+            if w[2] == 'int':
+                q[1] = int(q[1])
+        '''
+        
         if sorted(sample[0:-1]) == sorted(lutdata):
             break
     sparam_file = sample[-1][1].split(";")
