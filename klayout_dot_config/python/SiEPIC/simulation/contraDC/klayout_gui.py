@@ -263,7 +263,22 @@ class MyWindow(pya.QWidget):
 
         self.setLayout(vbox)
 
+    def condition_xml(self, element, indent='    ', level=0):
+        """Recursively add indentation and line breaks to the XML tree."""
+        if element:  # checks if element is not None and not an empty string/list
+            if not element.text or not element.text.strip():
+                element.text = f"\n{indent * (level+1)}"
+            if not element.tail or not element.tail.strip():
+                element.tail = f"\n{indent * level}"
+            for elem in element:
+                self.condition_xml(elem, indent, level+1)
+        else:
+            if level and (not element.tail or not element.tail.strip()):
+                element.tail = f"\n{indent * (level-1)}"
+
     def on_simulate_clicked(self):
+        import glob
+        import xml.etree.ElementTree as ET
 
         N = float(self.pcell_N_fill.text)
         period = float(self.pcell_period_fill.text) * 1e-6
@@ -362,9 +377,57 @@ class MyWindow(pya.QWidget):
 
             # Generate compact model for Lumerical INTERCONNECT
             # return self.path_dat, .dat file that was created
-            device.gen_sparams(
+            filename = device.gen_sparams(
                 filepath=folder_CML, make_plot=False
             )  # this will create a ContraDC_sparams.dat file to import into INTC
+
+            # append data to xml
+            # Search for an XML file in folder_CML
+            xml_files = glob.glob(os.path.join(folder_CML, '*.xml'))
+            if not xml_files:
+                raise UserWarning(
+                    f"No XML file found in the folder {folder_CML}. "
+                    "Cannot save to the Compact Model Library."
+                )
+            xml_file = xml_files[0]  # Take the first XML file found
+
+            # Load and parse the XML file
+            tree = ET.parse(xml_file)
+            root = tree.getroot()
+
+            # Use the same association details for the new entry
+            new_association = ET.fromstring(f'''
+                <association>
+                    <design>
+                        <value name="wg1_width" type="double">{w1}</value>
+                        <value name="wg2_width" type="double">{w2}</value>
+                        <value name="corrugation_width1" type="double">{dw1}</value>
+                        <value name="corrugation_width2" type="double">{dw2}</value>
+                        <value name="gap" type="double">{gap}</value>
+                        <value name="grating_period" type="double">{period}</value>
+                        <value name="number_of_periods" type="int">{int(N)}</value>
+                        <value name="sinusoidal" type="double">False</value>
+                        <value name="apodization_index" type="double">{a}</value>
+                        <value name="lambda_start" type="double">{float(self.sim_wavlstart_fill.text)}</value>
+                        <value name="lambda_end" type="double">{float(self.sim_wavlstop_fill.text)}</value>
+                        <value name="lambda_points" type="double">500</value>
+                    </design>
+                    <extracted>
+                        <value name="sparam" type="string">{filename}</value>
+                    </extracted>
+                </association>''')
+
+            # Add the new association to the root element
+            root.append(new_association)
+
+            # Prettify the entire XML tree
+            self.condition_xml(root)
+
+            # Write the updated and formatted XML back to the file
+            tree.write(xml_file, encoding='utf-8', xml_declaration=True)
+            print(xml_file)
+
+
 
         self.device = device
         self.simulate.setText("Done simulating.")

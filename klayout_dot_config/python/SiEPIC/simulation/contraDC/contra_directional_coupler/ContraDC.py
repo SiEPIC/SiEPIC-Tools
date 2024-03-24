@@ -521,8 +521,7 @@ class ContraDC():
 
         # from lumerical_tools import generate_dat
         # generate_dat()
-        self.generate_dat(filepath=filepath, make_plot=make_plot)
-        return self
+        return self.generate_dat(filepath=filepath, make_plot=make_plot)
 
     def generate_dat(self, filepath='', make_plot=True):
         import numpy as np
@@ -656,8 +655,7 @@ class ContraDC():
             period=self.period[0]
         else:
             period=self.period
-        filename =  "w1=" + "%.0f"%(w1*1e9) + ",w2=" + "%.0f"%(w2*1e9) + ",dW1=" + "%.0f"%(self.dw1*1e9) + ",dW2=" + "%.0f"%(self.dw2*1e9) +  ",gap=" + "%.0f"%(self.gap*1e9) + ",p=" + "%.1f"%(period*1e9) + ",N=" + str(self.N) + ",s=" + str(1 if self.sinusoidal else 0) +  ",a=" + "%.2f"%self.a +  ",rib=" + str(1 if self.rib else 0) + ",pol=" + str(0 if self.pol=='TE' else 1) + ",l1=" + "%.0f"%(self.wvl_range[0]*1e9) + ",l2=" + "%.0f"%(self.wvl_range[1]*1e9) + ",ln=" + str(self.resolution) + '.dat';
-        
+        filename = f"w1={w1*1e9:.0f},w2={w2*1e9:.0f},dW1={self.dw1*1e9:.0f},dW2={self.dw2*1e9:.0f},gap={self.gap*1e9:.0f},p={period*1e9:.1f},N={int(self.N)},s={1 if self.sinusoidal else 0},a={self.a:.2f},rib={1 if self.rib else 0},pol={0 if self.pol=='TE' else 1},l1={self.wvl_range[0]*1e9:.0f},l2={self.wvl_range[1]*1e9:.0f},ln={self.resolution}.dat"
         import os
         path = os.path.join(filepath,filename)
 
@@ -744,7 +742,7 @@ class ContraDC():
             f.write(f"('port 4',{mode_label},{mode_ID},'port 4',{mode_ID},'transmission')\n")
             f.write(f"({FREQ_PTS},3)\n")
             np.savetxt(f, S44_data, fmt="%.6e", delimiter=" ")
-        return path
+        return filename
 
     def getGroupDelay(self):
         """Calculates the group delay of the device,
