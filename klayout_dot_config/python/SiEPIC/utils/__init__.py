@@ -13,6 +13,7 @@ load_Waveguides
 load_Waveguides_by_Tech
 load_Calibre
 load_Monte_Carlo
+load_Verification
 load_DFT
 load_FDTD_settings
 load_GC_settings

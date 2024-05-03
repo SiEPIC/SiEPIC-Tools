@@ -239,6 +239,12 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
         rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) %s the opt_in label (laser injection port) and at most %s Grating Coupler(s) %s the opt_in label. \nGrating couplers must be on a %s micron pitch, %s arranged." % (
             int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), dir1,int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), dir2,float(DFT['design-for-test']['grating-couplers']['gc-pitch']),dir3)
 
+        # minimum-gc-spacing        
+        if 'minimum-gc-spacing' in DFT['design-for-test']['grating-couplers'].keys():
+            rdb_cat_id_GC_min_spacing= rdb.create_category(rdb_cat_id, "Grating coupler: minimum spacing")
+            rdb_cat_id_GC_min_spacing.description = "The grating coupler spacing (pitch) must be at least %s microns." % float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing'])
+
+
     else:
         if verbose:
             print('  No DFT rules found.')
@@ -337,6 +343,9 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             if e[0].dpolygon:
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_shapesoutside.rdb_id())
                 rdb_item.add_value(pya.RdbItemValue(e[0].dpolygon.transformed(e[1].to_trans().to_itrans(dbu))))
+
+
+
 
     if timing:
         print("*** layout_check(), timing; done shapes in component ")
@@ -441,6 +450,28 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                         rdb_item.add_value(pya.RdbItemValue( "Cell %s should be %s degrees" % (ci,DFT_GC_angle) ))
                         rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
 
+                # minimum-gc-spacing        
+                #  grating couplers need to be far enough apart for the automated probe station so it doesn't get confused
+                # check if the component "c" in the loop is a grating coupler:
+                if 'minimum-gc-spacing' in DFT['design-for-test']['grating-couplers'].keys():
+                    test = [ci.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
+                    if any(test):
+                        min_gc_spacing = float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing']) / dbu
+                        for i2 in range(i + 1, len(components)):
+                            c2 = components[i2]
+                            c2i = c2.basic_name
+                            # check if the 2nd component "c2" in the loop is a grating coupler:
+                            test = [c2i.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
+                            if any(test):
+                                # compare two grating coupler distances, versus the rule
+                                dist = (c.trans.disp-c2.trans.disp).abs()
+                                # print('dist: %s, %s' % (dist, min_gc_spacing))
+                                if dist < min_gc_spacing:
+                                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GC_min_spacing.rdb_id())
+                                    rdb_item.add_value(pya.RdbItemValue( "Grating couplers should be at least %s microns apart (center-to-center pitch)" % (min_gc_spacing) ))
+                                    rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
+                                    rdb_item.add_value(pya.RdbItemValue(c2.polygon.to_dtype(dbu)))
+
 
         # Pre-simulation check: do components have models?
         # disabled by lukasc, 2021/05
@@ -497,7 +528,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                 # find the GC closest to the opt_in label.
                 components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
                                            key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
-                # GC too far check:
+                # GC opt_in label too far check:
                 if components_sorted:
                     dist_optin_c = components_sorted[0].trans.disp.to_p(
                     ).distance(pya.Point(t.x, t.y).to_dtype(1))
@@ -510,7 +541,10 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                                   (components_sorted[0].instance, opt_in[ti1]['opt_in']))
                         rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_toofar.rdb_id())
                         rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-    
+                        rdb_item.add_value(pya.RdbItemValue(components_sorted[0].polygon.to_dtype(dbu)))
+                        # it would be nice to highlight the entire text, but bbox returns a point https://www.klayout.de/doc-qt5/code/class_DText.html#method18
+                        # rdb_item.add_value(pya.RdbItemValue(t.bbox()))
+
                     # starting with each opt_in label, identify the sub-circuit, then GCs, and
                     # check for GC spacing
                     trimmed_nets, trimmed_components = trim_netlist(
