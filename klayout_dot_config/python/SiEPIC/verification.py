@@ -240,8 +240,9 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), dir1,int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), dir2,float(DFT['design-for-test']['grating-couplers']['gc-pitch']),dir3)
 
         # minimum-gc-spacing        
-        rdb_cat_id_GC_min_spacing= rdb.create_category(rdb_cat_id, "Grating coupler: minimum spacing")
-        rdb_cat_id_GC_min_spacing.description = "The grating coupler spacing (pitch) must be at least %s microns." % float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing'])
+        if 'minimum-gc-spacing' in DFT['design-for-test']['grating-couplers'].keys():
+            rdb_cat_id_GC_min_spacing= rdb.create_category(rdb_cat_id, "Grating coupler: minimum spacing")
+            rdb_cat_id_GC_min_spacing.description = "The grating coupler spacing (pitch) must be at least %s microns." % float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing'])
 
 
     else:
