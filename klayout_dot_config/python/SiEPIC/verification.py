@@ -452,23 +452,24 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                 # minimum-gc-spacing        
                 #  grating couplers need to be far enough apart for the automated probe station so it doesn't get confused
                 # check if the component "c" in the loop is a grating coupler:
-                test = [ci.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
-                if any(test):
-                    min_gc_spacing = float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing']) / dbu
-                    for i2 in range(i + 1, len(components)):
-                        c2 = components[i2]
-                        c2i = c2.basic_name
-                        # check if the 2nd component "c2" in the loop is a grating coupler:
-                        test = [c2i.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
-                        if any(test):
-                            # compare two grating coupler distances, versus the rule
-                            dist = (c.trans.disp-c2.trans.disp).abs()
-                            # print('dist: %s, %s' % (dist, min_gc_spacing))
-                            if dist < min_gc_spacing:
-                                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GC_min_spacing.rdb_id())
-                                rdb_item.add_value(pya.RdbItemValue( "Grating couplers should be at least %s microns apart (center-to-center pitch)" % (min_gc_spacing) ))
-                                rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
-                                rdb_item.add_value(pya.RdbItemValue(c2.polygon.to_dtype(dbu)))
+                if 'minimum-gc-spacing' in DFT['design-for-test']['grating-couplers'].keys():
+                    test = [ci.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
+                    if any(test):
+                        min_gc_spacing = float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing']) / dbu
+                        for i2 in range(i + 1, len(components)):
+                            c2 = components[i2]
+                            c2i = c2.basic_name
+                            # check if the 2nd component "c2" in the loop is a grating coupler:
+                            test = [c2i.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
+                            if any(test):
+                                # compare two grating coupler distances, versus the rule
+                                dist = (c.trans.disp-c2.trans.disp).abs()
+                                # print('dist: %s, %s' % (dist, min_gc_spacing))
+                                if dist < min_gc_spacing:
+                                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GC_min_spacing.rdb_id())
+                                    rdb_item.add_value(pya.RdbItemValue( "Grating couplers should be at least %s microns apart (center-to-center pitch)" % (min_gc_spacing) ))
+                                    rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
+                                    rdb_item.add_value(pya.RdbItemValue(c2.polygon.to_dtype(dbu)))
 
 
         # Pre-simulation check: do components have models?
