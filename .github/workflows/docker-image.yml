@@ -21,7 +21,8 @@ env:
 
 jobs:
   build-and-push-image:
-  
+    if: github.repository_owner == 'SiEPIC'
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
