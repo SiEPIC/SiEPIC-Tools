@@ -303,7 +303,8 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     from SiEPIC.utils import load_Verification
     verification = load_Verification(TECHNOLOGY=TECHNOLOGY)
     if verification:
-        print(verification)
+        if verbose:
+            print(verification)
         # define device-only layers
         try:
             deviceonly_layers = eval(verification['verification']['shapes-inside-components']['deviceonly-layers'])
@@ -353,16 +354,20 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
 
 
     # Experimental, attempt to break up the circuit into regions connected by DevRec layers
+    '''
     region = pya.Region()
     for i in range(0, len(components)):
         c = components[i]
         region += pya.Region(c.polygon)
-    print ('DevRec Regions: original %s, merged %s' % (region.count(), region.merge().count()))
+    if verbose:
+        print ('DevRec Regions: original %s, merged %s' % (region.count(), region.merge().count()))
+    '''
+
     '''
     Approach: create lists of components for each merged region, then do the verification on a per-merged-region basis
     reduce the O(n**2) to O((n/10)**2)  (assuming on average 10 components per circuit)
     '''
-
+    
     if timing:
         print("*** layout_check(), timing; counting merged DevRec regions")
         print('    Time elapsed: %s' % (time() - time1))    
@@ -646,8 +651,9 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             v = pya.MessageBox.warning(
                 "Errors", msg, pya.MessageBox.Ok)
             lv.show_rdb(rdb_i, cv.cell_index)
-        else: 
-            print(msg)
+        print(msg)
+        for e in rdb.each_item():
+            print('Error: %s: %s' % (rdb.category_by_id(e.category_id()).name(),rdb.category_by_id(e.category_id()).description))
     else:
         if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
@@ -690,5 +696,5 @@ if __name__ == "__main__":
     print('SiEPIC-Tools functional verification')
     from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, layout, cell = get_layout_variables()  
-    num_errors = layout_check(cell=cell, verbose=True)
+    num_errors = layout_check(cell=cell, verbose=False)
     
