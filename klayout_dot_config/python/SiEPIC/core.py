@@ -303,7 +303,7 @@ class Component():
         self.params = spice_str
         return True
         
-    def get_SPICE_params(self): #Retturns a SPICE parameter string (without the 'Spice_param:' label)
+    def get_SPICE_params(self): #Returns a SPICE parameter string (without the 'Spice_param:' label)
         return (self.params)
       
     def find_pins(self):

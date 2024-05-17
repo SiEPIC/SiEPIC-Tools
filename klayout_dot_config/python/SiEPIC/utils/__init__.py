@@ -521,8 +521,7 @@ def load_Verification(TECHNOLOGY=None, debug=True):
     matches = []
     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
         for filename in fnmatch.filter(filenames, search_str):
-            if tech_name in root:
-                matches.append(os.path.join(root, filename))
+            matches.append(os.path.join(root, filename))
     if matches:
         if debug:
             print(' - load_Verification, matches: %s' %matches ) 
