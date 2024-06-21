@@ -119,8 +119,8 @@ def _sample_function(func, points, values=None, mask=None, tol=0.05,
 
         sz = (p.shape[0] - 1) // 2
 
-        xscale = x_2.ptp(axis=-1)
-        yscale = np.abs(y_2_val.ptp(axis=-1)).ravel()
+        xscale = np.ptp(x_2, axis=-1)
+        yscale = np.abs(np.ptp(y_2_val,axis=-1)).ravel()
 
         p[0] /= xscale
 
