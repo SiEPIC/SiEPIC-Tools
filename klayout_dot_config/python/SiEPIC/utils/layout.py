@@ -209,24 +209,24 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
     return waveguide_length
 
 
-'''
-Create a waveguide, in a specific technology
-inputs
-- cell: into which Cell we add the waveguide
-    from SiEPIC.utils import get_layout_variables
-    TECHNOLOGY, lv, layout, cell = get_layout_variables()
-- pts
-- params, obtained from load_Waveguides_by_Tech and Waveguides.XML
-    must be a primitive waveguide type containing <component> info
-output:
-- waveguide
-- DevRec, PinRec
-by Lukas Chrostowski
-'''
 
 
-def layout_waveguide3(cell, pts, params, debug=False):
 
+def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
+    '''
+    Create a waveguide, in a specific technology
+    inputs
+    - cell: into which Cell we add the waveguide
+        from SiEPIC.utils import get_layout_variables
+        TECHNOLOGY, lv, layout, cell = get_layout_variables()
+    - pts: a list of pya.Points, in database units (e.g., nm)
+    - params, obtained from load_Waveguides_by_Tech and Waveguides.XML
+        must be a primitive waveguide type containing <component> info
+    output:
+    - waveguide
+    - DevRec, PinRec
+    by Lukas Chrostowski
+    '''
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide3: ')
 
@@ -239,10 +239,18 @@ def layout_waveguide3(cell, pts, params, debug=False):
     from SiEPIC.extend import to_itype
     wg_width = to_itype(params['width'], dbu)
     radius = float(params['radius'])
-    model = params['model']
+    if 'model' not in params.keys():
+        params['model'] = ''
     cellName = 'Waveguide'
-    CML = params['CML']
-    waveguide_type = params['waveguide_type']
+    if 'CML' not in params.keys():
+        params['CML'] = ''
+    if 'bezier' not in params.keys():
+        params['adiabatic'] = False
+        params['bezier'] = ''
+    if 'waveguide_type' in params.keys():
+        waveguide_type = params['waveguide_type']
+    else:
+        waveguide_type = params['name']
 
     if debug:
         print(' - waveguide params: %s' % (params))
@@ -260,25 +268,15 @@ def layout_waveguide3(cell, pts, params, debug=False):
 
     # Draw the marking layers
     from SiEPIC.utils import angle_vector
-    LayerPinRecN = layout.layer(TECHNOLOGY['PinRec'])
-
-    make_pin(cell, 'opt1', pts[0], wg_width, LayerPinRecN, angle_vector(pts[0]-pts[1]) % 360)
-    make_pin(cell, 'opt2', pts[-1], wg_width, LayerPinRecN,
-             angle_vector(pts[-1]-pts[-2]) % 360)
+    
+    if drawRec:
+        LayerPinRecN = layout.layer(TECHNOLOGY['PinRec'])
+        make_pin(cell, 'opt1', pts[0], wg_width, LayerPinRecN, angle_vector(pts[0]-pts[1]) % 360)
+        make_pin(cell, 'opt2', pts[-1], wg_width, LayerPinRecN,
+                 angle_vector(pts[-1]-pts[-2]) % 360)
+        LayerDevRecN = layout.layer(TECHNOLOGY['DevRec'])
 
     from pya import Trans, Text, Path, Point
-
-    '''
-    t1 = Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
-    cell.shapes(LayerPinRecN).insert(Path([Point(-10, 0), Point(10, 0)], wg_width).transformed(t1))
-    cell.shapes(LayerPinRecN).insert(Text("opt1", t1, 0.3/dbu, -1))
-    
-    t = Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
-    cell.shapes(LayerPinRecN).insert(Path([Point(-10, 0), Point(10, 0)], wg_width).transformed(t))
-    cell.shapes(LayerPinRecN).insert(Text("opt2", t, 0.3/dbu, -1))
-    '''
-
-    LayerDevRecN = layout.layer(TECHNOLOGY['DevRec'])
 
     # Compact model information
     angle_vec = angle_vector(pts[0]-pts[1])/90
@@ -309,64 +307,68 @@ def layout_waveguide3(cell, pts, params, debug=False):
 
     t = Trans(angle, False, pt3)
     import re
-    CML = re.sub('design kits/', '', CML, flags=re.IGNORECASE)
-#    CML = CML.lower().replace('design kits/','') # lower: to make it case insensitive, in case WAVEGUIDES.XML contains "Design Kits/" rather than "Design kits/"
-    text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt2)
-    text = Text('Component=%s' % model, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt5)
-    text = Text('cellName=%s' % cellName, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pts[0])
-    pts_txt = str([[round(p.to_dtype(dbu).x, 3), round(p.to_dtype(dbu).y, 3)]
-                  for p in pts]).replace(', ', ',')
-    text = Text(
-        'Spice_param:wg_length=%.9f wg_width=%.3g points="%s" radius=%.3g' %
-        (waveguide_length*1e-6, wg_width*1e-9, pts_txt, radius*1e-6), t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt4)
-    text = Text(
-        'Length=%.3f (microns)' % (waveguide_length), t, 0.5*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt6)
-    text = Text('waveguide_type=%s' % waveguide_type, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
+    if params['CML']:
+        CML = re.sub('design kits/', '', params['CML'], flags=re.IGNORECASE)
+    #    CML = CML.lower().replace('design kits/','') # lower: to make it case insensitive, in case WAVEGUIDES.XML contains "Design Kits/" rather than "Design kits/"
+        text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt2)
+        text = Text('Component=%s' % params['model'], t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt5)
+        text = Text('cellName=%s' % cellName, t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pts[0])
+
+    if drawRec:
+        pts_txt = str([[round(p.to_dtype(dbu).x, 3), round(p.to_dtype(dbu).y, 3)]
+                      for p in pts]).replace(', ', ',')
+        text = Text(
+            'Spice_param:wg_length=%.9f wg_width=%.3g points="%s" radius=%.3g' %
+            (waveguide_length*1e-6, wg_width*1e-9, pts_txt, radius*1e-6), t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt4)
+        text = Text(
+            'Length=%.3f (microns)' % (waveguide_length), t, 0.5*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt6)
+        text = Text('waveguide_type=%s' % waveguide_type, t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
 
     return waveguide_length
 
 
-'''
-Create a waveguide, in a specific technology
-inputs
-- TECHNOLOGY, layout, cell:
-    from SiEPIC.utils import get_layout_variables
-    TECHNOLOGY, lv, layout, cell = get_layout_variables()
-- layers: list of text names, e.g., ['Waveguide']
-- widths: list of floats in units Microns, e.g., [0.50]
-- offsets: list of floats in units Microns, e.g., [0]
-- pts: a list of pya.Points, e.g. 
-    L=15/dbu
-    pts = [Point(0,0), Point(L,0), Point(L,L)]
-- radius: in Microns, e.g., 5
-- adiab: 1 = Bezier curve, 0 = radial bend (arc)
-- bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
-- sbends (optional): sbends (Boolean)
-Note: bezier parameters need to be simulated and optimized, and will depend on 
-    wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
-    most useful for TE 
-by Lukas Chrostowski
-'''
 
 
 def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier, sbends = True):
+    '''
+    Create a waveguide, in a specific technology
+    inputs
+    - TECHNOLOGY, layout, cell:
+        from SiEPIC.utils import get_layout_variables
+        TECHNOLOGY, lv, layout, cell = get_layout_variables()
+    - layers: list of text names, e.g., ['Waveguide']
+    - widths: list of floats in units Microns, e.g., [0.50]
+    - offsets: list of floats in units Microns, e.g., [0]
+    - pts: a list of pya.Points, in database units (e.g., nm)
+        e.g. 
+        L=15/dbu
+        pts = [Point(0,0), Point(L,0), Point(L,L)]
+    - radius: in Microns, e.g., 5
+    - adiab: 1 = Bezier curve, 0 = radial bend (arc)
+    - bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
+    - sbends (optional): sbends (Boolean)
+    Note: bezier parameters need to be simulated and optimized, and will depend on 
+        wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
+        most useful for TE 
+    by Lukas Chrostowski
+    '''
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from SiEPIC.extend import to_itype
     from SiEPIC.utils.geometry import bezier_parallel
