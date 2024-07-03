@@ -8,6 +8,8 @@ PDK Pcells.
 
 Functions:
 
+layout_waveguide4
+layout_waveguide3
 layout_waveguide2
 layout_waveguide
 layout_waveguide_sbend_bezier
@@ -15,7 +17,7 @@ make_pin
 y_splitter_tree
 floorplan(topcell, x, y)
 new_layout(tech, topcell_name, overwrite = False)
-
+strip2rib
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -1295,3 +1297,29 @@ def new_layout(tech, topcell_name, GUI=True, overwrite = False):
 
     return topcell, ly
 
+
+def strip2rib(cell, trans, w_slab, w_rib, w_slab_tip, w_strip, length, LayerRib, LayerSlab):
+    '''
+    PCell: Strip to Rib converter (linear)
+        cell: pya.Cell
+        trans: pya.Trans
+        w_slab: width of the slab region of the rib waveguide, in microns
+        w_rib: width of the rib region of the rib waveguide, in microns
+        w_slab_tip: width of the rib tip of the strip waveguide region, in microns
+        w_strip: width of the strip of the strip waveguide, in microns
+        length: taper length, in microns
+            at (0,0): strip waveguide
+        LayerRib, LayerSlab: string, layer names
+        
+    '''
+    from pya import DPoint, DPolygon
+    # waveguide rib
+    nLayerRib = cell.layout().layer(cell.layout().TECHNOLOGY[LayerRib])
+    # box = pya.DBox(0, -w_rib/2, length, w_rib/2)
+    # cell.shapes(LayerRib).insert(box.transformed(trans))
+    poly = DPolygon([DPoint(length,-w_rib/2), DPoint(length,w_rib/2), DPoint(0, w_strip/2), DPoint(0, -w_strip/2)])
+    cell.shapes(nLayerRib).insert(poly.transformed(trans))
+    # waveguide slab
+    nLayerSlab = cell.layout().layer(cell.layout().TECHNOLOGY[LayerSlab])
+    poly = DPolygon([DPoint(length,-w_slab/2), DPoint(length,w_slab/2), DPoint(0, w_slab_tip/2), DPoint(0, -w_slab_tip/2)])
+    cell.shapes(nLayerSlab).insert(poly.transformed(trans))
