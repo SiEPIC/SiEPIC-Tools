@@ -4,7 +4,7 @@
 '''
 List of functions:
 
-
+create_cell2
 advance_iterator
 get_library_names
 get_technology_by_name
@@ -62,6 +62,29 @@ from .. import _globals
 if _globals.Python_Env == "KLayout_GUI":
     import pya
 '''
+
+def create_cell2(ly, cell_name, library_name):
+    '''
+    Wrapper for KLayout Layout.create_cell(name, library),
+    with error handling, and debugging information if unsuccessful. 
+        ly: pya.Layout
+        cell_name: string name for pya.Cell
+        library_name: string name for a pya.Library
+    '''
+    pcell = ly.create_cell(cell_name, library_name)
+    if not pcell:
+        if library_name not in pya.Library().library_names():
+            raise Exception('Error: library (%s) not available. Libraries for technology (%s) are: %s.' % (library_name, ly.technology().name, pya.Library().library_names()))
+        ly_library = pya.Library().library_by_name(library_name,ly.technology().name).layout()
+        library_cells = [ly_library.cell(a).name for a in ly_library.each_top_cell()]
+        if cell_name not in library_cells:
+            raise Exception('Error: cell (%s) not available in library (%s) for technology (%s). Cells are: %s.' % (cell_name, library_name, ly.technology().name, library_cells))
+
+        raise Exception('Error: loading cell (%s) from library (%s)' % (cell_name, library_name))
+        
+    return pcell
+
+
 
 # Python 2 vs 3 issues:  http://python3porting.com/differences.html
 # Python 2: iterator.next()
