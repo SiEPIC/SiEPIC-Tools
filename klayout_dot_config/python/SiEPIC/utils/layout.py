@@ -1032,17 +1032,19 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
     name: text label for the pin
     center: location, int [x,y]
     w: pin width
-    layer: layout.layer() type
+    layer: layout.layer() integer type, or string
     direction = 
         0: right
         90: up
         180: left
         270: down
 
-    Units: input can be float for microns, or int for nm
+    Units: input can be float for microns, or int for database units (typ. nm)
     '''
 
-
+    if type(layer) == str:
+        layer = cell.layout().layer(cell.layout().TECHNOLOGY[layer])
+         
     from SiEPIC.extend import to_itype
     from pya import Point, DPoint
     import numpy
