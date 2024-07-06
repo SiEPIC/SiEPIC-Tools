@@ -205,21 +205,39 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 
     else:
         cell=instanceA.parent_cell
-            
+
     # Find the two components:
     from time import time
     t = time()
     # benchmarking: find_components here takes 0.015 s
-    componentA = instanceA.parent_cell.find_components(inst=instanceA)
-    componentB = instanceB.parent_cell.find_components(inst=instanceB)
 #    print('Time elapsed: %s' % (time() - t))    
-    if componentA==[]:
-        print('InstA: %s, %s' % (instanceA.cell.name, instanceA) )
-        print('componentA: %s' % (componentA) )
-        print('parent_cell A: %s, cell A: %s' % (instanceA.parent_cell, instanceA.cell) )
-        print('all found components A: instance variable: %s' %    ([n.instance for n in instanceA.parent_cell.find_components()]) )
-        print('all found components A: component variable: %s' %    ([n.component for n in instanceA.parent_cell.find_components()]) )
-        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceA.cell.name)
+
+    # Find the instance's pins, and see if they uniquely match
+    ipinA = [p for p in instanceA.find_pins()[0] if p.pin_name == pinA]
+    ipinB = [p for p in instanceB.find_pins()[0] if p.pin_name == pinB]
+    if len(ipinA) == 1:
+        cpinA = ipinA
+        if verbose:
+            print(' - connect_pins_with_waveguide: found unique pin %s' % pinA)
+    else:
+        if verbose:
+            print(' - connect_pins_with_waveguide: searching for pin %s' % pinA)
+        componentA = instanceA.parent_cell.find_components(inst=instanceA)
+        if componentA==[]:
+            print('InstA: %s, %s' % (instanceA.cell.name, instanceA) )
+            print('componentA: %s' % (componentA) )
+            print('parent_cell A: %s, cell A: %s' % (instanceA.parent_cell, instanceA.cell) )
+            print('all found components A: instance variable: %s' %    ([n.instance for n in instanceA.parent_cell.find_components()]) )
+            print('all found components A: component variable: %s' %    ([n.component for n in instanceA.parent_cell.find_components()]) )
+            raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceA.cell.name)
+        # if the instance had sub-cells, then there will be many components. Pick the first one.
+        if type(componentA) == type([]):
+            componentA = componentA[0]
+        # Find pinA and pinB
+        cpinA = [p for p in componentA.pins if p.pin_name == pinA]
+
+
+    componentB = instanceB.parent_cell.find_components(inst=instanceB)
     if componentB==[]:
         print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
         print('componentB: %s' % (componentB) )
@@ -227,23 +245,18 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
         print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
         raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
-
     # if the instance had sub-cells, then there will be many components. Pick the first one.
-    if type(componentA) == type([]):
-        componentA = componentA[0]
     if type(componentB) == type([]):
         componentB = componentB[0]
+    # Find pinA and pinB
+    cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
 
     if verbose:
         print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
         print('componentA: %s, componentB: %s' % (componentA, componentB) )
-
         componentA.display()
         componentB.display()
         
-    # Find pinA and pinB
-    cpinA = [p for p in componentA.pins if p.pin_name == pinA]
-    cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
 
     # relaxed_pinnames:  scan for only the number
     if relaxed_pinnames==True:

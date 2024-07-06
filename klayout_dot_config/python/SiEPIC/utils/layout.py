@@ -494,6 +494,9 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
 
         wg_pts += [pts[-1]]
         wg_pts = pya.Path(wg_pts, 0).unique_points().get_points()
+        if len(wg_pts) < 2:
+            print (' - warning: SiEPIC.utils.layout.layout_waveguide2: less than 2 points.')
+            return 0            
         wg_polygon = Polygon(translate_from_normal(wg_pts, width/2 + (offset if turn > 0 else - offset)) +
                              translate_from_normal(wg_pts, -width/2 + (offset if turn > 0 else - offset))[::-1])
         cell.shapes(layer).insert(wg_polygon)

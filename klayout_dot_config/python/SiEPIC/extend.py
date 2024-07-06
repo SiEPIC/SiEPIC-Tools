@@ -749,10 +749,14 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
             while not(iter2.at_end()):
                 if iter2.shape().is_text():
                     pin_name = iter2.shape().text.string
-                iter2.next()
                 if pin_name and pin_path.num_points()==2:
-                  # Store the pin information in the pins array
-                  pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+                    # make sure that the Pin's path and text are in the same cell:
+                    if it.shape().cell.name == iter2.shape().cell.name:
+                        # Store the pin information in the pins array
+                        pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+                        if verbose:
+                            print(' - found pin: %s in cell %s, in %s, text %s' % (pin_name, subcell.name, it.shape().cell.name, iter2.shape().cell.name ))
+                iter2.next()
             if pin_name == None or pin_path.num_points()!=2:
                 print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
                 error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name.\n" %
@@ -1767,7 +1771,7 @@ def find_pin(self, pin_name, verbose=False):
                 raise Exception ('Multiple Pins with name "%s" found in cell "%s"' % (pin_name, self.cell.basic_name()) )
             return p[0]
         else:
-            raise Exception ('Pin with name "%s" not found in cell "%s"' % (pin_name, self.cell.basic_name()) )
+            raise Exception ('Pin with name "%s" not found in cell "%s". Available pins: %s' % (pin_name, self.cell.basic_name(), [p.pin_name for p in pins]) )
     else:
         raise Exception ('No Pins found in cell "%s"' % (self.cell.basic_name()) )
 

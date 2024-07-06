@@ -63,7 +63,7 @@ if _globals.Python_Env == "KLayout_GUI":
     import pya
 '''
 
-def create_cell2(ly, cell_name, library_name):
+def create_cell2(ly, cell_name, library_name, load_check=True):
     '''
     Wrapper for KLayout Layout.create_cell(name, library),
     with error handling, and debugging information if unsuccessful. 
@@ -71,6 +71,10 @@ def create_cell2(ly, cell_name, library_name):
         cell_name: string name for pya.Cell
         library_name: string name for a pya.Library
     '''
+    # check if it is already loaded
+    if load_check and ly.cell(cell_name):
+        return ly.cell(cell_name)
+    # load the cell from the library
     pcell = ly.create_cell(cell_name, library_name)
     if not pcell:
         if library_name not in pya.Library().library_names():
