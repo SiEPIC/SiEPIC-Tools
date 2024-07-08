@@ -4,6 +4,7 @@
 '''
 List of functions:
 
+load_layout
 create_cell2
 advance_iterator
 get_library_names
@@ -62,6 +63,38 @@ from .. import _globals
 if _globals.Python_Env == "KLayout_GUI":
     import pya
 '''
+
+
+
+def load_layout(layout, path, filename, single_topcell = True, Verbose = False):
+    '''
+    Load a GDS or OASIS file from path/file, and copies the top cell(s) into the specified layout. 
+    Input:
+      layout: pya.Layout, into which the top cell(s) will by copied
+      path: os.path
+      file: str
+      single_topcell: return only a single top cell. if there are more, pick the first one.
+            potential future improvement: one with the highest number of subcells
+    Returns:
+      cell, or [cell list]
+    '''
+    # Load the layout file
+    layout2 = pya.Layout()
+    layout2.read(os.path.join(path,filename))
+
+    subcells = []
+    for cell in layout2.top_cells():
+        if Verbose: 
+            print(" top cell name: %s" % cell.name)
+        # Create sub-cell in the layout
+        subcell = layout.create_cell(cell.name)
+        # Copy top cell into the sub-cell
+        subcell.copy_tree(cell)  
+        if single_topcell:
+            return subcell
+        subcells.append (subcell)
+    return subcells
+
 
 def create_cell2(ly, cell_name, library_name, load_check=True):
     '''
