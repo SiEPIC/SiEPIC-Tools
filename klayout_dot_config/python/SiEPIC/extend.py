@@ -882,7 +882,22 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     return pins, pin_errors
 
 
-def find_pin(self, name):
+def find_pin(self, pin_name, verbose=False):
+
+    pins, _ = self.find_pins()
+
+    if pins:
+        p = [ p for p in pins if (p.pin_name==pin_name)]
+        if p:
+            if len(p)>1:
+                raise Exception ('Multiple Pins with name "%s" found in cell "%s"' % (pin_name, self.basic_name()) )
+            return p[0]
+        else:
+            raise Exception ('Pin with name "%s" not found in cell "%s". Available pins: %s' % (pin_name, self.basic_name(), [p.pin_name for p in pins]) )
+    else:
+        raise Exception ('No Pins found in cell "%s"' % (self.basic_name()) )
+    '''
+    (self, name):
     from . import _globals
     from .core import Pin
     pins = []
@@ -906,6 +921,8 @@ def find_pin(self, name):
             return Pin(pin, _globals.PIN_TYPES.OPTICAL)
 
     return None
+    '''
+
 
 # find the pins inside a component
 
