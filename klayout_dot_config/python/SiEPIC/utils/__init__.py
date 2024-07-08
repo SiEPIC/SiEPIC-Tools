@@ -1106,7 +1106,7 @@ def arc_bezier(radius, start, stop, bezier, DevRec=None, dbu=0.001):
         t = i * diff
         pts.append(pya.Point(-L, 0) + pya.Point(t**3 * xA + t**2 * xB +
                                                 t * xC + xD, t**3 * yA + t**2 * yB + t * yC + yD))
-    pts.extend([pya.Point(0, L - 1), pya.Point(0, L)])
+    pts.extend([pya.Point(0, L)])
     return pts
 
 
