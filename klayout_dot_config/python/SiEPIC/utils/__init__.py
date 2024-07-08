@@ -47,7 +47,7 @@ eng_str
 svg_from_component
 sample_function
 pointlist_to_path
-
+waveguide_length
 
 '''
 
@@ -1567,4 +1567,15 @@ def pointlist_to_path(pointlist, dbu):
     path = pya.Path(points)
     return path
 
-
+def waveguide_length(cell):
+    '''
+    Extract the waveguide length from the layout cell Spice parameters
+    input: pya.Cell or pya.Instance
+    '''
+    
+    if type(cell) == pya.Instance:
+        cell = cell.cell
+    if type(cell) == pya.Cell:
+        return float(cell.find_components()[0].params.split('wg_length=')[1].split(' ')[0])*1e6
+    else:
+        raise Exception ('SiEPIC.utils.waveguide_length: input needs to be a Cell or Instance.')
