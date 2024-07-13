@@ -337,13 +337,14 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             iter1.next()
         if verbose:
             print(" - found %s shape(s) not belonging to components " % len(extra_shapes) )
-            for e in extra_shapes:
-                print( "   - %s, %s" % (e[0], e[1]) )
         # add shapes into the results database
         for e in extra_shapes:
             if e[0].dpolygon:
+                if verbose:
+                    print( "   - %s: %s, %s: %s" % (type(e[1]), e[1], type(e[0]), e[0]) )
+                    print( "    - %s, %s" % (e[1].to_trans().to_itrans(dbu), e[0].dpolygon) )
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_shapesoutside.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(e[0].dpolygon.transformed(e[1].to_trans().to_itrans(dbu))))
+                rdb_item.add_value(pya.RdbItemValue(e[0].polygon.transformed(e[1]).to_dtype(dbu)))
 
 
 
