@@ -1,7 +1,7 @@
 '''
 --- Simple MZI ---
 
-by Lukas Chrostowski, 2020-2023
+by Lukas Chrostowski, 2020-2024
 
 Example simple script to
  - create a new layout with a top cell
@@ -11,7 +11,7 @@ Example simple script to
 using SiEPIC-Tools function including connect_pins_with_waveguide and connect_cell
 
 usage:
- - run this script in KLayout Application
+ - run this script in KLayout Application, or in standalone Python
 '''
 
 from pya import *
@@ -34,7 +34,8 @@ def example_circuit():
 
     tech_name = 'GSiP'
 
-    if SiEPIC.__version__ < '0.5.4':
+    from packaging import version
+    if version.parse(SiEPIC.__version__) < version.parse('0.5.4'):
         raise Exception("Errors", "This example requires SiEPIC-Tools version 0.5.4 or greater.")
 
     if Python_Env == 'Script':
@@ -76,8 +77,8 @@ def example_circuit():
     instY2.transform(Trans(20000,0))
 
     # Waveguides:
-    connect_pins_with_waveguide(instGC1, 'opt_wg', instY1, 'opt1', waveguide_type=waveguide_type)
-    connect_pins_with_waveguide(instGC2, 'opt_wg', instY2, 'opt1', waveguide_type=waveguide_type)
+    connect_pins_with_waveguide(instGC1, 'opt_wg', instY1, 'opt1', waveguide_type=waveguide_type, verbose=True, error_min_bend_radius=False)
+    connect_pins_with_waveguide(instGC2, 'opt_wg', instY2, 'opt1', waveguide_type=waveguide_type, verbose=True, error_min_bend_radius=True)
     connect_pins_with_waveguide(instY1, 'opt2', instY2, 'opt3', waveguide_type=waveguide_type)
     connect_pins_with_waveguide(instY1, 'opt3', instY2, 'opt2', waveguide_type=waveguide_type,turtle_B=[25,-90])
     

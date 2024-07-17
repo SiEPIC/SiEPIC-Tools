@@ -131,8 +131,12 @@ class Pin():
 
     def display(self):
         p = self
-        print("- pin_name %s: component_idx %s, pin_type %s, rotation: %s, net: %s, (%s), path: %s" %
-              (p.pin_name, p.component.idx, p.type, p.rotation, p.net.idx, p.center, p.path))
+        if p.component:
+            print("- pin_name %s: component_idx %s, pin_type %s, rotation: %s, net: %s, (%s), path: %s" %
+                  (p.pin_name, p.component.idx, p.type, p.rotation, p.net.idx, p.center, p.path))
+        else:
+            print("- pin_name %s: pin_type %s, rotation: %s, net: %s, (%s), path: %s" %
+                  (p.pin_name, p.type, p.rotation, p.net.idx, p.center, p.path))
         o = self
 #        print("- pin #%s: component_idx %s, pin_name %s, pin_type %s, net: %s, (%s), path: %s" %
 #              (o.idx, o.component_idx, o.pin_name, o.type, o.net.idx, o.center, o.path))

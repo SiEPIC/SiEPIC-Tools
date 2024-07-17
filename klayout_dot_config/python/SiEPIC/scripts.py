@@ -212,7 +212,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     # benchmarking: find_components here takes 0.015 s
 #    print('Time elapsed: %s' % (time() - t))    
 
-    # Find the instance's pins, and see if they uniquely match
+    # Find the two instances' pins, and see if they uniquely match
     ipinA = [p for p in instanceA.find_pins()[0] if p.pin_name == pinA]
     ipinB = [p for p in instanceB.find_pins()[0] if p.pin_name == pinB]
     if len(ipinA) == 1:
@@ -233,39 +233,49 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
         # if the instance had sub-cells, then there will be many components. Pick the first one.
         if type(componentA) == type([]):
             componentA = componentA[0]
-        # Find pinA and pinB
-        cpinA = [p for p in componentA.pins if p.pin_name == pinA]
-
-
-    componentB = instanceB.parent_cell.find_components(inst=instanceB)
-    if componentB==[]:
-        print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
-        print('componentB: %s' % (componentB) )
-        print('parent_cell B: %s, cell B: %s' % (instanceB.parent_cell, instanceB.cell) )
-        print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
-        print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
-        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
-    # if the instance had sub-cells, then there will be many components. Pick the first one.
-    if type(componentB) == type([]):
-        componentB = componentB[0]
-    # Find pinA and pinB
-    cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
+        # Find component pinA
+        cpinA = [p for p in componentA.pins if p.pin_name == pinA]     
+    if len(ipinB) == 1:
+        cpinB = ipinB
+        if verbose:
+            print(' - connect_pins_with_waveguide: found unique pin %s' % pinB)
+    else:
+        if verbose:
+            print(' - connect_pins_with_waveguide: searching for pin %s' % pinB)
+        componentB = instanceB.parent_cell.find_components(inst=instanceB)
+        if componentB==[]:
+            print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
+            print('componentB: %s' % (componentB) )
+            print('parent_cell B: %s, cell B: %s' % (instanceB.parent_cell, instanceB.cell) )
+            print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
+            print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
+            raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
+        # if the instance had sub-cells, then there will be many components. Pick the first one.
+        if type(componentB) == type([]):
+            componentB = componentB[0]
+        # Find component pinB
+        cpinB = [p for p in componentB.pins if p.pin_name == pinB]
 
     if verbose:
         print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-        print('componentA: %s, componentB: %s' % (componentA, componentB) )
-        componentA.display()
-        componentB.display()
+        print('cpinA: %s, cpinB: %s' % (cpinA, cpinB) )
+        if 'componentA' in locals():
+            print('componentA: %s' % (componentA) )
+            componentA.display()
+        if 'componentB' in locals():
+            print('componentB: %s' % (componentB) )
+            componentB.display()
         
-
+    # If we haven't found the pins,
     # relaxed_pinnames:  scan for only the number
     if relaxed_pinnames==True:
-        import re
         try:
             if cpinA==[]:
+                import re
                 if re.findall(r'\d+', pinA):
                     cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
             if cpinB==[]:
+                import re
                 if re.findall(r'\d+', pinB):
                     cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
         except:
@@ -278,37 +288,20 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
             cpinA = [instanceA.find_pin(pinA)]
         except:
-              error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentA (%s). Available pins: %s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins])
-              '''
-              if _globals.Python_Env == "KLayout_GUI":
-                question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
-                question.setText("SiEPIC-Tools scripted layout, requested pin not found")
-                question.setInformativeText(error_message)
-                pya.QMessageBox_StandardButton(question.exec_())
-                return
-              else:
-              '''          
-              raise Exception(error_message)
+            error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentA (%s). Available pins: %s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins])
+            raise Exception(error_message)
     if cpinB==[]:
         try:  
             # this checks if the cell (which could contain multiple components) 
             # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
             cpinB = [instanceB.find_pin(pinB)]
         except:
-              error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentB (%s). Available pins: %s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins])
-              '''
-              if _globals.Python_Env == "KLayout_GUI":
-                question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
-                question.setText("SiEPIC-Tools scripted layout, requested pin not found")
-                question.setInformativeText(error_message)
-                pya.QMessageBox_StandardButton(question.exec_())
-                return
-              else:          
-              '''
-              raise Exception(error_message)
+            error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentB (%s). Available pins: %s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins])
+            raise Exception(error_message)
 
     cpinA=cpinA[0]
     cpinB=cpinB[0]
+    
     if verbose:
         cpinA.display()
         cpinB.display()
