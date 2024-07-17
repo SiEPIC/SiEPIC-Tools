@@ -39,10 +39,10 @@ def test_all_library_cells():
         import GSiP
 
     # Create a new layout
-    from SiEPIC.scripts import instantiate_all_library_cells
     topcell, ly = new_layout(tech_name, "UnitTesting", overwrite = True)
 
     # Instantiate all cells
+    from SiEPIC.scripts import instantiate_all_library_cells
     instantiate_all_library_cells(topcell)
 
     # Check if there are any errors
