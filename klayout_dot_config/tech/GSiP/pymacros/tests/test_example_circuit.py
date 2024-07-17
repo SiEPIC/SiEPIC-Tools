@@ -73,17 +73,39 @@ def example_circuit():
     # Y branches:
     instY1 = connect_cell(instGC1, 'opt_wg', cell_ebeam_y, 'opt1')
     instY1.transform(Trans(20000,0))
-    instY2 = connect_cell(instGC2, 'opt_wg', cell_ebeam_y, 'opt1')
+    # 'pin1' is not a pin on this cell, but rather 'opt1':
+    instY2 = connect_cell(instGC2, 'opt_wg', cell_ebeam_y, 'pin1', relaxed_pinnames=True)
     instY2.transform(Trans(20000,0))
+
+    # move the splitters into a subcell, to make an MZI sub-cell:
+    cell_MZI = ly.create_cell('MZI')
+    t = Trans(Trans.R0,0,0)
+    inst_MZI = cell.insert(CellInstArray(cell_MZI.cell_index(), t))
+    instY1.parent_cell = cell_MZI
+    instY2.parent_cell = cell_MZI
 
     # Waveguides:
     connect_pins_with_waveguide(instGC1, 'opt_wg', instY1, 'opt1', waveguide_type=waveguide_type, verbose=True, error_min_bend_radius=False)
     connect_pins_with_waveguide(instGC2, 'opt_wg', instY2, 'opt1', waveguide_type=waveguide_type, verbose=True, error_min_bend_radius=True)
-    connect_pins_with_waveguide(instY1, 'opt2', instY2, 'opt3', waveguide_type=waveguide_type)
+    connect_pins_with_waveguide(instY1, '2', instY2, '3', waveguide_type=waveguide_type, relaxed_pinnames=True)
     connect_pins_with_waveguide(instY1, 'opt3', instY2, 'opt2', waveguide_type=waveguide_type,turtle_B=[25,-90])
     
     # Zoom out
     zoom_out(cell)
+
+    # Delete extra top cells
+    from SiEPIC.scripts import delete_extra_topcells
+    delete_extra_topcells(ly, cell)
+
+    # Find the automated measurement coordinates:
+    from SiEPIC.utils import find_automated_measurement_labels
+    text_out, opt_in = find_automated_measurement_labels(cell)
+    print(opt_in)
+
+    # calculate areas
+    from SiEPIC.scripts import calculate_area
+    text = calculate_area(ly,cell)
+    print (text)
 
     # Verify
     num_errors = layout_check(cell=cell, verbose=True, GUI=True)
@@ -97,6 +119,12 @@ def example_circuit():
     # Save
     filename = os.path.splitext(os.path.basename(__file__))[0]
     file_out = export_layout(cell, path, filename, format='oas', screenshot=True)
+
+    # Display in KLayout
+    from SiEPIC._globals import Python_Env
+    if Python_Env == 'Script':
+        from SiEPIC.utils import klive
+        klive.show(file_out, technology=tech_name, keep_position=True)
 
     return num_errors
 
