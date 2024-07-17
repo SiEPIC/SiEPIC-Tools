@@ -41,10 +41,10 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     from SiEPIC.extend import to_itype
     
     # fetch the parameters
-#    TECHNOLOGY = get_technology_by_name('GSiP')
     dbu = self.layout.dbu
     ly = self.layout
     shapes = self.cell.shapes
+    ly.technology_name='GSiP'
     
     LayerSi = self.silayer
     LayerSi3 = ly.layer(self.si3layer)
