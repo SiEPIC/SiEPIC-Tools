@@ -1222,9 +1222,9 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
     topcell = self
 
     from . import _globals
-    from .utils import select_paths, get_technology
+    from .utils import select_paths, get_technology_by_name
     from .core import Net
-    TECHNOLOGY = get_technology()
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
 
     layout = topcell.layout()
     LayerLumericalN = self.layout().layer(TECHNOLOGY['Lumerical'])
@@ -1321,14 +1321,16 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     from .core import Net
 
     from SiEPIC.utils import load_DFT
-    DFT = load_DFT()
+    from .utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
+    DFT = load_DFT(TECHNOLOGY)
     if not DFT:
         if verbose:
             print(' no DFT rules available.')
         return False, False, False, False, False, False, False, False
 
     from .scripts import user_select_opt_in
-    opt_in_selection_text, opt_in_dict = user_select_opt_in(
+    opt_in_selection_text, opt_in_dict = user_select_opt_in(cell=self,
         verbose=verbose, option_all=False, opt_in_selection_text=opt_in_selection_text)
     if not opt_in_dict:
         if verbose:
@@ -1442,8 +1444,8 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
     from time import strftime
     from .utils import eng_str
 
-    from .utils import get_technology
-    TECHNOLOGY = get_technology()
+    from .utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
     if not TECHNOLOGY['technology_name']:
         v = pya.MessageBox.warning("Errors", "SiEPIC-Tools requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
         return '', '', 0, []

@@ -3016,9 +3016,9 @@ User to select opt_in labels, either:
 '''
 
 
-def user_select_opt_in(verbose=None, option_all=True, opt_in_selection_text=[]):
+def user_select_opt_in(cell=None, verbose=None, option_all=True, opt_in_selection_text=[]):
     from .utils import find_automated_measurement_labels
-    text_out, opt_in = find_automated_measurement_labels()
+    text_out, opt_in = find_automated_measurement_labels(topcell=cell)
     if not opt_in:
         print(' No opt_in labels found in the layout')
         return False, False

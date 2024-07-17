@@ -781,6 +781,9 @@ def find_paths(layer, cell=None):
 def selected_opt_in_text():
     '''KLayout Application use. Return all selected opt_in Text labels.
     # example usage: selected_opt_in_text()[0].shape.text.string'''
+    from SiEPIC._globals import Python_Env
+    if Python_Env == 'Script':
+        raise Exception('This function can only be executed in KLayout Application GUI mode.')
     from . import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
 
@@ -1205,8 +1208,12 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, TECHNOLOGY=
     
     import string
     if TECHNOLOGY == None:
-        from . import get_technology, find_paths
-        TECHNOLOGY = get_technology()
+        if topcell:
+            from . import get_technology_by_name
+            TECHNOLOGY = get_technology_by_name(topcell.layout().technology().name)
+        else:
+            from . import get_technology
+            TECHNOLOGY = get_technology()
     dbu = TECHNOLOGY['dbu']
     if LayerTextN == None:
         LayerTextN = TECHNOLOGY['Text']

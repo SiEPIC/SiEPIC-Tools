@@ -89,6 +89,11 @@ def example_circuit():
     num_errors = layout_check(cell=cell, verbose=True, GUI=True)
     print('Number of errors: %s' % num_errors)
 
+    # Netlist
+    from SiEPIC.netlist import export_spice
+    filename_netlist, filename_subckt = export_spice(cell, opt_in_selection_text=["opt_in_TE_1550_device_%s_MZI1" % designer_name])
+    print(filename_netlist)
+
     # Save
     filename = os.path.splitext(os.path.basename(__file__))[0]
     file_out = export_layout(cell, path, filename, format='oas', screenshot=True)
