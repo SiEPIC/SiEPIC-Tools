@@ -685,6 +685,11 @@ def print_parameter_values(self):
 def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     '''
     Find Pins in a Cell.
+    Inputs:
+        self: pya.Cell
+        verbose: True prints details for debugging
+        polygon_devrec:
+
     Optical Pins have:
      1) path on layer PinRec, indicating direction (out of component)
      2) text on layer PinRec, inside the path

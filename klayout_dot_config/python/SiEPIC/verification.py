@@ -275,11 +275,8 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     if pin_errors:
         for p in pin_errors:
             if p[0].polygon():
-                print (p)
-                print(p[0].polygon())
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_pinerrors.rdb_id())
                 rdb_item.add_value(pya.RdbItemValue(p[0].polygon().to_dtype(dbu)))
-                # .transformed(p[1].to_trans().to_itrans(dbu))
 
     if timing:
         print("*** layout_check(), timing; done invalid pins ")
@@ -413,23 +410,42 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
 
         # check all the component's pins to check if they are assigned a net:
+        r1 = pya.Region(c.polygon) # Component's DevRec region
         for pin in c.pins:
             if pin.type == _globals.PIN_TYPES.OPTICAL and pin.net.idx == None:
                 # disconnected optical pin
                 if verbose:
                     print(" - Found disconnected pin, type %s, at (%s)" % (pin.type, pin.center))
+                    pin.display()
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_discpin.rdb_id())
                 rdb_item.add_value(pya.RdbItemValue(pin.path.to_dtype(dbu)))
+
+            # Check for pin errors, facing the wrong way in the Component
+            # ***** 
+            pts = pin.path.get_points()[0]
+            px, py = pts.x, pts.y
+            test_box = pya.Box(px - 1, py - 1, px + 1, py + 1)
+            r2 = pya.Region(test_box)
+            polygon_and = [p for p in r1 & r2]
+            if not polygon_and: 
+                # Pin's first point is not inside the DevRec
+                test_box = pya.Box(px - 5, py - 5, px + 5, py + 5)
+                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_pinerrors.rdb_id())
+                rdb_item.add_value(pya.RdbItemValue(pya.Polygon(test_box).to_dtype(dbu)))
+                rdb_item.add_value(pya.RdbItemValue(
+                    "The components with the pin problem is: " + c.component))
+                if verbose:
+                    print (str(test_box))
+
+
 
         # Verification: overlapping components (DevRec)
             # automatically takes care of waveguides crossing other waveguides & components
         # Region: put in two DevRec polygons (in raw), measure area, merge, check if are is the same
         #  checks for touching but not overlapping DevRecs
         for i2 in range(i + 1, len(components)):
-            
             c2 = components[i2]
-            r1 = pya.Region(c.polygon)
-            r2 = pya.Region(c2.polygon)
+            r2 = pya.Region(c2.polygon) # Component's DevRec region
             polygon_and = [p for p in r1 & r2]
             if polygon_and:
                 print(" - Found overlapping components: %s, %s" % (c.component, c2.component))
