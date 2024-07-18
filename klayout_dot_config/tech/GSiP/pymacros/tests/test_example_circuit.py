@@ -108,7 +108,7 @@ def example_circuit():
     print (text)
 
     # Verify
-    num_errors = layout_check(cell=cell, verbose=True, GUI=True)
+    num_errors = layout_check(cell=cell, verbose=False, GUI=True)
     print('Number of errors: %s' % num_errors)
 
     # Netlist
