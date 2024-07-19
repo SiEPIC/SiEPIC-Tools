@@ -49,6 +49,7 @@ pya.Cell Extensions:
   - spice_netlist_export
   - check_component_models
   - pinPoint
+  - plot: display an image for Jupyter notebook
 
 pya.Instance Extensions:
   - find_pins: find Pin objects for all pins in a cell instance
@@ -1738,8 +1739,7 @@ def pinPoint(self, pin_name, verbose=False):
             raise Exception("Did not find matching pin (%s), in the components list of pins (%s)." %(pin_name, [p.pin_name for p in pins]) )
             return
         return matched_pins[0].center
-    else:
-        pass
+
 
 def show(self):
     '''Show the cell in KLayout using klive'''
@@ -1756,6 +1756,53 @@ def show(self):
         from SiEPIC.utils import klive
         klive.show(file_out, technology=self.layout().technology().name, keep_position=True)
 
+def plot(self, width = 800, show_labels = True, show_ruler = True, retina = True):
+        '''
+        Generate an image of the layout cell, and display. Useful for Jupyter notebooks
+        
+        Args:
+            self: pya.Cell
+            width: number of pixels
+            show_labels: KLayout display config to show text = True, https://www.klayout.de/doc-qt5/code/class_LayoutView.html#method101
+            show_ruler: KLayout display config to show ruler = True
+            retina: IPython.display.Image configuration for retina display, True
+        '''
+        
+        from io import BytesIO
+        import matplotlib.pyplot as plt
+        from IPython.display import Image, display
+        
+        # Create a LayoutView, and populate it with the current cell & layout
+        cell = self
+        layout_view = pya.LayoutView()
+        cell_view_index = layout_view.create_layout(True)
+        layout_view.active_cellview_index = cell_view_index
+        cell_view = layout_view.cellview(cell_view_index)
+        layout = cell_view.layout()
+        layout.assign(cell.layout())
+        cell_view.cell = layout.cell(cell.name)
+
+        # Load layer properties from the technology
+        lyp_path=layout.technology().eff_layer_properties_file()
+        layout_view.load_layer_props(lyp_path)
+        
+        # Configure the layout view settings
+        # print(layout_view.get_config_names())
+        layout_view.set_config("text-font",3)        
+        layout_view.set_config("background-color", "#ffffff")
+        layout_view.set_config("text-visible", "true" if show_labels else "false")
+        layout_view.set_config("grid-show-ruler", "true" if show_ruler else "false")
+
+        # Zoom out and show all layout details
+        layout_view.max_hier()
+        layout_view.zoom_fit()
+
+        # Display as a PNG
+        width = width * (2 if retina else 1)
+        pixel_buffer = layout_view.get_pixels(width, cell.bbox().height()/cell.bbox().width()*width)
+        png_data = pixel_buffer.to_png_data()
+        im = Image(png_data, retina=retina)
+        display(im)
 
 #################################################################################
 
@@ -1770,6 +1817,7 @@ pya.Cell.get_LumericalINTERCONNECT_analyzers_from_opt_in = get_LumericalINTERCON
 pya.Cell.spice_netlist_export = spice_netlist_export
 pya.Cell.pinPoint = pinPoint
 pya.Cell.show = show
+pya.Cell.plot = plot
 
 
 #################################################################################

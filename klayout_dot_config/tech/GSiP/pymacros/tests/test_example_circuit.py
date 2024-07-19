@@ -126,6 +126,10 @@ def example_circuit():
         from SiEPIC.utils import klive
         klive.show(file_out, technology=tech_name, keep_position=True)
 
+    # Plot 
+    cell.plot() # in the browser
+
+
     return num_errors
 
 def test_example_circuit():

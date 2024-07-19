@@ -24,4 +24,5 @@ else:
     if _globals.Python_Env == "KLayout_GUI":
         from . import extend, _globals, core, examples, github, scripts, utils, setup, install, verification
     else:
-        from . import extend, _globals, verification
+        from . import _globals, core, utils, extend, verification, scripts
+        
