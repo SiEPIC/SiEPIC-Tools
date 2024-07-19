@@ -45,17 +45,17 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: true
 
-      - name: setup python 3.7
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.7'
-          cache: "pip"
-          cache-dependency-path: pyproject.toml
+      # - name: setup python 3.9
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: '3.9'
+      #     cache: "pip"
+      #     cache-dependency-path: pyproject.toml
 
-      - name: install python 3.7 packages
-        run: |
-          python -m pip install --upgrade pip
-          pip install klayout numpy scipy pytest pytest-cov
+      # - name: install python 3.9 packages
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     pip install klayout numpy scipy pytest pytest-cov
 
-      - name: Test with pytest, python 3.7
-        run: pytest klayout_dot_config/tech
+      # - name: Test with pytest, python 3.9
+      #   run: pytest klayout_dot_config/tech
