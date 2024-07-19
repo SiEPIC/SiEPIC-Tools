@@ -104,9 +104,12 @@ class Ring_Filter_DB(pya.PCellDeclarationHelper):
     # Generate the layout:
    
     # Create the ring resonator
+    from SiEPIC.utils.layout import layout_ring
+    layout_ring(self.cell, LayerSiN, pya.DPoint((self.r+self.w/2), (self.r+self.g+self.w)), self.r, self.w)
+    # ring centre:
     t = pya.Trans(pya.Trans.R0,(self.r+self.w/2)/dbu, (self.r+self.g+self.w)/dbu)
-    pcell = ly.create_cell("Ring", "GSiP", { "layer": LayerSi, "radius": self.r, "width": self.w } )
-    self.cell.insert(pya.CellInstArray(pcell.cell_index(), t))
+#    pcell = ly.create_cell("Ring", "GSiP", { "layer": LayerSi, "radius": self.r, "width": self.w } )
+#    self.cell.insert(pya.CellInstArray(pcell.cell_index(), t))
     
     # Create the two waveguides
     wg1 = pya.Box(x0 - (w_Si3 / 2 + taper_length), -w/2, x0 + (w_Si3 / 2 + taper_length), w/2)

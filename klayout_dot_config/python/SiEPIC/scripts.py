@@ -33,6 +33,7 @@ replace_cell
 svg_from_cell
 zoom_out: When running in the GUI, Zoom out and show full hierarchy
 export_layout
+instantiate_all_library_cells
 
 '''
 
@@ -1737,7 +1738,7 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   # check cells
   if type(cellB) != pya.Cell:
-      raise Exception("cellB needs to be a cell, not a cell index")
+      raise Exception("cellB needs to be a pya.Cell, not a cell index, nor string")
   if type(instanceA) != pya.Instance:
       raise Exception("instanceA needs to be an Instance, not an index")
 
@@ -3297,20 +3298,24 @@ def export_layout(topcell, path, filename, relative_path = '', format='oas', scr
 
     return file_out
 
-def instantiate_all_library_cells(topcell, progress_bar = True):
+def instantiate_all_library_cells(topcell, terminator_cells = None, terminator_libraries = None, terminator_waveguide_types = None, progress_bar = True):
     '''
     Load all cells (fixed and PCells) and instantiate them on the layout. 
     One column per library, one column for fixed and PCells.
     topcell: is a cell in a pya.Layout that has already configured with Layout.technology_name 
+    terminator_cells: list of str, attach a terminator to each of the optical ports for each cell, and verify
+        terminator_libraries: list of str, the library name corresponding to each terminator
+        terminator_waveguide_types: list of str, waveguide type corresponding to each terminator
     progress_bar: True displays percentage
     '''
     
+    print('v2')
     
     from SiEPIC._globals import Python_Env
+    ly = topcell.layout()
     if True or Python_Env == "KLayout_GUI":
         # Count all the cells for the progress bar
         count = 0
-        ly = topcell.layout()
         for lib in pya.Library().library_ids():
             li = pya.Library().library_by_id(lib)
             if not li.is_for_technology(ly.technology_name) or li.name() == 'Basic':
@@ -3323,6 +3328,17 @@ def instantiate_all_library_cells(topcell, progress_bar = True):
                     count += 1
         p = pya.RelativeProgress("Instantiate all libraries' cells", count)
 
+    if terminator_cells:
+        # load terminator cell
+        from SiEPIC.utils import create_cell2
+        cell_terminators = []
+        for i in range(0, len(terminator_cells)):
+            cell_terminators.append(
+                create_cell2(ly, terminator_cells[i], terminator_libraries[i])
+            )
+        from SiEPIC.scripts import connect_cell
+        from SiEPIC import _globals
+        
     # all the libraries
     ly = topcell.layout()
     x,y,xmax=0,0,0
@@ -3338,10 +3354,21 @@ def instantiate_all_library_cells(topcell, progress_bar = True):
             print(" - PCell: ", li.name(), n)
             pcell = ly.create_cell(n,li.name(), {})
             if pcell:
-                t = pya.Trans(pya.Trans.R0, x-pcell.bbox().left, y-pcell.bbox().bottom)
-                topcell.insert(pya.CellInstArray(pcell.cell_index(), t))
-                y += pcell.bbox().height()+2000
-                xmax = max(xmax, x+pcell.bbox().width()+2000)
+                subcell = ly.create_cell('c_'+n)
+                t = pya.Trans(pya.Trans.R0, pcell.bbox().left, pcell.bbox().bottom)
+                inst = subcell.insert(pya.CellInstArray(pcell.cell_index(), t))
+                # connect terminators
+                if terminator_cells:
+                    pins, _ = pcell.find_pins()
+                    if pins:
+                        for p1 in pins:
+                            if p1.type == _globals.PIN_TYPES.OPTICAL:
+                                connect_cell(inst,p1.pin_name, cell_terminators[0],'1',relaxed_pinnames=True)
+                t = pya.Trans(pya.Trans.R0, x-subcell.bbox().left, y-subcell.bbox().bottom)
+                inst = topcell.insert(pya.CellInstArray(subcell.cell_index(), t))
+
+                y += subcell.bbox().height()+2000
+                xmax = max(xmax, x+subcell.bbox().width()+2000)
             else:
                 print('Error in: %s' % n)
             p.inc()
@@ -3356,10 +3383,21 @@ def instantiate_all_library_cells(topcell, progress_bar = True):
                 if not pcell:
                     pcell = ly.create_cell(li.layout().cell(c).name,li.name())
                 if pcell:
-                    t = pya.Trans(pya.Trans.R0, x-pcell.bbox().left, y-pcell.bbox().bottom)
-                    topcell.insert(pya.CellInstArray(pcell.cell_index(), t))
-                    y += pcell.bbox().height()+2000
-                    xmax = max(xmax, x+pcell.bbox().width()+2000)
+                    subcell = ly.create_cell('c_'+pcell.name)
+                    t = pya.Trans(pya.Trans.R0, pcell.bbox().left, pcell.bbox().bottom)
+                    inst = subcell.insert(pya.CellInstArray(pcell.cell_index(), t))
+                    # connect terminators
+                    if terminator_cells:
+                        pins, _ = pcell.find_pins()
+                        if pins:
+                            for p1 in pins:
+                                if p1.type == _globals.PIN_TYPES.OPTICAL:
+                                    connect_cell(inst,p1.pin_name, cell_terminators[0],'1',relaxed_pinnames=True)
+                    t = pya.Trans(pya.Trans.R0, x-subcell.bbox().left, y-subcell.bbox().bottom)
+                    inst = topcell.insert(pya.CellInstArray(subcell.cell_index(), t))
+
+                    y += subcell.bbox().height()+2000
+                    xmax = max(xmax, x+subcell.bbox().width()+2000)
                 else:
                     print('Error in: %s' % li.layout().cell(c).name)
             p.inc()

@@ -43,7 +43,7 @@ def test_all_library_cells():
 
     # Instantiate all cells
     from SiEPIC.scripts import instantiate_all_library_cells
-    instantiate_all_library_cells(topcell)
+    instantiate_all_library_cells(topcell, terminator_cells = ['Terminator_TE_1550'], terminator_libraries = ['GSiP'], terminator_waveguide_types = ['Strip'])
 
     # Check if there are any errors
     for cell_id in topcell.called_cells():
@@ -54,7 +54,14 @@ def test_all_library_cells():
         if c.is_empty() or c.bbox().area() == 0:
             raise Exception('Empty cell: %s' % c.name)
 
+    topcell.show()
+
+    # Verify
+    num_errors = layout_check(cell=topcell, verify_DFT=False, verbose=False, GUI=True)
+    if num_errors:
+        raise Exception('Number of errors: %s' % num_errors)
+    print('Number of errors: %s' % num_errors)
+
 
 if __name__ == "__main__":
     test_all_library_cells()
-
