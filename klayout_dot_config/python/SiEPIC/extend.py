@@ -1769,7 +1769,6 @@ def plot(self, width = 800, show_labels = True, show_ruler = True, retina = True
         '''
         
         from io import BytesIO
-        import matplotlib.pyplot as plt
         from IPython.display import Image, display
         
         # Create a LayoutView, and populate it with the current cell & layout
