@@ -14,9 +14,9 @@ class Waveguide(pya.PCellDeclarationHelper):
     self.param("width", self.TypeDouble, "Width", default = 0.5)
     self.param("adiab", self.TypeBoolean, "Adiabatic", default = False)
     self.param("bezier", self.TypeDouble, "Bezier Parameter", default = 0.35)
-    self.param("layers", self.TypeList, "Layers", default = ['Waveguide'])
-    self.param("widths", self.TypeList, "Widths", default =  [0.5])
-    self.param("offsets", self.TypeList, "Offsets", default = [0])
+    self.param("layers", self.TypeList, "Layers", default = ['Waveguide','DevRec'])
+    self.param("widths", self.TypeList, "Widths", default =  [0.5,1.5])
+    self.param("offsets", self.TypeList, "Offsets", default = [0,0])
     self.param("CML", self.TypeString, "Compact Model Library (CML)", default = 'GSiP')
     self.param("model", self.TypeString, "CML Model name", default = 'wg_strip_integral_1550') 
     self.cellName="Waveguide"

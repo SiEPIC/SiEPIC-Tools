@@ -662,18 +662,22 @@ def layout_waveguide(cell, layer, points_list, width):
 
 
 def layout_ring(cell, layer, center, r, w):
-    # function to produce the layout of a ring
-    # cell: layout cell to place the layout
-    # layer: which layer to use
-    # center: origin DPoint
-    # r: radius
-    # w: waveguide width
-    # units in microns
+    '''
+    Produce the layout of a ring
+    
+    Args:
+        cell: layout cell to place the layout
+        layer: layer index to use, cell.layout.layer()
+        center: origin pya.DPoint
+        r: radius, units in microns
+        w: waveguide width, units in microns
 
-    # example usage.  Places the ring layout in the presently selected cell.
-    # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-    # layout_ring(cell, cell.layout().layer(LayerInfo(1, 0)), pya.DPoint(0,0), 10, 0.5)
-
+    Example usage:  
+    Places the ring layout in the presently selected cell.
+    cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    layout_ring(cell, cell.layout().layer(LayerInfo(1, 0)), pya.DPoint(0,0), 10, 0.5)
+    '''
+    
     layout_arc(cell, layer, center, r, w, 0, 2 * np.pi)
 
 

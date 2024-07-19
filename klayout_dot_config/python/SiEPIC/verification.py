@@ -7,9 +7,13 @@ by Lukas Chrostowski, 2016-2023
 '''
 
 
-def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = None):
-    '''Functional Verification:
-    cell=pya.cell, file_rbd=<str> path.
+def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = None, verify_DFT = True):
+    '''Functional Verification.
+    Input
+        cell: pya.Cell
+        file_rbd: <str> path
+        verify_DFT: True for design for test verification, False to skip.
+        
     Verification of things that are specific to photonic integrated circuits, including
     - Waveguides: paths, radius, bend points, Manhattan
     - Component checking: overlapping, avoiding crosstalk
@@ -184,7 +188,10 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
 
     # Design for Test checking
     from SiEPIC.utils import load_DFT
-    DFT = load_DFT(TECHNOLOGY=TECHNOLOGY)
+    if verify_DFT:
+        DFT = load_DFT(TECHNOLOGY=TECHNOLOGY)
+    else:
+        DFT = None
     if DFT:
         if verbose:
             print(DFT)

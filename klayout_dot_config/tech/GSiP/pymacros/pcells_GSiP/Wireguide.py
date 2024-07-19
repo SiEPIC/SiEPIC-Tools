@@ -13,9 +13,9 @@ class Wireguide(pya.PCellDeclarationHelper):
     self.radius = 0
     self.param("width", self.TypeDouble, "Width", default = 0.5)
     self.adiab = False
-    self.param("layers", self.TypeList, "Layers", default = ['Waveguide'])
-    self.param("widths", self.TypeList, "Widths", default =  [0.5])
-    self.param("offsets", self.TypeList, "Offsets", default = [0])
+    self.param("layers", self.TypeList, "Layers", default = ['ML','DevRec'])
+    self.param("widths", self.TypeList, "Widths", default =  [0.5, 1])
+    self.param("offsets", self.TypeList, "Offsets", default = [0,0])
    
   def display_text_impl(self):
     # Provide a descriptive text for the cell
@@ -82,12 +82,12 @@ class Wireguide(pya.PCellDeclarationHelper):
             pt_radius = dis2/2
         # wireguide bends:
         if(self.adiab):
-          wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), self.bezier, DevRec='DevRec' in self.layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+          wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), self.bezier), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
         else:
-          wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]),DevRec='DevRec' in self.layers[lr]), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+          wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i])), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
       wg_pts += [pts[-1]]
       wg_pts = pya.Path(wg_pts, 0).unique_points().get_points()
-      wg_polygon = Path(wg_pts, wg_width)
+      wg_polygon = Path(wg_pts, width)
       self.cell.shapes(layer).insert(wg_polygon) # insert the wireguide
        
       #if self.layout.layer(TECHNOLOGY['Wireguide']) == layer:
@@ -104,7 +104,7 @@ class Wireguide(pya.PCellDeclarationHelper):
     t = Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
     self.cell.shapes(LayerPinRecN).insert(Path([Point(-50, 0), Point(50, 0)], wg_width).transformed(t))
     self.cell.shapes(LayerPinRecN).insert(Text("pin2", t, 0.3/dbu, -1))
-	
+
     LayerDevRecN = self.layout.layer(TECHNOLOGY['DevRec'])
     
     # Compact model information

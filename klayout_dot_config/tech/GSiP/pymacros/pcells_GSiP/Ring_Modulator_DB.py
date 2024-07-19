@@ -147,9 +147,12 @@ class Ring_Modulator_DB(pya.PCellDeclarationHelper):
     # Generate the layout:
    
     # Create the ring resonator
+    from SiEPIC.utils.layout import layout_ring
+    layout_ring(self.cell, LayerSiN, pya.DPoint(x0*dbu,y0*dbu), self.r, self.w)
+    # ring centre:
     t = pya.Trans(pya.Trans.R0,x0, y0)
-    pcell = ly.create_cell("Ring", "GSiP", { "layer": self.silayer, "radius": self.r, "width": self.w } )
-    self.cell.insert(pya.CellInstArray(pcell.cell_index(), t))
+    
+    #pcell = ly.create_cell("Ring", "GSiP", { "layer": self.silayer, "radius": self.r, "width": self.w } )
 
     
     # Create the two waveguides

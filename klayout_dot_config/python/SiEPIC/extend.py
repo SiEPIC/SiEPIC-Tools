@@ -943,6 +943,8 @@ def find_pins_component(self, component):
 '''
 Components:
 '''
+from functools import lru_cache
+@lru_cache(maxsize=None)
 def find_components(self, cell_selected=None, inst=None, verbose=False):
     '''
     Function to traverse the cell's hierarchy and find all the components
@@ -1024,6 +1026,10 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                       (idx, subcell.basic_name(), box.p1, box.p2))
             polygon = pya.Polygon(box)  # Save the component outline polygon
             DevRec_polygon = pya.Polygon(iter1.shape().box)
+            found_component = True
+        if iter1.shape().is_path():
+            polygon = iter1.shape().path.polygon().transformed(iter1.itrans())  # Save the component outline polygon
+            DevRec_polygon = iter1.shape().path.polygon
             found_component = True
         if iter1.shape().is_polygon():
             polygon = iter1.shape().polygon.transformed(iter1.itrans())  # Save the component outline polygon
@@ -1735,6 +1741,21 @@ def pinPoint(self, pin_name, verbose=False):
     else:
         pass
 
+def show(self):
+    '''Show the cell in KLayout using klive'''
+
+    # Save the cell in a temporary file
+    from ._globals import TEMP_FOLDER
+    import os
+    file_out = os.path.join(TEMP_FOLDER, self.name+'.gds')
+    self.write(file_out)
+
+    # Display in KLayout
+    from SiEPIC._globals import Python_Env
+    if Python_Env == 'Script':
+        from SiEPIC.utils import klive
+        klive.show(file_out, technology=self.layout().technology().name, keep_position=True)
+
 
 #################################################################################
 
@@ -1748,6 +1769,7 @@ pya.Cell.get_LumericalINTERCONNECT_analyzers = get_LumericalINTERCONNECT_analyze
 pya.Cell.get_LumericalINTERCONNECT_analyzers_from_opt_in = get_LumericalINTERCONNECT_analyzers_from_opt_in
 pya.Cell.spice_netlist_export = spice_netlist_export
 pya.Cell.pinPoint = pinPoint
+pya.Cell.show = show
 
 
 #################################################################################
