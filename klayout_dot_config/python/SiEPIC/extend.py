@@ -1334,7 +1334,10 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
 
     from SiEPIC.utils import load_DFT
     from .utils import get_technology_by_name
-    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
+    if 'TECHNOLOGY' in dir(self.layout()):
+        TECHNOLOGY = self.layout().TECHNOLOGY
+    else:
+        TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
     DFT = load_DFT(TECHNOLOGY)
     if not DFT:
         if verbose:
@@ -1783,6 +1786,8 @@ def plot(self, width = 800, show_labels = True, show_ruler = True, retina = True
 
         # Load layer properties from the technology
         lyp_path=layout.technology().eff_layer_properties_file()
+        if not lyp_path:
+            raise Exception ('SiEPIC.extend.plot: technology not specified.')
         layout_view.load_layer_props(lyp_path)
         
         # Configure the layout view settings

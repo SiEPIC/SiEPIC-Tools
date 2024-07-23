@@ -242,7 +242,7 @@ def get_technology_by_name(tech_name, verbose=False):
 
     if not tech_name:
         raise Exception(
-            "Problem with Technology", "Problem with active Technology: please activate a technology (not Default)", pya.MessageBox.Ok)
+            "Problem with Technology", "Problem with active Technology: please activate a technology (not Default)")
 
     from .._globals import KLAYOUT_VERSION
     technology = {}
@@ -1209,8 +1209,11 @@ def find_automated_measurement_labels(topcell=None, LayerTextN=None, TECHNOLOGY=
     import string
     if TECHNOLOGY == None:
         if topcell:
-            from . import get_technology_by_name
-            TECHNOLOGY = get_technology_by_name(topcell.layout().technology().name)
+            if 'TECHNOLOGY' in dir(topcell.layout()):
+                TECHNOLOGY = topcell.layout().TECHNOLOGY
+            else:
+                from . import get_technology_by_name
+                TECHNOLOGY = get_technology_by_name(topcell.layout().technology().name)
         else:
             from . import get_technology
             TECHNOLOGY = get_technology()

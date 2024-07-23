@@ -2527,15 +2527,15 @@ def open_folder(folder):
         print("running in windows explorer, %s" % folder)
         print(subprocess.Popen(r'explorer /select,"%s"' % folder))
 
-'''
-User to select opt_in labels, either:
- - Text object selection in the layout
- - GUI with drop-down menu from all labels in the layout
- - argument to the function, opt_in_selection_text, array of opt_in labels (strings)
-'''
 
 
 def user_select_opt_in(cell=None, verbose=None, option_all=True, opt_in_selection_text=[]):
+    '''
+    User to select opt_in labels, either:
+     - Text object selection in the layout
+     - GUI with drop-down menu from all labels in the layout
+     - argument to the function, opt_in_selection_text, array of opt_in labels (strings)
+    '''
     from .utils import find_automated_measurement_labels
     text_out, opt_in = find_automated_measurement_labels(topcell=cell)
     if not opt_in:
