@@ -377,6 +377,48 @@ try:
 except ImportError:
     pass
 
+def bezier_cubic(P0, P3, angle0, angle3, a, b, accuracy = 0.001, *args, **kwargs):
+    '''
+    Calculate a cubic Bezier curve between Points P0 and P3, 
+    where the control point positions P1 and P2 are determined by
+    the angles at P0 (angle0) and P3 (angle3), 
+    at a distance of a * scale from P0, and b * scale from P3,
+    where scale is the distance between P0 and P3.
+
+    Args:
+        P0, P3: pya.DPoint (in microns)
+        angle0, angle3: radians
+        a, b: <float> greater than 0
+        accuracy: 0.001 = 1 nm
+
+    Returns:
+        list of pya.DPoint
+    '''
+
+    P0 = Point(P0.x, P0.y)
+    P3 = Point(P3.x, P3.y)
+    scale = (P3 - P0).norm()  # distance between the two end points
+    P1 = a * scale * Point(np.cos(angle0), np.sin(angle0)) + P0
+    P2 = P3 - b * scale * Point(np.cos(angle3), np.sin(angle3))
+    new_bezier_line = bezier_line(P0, P1, P2, P3)
+    # new_bezier_line = _bezier_optimal_pure(P0, P3, *args, **kwargs)
+    bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
+
+    _, bezier_point_coordinates_sampled = \
+        sample_function(bezier_point_coordinates, [0, 1], tol=accuracy / scale) 
+
+    # # This yields a better polygon
+    bezier_point_coordinates_sampled = \
+        np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(accuracy / scale),
+                    axis=1)  # add a point right after the first one
+    bezier_point_coordinates_sampled = \
+        np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - accuracy / scale),
+                    axis=1)  # add a point right before the last one
+
+    return [pya.DPoint(x, y) for (x, y) in zip(*(bezier_point_coordinates_sampled))]
+
+
+
 # ####################### SIEPIC EXTENSION ##########################
 
 
