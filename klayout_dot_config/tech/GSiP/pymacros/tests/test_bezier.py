@@ -60,14 +60,31 @@ def test_bezier_bends():
     h = 1
     width = 0.5
     layer = ly.layer(ly.TECHNOLOGY['Waveguide'])
+    layer2 = ly.layer(ly.TECHNOLOGY['FloorPlan'])
+    print(' Layers: %s, %s' % (ly.TECHNOLOGY['Waveguide'], ly.TECHNOLOGY['FloorPlan']))
 
-    # Two S-bends
+
+    # Two S-bends, small ∆h
     wg_Dpts = bezier_parallel(pya.DPoint(0, 0), pya.DPoint(w, h), 0)
     wg_polygon = pya.DPolygon(translate_from_normal(wg_Dpts, width/2) +
                              translate_from_normal(wg_Dpts, -width/2)[::-1]
                              )
+    cell.shapes(layer2).insert(wg_polygon)
+    a = 0.45
+    wg_Dpts = bezier_cubic(pya.DPoint(0, 0), pya.DPoint(w, h), 0, 0, a, a, accuracy = accuracy)
+    wg_polygon = pya.DPolygon(translate_from_normal(wg_Dpts, width/2) +
+                             translate_from_normal(wg_Dpts, -width/2)[::-1]
+                             )
     cell.shapes(layer).insert(wg_polygon)
-    a = 0.5
+
+    # Two S-bends, large ∆h
+    h = 9
+    wg_Dpts = bezier_parallel(pya.DPoint(0, 0), pya.DPoint(w, h), 0)
+    wg_polygon = pya.DPolygon(translate_from_normal(wg_Dpts, width/2) +
+                             translate_from_normal(wg_Dpts, -width/2)[::-1]
+                             )
+    cell.shapes(layer2).insert(wg_polygon)
+    a = 0.75
     wg_Dpts = bezier_cubic(pya.DPoint(0, 0), pya.DPoint(w, h), 0, 0, a, a, accuracy = accuracy)
     wg_polygon = pya.DPolygon(translate_from_normal(wg_Dpts, width/2) +
                              translate_from_normal(wg_Dpts, -width/2)[::-1]
@@ -76,20 +93,28 @@ def test_bezier_bends():
 
     # 90º bend
     r = 5
-    bezier = 0.3
-    a = (1-bezier)/np.sqrt(2)
-    wg_Dpts = bezier_cubic(pya.DPoint(0, 0), pya.DPoint(r, r), 0, 90/180*np.pi, a, a, accuracy = accuracy)
+    bezier = 0.2
+    a = (1-bezier) # /np.sqrt(2)
+    wg_Dpts = bezier_cubic(pya.DPoint(0, 0), pya.DPoint(r, r), 0, 90/180*np.pi, a, a, accuracy = accuracy, verbose=True)
     wg_polygon = pya.DPolygon(translate_from_normal(wg_Dpts, width/2) +
                              translate_from_normal(wg_Dpts, -width/2)[::-1]
                              )
     cell.shapes(layer).insert(wg_polygon)
     wg_pts = arc_bezier(r/dbu, 0, 90, float(bezier))
     wg_Dpts = [p.to_dtype(dbu) for p in wg_pts]
-                    # wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), 
-                    #     DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
     wg_polygon = pya.DPolygon(translate_from_normal(wg_Dpts, width/2) +
                              translate_from_normal(wg_Dpts, -width/2)[::-1]
                              ).transformed(pya.Trans(r,0))
+    cell.shapes(layer2).insert(wg_polygon)
+
+    # U-turn bend
+    r = 5
+    h = 1.6 *r 
+    a = 2 / (h/r)
+    wg_Dpts = bezier_cubic(pya.DPoint(0, 0), pya.DPoint(0, h), 0, 180/180*np.pi, a, a, accuracy = accuracy, verbose=True)
+    wg_polygon = pya.DPolygon(translate_from_normal(wg_Dpts, width/2) +
+                             translate_from_normal(wg_Dpts, -width/2)[::-1]
+                             )
     cell.shapes(layer).insert(wg_polygon)
 
 
@@ -204,6 +229,6 @@ def test_bezier_tapers():
 
 
 if __name__ == "__main__":
-    test_bezier_bends()
+    # test_bezier_bends()
     test_bezier_tapers()
 
