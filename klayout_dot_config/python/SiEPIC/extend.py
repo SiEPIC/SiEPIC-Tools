@@ -702,6 +702,11 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     Electrical Pins have:
      1) box on layer PinRec
      2) text on layer PinRec, inside the box
+     
+    Returns:
+        pins: SiEPIC.core.Pin
+        pin_errors: text
+
     '''
 
     if verbose:
@@ -946,7 +951,7 @@ Components:
 '''
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def find_components(self, cell_selected=None, inst=None, verbose=False):
+def find_components(self, cell_selected=None, inst=None, verbose=False, raiseException = True):
     '''
     Function to traverse the cell's hierarchy and find all the components
     returns list of components (class Component)
@@ -963,13 +968,15 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     
     inst: return only the component that matches the instance inst
     
+    raiseException: False turns of exception handling, and returns None instead
+    
     limitation:
      - flat components only. doesn't find the component if it is buried in a hierarchy
      - no function for instance.find_components.  Instead we find based on cell, then try to match it to the requested instance.
 
     '''
     
-    if cell_selected != None and type(cell_selected) != type([]):
+    if cell_selected != None and type(cell_selected) != type([]) and type(cell_selected) != tuple:
           cell_selected=[cell_selected]
 
     if verbose:
@@ -1143,8 +1150,10 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
         return component_matched
     
     if components == []:
-        raise Exception ('SiEPIC.extend.find_components: No component found for cell_selected=%s' % (cell_selected[0].name if cell_selected else None))
-
+        if raiseException:
+            raise Exception ('SiEPIC.extend.find_components: No component found for cell_selected=%s' % (cell_selected[0].name if cell_selected else None))
+        else:
+            return None
     return components
 # end def find_components
 
