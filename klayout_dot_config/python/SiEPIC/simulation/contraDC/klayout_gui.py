@@ -23,7 +23,6 @@ pio.renderers.default = "browser"
 
 
 class MyWindow(pya.QWidget):
-
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Contra-directional coupler simulator")
@@ -260,7 +259,7 @@ class MyWindow(pya.QWidget):
 
         self.setLayout(vbox)
 
-    def condition_xml(self, element, indent='    ', level=0):
+    def condition_xml(self, element, indent="    ", level=0):
         """Recursively add indentation and line breaks to the XML tree."""
         if element:  # checks if element is not None and not an empty string/list
             if not element.text or not element.text.strip():
@@ -268,7 +267,7 @@ class MyWindow(pya.QWidget):
             if not element.tail or not element.tail.strip():
                 element.tail = f"\n{indent * level}"
             for elem in element:
-                self.condition_xml(elem, indent, level+1)
+                self.condition_xml(elem, indent, level + 1)
         else:
             if level and (not element.tail or not element.tail.strip()):
                 element.tail = f"\n{indent * (level-1)}"
@@ -378,7 +377,7 @@ class MyWindow(pya.QWidget):
 
             # append data to xml
             # Search for an XML file in folder_CML
-            xml_files = glob.glob(os.path.join(folder_CML, '*.xml'))
+            xml_files = glob.glob(os.path.join(folder_CML, "*.xml"))
             if not xml_files:
                 raise UserWarning(
                     f"No XML file found in the folder {folder_CML}. "
@@ -391,7 +390,7 @@ class MyWindow(pya.QWidget):
             root = tree.getroot()
 
             # Use the same association details for the new entry
-            new_association = ET.fromstring(f'''
+            new_association = ET.fromstring(f"""
                 <association>
                     <design>
                         <value name="wg1_width" type="double">{w1}</value>
@@ -410,7 +409,7 @@ class MyWindow(pya.QWidget):
                     <extracted>
                         <value name="sparam" type="string">{filename}</value>
                     </extracted>
-                </association>''')
+                </association>""")
 
             # Add the new association to the root element
             root.append(new_association)
@@ -419,10 +418,8 @@ class MyWindow(pya.QWidget):
             self.condition_xml(root)
 
             # Write the updated and formatted XML back to the file
-            tree.write(xml_file, encoding='utf-8', xml_declaration=True)
+            tree.write(xml_file, encoding="utf-8", xml_declaration=True)
             print(xml_file)
-
-
 
         self.device = device
         self.simulate.setText("Done simulating.")

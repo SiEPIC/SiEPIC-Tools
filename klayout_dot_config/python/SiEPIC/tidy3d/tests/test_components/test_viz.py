@@ -1,4 +1,5 @@
 """Tests visualization operations."""
+
 from tidy3d.components.viz import Polygon
 
 

@@ -51,7 +51,13 @@ def make_coupler():
         return lambda u: 0.5 * (1 + scale * np.tanh(max_arg * (u * 2 - 1)))
 
     def make_coupler(
-        length, wg_spacing_in, wg_width, wg_spacing_coup, coup_length, bend_length, npts_bend=30
+        length,
+        wg_spacing_in,
+        wg_width,
+        wg_spacing_coup,
+        coup_length,
+        bend_length,
+        npts_bend=30,
     ):
         """Make an integrated coupler using the gdstk RobustPath object."""
         # bend interpolator
@@ -69,7 +75,8 @@ def make_coupler():
         )
         coup.segment((-0.5 * coup_length - bend_length, 0))
         coup.segment(
-            (-0.5 * coup_length, 0), offset=[lambda u: -0.5 * offset(u), lambda u: 0.5 * offset(u)]
+            (-0.5 * coup_length, 0),
+            offset=[lambda u: -0.5 * offset(u), lambda u: 0.5 * offset(u)],
         )
         coup.segment((0.5 * coup_length, 0))
         coup.segment(
@@ -91,7 +98,12 @@ def make_coupler():
 
     # Add the coupler to a gdstk cell
     gds_coup = make_coupler(
-        device_length, wg_spacing_in, wg_width, wg_spacing_coup, coup_length, bend_length
+        device_length,
+        wg_spacing_in,
+        wg_width,
+        wg_spacing_coup,
+        coup_length,
+        bend_length,
     )
     coup_cell.add(gds_coup)
 
@@ -115,11 +127,18 @@ def make_coupler():
     sim_length = 2 * straight_wg_length + 2 * bend_length + coup_length
 
     # Spacing between waveguides and PML
-    sim_size = [sim_length, wg_spacing_in + wg_width + 2 * pml_spacing, wg_height + 2 * pml_spacing]
+    sim_size = [
+        sim_length,
+        wg_spacing_in + wg_width + 2 * pml_spacing,
+        wg_height + 2 * pml_spacing,
+    ]
 
     # in-plane field monitor (optional, increases required data storage)
     domain_monitor = td.FieldMonitor(
-        center=[0, 0, wg_height / 2], size=[td.inf, td.inf, 0], freqs=[freq0], name="field"
+        center=[0, 0, wg_height / 2],
+        size=[td.inf, td.inf, 0],
+        freqs=[freq0],
+        name="field",
     )
 
     # initialize the simulation
@@ -135,7 +154,6 @@ def make_coupler():
 
 
 def make_ports():
-
     sim = make_coupler()
     # source
     src_pos = sim.size[0] / 2 - straight_wg_length / 2
@@ -182,12 +200,15 @@ def make_component_modeler(**kwargs):
     ports = make_ports()
     batch_empty = Batch(simulations={}, folder_name="None")
     return ComponentModeler(
-        simulation=sim, ports=ports, freq=sim.monitors[0].freqs[0], batch=batch_empty, **kwargs
+        simulation=sim,
+        ports=ports,
+        freq=sim.monitors[0].freqs[0],
+        batch=batch_empty,
+        **kwargs,
     )
 
 
 def run_component_modeler(monkeypatch, modeler: ComponentModeler):
-
     values = dict(
         simulation=modeler.simulation,
         ports=modeler.ports,
@@ -197,7 +218,9 @@ def run_component_modeler(monkeypatch, modeler: ComponentModeler):
     )
     sim_dict = modeler.make_sim_dict(values)
     batch_data = {task_name: run_emulated(sim) for task_name, sim in sim_dict.items()}
-    monkeypatch.setattr(ComponentModeler, "_run_sims", lambda self, path_dir: batch_data)
+    monkeypatch.setattr(
+        ComponentModeler, "_run_sims", lambda self, path_dir: batch_data
+    )
     s_matrix = modeler.run()
     return s_matrix
 
@@ -238,13 +261,16 @@ def test_ports_too_close_boundary():
             update=dict(center=port_center_at_edge, direction=port_dir)
         )
         with pytest.raises(SetupError):
-            modeler._shift_value_signed(simulation=modeler.simulation, port=port_at_edge)
+            modeler._shift_value_signed(
+                simulation=modeler.simulation, port=port_at_edge
+            )
 
 
 def test_validate_batch_supplied():
-
     sim = make_coupler()
-    modeler = ComponentModeler(simulation=sim, ports=[], freq=sim.monitors[0].freqs[0], batch=None)
+    modeler = ComponentModeler(
+        simulation=sim, ports=[], freq=sim.monitors[0].freqs[0], batch=None
+    )
 
 
 def test_plot_sim():
@@ -274,7 +300,9 @@ def test_run_component_modeler(monkeypatch):
                 for mode_index_out in range(port_out.mode_spec.num_modes):
                     index_out = (port_out.name, mode_index_out)
                     assert index_in in s_matrix, "source index not present in S matrix"
-                    assert index_out in s_matrix[index_in], "monitor index not present in S matrix"
+                    assert (
+                        index_out in s_matrix[index_in]
+                    ), "monitor index not present in S matrix"
 
 
 def test_component_modeler_run_only(monkeypatch):
@@ -295,7 +323,9 @@ def test_component_modeler_run_only(monkeypatch):
 
                     # make sure only allowed elements are in S matrix
                     if index_in == ONLY_SOURCE:
-                        assert index_in in s_matrix, "run_only source index not present in S matrix"
+                        assert (
+                            index_in in s_matrix
+                        ), "run_only source index not present in S matrix"
                         assert (
                             index_out in s_matrix[index_in]
                         ), "run_only out data not present in S matrix"
@@ -308,11 +338,12 @@ def test_component_modeler_run_only(monkeypatch):
 def _test_mappings(element_mappings, s_matrix):
     """Makes sure the mappings are reflected in a given S matrix."""
     for (i, j), (k, l), mult_by in element_mappings:
-        assert s_matrix[k][l] == mult_by * s_matrix[i][j], "mapping not applied correctly."
+        assert (
+            s_matrix[k][l] == mult_by * s_matrix[i][j]
+        ), "mapping not applied correctly."
 
 
 def test_run_component_modeler_mappings(monkeypatch):
-
     element_mappings = (
         ((("left_top", 0), ("right_top", 0)), (("left_bot", 0), ("right_bot", 0)), -1j),
         ((("left_top", 0), ("right_bot", 0)), (("left_bot", 0), ("right_top", 0)), +1),
@@ -345,7 +376,9 @@ def test_mapping_exclusion(monkeypatch):
     modeler = make_component_modeler(element_mappings=element_mappings)
 
     run_sim_indices = modeler.matrix_indices_run_sim(
-        ports=modeler.ports, run_only=modeler.run_only, element_mappings=modeler.element_mappings
+        ports=modeler.ports,
+        run_only=modeler.run_only,
+        element_mappings=modeler.element_mappings,
     )
     assert EXCLUDE_INDEX not in run_sim_indices, "mapping didnt exclude row properly"
 

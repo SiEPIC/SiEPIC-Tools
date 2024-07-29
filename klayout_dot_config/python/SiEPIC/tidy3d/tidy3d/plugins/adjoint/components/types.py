@@ -1,4 +1,5 @@
 """Special types and validators used by adjoint plugin."""
+
 from typing import Union, Callable
 import pydantic as pd
 
@@ -35,8 +36,12 @@ def _add_schema(arbitrary_type: type, title: str, field_type_str: str) -> None:
     arbitrary_type.__modify_schema__ = mod_schema_fn
 
 
-_add_schema(DeviceArray, title="DeviceArray", field_type_str="jaxlib.xla_extension.DeviceArray")
-_add_schema(JVPTracer, title="JVPTracer", field_type_str="jax.interpreters.ad.JVPTracer")
+_add_schema(
+    DeviceArray, title="DeviceArray", field_type_str="jaxlib.xla_extension.DeviceArray"
+)
+_add_schema(
+    JVPTracer, title="JVPTracer", field_type_str="jax.interpreters.ad.JVPTracer"
+)
 
 # define types usable as floats including the jax tracers
 JaxArrayLike = Union[NumpyArrayType, DeviceArray]
@@ -53,6 +58,7 @@ for jax 0.4.x, need to use
 and can make JaxFloat like
 # JaxFloat = Union[float, ArrayLike]
 """
+
 
 # pylint: disable= unused-argument
 def sanitize_validator_fn(cls, val):

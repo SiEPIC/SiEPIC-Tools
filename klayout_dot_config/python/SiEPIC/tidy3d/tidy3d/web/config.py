@@ -1,4 +1,5 @@
-""" sets configuration options for web interface """
+"""sets configuration options for web interface"""
+
 import os
 from importlib.resources import path as get_path
 from typing import Any, Dict

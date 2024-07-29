@@ -46,7 +46,9 @@ def make_sim_data_1(file_size_gb=FILE_SIZE_GB):
     z = np.linspace(-1, 1, n)
     f = np.linspace(2e14, 4e14, n)
     src = PointDipole(
-        center=(0, 0, 0), source_time=GaussianPulse(freq0=3e14, fwidth=1e14), polarization="Ex"
+        center=(0, 0, 0),
+        source_time=GaussianPulse(freq0=3e14, fwidth=1e14),
+        polarization="Ex",
     )
     coords = dict(x=x, y=y, z=z, f=f)
     Ex = ScalarFieldDataArray(data, coords=coords)
@@ -82,7 +84,6 @@ def test_memory_2_load():
 
 
 def test_core_profile_small_1_save():
-
     Nx, Ny, Nz, Nt = 100, 100, 100, 10
 
     x = np.arange(Nx)
@@ -90,8 +91,12 @@ def test_core_profile_small_1_save():
     z = np.arange(Nz)
     t = np.arange(Nt)
     coords = dict(x=x, y=y, z=z, t=t)
-    scalar_field = td.ScalarFieldTimeDataArray(np.random.random((Nx, Ny, Nz, Nt)), coords=coords)
-    monitor = td.FieldTimeMonitor(size=(2, 4, 6), interval=100, name="field", fields=["Ex", "Hz"])
+    scalar_field = td.ScalarFieldTimeDataArray(
+        np.random.random((Nx, Ny, Nz, Nt)), coords=coords
+    )
+    monitor = td.FieldTimeMonitor(
+        size=(2, 4, 6), interval=100, name="field", fields=["Ex", "Hz"]
+    )
     data = td.FieldTimeData(monitor=monitor, Ex=scalar_field, Hz=scalar_field)
     with Profile():
         data.to_file(PATH)
@@ -99,14 +104,12 @@ def test_core_profile_small_1_save():
 
 
 def test_core_profile_small_2_load():
-
     with Profile():
         print(f"file_size = {os.path.getsize(PATH):.2e} Bytes")
         data = td.FieldTimeData.from_file(PATH)
 
 
 def test_core_profile_large():
-
     sim_data = make_sim_data_1()
 
     with Profile():
@@ -120,7 +123,6 @@ def test_core_profile_large():
 
 @profile
 def test_speed_many_datasets():
-
     Nx, Ny, Nz, Nf = 100, 100, 100, 1
 
     x = np.arange(Nx)
@@ -128,7 +130,9 @@ def test_speed_many_datasets():
     z = np.arange(Nz)
     f = np.arange(Nf)
     coords = dict(x=x, y=y, z=z, f=f)
-    scalar_field = td.ScalarFieldDataArray(np.random.random((Nx, Ny, Nz, Nf)), coords=coords)
+    scalar_field = td.ScalarFieldDataArray(
+        np.random.random((Nx, Ny, Nz, Nf)), coords=coords
+    )
 
     def make_field_data(num_index: int):
         monitor = td.FieldMonitor(
@@ -146,7 +150,9 @@ def test_speed_many_datasets():
     data = [make_field_data(n) for n in range(num_datasets)]
     monitors = [d.monitor for d in data]
     src = PointDipole(
-        center=(0, 0, 0), source_time=GaussianPulse(freq0=3e14, fwidth=1e14), polarization="Ex"
+        center=(0, 0, 0),
+        source_time=GaussianPulse(freq0=3e14, fwidth=1e14),
+        polarization="Ex",
     )
     sim = Simulation(
         size=(2, 2, 2),
@@ -162,7 +168,6 @@ def test_speed_many_datasets():
     )
 
     with Profile():
-
         sim_data.to_file(PATH)
         sim_data2 = sim_data.from_file(PATH)
 

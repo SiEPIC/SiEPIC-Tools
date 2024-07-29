@@ -1,4 +1,5 @@
-""" Allows users to log in and be authenticated."""
+"""Allows users to log in and be authenticated."""
+
 import os
 import getpass
 import hashlib
@@ -26,11 +27,15 @@ def set_authentication_config(email: str, password: str) -> None:
     url = "/".join([Config.auth_api_endpoint, "auth"])
     headers = {"Application": "TIDY3D"}
     try:
-        resp = requests.get(url, headers=headers, auth=(email, password), verify=Config.ssl_verify)
+        resp = requests.get(
+            url, headers=headers, auth=(email, password), verify=Config.ssl_verify
+        )
     except (requests.exceptions.SSLError, ssl.SSLError):
         log.info("disable the ssl verify and retry")
         Config.ssl_verify = False
-        resp = requests.get(url, headers=headers, auth=(email, password), verify=Config.ssl_verify)
+        resp = requests.get(
+            url, headers=headers, auth=(email, password), verify=Config.ssl_verify
+        )
 
     if resp.status_code != 200:
         raise WebError("Failed to log in with username and password.")
@@ -97,11 +102,12 @@ def get_credentials() -> None:  # pylint:disable=too-many-branches
             if counter < MAX_ATTEMPTS - 1:
                 log.info("Error: Failed to log in with new username and password.")
             else:
-                raise WebError("Failed to log in with new username and password.") from e
+                raise WebError(
+                    "Failed to log in with new username and password."
+                ) from e
 
     # ask to stay logged in
     for _ in range(MAX_ATTEMPTS):
-
         keep_logged_in = input(
             "Authentication successful. "
             "Do you want to stay logged in on this machine? ([Y]es / [N]o) "
@@ -109,7 +115,6 @@ def get_credentials() -> None:  # pylint:disable=too-many-branches
 
         # if user wants to stay logged in
         if keep_logged_in.lower() == "y":
-
             try:
                 _save_credential_to_stored_file(email, password)
                 return
@@ -193,7 +198,9 @@ def _get_credential_from_console(email):
     new_email = None
     while not new_email:
         if email:
-            new_email = input(f"Enter your email registered at tidy3d. Default is ({email}): ")
+            new_email = input(
+                f"Enter your email registered at tidy3d. Default is ({email}): "
+            )
         else:
             new_email = input("Enter your email registered at tidy3d : ")
 

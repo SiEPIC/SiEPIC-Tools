@@ -1,4 +1,4 @@
-""" Defines 'types' that various fields can be """
+"""Defines 'types' that various fields can be"""
 
 from typing import Tuple, Union
 
@@ -11,6 +11,7 @@ from typing_extensions import Annotated
 
 import pydantic
 import numpy as np
+
 # from matplotlib.axes import Axes
 Axes = None
 from shapely.geometry.base import BaseGeometry
@@ -59,7 +60,8 @@ class TypedArrayLike(np.ndarray):
 
             if (cls_ndims is not None) and (cls_ndims != val_ndims):
                 raise ValidationError(
-                    "wrong number of dimensions given. " f"Given {val_ndims}, expected {cls_ndims}."
+                    "wrong number of dimensions given. "
+                    f"Given {val_ndims}, expected {cls_ndims}."
                 )
             return cls.make_tuple(val.tolist())
 
@@ -86,7 +88,9 @@ class ArrayLikeMeta(type):
     def __getitem__(cls, type_ndims):
         """Array[type, ndims] -> TypedArrayLike"""
         desired_type, ndims = type_ndims
-        return type("Array", (TypedArrayLike,), {"inner_type": desired_type, "ndims": ndims})
+        return type(
+            "Array", (TypedArrayLike,), {"inner_type": desired_type, "ndims": ndims}
+        )
 
 
 class ArrayLike(np.ndarray, metaclass=ArrayLikeMeta):
@@ -179,7 +183,7 @@ ObsGridArray = Union[Tuple[float, ...], ArrayLike[float, 1]]
 
 """ plotting """
 
-#Ax = Axes
+# Ax = Axes
 Ax = None
 
 """ mode tracking """

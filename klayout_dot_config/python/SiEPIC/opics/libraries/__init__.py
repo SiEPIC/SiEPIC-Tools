@@ -15,7 +15,6 @@ def _import_external_libraries(library_catalogue):
     installed_libraries = []
 
     for each_lib in library_catalogue.keys():
-
         if library_catalogue[each_lib]["installed"]:
             sys.path.append(f"{library_catalogue[each_lib]['library_path']}")
             installed_libraries.append(each_lib)

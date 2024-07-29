@@ -1,4 +1,5 @@
 """Tests monitors."""
+
 import pytest
 import numpy as np
 import tidy3d as td
@@ -22,16 +23,19 @@ def test_time_inds():
 
 
 def test_downsampled():
-    M = td.FieldMonitor(size=(1, 1, 1), name="f", freqs=[1e12], interval_space=(1, 2, 3))
+    M = td.FieldMonitor(
+        size=(1, 1, 1), name="f", freqs=[1e12], interval_space=(1, 2, 3)
+    )
     num_cells = (10, 10, 10)
     downsampled_num_cells = a, b, c = M.downsampled_num_cells(num_cells=(10, 10, 10))
     assert downsampled_num_cells != num_cells
 
 
 def test_excluded_surfaces_flat():
-
     with pytest.raises(SetupError):
-        M = td.FluxMonitor(size=(1, 1, 0), name="f", freqs=[1e12], exclude_surfaces=("x-",))
+        M = td.FluxMonitor(
+            size=(1, 1, 0), name="f", freqs=[1e12], exclude_surfaces=("x-",)
+        )
 
 
 def test_integration_surfaces():
@@ -67,7 +71,12 @@ def test_integration_surfaces():
 
     # volume monitor with excluded surfaces
     surfaces = td.FieldProjectionAngleMonitor(
-        size=(2, 2, 2), theta=[1], phi=[0], name="f", freqs=[2e12], exclude_surfaces=["x-", "y+"]
+        size=(2, 2, 2),
+        theta=[1],
+        phi=[0],
+        name="f",
+        freqs=[2e12],
+        exclude_surfaces=["x-", "y+"],
     ).integration_surfaces
     assert len(surfaces) == 4
     expected_surfs = ["x+", "y-", "z-", "z+"]
@@ -106,7 +115,12 @@ def test_fieldproj_surfaces():
     assert len(M) == 6
 
     M = td.FieldProjectionAngleMonitor(
-        size=(2, 2, 2), theta=[1], phi=[0], name="f", freqs=[2e12], exclude_surfaces=["x-", "y+"]
+        size=(2, 2, 2),
+        theta=[1],
+        phi=[0],
+        name="f",
+        freqs=[2e12],
+        exclude_surfaces=["x-", "y+"],
     ).projection_surfaces
     assert len(M) == 4
 
@@ -132,15 +146,28 @@ def test_fieldproj_local_origin():
     )
     M.local_origin
     M = td.FieldProjectionAngleMonitor(
-        size=(2, 0, 2), theta=[1, 2], phi=[0], name="f", freqs=[2e12], custom_origin=(1, 2, 3)
+        size=(2, 0, 2),
+        theta=[1, 2],
+        phi=[0],
+        name="f",
+        freqs=[2e12],
+        custom_origin=(1, 2, 3),
     )
     M.local_origin
 
 
 PROJ_MNTS = [
-    td.FieldProjectionAngleMonitor(size=(2, 0, 2), theta=[1, 2], phi=[0], name="f", freqs=[2e12]),
+    td.FieldProjectionAngleMonitor(
+        size=(2, 0, 2), theta=[1, 2], phi=[0], name="f", freqs=[2e12]
+    ),
     td.FieldProjectionCartesianMonitor(
-        size=(2, 0, 2), x=[1, 2], y=[0], proj_distance=0, proj_axis=2, name="f", freqs=[2e12]
+        size=(2, 0, 2),
+        x=[1, 2],
+        y=[0],
+        proj_distance=0,
+        proj_axis=2,
+        name="f",
+        freqs=[2e12],
     ),
     td.FieldProjectionKSpaceMonitor(
         size=(2, 0, 2), ux=[1, 0.2], uy=[0], proj_axis=2, name="f", freqs=[2e12]
@@ -195,7 +222,6 @@ def test_monitor_downsampling():
 
 
 def test_diffraction_validators():
-
     # ensure error if boundaries are not periodic
     boundary_spec = td.BoundarySpec(
         x=td.Boundary.pml(),
@@ -206,9 +232,13 @@ def test_diffraction_validators():
         sim = td.Simulation(
             size=(2, 2, 2),
             run_time=1e-12,
-            structures=[td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=td.Medium())],
+            structures=[
+                td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=td.Medium())
+            ],
             boundary_spec=boundary_spec,
-            monitors=[td.DiffractionMonitor(size=[td.inf, td.inf, 0], freqs=[1e12], name="de")],
+            monitors=[
+                td.DiffractionMonitor(size=[td.inf, td.inf, 0], freqs=[1e12], name="de")
+            ],
         )
 
     # ensure error if monitor isn't infinite in two directions
@@ -217,20 +247,29 @@ def test_diffraction_validators():
 
 
 def test_monitor():
-
     size = (1, 2, 3)
     center = (1, 2, 3)
 
     m1 = td.FieldMonitor(size=size, center=center, freqs=[1, 2, 3], name="test_monitor")
-    m1s = td.FieldMonitor.surfaces(size=size, center=center, freqs=[1, 2, 3], name="test_monitor")
+    m1s = td.FieldMonitor.surfaces(
+        size=size, center=center, freqs=[1, 2, 3], name="test_monitor"
+    )
     m2 = td.FieldTimeMonitor(size=size, center=center, name="test_mon")
     m3 = td.FluxMonitor(size=(1, 1, 0), center=center, freqs=[1, 2, 3], name="test_mon")
     m4 = td.FluxTimeMonitor(size=(1, 1, 0), center=center, name="test_mon")
     m5 = td.ModeMonitor(
-        size=(1, 1, 0), center=center, mode_spec=td.ModeSpec(), freqs=[1, 2, 3], name="test_mon"
+        size=(1, 1, 0),
+        center=center,
+        mode_spec=td.ModeSpec(),
+        freqs=[1, 2, 3],
+        name="test_mon",
     )
     m6 = td.ModeSolverMonitor(
-        size=(1, 1, 0), center=center, mode_spec=td.ModeSpec(), freqs=[1, 2, 3], name="test_mon"
+        size=(1, 1, 0),
+        center=center,
+        mode_spec=td.ModeSpec(),
+        freqs=[1, 2, 3],
+        name="test_mon",
     )
     m7 = td.PermittivityMonitor(size=size, center=center, freqs=[1, 2, 3], name="perm")
 
@@ -246,7 +285,6 @@ def test_monitor():
 
 
 def test_monitor_plane():
-
     freqs = [1, 2, 3]
 
     # make sure flux, mode and diffraction monitors fail with non planar geometries
@@ -265,7 +303,6 @@ def _test_freqs_nonempty():
 
 
 def test_monitor_surfaces_from_volume():
-
     center = (1, 2, 3)
 
     # make sure that monitors with zero volume raise an error (adapted from test_monitor_plane())
@@ -282,25 +319,49 @@ def test_monitor_surfaces_from_volume():
     )
 
     # x- surface
-    assert monitor_surfaces[0].center == (center[0] - size[0] / 2.0, center[1], center[2])
+    assert monitor_surfaces[0].center == (
+        center[0] - size[0] / 2.0,
+        center[1],
+        center[2],
+    )
     assert monitor_surfaces[0].size == (0.0, size[1], size[2])
 
     # x+ surface
-    assert monitor_surfaces[1].center == (center[0] + size[0] / 2.0, center[1], center[2])
+    assert monitor_surfaces[1].center == (
+        center[0] + size[0] / 2.0,
+        center[1],
+        center[2],
+    )
     assert monitor_surfaces[1].size == (0.0, size[1], size[2])
 
     # y- surface
-    assert monitor_surfaces[2].center == (center[0], center[1] - size[1] / 2.0, center[2])
+    assert monitor_surfaces[2].center == (
+        center[0],
+        center[1] - size[1] / 2.0,
+        center[2],
+    )
     assert monitor_surfaces[2].size == (size[0], 0.0, size[2])
 
     # y+ surface
-    assert monitor_surfaces[3].center == (center[0], center[1] + size[1] / 2.0, center[2])
+    assert monitor_surfaces[3].center == (
+        center[0],
+        center[1] + size[1] / 2.0,
+        center[2],
+    )
     assert monitor_surfaces[3].size == (size[0], 0.0, size[2])
 
     # z- surface
-    assert monitor_surfaces[4].center == (center[0], center[1], center[2] - size[2] / 2.0)
+    assert monitor_surfaces[4].center == (
+        center[0],
+        center[1],
+        center[2] - size[2] / 2.0,
+    )
     assert monitor_surfaces[4].size == (size[0], size[1], 0.0)
 
     # z+ surface
-    assert monitor_surfaces[5].center == (center[0], center[1], center[2] + size[2] / 2.0)
+    assert monitor_surfaces[5].center == (
+        center[0],
+        center[1],
+        center[2] + size[2] / 2.0,
+    )
     assert monitor_surfaces[5].size == (size[0], size[1], 0.0)

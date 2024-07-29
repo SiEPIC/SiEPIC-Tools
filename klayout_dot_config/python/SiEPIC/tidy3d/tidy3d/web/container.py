@@ -1,4 +1,5 @@
 """higher level wrappers for webapi functions for individual (Job) and batch (Batch) tasks."""
+
 from __future__ import annotations
 
 import os
@@ -34,10 +35,14 @@ class Job(WebContainer):
         ..., title="Simulation", description="Simulation to run as a 'task'."
     )
 
-    task_name: TaskName = pd.Field(..., title="Task Name", description="Unique name of the task.")
+    task_name: TaskName = pd.Field(
+        ..., title="Task Name", description="Unique name of the task."
+    )
 
     folder_name: str = pd.Field(
-        "default", title="Folder Name", description="Name of folder to store task on web UI."
+        "default",
+        title="Folder Name",
+        description="Name of folder to store task on web UI.",
     )
 
     callback_url: str = pd.Field(
@@ -49,7 +54,9 @@ class Job(WebContainer):
     )
 
     verbose: bool = pd.Field(
-        True, title="Verbose", description="Whether to print info messages and progressbars."
+        True,
+        title="Verbose",
+        description="Whether to print info messages and progressbars.",
     )
 
     task_id: TaskId = pd.Field(
@@ -181,11 +188,15 @@ class BatchData(Tidy3dBaseModel):
     )
 
     task_ids: Dict[TaskName, str] = pd.Field(
-        ..., title="Task IDs", description="Mapping of task_name to task_id for each task in batch."
+        ...,
+        title="Task IDs",
+        description="Mapping of task_name to task_id for each task in batch.",
     )
 
     verbose: bool = pd.Field(
-        True, title="Verbose", description="Whether to print info messages and progressbars."
+        True,
+        title="Verbose",
+        description="Whether to print info messages and progressbars.",
     )
 
     def load_sim_data(self, task_name: str) -> SimulationData:
@@ -245,7 +256,9 @@ class Batch(WebContainer):
     )
 
     verbose: bool = pd.Field(
-        True, title="Verbose", description="Whether to print info messages and progressbars."
+        True,
+        title="Verbose",
+        description="Whether to print info messages and progressbars.",
     )
 
     jobs: Dict[TaskName, Job] = pd.Field(
@@ -383,7 +396,6 @@ class Batch(WebContainer):
             console.log("Started working on Batch.")
 
             with Progress(console=console) as progress:
-
                 # create progressbars
                 pbar_tasks = {}
                 for task_name, job in self.jobs.items():
@@ -398,7 +410,9 @@ class Batch(WebContainer):
                         status = job.status
                         description = pbar_description(task_name, status)
                         completed = run_statuses.index(status)
-                        progress.update(pbar, description=description, completed=completed)
+                        progress.update(
+                            pbar, description=description, completed=completed
+                        )
                     time.sleep(web.REFRESH_TIME)
 
                 # set all to 100% completed
@@ -503,7 +517,9 @@ class Batch(WebContainer):
         task_paths = {}
         task_ids = {}
         for task_name, job in self.jobs.items():
-            task_paths[task_name] = self._job_data_path(task_id=job.task_id, path_dir=path_dir)
+            task_paths[task_name] = self._job_data_path(
+                task_id=job.task_id, path_dir=path_dir
+            )
             task_ids[task_name] = self.jobs[task_name].task_id
 
         return BatchData(task_paths=task_paths, task_ids=task_ids, verbose=self.verbose)

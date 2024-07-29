@@ -8,6 +8,7 @@ translate_from_normal2: curve translation
 
 
 """
+
 import numpy as np
 from numpy import sqrt
 from .sampling import sample_function
@@ -20,7 +21,7 @@ class GeometryError(RuntimeError):
 
 
 class Point(object):
-    """ Defines a point with two coordinates. Mimics pya.Point"""
+    """Defines a point with two coordinates. Mimics pya.Point"""
 
     def __init__(self, x, y):
         self.x = x
@@ -39,7 +40,7 @@ class Point(object):
     __array_priority__ = MAGIC_NUMBER  #: This allows rmul to be called first. See https://stackoverflow.com/questions/38229953/array-and-rmul-operator-in-python-numpy"""
 
     def __mul__(self, factor):
-        """ This implements P * factor"""
+        """This implements P * factor"""
         if isinstance(factor, np.ndarray):
             # Return a Line instead
             return Line(self.x * factor, self.y * factor)
@@ -48,7 +49,7 @@ class Point(object):
         return self.__class__(self.x * factor, self.y * factor)
 
     def __rmul__(self, factor):
-        """ This implements factor * P """
+        """This implements factor * P"""
         if isinstance(factor, np.ndarray):
             return self.__mul__(factor)
         return self.__class__(self.x * factor, self.y * factor)
@@ -57,19 +58,20 @@ class Point(object):
         return self.x == other.x and self.y == other.y
 
     def __str__(self):
-#        return f"Point({self.x}, {self.y})"
+        #        return f"Point({self.x}, {self.y})"
         return str(Point({self.x}, {self.y}))
 
     def norm(self):
-        '''Euclidean length'''
+        """Euclidean length"""
         return sqrt(self.x**2 + self.y**2)
 
     def long_edge_length(self):
-        '''return the longest segment of a Manhattan distance'''
+        """return the longest segment of a Manhattan distance"""
         return max(self.x, self.y)
 
+
 class Line(Point):
-    """ Defines a line """
+    """Defines a line"""
 
     def __init__(self, x, y):
         x, y = np.array(x), np.array(y)
@@ -123,11 +125,16 @@ def bezier_line(P0, P1, P2, P3):
     Reference
         https://en.wikipedia.org/wiki/Bezier_curve"""
 
-    return lambda t: (1 - t)**3 * P0 + 3 * (1 - t)**2 * t * P1 + 3 * (1 - t) * t**2 * P2 + t**3 * P3
+    return (
+        lambda t: (1 - t) ** 3 * P0
+        + 3 * (1 - t) ** 2 * t * P1
+        + 3 * (1 - t) * t**2 * P2
+        + t**3 * P3
+    )
 
 
 def curvature_bezier(P0, P1, P2, P3):
-    """ Measures the curvature of the Bezier curve at every point t
+    """Measures the curvature of the Bezier curve at every point t
 
     Returns:
         Function of parameter t (1d array)
@@ -136,15 +143,20 @@ def curvature_bezier(P0, P1, P2, P3):
         https://en.wikipedia.org/wiki/Radius_of_curvature
         https://en.wikipedia.org/wiki/Bezier_curve
     """
-    b_prime = lambda t: 3 * (1 - t)**2 * (P1 - P0) + 6 * (1 - t) * \
-        t * (P2 - P1) + 3 * t**2 * (P3 - P2)
+    b_prime = (
+        lambda t: 3 * (1 - t) ** 2 * (P1 - P0)
+        + 6 * (1 - t) * t * (P2 - P1)
+        + 3 * t**2 * (P3 - P2)
+    )
     b_second = lambda t: 6 * (1 - t) * (P2 - 2 * P1 + P0) + 6 * t * (P3 - 2 * P2 + P1)
 
     dx = lambda t: b_prime(t).x
     dy = lambda t: b_prime(t).y
     ddx = lambda t: b_second(t).x
     ddy = lambda t: b_second(t).y
-    return lambda t: (dx(t) * ddy(t) - dy(t) * ddx(t)) / (dx(t) ** 2 + dy(t) ** 2) ** (3 / 2)
+    return lambda t: (dx(t) * ddy(t) - dy(t) * ddx(t)) / (dx(t) ** 2 + dy(t) ** 2) ** (
+        3 / 2
+    )
 
 
 def max_curvature(P0, P1, P2, P3):
@@ -153,6 +165,7 @@ def max_curvature(P0, P1, P2, P3):
     curv = curvature_bezier(P0, P1, P2, P3)(t)
     max_curv = np.max(np.abs(curv.flatten()))
     return max_curv
+
 
 def min_curvature(P0, P1, P2, P3):
     """Gets the minimum curvature of Bezier curve"""
@@ -203,7 +216,9 @@ def curve_length(curve, t0=0, t1=1):
         scale = (curve_func(t1) - curve_func(t0)).norm()
         if scale > 0:
             coords = lambda t: np.array([curve_func(t).x, curve_func(t).y])
-            _, sampled_coords = sample_function(coords, [t0, t1], tol=0.0001 / scale, min_points=100)  # 1000 times more precise than the scale
+            _, sampled_coords = sample_function(
+                coords, [t0, t1], tol=0.0001 / scale, min_points=100
+            )  # 1000 times more precise than the scale
             dp = np.diff(sampled_coords, axis=-1)
             ds = np.sqrt((dp**2).sum(axis=0))
             return ds.sum()
@@ -212,9 +227,11 @@ def curve_length(curve, t0=0, t1=1):
 
 
 from functools import lru_cache
+
+
 @lru_cache(maxsize=None)
 def _bezier_optimal(angle0, angle3):
-    """ This is a reduced problem of the bezier connection.
+    """This is a reduced problem of the bezier connection.
 
     Args:
         angle0: starting angle in radians
@@ -222,28 +239,27 @@ def _bezier_optimal(angle0, angle3):
 
     This assumes P0 = (0,0), P3 = (1,0).
     """
-    
-    
+
     # #### Computing best Bezier curves based on P0, P3, angle0, angle3
     try:
         import scipy
     except:
         from SiEPIC.install import install_scipy
-        install_scipy()
-    
-    try:
-      from scipy.optimize import minimize
-    except:
-      opt =   scipy.optimize()
-      minimize = opt.minimize()
 
+        install_scipy()
+
+    try:
+        from scipy.optimize import minimize
+    except:
+        opt = scipy.optimize()
+        minimize = opt.minimize()
 
     angle0 = fix_angle(angle0)
     angle3 = fix_angle(angle3)
     # print(f"Solving for angles: {angle0}, {angle3}")
 
     def J(a, b, a_max, b_max):
-        """ Energy function for bezier optimization """
+        """Energy function for bezier optimization"""
         P0 = Point(0, 0)
         P3 = Point(1, 0)
         P1 = P0 + a * Point(np.cos(angle0), np.sin(angle0))
@@ -283,10 +299,12 @@ def _bezier_optimal(angle0, angle3):
         initial_simplex = np.array([[a, b], [a * 1.1, b], [a, b * 1.1]])
         # print("init ineq:", ineq(a, b))
         # print("init J:", J(a, b, MAX * 3, MAX * 3))
-        result = minimize(lambda x: J(x[0], x[1], MAX * 3, MAX * 3),
-                          np.array([a, b]),
-                          method='Nelder-Mead',
-                          options=dict(initial_simplex=initial_simplex))
+        result = minimize(
+            lambda x: J(x[0], x[1], MAX * 3, MAX * 3),
+            np.array([a, b]),
+            method="Nelder-Mead",
+            options=dict(initial_simplex=initial_simplex),
+        )
         # print("end J:", J(result.x[0], result.x[1], MAX * 3, MAX * 3))
         # print("end ineq:", ineq(result.x[0], result.x[1]))
     else:
@@ -297,15 +315,20 @@ def _bezier_optimal(angle0, angle3):
 
         initial_simplex = np.array([[a, b], [a * 1.1, b], [a, b * 1.1]])
 
-        result = minimize(lambda x: J(x[0], x[1], MAX, MAX),
-                          np.array([a, b]),
-                          method='Nelder-Mead',
-                          options=dict(initial_simplex=initial_simplex))
+        result = minimize(
+            lambda x: J(x[0], x[1], MAX, MAX),
+            np.array([a, b]),
+            method="Nelder-Mead",
+            options=dict(initial_simplex=initial_simplex),
+        )
 
     if result.success:
         a, b = result.x[0], result.x[1]
     else:
-        if result.message == "Maximum number of function evaluations has been exceeded.":
+        if (
+            result.message
+            == "Maximum number of function evaluations has been exceeded."
+        ):
             a, b = result.x[0], result.x[1]
         else:
             print("Could not optimize. Exited with message:{%s}" % result.message)
@@ -314,7 +337,7 @@ def _bezier_optimal(angle0, angle3):
 
 
 def bezier_optimal(P0, P3, angle0, angle3, debug=False):
-    """ Computes the optimal bezier curve from P0 to P3 with angles 0 and 3
+    """Computes the optimal bezier curve from P0 to P3 with angles 0 and 3
 
     Args:
         P0, P3: Point
@@ -333,13 +356,22 @@ def bezier_optimal(P0, P3, angle0, angle3, debug=False):
         P1 = a * scaling * Point(np.cos(angle0), np.sin(angle0)) + P0
         P2 = P3 - b * scaling * Point(np.cos(angle3), np.sin(angle3))
         curve_func = bezier_line(P0, P1, P2, P3)
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             if debug:
-                print("Min radius: {:.2f} um".format(np.true_divide(1, max_curvature(P0, P1, P2, P3))))
+                print(
+                    "Min radius: {:.2f} um".format(
+                        np.true_divide(1, max_curvature(P0, P1, P2, P3))
+                    )
+                )
                 print("Total length: {:.3f} um".format(curve_length(curve_func, 0, 1)))
         return curve_func
     else:
-        raise GeometryError(str("Error: calling bezier between two identical points: {%s}, {%s}" % (P0, P3)))
+        raise GeometryError(
+            str(
+                "Error: calling bezier between two identical points: {%s}, {%s}"
+                % (P0, P3)
+            )
+        )
 
 
 from functools import partial
@@ -357,6 +389,7 @@ bezier_vertical = partial(bezier_parallel, angle=90)
 
 try:
     import pya
+
     _bezier_optimal_pure = bezier_optimal
 
     def bezier_optimal(P0, P3, *args, **kwargs):
@@ -367,18 +400,27 @@ try:
         #     scale /= 1000
         # This function returns a Line object, needs to convert to array of Points
         new_bezier_line = _bezier_optimal_pure(P0, P3, *args, **kwargs)
-        bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
+        bezier_point_coordinates = lambda t: np.array(
+            [new_bezier_line(t).x, new_bezier_line(t).y]
+        )
 
-        _, bezier_point_coordinates_sampled = \
-            sample_function(bezier_point_coordinates, [0, 1], tol=0.001 / scale)  # tol about 1 nm
+        _, bezier_point_coordinates_sampled = sample_function(
+            bezier_point_coordinates, [0, 1], tol=0.001 / scale
+        )  # tol about 1 nm
 
         # # This yields a better polygon
-        bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(.001 / scale),
-                      axis=1)  # add a point right after the first one
-        bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - .001 / scale),
-                      axis=1)  # add a point right before the last one
+        bezier_point_coordinates_sampled = np.insert(
+            bezier_point_coordinates_sampled,
+            1,
+            bezier_point_coordinates(0.001 / scale),
+            axis=1,
+        )  # add a point right after the first one
+        bezier_point_coordinates_sampled = np.insert(
+            bezier_point_coordinates_sampled,
+            -1,
+            bezier_point_coordinates(1 - 0.001 / scale),
+            axis=1,
+        )  # add a point right before the last one
         # bezier_point_coordinates_sampled = \
         #     np.append(bezier_point_coordinates_sampled, np.atleast_2d(bezier_point_coordinates(1 + .001 / scale)).T,
         #               axis=1)  # finish the waveguide a little bit after
@@ -388,11 +430,24 @@ try:
 except ImportError:
     pass
 
-def bezier_cubic(P0, P3, angle0, angle3, a, b, accuracy = 0.001, verbose=False, plot=False, *args, **kwargs):
-    '''
-    Calculate a cubic Bezier curve between Points P0 and P3, 
+
+def bezier_cubic(
+    P0,
+    P3,
+    angle0,
+    angle3,
+    a,
+    b,
+    accuracy=0.001,
+    verbose=False,
+    plot=False,
+    *args,
+    **kwargs,
+):
+    """
+    Calculate a cubic Bezier curve between Points P0 and P3,
     where the control point positions P1 and P2 are determined by
-    the angles at P0 (angle0) and P3 (angle3), 
+    the angles at P0 (angle0) and P3 (angle3),
     at a distance of a * scale from P0, and b * scale from P3,
     where scale is the longest segment in a Manhattan route between P0 and P3.
 
@@ -408,7 +463,7 @@ def bezier_cubic(P0, P3, angle0, angle3, a, b, accuracy = 0.001, verbose=False, 
     Example:
         Bezier curve can approximate a 1/4 circle (arc) for a=b=0.553
             # https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
-    '''
+    """
 
     P0 = Point(P0.x, P0.y)
     P3 = Point(P3.x, P3.y)
@@ -417,32 +472,48 @@ def bezier_cubic(P0, P3, angle0, angle3, a, b, accuracy = 0.001, verbose=False, 
     P2 = P3 - b * scale * Point(np.cos(angle3), np.sin(angle3))
     new_bezier_line = bezier_line(P0, P1, P2, P3)
     # new_bezier_line = _bezier_optimal_pure(P0, P3, *args, **kwargs)
-    bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
+    bezier_point_coordinates = lambda t: np.array(
+        [new_bezier_line(t).x, new_bezier_line(t).y]
+    )
 
-    _, bezier_point_coordinates_sampled = \
-        sample_function(bezier_point_coordinates, [0, 1], tol=accuracy / scale) 
+    _, bezier_point_coordinates_sampled = sample_function(
+        bezier_point_coordinates, [0, 1], tol=accuracy / scale
+    )
 
     # # This yields a better polygon
-    bezier_point_coordinates_sampled = \
-        np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(accuracy / scale),
-                    axis=1)  # add a point right after the first one
-    bezier_point_coordinates_sampled = \
-        np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - accuracy / scale),
-                    axis=1)  # add a point right before the last one
+    bezier_point_coordinates_sampled = np.insert(
+        bezier_point_coordinates_sampled,
+        1,
+        bezier_point_coordinates(accuracy / scale),
+        axis=1,
+    )  # add a point right after the first one
+    bezier_point_coordinates_sampled = np.insert(
+        bezier_point_coordinates_sampled,
+        -1,
+        bezier_point_coordinates(1 - accuracy / scale),
+        axis=1,
+    )  # add a point right before the last one
 
     if verbose:
         # print the minimum/maximum curvature
-        print ('SiEPIC.utils.geometry.bezier_cubic: minimum radius of curvature = %0.3g' % (1/max_curvature(P0, P1, P2, P3)))
-        print ('SiEPIC.utils.geometry.bezier_cubic: maximum radius of curvature = %0.3g' % (1/min_curvature(P0, P1, P2, P3)))
+        print(
+            "SiEPIC.utils.geometry.bezier_cubic: minimum radius of curvature = %0.3g"
+            % (1 / max_curvature(P0, P1, P2, P3))
+        )
+        print(
+            "SiEPIC.utils.geometry.bezier_cubic: maximum radius of curvature = %0.3g"
+            % (1 / min_curvature(P0, P1, P2, P3))
+        )
     if plot:
         t = np.linspace(0, 1, 300)
         curv = curvature_bezier(P0, P1, P2, P3)(t)
-        rc = 1./curv.flatten()
+        rc = 1.0 / curv.flatten()
         import matplotlib.pyplot as plt
-        plt.plot(t, rc, '--pb', label='a=%3g, b=%3g' % (a,b), linewidth=1.5)
+
+        plt.plot(t, rc, "--pb", label="a=%3g, b=%3g" % (a, b), linewidth=1.5)
         SizeFont = 19
-        plt.xlabel('Position along path (t)', fontsize=SizeFont)
-        plt.ylabel('Radius of curvature (microns)', fontsize=SizeFont)
+        plt.xlabel("Position along path (t)", fontsize=SizeFont)
+        plt.ylabel("Radius of curvature (microns)", fontsize=SizeFont)
         plt.legend(fontsize=SizeFont)
         plt.xticks(fontsize=SizeFont)
         plt.ylim(bottom=0)
@@ -452,12 +523,11 @@ def bezier_cubic(P0, P3, angle0, angle3, a, b, accuracy = 0.001, verbose=False, 
     return [pya.DPoint(x, y) for (x, y) in zip(*(bezier_point_coordinates_sampled))]
 
 
-
 # ####################### SIEPIC EXTENSION ##########################
 
 
 class Port(object):
-    """ Defines a port object """
+    """Defines a port object"""
 
     def __init__(self, name, position, direction, width):
         self.name = name
@@ -466,71 +536,71 @@ class Port(object):
         self.width = width
 
 
-
-
 # Curve translation:
 def translate_from_normal2(pts, trans, trans2=None):
-    '''
-    Translate each point in the array pts, by its local normal by a distance that 
-     varies linearly starting at 'trans' and ending 'trans2' 
+    """
+    Translate each point in the array pts, by its local normal by a distance that
+     varies linearly starting at 'trans' and ending 'trans2'
     Useful for making an S-bend with different waveguide widths at the ends
-    
+
     Author: Lukas Chrostowski
-    
+
     Inputs:
      pts: DPoint array, length at least 3
      trans: float
      trans2: float
-     
+
     Output:
      tpts: DPoint array
-     
+
     Example, SBend Waveguide with variable width:
-    
+
     from SiEPIC.utils.geometry import bezier_parallel
-    
+
     w1 = 0.15 # input waveguide width
     wo = 0.35 # output waveguide width
     l = 5     # horizontal length
     offset = 2# vertical offset
-    
+
     p = bezier_parallel(DPoint(0,0), DPoint(l,offset), 0)
     pt1 = translate_from_normal2(p,w1/2,wo/2)
     pt2 = translate_from_normal2(p,-w1/2, -wo/2)
     pt = pt1+pt2[::-1]
-    
+
     from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
     layer = cell.layout().layer(TECHNOLOGY['Waveguide'])
     poly = pya.DPolygon(pt)
     cell.shapes(layer).insert(poly)
-    '''
+    """
 
     if trans2 == None:
         trans2 = trans
     if len(pts) < 2:
-        return pts    
+        return pts
 
-    length = 0    # total length
+    length = 0  # total length
     for i in range(1, len(pts) - 1):
-        length+=(pts[i + 1] - pts[i - 1]).length()
+        length += (pts[i + 1] - pts[i - 1]).length()
 
-    transv = [] # translation vector, linearly varying along the length
-    lengthc = 0 # cumulative length
+    transv = []  # translation vector, linearly varying along the length
+    lengthc = 0  # cumulative length
     for i in range(1, len(pts) - 1):
-        lengthc+=(pts[i + 1] - pts[i - 1]).length()
-        transv.append( (lengthc/length)*trans2 + (1-lengthc/length)*trans )
-        
+        lengthc += (pts[i + 1] - pts[i - 1]).length()
+        transv.append((lengthc / length) * trans2 + (1 - lengthc / length) * trans)
+
     from math import cos, sin, pi
     from SiEPIC.utils import angle_vector
-    
-    d = 1. / (len(pts) - 1)
+
+    d = 1.0 / (len(pts) - 1)
     a = angle_vector(pts[1] - pts[0]) * pi / 180 + (pi / 2 if trans > 0 else -pi / 2)
     tpts = [pts[0] + pya.DPoint(abs(trans) * cos(a), abs(trans) * sin(a))]
 
     for i in range(1, len(pts) - 1):
         dpt = (pts[i + 1] - pts[i - 1]) * (2 / d)
-        tpts.append(pts[i] + pya.DPoint(-dpt.y, dpt.x) * (transv[i-1] / 1 / dpt.abs()))
+        tpts.append(
+            pts[i] + pya.DPoint(-dpt.y, dpt.x) * (transv[i - 1] / 1 / dpt.abs())
+        )
 
     a = angle_vector(pts[-1] - pts[-2]) * pi / 180 + (pi / 2 if trans > 0 else -pi / 2)
     tpts.append(pts[-1] + pya.DPoint(abs(trans2) * cos(a), abs(trans2) * sin(a)))
@@ -545,5 +615,3 @@ def translate_from_normal2(pts, trans, trans2=None):
     else:
         tpts[-1].x = pts[-1].x
     return tpts
-
-

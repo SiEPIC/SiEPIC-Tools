@@ -1,9 +1,12 @@
 # Required packages
 from SiEPIC.install import install
-if not install('defusedxml'):
-    pya.MessageBox.warning(
-    "Missing package", "The OPICS circuit simulator does not function without the package 'defusedxml'.",  pya.MessageBox.Ok)    
 
+if not install("defusedxml"):
+    pya.MessageBox.warning(
+        "Missing package",
+        "The OPICS circuit simulator does not function without the package 'defusedxml'.",
+        pya.MessageBox.Ok,
+    )
 
 
 from typing import Any, Dict, List, Tuple
@@ -193,7 +196,7 @@ def LUT_reader(filedir: PosixPath, lutfilename: str, lutdata: List[List[str]]):
 
     for node in root.iter("association"):
         sample = [[each.attrib["name"], each.text] for each in node.iter("value")]
-        '''
+        """
         Look-up is not working. returns the last one each time.
         Attempt to fix it.. gave up...
         
@@ -208,8 +211,8 @@ def LUT_reader(filedir: PosixPath, lutfilename: str, lutdata: List[List[str]]):
                 q[1] = bool(q[1])
             if w[2] == 'int':
                 q[1] = int(q[1])
-        '''
-        
+        """
+
         if sorted(sample[0:-1]) == sorted(lutdata):
             break
     sparam_file = sample[-1][1].split(";")
@@ -228,7 +231,7 @@ def LUT_processor(
     start = time.time()
     sparam_file, xml, node = LUT_reader(filedir, lutfilename, lutdata)
 
-    print(' - LUT_processor: file: %s' % sparam_file)
+    print(" - LUT_processor: file: %s" % sparam_file)
 
     # read data
     if ".npz" in sparam_file[0] or ".npz" in sparam_file[-1]:
@@ -239,7 +242,10 @@ def LUT_processor(
 
     else:
         if verbose:
-            print("numpy datafile not found. reading sparam file instead.. %s " % sparam_file)
+            print(
+                "numpy datafile not found. reading sparam file instead.. %s "
+                % sparam_file
+            )
 
         sdata = universal_sparam_filereader(nports, sparam_file[-1], filedir, "auto")
         # create npz file name
@@ -299,25 +305,29 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
             # Using the libraries installed within the OPICS folder
             libs_comps[each_lib] = all_libraries[each_lib].component_factory
         else:
-            opics_lib_name = "opics_"+each_lib
+            opics_lib_name = "opics_" + each_lib
             try:
                 # import the library named opics_xxx where xxx is the library name
                 import importlib
+
                 opics_lib = importlib.import_module(opics_lib_name)
                 from importlib import reload
+
                 opics_lib = reload(opics_lib)
                 globals()[opics_lib_name] = opics_lib
                 libs_comps[each_lib] = opics_lib.component_factory
             except:
-                raise Exception ('Unable to import the library: %s' %opics_lib_name) 
+                raise Exception("Unable to import the library: %s" % opics_lib_name)
 
     # add circuit components
     for i in range(len(circuitData["compModels"])):
         if len(circuitData["compModels"]) != len(circuitData["compLibs"]):
-            print (circuitData["compModels"])
-            print (circuitData["compLibs"])
+            print(circuitData["compModels"])
+            print(circuitData["compLibs"])
 
-            raise Exception ('Unknown problem in OPICS and the compact model library. \nThe circuitData component model and component library lists have different lengths.')
+            raise Exception(
+                "Unknown problem in OPICS and the compact model library. \nThe circuitData component model and component library lists have different lengths."
+            )
 
         # get component model
         # check if the requested library is available
@@ -326,13 +336,19 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
             if circuitData["compModels"][i] in libs_comps[circuitData["compLibs"][i]]:
                 comp_model = libs_comps[circuitData["compLibs"][i]][
                     circuitData["compModels"][i]
-                    ]
+                ]
             else:
                 # Missing component
-                raise Exception ('Missing OPICS compact model for component %s in library %s' % (circuitData["compModels"][i],circuitData["compLibs"][i]) ) 
+                raise Exception(
+                    "Missing OPICS compact model for component %s in library %s"
+                    % (circuitData["compModels"][i], circuitData["compLibs"][i])
+                )
         else:
             # Missing library
-            raise Exception ('Missing OPICS compact model library for component %s in library %s' % (circuitData["compModels"][i],circuitData["compLibs"][i]) ) 
+            raise Exception(
+                "Missing OPICS compact model library for component %s in library %s"
+                % (circuitData["compModels"][i], circuitData["compLibs"][i])
+            )
         # clean attributes
         cls_attrs = deepcopy(comp_model.cls_attrs)  # class attributes
         comp_attrs = circuitData["compAttrs"][i]  # component attributes
@@ -349,7 +365,9 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
 
     # add circuit netlist
     # subckt.global_netlist = circuitData["circuitNets"]
-    subckt.global_netlist = {i:j for i,j in zip(circuitData['compLabels'], circuitData['circuitNets'])}
+    subckt.global_netlist = {
+        i: j for i, j in zip(circuitData["compLabels"], circuitData["circuitNets"])
+    }
 
     # add unique net component connections
     subckt.current_connections = circuitData["circuitConns"]
@@ -410,7 +428,6 @@ class netlistParser:
                 temp_data = each_line.split(" ")
 
                 if len(temp_data) > 1:  # if line is not an empty one
-
                     MC_location = []
 
                     if temp_data[0] == ".subckt":
@@ -484,9 +501,7 @@ class netlistParser:
 
                             elif found_ports == 1 and "N$" not in temp_data[i]:
                                 circuitModels.append(temp_data[i])
-                                temp_cls_atrr = (
-                                    {}
-                                )  # deepcopy(lib[temp_data[i]].cls_attrs)
+                                temp_cls_atrr = {}  # deepcopy(lib[temp_data[i]].cls_attrs)
                                 found_ports = -1
 
                             elif "lay" in temp_data[i] or "sch" in temp_data[i]:

@@ -1,4 +1,5 @@
 """Tests custom sources and mediums."""
+
 import pytest
 import numpy as np
 import dill as pickle
@@ -89,7 +90,9 @@ def test_validator_non_planar():
 def test_validator_freq_out_of_range():
     """Test that it errors if field_dataset frequency out of range of source_time."""
     field_dataset = FIELD_SRC.field_dataset
-    Ex_new = ScalarFieldDataArray(field_dataset.Ex.data, coords=dict(x=X, y=Y, z=Z, f=[0]))
+    Ex_new = ScalarFieldDataArray(
+        field_dataset.Ex.data, coords=dict(x=X, y=Y, z=Z, f=[0])
+    )
     field_dataset = FIELD_SRC.field_dataset.copy(update=dict(Ex=Ex_new))
     with pytest.raises(SetupError):
         field_source_no_tang = CustomFieldSource(
@@ -185,14 +188,20 @@ def test_medium_raw():
 
 def test_medium_interp():
     """Test if the interp works."""
-    coord_interp = Coords(**{ax: np.linspace(-2, 2, 20 + ind) for ind, ax in enumerate("xyz")})
+    coord_interp = Coords(
+        **{ax: np.linspace(-2, 2, 20 + ind) for ind, ax in enumerate("xyz")}
+    )
 
     # more than one entries per each axis
     orig_data = make_scalar_data()
     data_fit_nearest = CustomMedium._interp(orig_data, coord_interp, "nearest")
     data_fit_linear = CustomMedium._interp(orig_data, coord_interp, "linear")
-    assert np.allclose(data_fit_nearest.shape[:3], [len(f) for f in coord_interp.to_list])
-    assert np.allclose(data_fit_linear.shape[:3], [len(f) for f in coord_interp.to_list])
+    assert np.allclose(
+        data_fit_nearest.shape[:3], [len(f) for f in coord_interp.to_list]
+    )
+    assert np.allclose(
+        data_fit_linear.shape[:3], [len(f) for f in coord_interp.to_list]
+    )
     # maximal or minimal values shouldn't exceed that in the supplied data
     assert max(data_fit_linear.values.ravel()) <= max(orig_data.values.ravel())
     assert min(data_fit_linear.values.ravel()) >= min(orig_data.values.ravel())
@@ -206,8 +215,12 @@ def test_medium_interp():
     orig_data = ScalarFieldDataArray(data, coords=dict(x=X, y=Y, z=Z, f=freqs))
     data_fit_nearest = CustomMedium._interp(orig_data, coord_interp, "nearest")
     data_fit_linear = CustomMedium._interp(orig_data, coord_interp, "linear")
-    assert np.allclose(data_fit_nearest.shape[:3], [len(f) for f in coord_interp.to_list])
-    assert np.allclose(data_fit_linear.shape[:3], [len(f) for f in coord_interp.to_list])
+    assert np.allclose(
+        data_fit_nearest.shape[:3], [len(f) for f in coord_interp.to_list]
+    )
+    assert np.allclose(
+        data_fit_linear.shape[:3], [len(f) for f in coord_interp.to_list]
+    )
     # maximal or minimal values shouldn't exceed that in the supplied data
     assert max(data_fit_linear.values.ravel()) <= max(orig_data.values.ravel())
     assert min(data_fit_linear.values.ravel()) >= min(orig_data.values.ravel())
@@ -240,7 +253,9 @@ def test_medium_smaller_than_one_positive_sigma():
 
 def test_medium_eps_diagonal_on_grid():
     """Test if ``eps_diagonal_on_grid`` works."""
-    coord_interp = Coords(**{ax: np.linspace(-1, 1, 20 + ind) for ind, ax in enumerate("xyz")})
+    coord_interp = Coords(
+        **{ax: np.linspace(-1, 1, 20 + ind) for ind, ax in enumerate("xyz")}
+    )
     freq_interp = 1e14
 
     eps_output = CUSTOM_MEDIUM.eps_diagonal_on_grid(freq_interp, coord_interp)

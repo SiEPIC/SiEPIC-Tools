@@ -41,7 +41,10 @@ class Coords(Tidy3dBaseModel):
     @cached_property
     def to_dict(self):
         """Return a dict of the three Coord1D objects as numpy arrays."""
-        return {key: np.array(value) for key, value in self.dict(exclude={TYPE_TAG_STR}).items()}
+        return {
+            key: np.array(value)
+            for key, value in self.dict(exclude={TYPE_TAG_STR}).items()
+        }
 
     @cached_property
     def to_list(self):
@@ -168,7 +171,9 @@ class Grid(Tidy3dBaseModel):
         >>> grid = Grid(boundaries=coords)
         >>> centers = grid.centers
         """
-        return Coords(**{key: self._avg(val) for key, val in self.boundaries.to_dict.items()})
+        return Coords(
+            **{key: self._avg(val) for key, val in self.boundaries.to_dict.items()}
+        )
 
     @property
     def sizes(self) -> Coords:
@@ -188,7 +193,9 @@ class Grid(Tidy3dBaseModel):
         >>> grid = Grid(boundaries=coords)
         >>> sizes = grid.sizes
         """
-        return Coords(**{key: np.diff(val) for key, val in self.boundaries.to_dict.items()})
+        return Coords(
+            **{key: np.diff(val) for key, val in self.boundaries.to_dict.items()}
+        )
 
     @property
     def num_cells(self) -> Tuple[int, int, int]:
@@ -209,7 +216,8 @@ class Grid(Tidy3dBaseModel):
         >>> Nx, Ny, Nz = grid.num_cells
         """
         return [
-            len(coords1d) - 1 for coords1d in self.boundaries.dict(exclude={TYPE_TAG_STR}).values()
+            len(coords1d) - 1
+            for coords1d in self.boundaries.dict(exclude={TYPE_TAG_STR}).values()
         ]
 
     @property
@@ -235,7 +243,10 @@ class Grid(Tidy3dBaseModel):
         """
 
         primal_steps = self._primal_steps.dict(exclude={TYPE_TAG_STR})
-        dsteps = {key: (psteps + np.roll(psteps, 1)) / 2 for (key, psteps) in primal_steps.items()}
+        dsteps = {
+            key: (psteps + np.roll(psteps, 1)) / 2
+            for (key, psteps) in primal_steps.items()
+        }
 
         return Coords(**dsteps)
 
@@ -281,7 +292,9 @@ class Grid(Tidy3dBaseModel):
             "Hz": self.yee.H.z,
         }
         if coord_key not in coord_dict:
-            raise SetupError(f"key {coord_key} not found in grid with {list(coord_dict.keys())} ")
+            raise SetupError(
+                f"key {coord_key} not found in grid with {list(coord_dict.keys())} "
+            )
 
         return coord_dict.get(coord_key)
 
@@ -356,7 +369,9 @@ class Grid(Tidy3dBaseModel):
 
             # index of smallest coord greater than pt_max
             inds_gt_pt_max = np.where(bound_coords > pt_max)[0]
-            ind_max = len(bound_coords) - 1 if len(inds_gt_pt_max) == 0 else inds_gt_pt_max[0]
+            ind_max = (
+                len(bound_coords) - 1 if len(inds_gt_pt_max) == 0 else inds_gt_pt_max[0]
+            )
 
             # index of largest coord less than or equal to pt_min
             inds_leq_pt_min = np.where(bound_coords <= pt_min)[0]
@@ -389,7 +404,9 @@ class Grid(Tidy3dBaseModel):
 
         return inds_list
 
-    def periodic_subspace(self, axis: Axis, ind_beg: int = 0, ind_end: int = 0) -> Coords1D:
+    def periodic_subspace(
+        self, axis: Axis, ind_beg: int = 0, ind_end: int = 0
+    ) -> Coords1D:
         """Pick a subspace of 1D boundaries within ``range(ind_beg, ind_end)``. If any indexes lie
         outside of the grid boundaries array, periodic padding is used, where the zeroth and last
         element of the boundaries are identified.
@@ -418,7 +435,9 @@ class Grid(Tidy3dBaseModel):
         # Pad on the left if needed
         if ind_beg < 0:
             num_pad = int(np.ceil(-ind_beg / num_cells))
-            coords_pad = coords[:-1, None] + (coords_width * np.arange(-num_pad, 0))[None, :]
+            coords_pad = (
+                coords[:-1, None] + (coords_width * np.arange(-num_pad, 0))[None, :]
+            )
             coords_pad = coords_pad.T.ravel()
             padded_coords = np.concatenate([coords_pad, padded_coords])
             ind_beg += num_pad * num_cells
@@ -427,7 +446,9 @@ class Grid(Tidy3dBaseModel):
         # Pad on the right if needed
         if ind_end >= padded_coords.size:
             num_pad = int(np.ceil((ind_end - padded_coords.size) / num_cells))
-            coords_pad = coords[1:, None] + (coords_width * np.arange(1, num_pad + 1))[None, :]
+            coords_pad = (
+                coords[1:, None] + (coords_width * np.arange(1, num_pad + 1))[None, :]
+            )
             coords_pad = coords_pad.T.ravel()
             padded_coords = np.concatenate([padded_coords, coords_pad])
 

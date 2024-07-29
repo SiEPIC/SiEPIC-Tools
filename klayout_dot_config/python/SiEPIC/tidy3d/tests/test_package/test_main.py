@@ -8,7 +8,9 @@ DEFAULT_PATH = "tests/tmp/sim.json"
 
 
 def save_sim_to_path(path: str) -> None:
-    sim = td.Simulation(size=(1, 1, 1), grid_spec=td.GridSpec.auto(wavelength=1.0), run_time=1e-12)
+    sim = td.Simulation(
+        size=(1, 1, 1), grid_spec=td.GridSpec.auto(wavelength=1.0), run_time=1e-12
+    )
     sim.to_file(path)
 
 

@@ -128,27 +128,24 @@ class ComponentModeler(Tidy3dBaseModel):
         simulation = values.get("simulation")
         freq = values.get("freq")
 
-        mode_monitors = [
-            cls._to_monitor(port=port, freq=freq) for port in ports
-        ]  # pylint:disable=protected-access
+        mode_monitors = [cls._to_monitor(port=port, freq=freq) for port in ports]  # pylint:disable=protected-access
 
-        for (port_name, mode_index) in cls.matrix_indices_run_sim(
+        for port_name, mode_index in cls.matrix_indices_run_sim(
             ports=ports,
             run_only=values.get("run_only"),
             element_mappings=values.get("element_mappings"),
         ):
-
             port = cls.get_port_by_name(port_name=port_name, ports=ports)
 
-            port_source = cls._shift_port(
-                simulation=simulation, port=port
-            )  # pylint:disable=protected-access
+            port_source = cls._shift_port(simulation=simulation, port=port)  # pylint:disable=protected-access
             mode_source = cls._to_source(
                 port=port_source, mode_index=mode_index, freq=freq
             )  # pylint:disable=protected-access
 
             new_mnts = list(simulation.monitors) + mode_monitors
-            sim_copy = simulation.copy(update=dict(sources=[mode_source], monitors=new_mnts))
+            sim_copy = simulation.copy(
+                update=dict(sources=[mode_source], monitors=new_mnts)
+            )
             task_name = cls._task_name(port=port, mode_index=mode_index)
             sim_dict[task_name] = sim_copy
         return sim_dict
@@ -167,13 +164,19 @@ class ComponentModeler(Tidy3dBaseModel):
         cls, ports: Tuple[Port, ...], run_only: Tuple[MatrixIndex, ...] = None
     ) -> Tuple[MatrixIndex, ...]:
         """Tuple of all the source matrix indices (port, mode_index) in the Component Modeler."""
-        return run_only if run_only is not None else cls.matrix_indices_monitor(ports=ports)
+        return (
+            run_only
+            if run_only is not None
+            else cls.matrix_indices_monitor(ports=ports)
+        )
 
     @classmethod
     def matrix_indices_run_sim(
         cls,
         ports: Tuple[Port, ...],
-        element_mappings: Dict[Element, Dict[Element, Callable[[complex], complex]]] = None,
+        element_mappings: Dict[
+            Element, Dict[Element, Callable[[complex], complex]]
+        ] = None,
         run_only: Tuple[MatrixIndex, ...] = None,
     ) -> Tuple[MatrixIndex, ...]:
         """Tuple of all the source matrix indices (port, mode_index) in the Component Modeler."""
@@ -182,12 +185,13 @@ class ComponentModeler(Tidy3dBaseModel):
             return cls.matrix_indices_source(ports=ports, run_only=run_only)
 
         # all the (i, j) pairs in `S_ij` that are tagged as covered by `element_mappings`
-        elements_determined_by_map = [element_out for (_, element_out, _) in element_mappings]
+        elements_determined_by_map = [
+            element_out for (_, element_out, _) in element_mappings
+        ]
 
         # loop through rows of the full s matrix and record rows that still need running.
         source_indices_needed = []
         for row_index in cls.matrix_indices_source(ports=ports, run_only=run_only):
-
             # loop through columns and keep track of whether each element is covered by mapping.
             matrix_elements_covered = []
             for col_index in cls.matrix_indices_monitor(ports=ports):
@@ -249,7 +253,9 @@ class ComponentModeler(Tidy3dBaseModel):
 
         # no port index can be determined
         if len(port_pos_gt_grid_bounds) == 0:
-            raise SetupError(f"Port position '{port_position}' outside of simulation bounds.")
+            raise SetupError(
+                f"Port position '{port_position}' outside of simulation bounds."
+            )
         port_index = port_pos_gt_grid_bounds[-1]
 
         # shift the port to the left
@@ -290,12 +296,16 @@ class ComponentModeler(Tidy3dBaseModel):
 
     @equal_aspect
     @add_ax_if_none
-    def plot_sim(self, x: float = None, y: float = None, z: float = None, ax: Ax = None) -> Ax:
+    def plot_sim(
+        self, x: float = None, y: float = None, z: float = None, ax: Ax = None
+    ) -> Ax:
         """Plot a :class:`Simulation` with all sources added for each port, for troubleshooting."""
 
         plot_sources = []
         for port_source in self.ports:
-            mode_source_0 = self._to_source(port=port_source, freq=self.freq, mode_index=0)
+            mode_source_0 = self._to_source(
+                port=port_source, freq=self.freq, mode_index=0
+            )
             plot_sources.append(mode_source_0)
         sim_plot = self.simulation.copy(update=dict(sources=plot_sources))
         return sim_plot.plot(x=x, y=y, z=z, ax=ax)
@@ -306,7 +316,9 @@ class ComponentModeler(Tidy3dBaseModel):
         self.batch.monitor()
         return self.batch.load(path_dir=path_dir)
 
-    def _normalization_factor(self, port_source: Port, sim_data: SimulationData) -> complex:
+    def _normalization_factor(
+        self, port_source: Port, sim_data: SimulationData
+    ) -> complex:
         """Compute the normalization amplitude based on the measured input mode amplitude."""
 
         port_monitor_data = sim_data[port_source.name]
@@ -318,11 +330,15 @@ class ComponentModeler(Tidy3dBaseModel):
             mode_index=mode_index,
         ).values
 
-        normalize_n_eff = port_monitor_data.n_eff.sel(f=self.freq, mode_index=mode_index).values
+        normalize_n_eff = port_monitor_data.n_eff.sel(
+            f=self.freq, mode_index=mode_index
+        ).values
 
         k0 = 2 * np.pi * C_0 / self.freq
         k_eff = k0 * normalize_n_eff
-        shift_value = self._shift_value_signed(simulation=self.simulation, port=port_source)
+        shift_value = self._shift_value_signed(
+            simulation=self.simulation, port=port_source
+        )
         return normalize_amp * np.exp(1j * k_eff * shift_value)
 
     def _construct_smatrix(  # pylint:disable=too-many-locals
@@ -332,34 +348,44 @@ class ComponentModeler(Tidy3dBaseModel):
 
         s_matrix = {
             row_index: {}
-            for row_index in self.matrix_indices_source(ports=self.ports, run_only=self.run_only)
+            for row_index in self.matrix_indices_source(
+                ports=self.ports, run_only=self.run_only
+            )
         }
 
         # loop through source ports
         for row_index in self.matrix_indices_run_sim(
-            ports=self.ports, run_only=self.run_only, element_mappings=self.element_mappings
+            ports=self.ports,
+            run_only=self.run_only,
+            element_mappings=self.element_mappings,
         ):
-
             port_name_in, mode_index_in = row_index
             port_in = self.get_port_by_name(port_name=port_name_in, ports=self.ports)
             s_matrix[row_index] = {}
 
-            sim_data = batch_data[self._task_name(port=port_in, mode_index=mode_index_in)]
+            sim_data = batch_data[
+                self._task_name(port=port_in, mode_index=mode_index_in)
+            ]
 
             for col_index in self.matrix_indices_monitor(ports=self.ports):
-
                 port_name_out, mode_index_out = col_index
-                port_out = self.get_port_by_name(port_name=port_name_out, ports=self.ports)
+                port_out = self.get_port_by_name(
+                    port_name=port_name_out, ports=self.ports
+                )
 
                 # directly compute the element
                 mode_amps_data = sim_data[port_out.name].copy().amps
                 dir_out = "-" if port_out.direction == "+" else "+"
-                amp = mode_amps_data.sel(f=self.freq, direction=dir_out, mode_index=mode_index_out)
+                amp = mode_amps_data.sel(
+                    f=self.freq, direction=dir_out, mode_index=mode_index_out
+                )
                 source_norm = self._normalization_factor(port_in, sim_data)
-                s_matrix[row_index][col_index] = complex(amp.data) / complex(source_norm)
+                s_matrix[row_index][col_index] = complex(amp.data) / complex(
+                    source_norm
+                )
 
         # element can be determined by user-defined mapping
-        for ((row_in, col_in), (row_out, col_out), mult_by) in self.element_mappings:
+        for (row_in, col_in), (row_out, col_out), mult_by in self.element_mappings:
             s_matrix[row_out][col_out] = mult_by * s_matrix[row_in][col_in]
 
         return s_matrix
@@ -382,6 +408,8 @@ class ComponentModeler(Tidy3dBaseModel):
         """Load an Smatrix from saved BatchData object."""
 
         if self.batch is None:
-            raise SetupError("Component modeler has no batch saved. Run .run() to generate.")
+            raise SetupError(
+                "Component modeler has no batch saved. Run .run() to generate."
+            )
         batch_data = self.batch.load(path_dir=path_dir)
         return self._construct_smatrix(batch_data=batch_data)

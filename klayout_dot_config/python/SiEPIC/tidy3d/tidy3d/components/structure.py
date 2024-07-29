@@ -1,4 +1,5 @@
 """Defines Geometric objects with Medium properties."""
+
 from typing import Union, Tuple, Optional
 import pydantic
 
@@ -24,14 +25,21 @@ class AbstractStructure(Tidy3dBaseModel):
         discriminator=TYPE_TAG_STR,
     )
 
-    name: str = pydantic.Field(None, title="Name", description="Optional name for the structure.")
+    name: str = pydantic.Field(
+        None, title="Name", description="Optional name for the structure."
+    )
 
     _name_validator = validate_name_str()
 
     @equal_aspect
     @add_ax_if_none
     def plot(
-        self, x: float = None, y: float = None, z: float = None, ax: Ax = None, **patch_kwargs
+        self,
+        x: float = None,
+        y: float = None,
+        z: float = None,
+        ax: Ax = None,
+        **patch_kwargs,
     ) -> Ax:
         """Plot structure's geometric cross section at single (x,y,z) coordinate.
 
@@ -78,7 +86,9 @@ class Structure(AbstractStructure):
         discriminator=TYPE_TAG_STR,
     )
 
-    def eps_diagonal(self, frequency: float, coords: Coords) -> Tuple[complex, complex, complex]:
+    def eps_diagonal(
+        self, frequency: float, coords: Coords
+    ) -> Tuple[complex, complex, complex]:
         """Main diagonal of the complex-valued permittivity tensor as a function of frequency.
 
         Parameters

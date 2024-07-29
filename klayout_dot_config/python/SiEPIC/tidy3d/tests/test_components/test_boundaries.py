@@ -48,10 +48,14 @@ def test_boundaryedge_types(plane_wave_dir):
 
     # Bloch boundaries should raise errors if incorrectly defined
     with pytest.raises(SetupError) as e_info:
-        bloch_from_source = BlochBoundary.from_source(source=source, domain_size=5, axis=2)
+        bloch_from_source = BlochBoundary.from_source(
+            source=source, domain_size=5, axis=2
+        )
     with pytest.raises(SetupError) as e_info:
         pt_dipole = PointDipole(center=(1, 2, 3), source_time=pulse, polarization="Ex")
-        bloch_from_source = BlochBoundary.from_source(source=pt_dipole, domain_size=5, axis=0)
+        bloch_from_source = BlochBoundary.from_source(
+            source=pt_dipole, domain_size=5, axis=0
+        )
 
     pml = PML(num_layers=10)
     stable_pml = StablePML(num_layers=40)
@@ -75,14 +79,18 @@ def test_boundary_validators():
         boundary = Boundary(plus=periodic, minus=pml)
 
 
-@pytest.mark.parametrize("boundary, log_level", [(PMCBoundary(), None), (Periodic(), "warning")])
+@pytest.mark.parametrize(
+    "boundary, log_level", [(PMCBoundary(), None), (Periodic(), "warning")]
+)
 def test_boundary_validator_warnings(caplog, boundary, log_level):
     """Test the validators in class `Boundary` which should show a warning but not an error"""
     boundary = Boundary(plus=PECBoundary(), minus=boundary)
     assert_log_level(caplog, log_level)
 
 
-@pytest.mark.parametrize("boundary, log_level", [(PMCBoundary(), None), (Periodic(), "warning")])
+@pytest.mark.parametrize(
+    "boundary, log_level", [(PMCBoundary(), None), (Periodic(), "warning")]
+)
 def test_boundary_validator_warnings_switched(caplog, boundary, log_level):
     """Test the validators in class `Boundary` which should show a warning but not an error"""
     boundary = Boundary(minus=PECBoundary(), plus=boundary)
@@ -98,29 +106,43 @@ def test_boundary():
 
     # pec
     boundary = Boundary.pec()
-    assert isinstance(boundary.plus, PECBoundary) and isinstance(boundary.minus, PECBoundary)
+    assert isinstance(boundary.plus, PECBoundary) and isinstance(
+        boundary.minus, PECBoundary
+    )
 
     # pmc
     boundary = Boundary.pmc()
-    assert isinstance(boundary.plus, PMCBoundary) and isinstance(boundary.minus, PMCBoundary)
+    assert isinstance(boundary.plus, PMCBoundary) and isinstance(
+        boundary.minus, PMCBoundary
+    )
 
     # bloch
     boundary = Boundary.bloch(bloch_vec=1)
-    assert isinstance(boundary.plus, BlochBoundary) and isinstance(boundary.minus, BlochBoundary)
+    assert isinstance(boundary.plus, BlochBoundary) and isinstance(
+        boundary.minus, BlochBoundary
+    )
 
     # bloch from source
     pulse = GaussianPulse(freq0=200e12, fwidth=20e12)
     source = PlaneWave(
-        size=(td.inf, td.inf, 0), source_time=pulse, direction="+", angle_theta=1.5, angle_phi=0.3
+        size=(td.inf, td.inf, 0),
+        source_time=pulse,
+        direction="+",
+        angle_theta=1.5,
+        angle_phi=0.3,
     )
     boundary = Boundary.bloch_from_source(source=source, domain_size=5, axis=0)
-    assert isinstance(boundary.plus, BlochBoundary) and isinstance(boundary.minus, BlochBoundary)
+    assert isinstance(boundary.plus, BlochBoundary) and isinstance(
+        boundary.minus, BlochBoundary
+    )
 
     # pml and related
     boundary = Boundary.pml()
     assert isinstance(boundary.plus, PML) and isinstance(boundary.minus, PML)
     boundary = Boundary.stable_pml()
-    assert isinstance(boundary.plus, StablePML) and isinstance(boundary.minus, StablePML)
+    assert isinstance(boundary.plus, StablePML) and isinstance(
+        boundary.minus, StablePML
+    )
     boundary = Boundary.absorber()
     assert isinstance(boundary.plus, Absorber) and isinstance(boundary.minus, Absorber)
 
@@ -172,15 +194,22 @@ def test_boundaryspec_classmethods():
     boundary_spec = BoundarySpec.all_sides(boundary=PML())
     boundaries = boundary_spec.to_list
     assert all(
-        [isinstance(boundary, PML) for boundary_dim in boundaries for boundary in boundary_dim]
+        [
+            isinstance(boundary, PML)
+            for boundary_dim in boundaries
+            for boundary in boundary_dim
+        ]
     )
 
 
 PLUS_MINUS_SPECIFIED = (("plus", "minus"), ("plus",), ("minus",), ())
 LOG_LEVELS_EXPECTED = (None, "warning", "warning", "warning")
 
+
 # TODO: remove for 2.0
-@pytest.mark.parametrize("pm_keys, log_level", zip(PLUS_MINUS_SPECIFIED, LOG_LEVELS_EXPECTED))
+@pytest.mark.parametrize(
+    "pm_keys, log_level", zip(PLUS_MINUS_SPECIFIED, LOG_LEVELS_EXPECTED)
+)
 def test_deprecation_defaults(caplog, pm_keys, log_level):
     """Make sure deprecation warnings thrown if defaults used."""
     boundary_kwargs = {key: Periodic() for key in pm_keys}

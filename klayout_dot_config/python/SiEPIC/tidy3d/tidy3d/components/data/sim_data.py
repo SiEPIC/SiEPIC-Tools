@@ -1,4 +1,5 @@
-""" Simulation Level Data """
+"""Simulation Level Data"""
+
 from __future__ import annotations
 from typing import Dict, Callable, Tuple
 
@@ -84,7 +85,9 @@ class SimulationData(Tidy3dBaseModel):
         """Ensure each MonitorData in ``.data`` corresponds to a monitor in ``.simulation``."""
         sim = values.get("simulation")
         if sim is None:
-            raise ValidationError("Simulation.simulation failed validation, can't validate data.")
+            raise ValidationError(
+                "Simulation.simulation failed validation, can't validate data."
+            )
         for mnt_data in val:
             try:
                 monitor_name = mnt_data.monitor.name
@@ -126,8 +129,12 @@ class SimulationData(Tidy3dBaseModel):
 
         # get boundary information to determine whether to use complex fields
         boundaries = self.simulation.boundary_spec.to_list
-        boundaries_1d = [boundary_1d for dim_boundary in boundaries for boundary_1d in dim_boundary]
-        complex_fields = any(isinstance(boundary, BlochBoundary) for boundary in boundaries_1d)
+        boundaries_1d = [
+            boundary_1d for dim_boundary in boundaries for boundary_1d in dim_boundary
+        ]
+        complex_fields = any(
+            isinstance(boundary, BlochBoundary) for boundary in boundaries_1d
+        )
 
         # plug in mornitor_data frequency domain information
         def source_spectrum_fn(freqs):
@@ -162,7 +169,9 @@ class SimulationData(Tidy3dBaseModel):
             return new_spectrum_fn(freqs) / old_spectrum_fn(freqs)
 
         # Make a new monitor_data dictionary with renormalized data
-        data_normalized = [mnt_data.normalize(source_spectrum_fn) for mnt_data in self.data]
+        data_normalized = [
+            mnt_data.normalize(source_spectrum_fn) for mnt_data in self.data
+        ]
 
         simulation = self.simulation.copy(update=dict(normalize_index=normalize_index))
 
@@ -319,7 +328,9 @@ class SimulationData(Tidy3dBaseModel):
             if field_data.coords[axis].size <= 1:
                 field_data = field_data.sel(**{axis: pos}, method="nearest")
             else:
-                field_data = field_data.interp(**{axis: pos}, kwargs=dict(bounds_error=True))
+                field_data = field_data.interp(
+                    **{axis: pos}, kwargs=dict(bounds_error=True)
+                )
 
         # warn about new API changes and replace the values
         if "freq" in sel_kwargs:
@@ -344,7 +355,9 @@ class SimulationData(Tidy3dBaseModel):
                     **{coord_name: coord_val}, kwargs=dict(bounds_error=True)
                 )
         field_data = field_data.squeeze(drop=True)
-        non_scalar_coords = {name: val for name, val in field_data.coords.items() if val.size > 1}
+        non_scalar_coords = {
+            name: val for name, val in field_data.coords.items() if val.size > 1
+        }
 
         # assert the data is valid for plotting
         if len(non_scalar_coords) != 2:
@@ -366,7 +379,9 @@ class SimulationData(Tidy3dBaseModel):
             )
 
         # get the spatial coordinate corresponding to the plane
-        planar_coord = [name for name, val in spatial_coords_in_data.items() if val is False][0]
+        planar_coord = [
+            name for name, val in spatial_coords_in_data.items() if val is False
+        ][0]
         axis = "xyz".index(planar_coord)
         position = float(field_data.coords[planar_coord])
 
@@ -443,7 +458,9 @@ class SimulationData(Tidy3dBaseModel):
 
         # select the field value
         if val not in ("real", "imag", "abs"):
-            raise DataError(f"`val` must be one of `{'real', 'imag', 'abs'}`, given {val}.")
+            raise DataError(
+                f"`val` must be one of `{'real', 'imag', 'abs'}`, given {val}."
+            )
 
         if val == "real":
             field_data = field_data.real
@@ -464,7 +481,13 @@ class SimulationData(Tidy3dBaseModel):
         xy_coord_labels.pop(axis)
         x_coord_label, y_coord_label = xy_coord_labels[0], xy_coord_labels[1]
         field_data.plot(
-            ax=ax, x=x_coord_label, y=y_coord_label, cmap=cmap, vmin=vmin, vmax=vmax, robust=robust
+            ax=ax,
+            x=x_coord_label,
+            y=y_coord_label,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+            robust=robust,
         )
 
         # plot the simulation epsilon

@@ -1,4 +1,5 @@
 """Mode solver for propagating EM modes."""
+
 from typing import Tuple
 
 import numpy as np
@@ -17,6 +18,7 @@ TOL_COMPLEX = fp_eps
 TOL_EIGS = fp_eps
 # Tolerance for deciding on the matrix to be diagonal or tensorial
 TOL_TENSORIAL = 1e-6
+
 
 # pylint:disable=too-many-statements,too-many-branches,too-many-locals
 def compute_modes(
@@ -88,7 +90,9 @@ def compute_modes(
         new_coords, jac_e, jac_h = radial_transform(new_coords, bend_radius, bend_axis)
 
     if angle_theta > 0:
-        new_coords, jac_e_tmp, jac_h_tmp = angled_transform(new_coords, angle_theta, angle_phi)
+        new_coords, jac_e_tmp, jac_h_tmp = angled_transform(
+            new_coords, angle_theta, angle_phi
+        )
         jac_e = np.einsum("ij...,jp...->ip...", jac_e_tmp, jac_e)
         jac_h = np.einsum("ij...,jp...->ip...", jac_h_tmp, jac_h)
 
@@ -110,7 +114,9 @@ def compute_modes(
     jac_e_det = np.linalg.det(np.moveaxis(jac_e, [0, 1], [-2, -1]))
     jac_h_det = np.linalg.det(np.moveaxis(jac_h, [0, 1], [-2, -1]))
     eps_tensor = np.einsum("ij...,jp...->ip...", jac_e, eps_tensor)  # J.dot(eps)
-    eps_tensor = np.einsum("ij...,pj...->ip...", eps_tensor, jac_e)  # (J.dot(eps)).dot(J.T)
+    eps_tensor = np.einsum(
+        "ij...,pj...->ip...", eps_tensor, jac_e
+    )  # (J.dot(eps)).dot(J.T)
     eps_tensor /= jac_e_det
     mu_tensor = np.einsum("ij...,jp...->ip...", jac_h, mu_tensor)
     mu_tensor = np.einsum("ij...,pj...->ip...", mu_tensor, jac_h)
@@ -162,11 +168,17 @@ def compute_modes(
 
     # Filter polarization if needed
     if mode_spec.filter_pol is not None:
-        te_int = np.sum(np.abs(E[0]) ** 2, axis=0) / np.sum(np.abs(E[:2]) ** 2, axis=(0, 1))
+        te_int = np.sum(np.abs(E[0]) ** 2, axis=0) / np.sum(
+            np.abs(E[:2]) ** 2, axis=(0, 1)
+        )
         if mode_spec.filter_pol == "te":
-            sort_inds = np.concatenate((np.nonzero(te_int >= 0.5)[0], np.nonzero(te_int < 0.5)[0]))
+            sort_inds = np.concatenate(
+                (np.nonzero(te_int >= 0.5)[0], np.nonzero(te_int < 0.5)[0])
+            )
         elif mode_spec.filter_pol == "tm":
-            sort_inds = np.concatenate((np.nonzero(te_int <= 0.5)[0], np.nonzero(te_int > 0.5)[0]))
+            sort_inds = np.concatenate(
+                (np.nonzero(te_int <= 0.5)[0], np.nonzero(te_int > 0.5)[0])
+            )
         E = E[..., sort_inds]
         H = H[..., sort_inds]
         neff = neff[..., sort_inds]
@@ -263,14 +275,16 @@ def solver_em(
 
     # call solver
     if is_tensorial:
-        return solver_tensorial(eps_tensor, mu_tensor, der_mats, num_modes, vec_init, neff_guess)
+        return solver_tensorial(
+            eps_tensor, mu_tensor, der_mats, num_modes, vec_init, neff_guess
+        )
 
-    return solver_diagonal(eps_tensor, mu_tensor, der_mats, num_modes, vec_init, neff_guess)
+    return solver_diagonal(
+        eps_tensor, mu_tensor, der_mats, num_modes, vec_init, neff_guess
+    )
 
 
-def solver_diagonal(
-    eps, mu, der_mats, num_modes, vec_init, neff_guess
-):  # pylint:disable=too-many-arguments
+def solver_diagonal(eps, mu, der_mats, num_modes, vec_init, neff_guess):  # pylint:disable=too-many-arguments
     """EM eigenmode solver assuming ``eps`` and ``mu`` are diagonal everywhere."""
 
     N = eps.shape[-1]
@@ -337,9 +351,7 @@ def solver_diagonal(
     return E, H, neff, keff
 
 
-def solver_tensorial(
-    eps, mu, der_mats, num_modes, vec_init, neff_guess
-):  # pylint:disable=too-many-arguments
+def solver_tensorial(eps, mu, der_mats, num_modes, vec_init, neff_guess):  # pylint:disable=too-many-arguments
     """EM eigenmode solver assuming ``eps`` or ``mu`` have off-diagonal elements."""
 
     N = eps.shape[-1]
@@ -454,7 +466,9 @@ def solver_eigs(mat, num_modes, vec_init, guess_value=1.0):
     guess_value : float, optional
     """
 
-    values, vectors = spl.eigs(mat, k=num_modes, sigma=guess_value, tol=TOL_EIGS, v0=vec_init)
+    values, vectors = spl.eigs(
+        mat, k=num_modes, sigma=guess_value, tol=TOL_EIGS, v0=vec_init
+    )
     return values, vectors
 
 
@@ -468,11 +482,16 @@ def isinstance_complex(vec_or_mat, tol=TOL_COMPLEX):
     """
 
     if isinstance(vec_or_mat, np.ndarray):
-        return np.linalg.norm(vec_or_mat.imag) / (np.linalg.norm(vec_or_mat) + fp_eps) > tol
+        return (
+            np.linalg.norm(vec_or_mat.imag) / (np.linalg.norm(vec_or_mat) + fp_eps)
+            > tol
+        )
     if isinstance(vec_or_mat, sp.csr_matrix):
         return spl.norm(vec_or_mat.imag) / (spl.norm(vec_or_mat) + fp_eps) > tol
 
-    raise RuntimeError("Variable type should be either numpy array or scipy csr_matrix.")
+    raise RuntimeError(
+        "Variable type should be either numpy array or scipy csr_matrix."
+    )
 
 
 def type_conversion(vec_or_mat, new_dtype):

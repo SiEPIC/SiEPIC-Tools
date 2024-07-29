@@ -1,4 +1,5 @@
 """Tests grid operations."""
+
 import pytest
 import numpy as np
 
@@ -32,7 +33,6 @@ def test_field_grid():
 
 
 def test_grid():
-
     boundaries_x = np.arange(-1, 2, 1)
     boundaries_y = np.arange(-2, 3, 1)
     boundaries_z = np.arange(-3, 4, 1)
@@ -87,12 +87,20 @@ def test_extend_grid():
     box_left = td.Box(center=(0, center_y - 1e-5, 0), size=(2, 0, 6))
     # 2d box on the right of a grid center
     box_right = td.Box(center=(0, center_y + 1e-5, 0), size=(2, 0, 6))
-    inds_l_0_0 = g.discretize_inds(box=box_left, extend=False, extend_2d_normal=False)[1]
-    inds_r_0_0 = g.discretize_inds(box=box_right, extend=False, extend_2d_normal=False)[1]
+    inds_l_0_0 = g.discretize_inds(box=box_left, extend=False, extend_2d_normal=False)[
+        1
+    ]
+    inds_r_0_0 = g.discretize_inds(box=box_right, extend=False, extend_2d_normal=False)[
+        1
+    ]
     inds_l_1_0 = g.discretize_inds(box=box_left, extend=True, extend_2d_normal=False)[1]
-    inds_r_1_0 = g.discretize_inds(box=box_right, extend=True, extend_2d_normal=False)[1]
+    inds_r_1_0 = g.discretize_inds(box=box_right, extend=True, extend_2d_normal=False)[
+        1
+    ]
     inds_l_0_1 = g.discretize_inds(box=box_left, extend=False, extend_2d_normal=True)[1]
-    inds_r_0_1 = g.discretize_inds(box=box_right, extend=False, extend_2d_normal=True)[1]
+    inds_r_0_1 = g.discretize_inds(box=box_right, extend=False, extend_2d_normal=True)[
+        1
+    ]
     inds_l_1_1 = g.discretize_inds(box=box_left, extend=True, extend_2d_normal=True)[1]
     inds_r_1_1 = g.discretize_inds(box=box_right, extend=True, extend_2d_normal=True)[1]
 
@@ -160,7 +168,9 @@ def test_sim_nonuniform_small():
         assert dl in grid_size_x
 
     # tests that it gives exactly what we expect
-    assert np.all(bound_coords == np.array([-12, -10, -8, -6, -4, -2, 0, 1, 4, 7, 10, 13, 16]))
+    assert np.all(
+        bound_coords == np.array([-12, -10, -8, -6, -4, -2, 0, 1, 4, 7, 10, 13, 16])
+    )
 
 
 def test_sim_nonuniform_large():
@@ -210,7 +220,6 @@ def test_sim_nonuniform_large():
 
 
 def test_sim_grid():
-
     sim = td.Simulation(
         size=(4, 4, 4),
         grid_spec=td.GridSpec.uniform(1.0),
@@ -257,7 +266,6 @@ def test_sim_symmetry_grid():
 
 
 def test_sim_pml_grid():
-
     sim = td.Simulation(
         size=(4, 4, 4),
         grid_spec=td.GridSpec.uniform(1.0),
@@ -276,7 +284,6 @@ def test_sim_pml_grid():
 
 
 def test_sim_discretize_vol():
-
     sim = td.Simulation(
         size=(4, 4, 4),
         grid_spec=td.GridSpec.uniform(1.0),
@@ -298,7 +305,6 @@ def test_sim_discretize_vol():
 
 
 def test_sim_discretize_plane():
-
     sim = td.Simulation(
         size=(4, 4, 4),
         grid_spec=td.GridSpec.uniform(1.0),

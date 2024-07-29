@@ -1,5 +1,4 @@
-"""Fit PoleResidue Dispersion models to optical NK data
-"""
+"""Fit PoleResidue Dispersion models to optical NK data"""
 
 from typing import Tuple, List, Optional, Union
 import csv
@@ -121,7 +120,9 @@ class DispersionFitter(Tidy3dBaseModel):
         bool
             True for lossy medium; False for lossless medium
         """
-        _, _, k_data = self._filter_wvl_range(wvl_min=self.wvl_range[0], wvl_max=self.wvl_range[1])
+        _, _, k_data = self._filter_wvl_range(
+            wvl_min=self.wvl_range[0], wvl_max=self.wvl_range[1]
+        )
         if k_data is None:
             return False
         if not np.any(k_data):
@@ -152,7 +153,9 @@ class DispersionFitter(Tidy3dBaseModel):
             Frequency array converted from filtered input wavelength data
         """
 
-        wvl_um, _, _ = self._filter_wvl_range(wvl_min=self.wvl_range[0], wvl_max=self.wvl_range[1])
+        wvl_um, _, _ = self._filter_wvl_range(
+            wvl_min=self.wvl_range[0], wvl_max=self.wvl_range[1]
+        )
         return C_0 / wvl_um
 
     @property
@@ -338,13 +341,12 @@ class DispersionFitter(Tidy3dBaseModel):
         best_rms = np.inf
 
         with Progress() as progress:
-
             task = progress.add_task(
-                f"Fitting with {num_poles} to RMS of {tolerance_rms}...", total=num_tries
+                f"Fitting with {num_poles} to RMS of {tolerance_rms}...",
+                total=num_tries,
             )
 
             while not progress.finished:
-
                 medium, rms_error = self._fit_single(num_poles=num_poles)
 
                 # if improvement, set the best RMS and coeffs
@@ -353,12 +355,16 @@ class DispersionFitter(Tidy3dBaseModel):
                     best_medium = medium
 
                 progress.update(
-                    task, advance=1, description=f"best RMS error so far: {best_rms:.2e}"
+                    task,
+                    advance=1,
+                    description=f"best RMS error so far: {best_rms:.2e}",
                 )
 
                 # if below tolerance, return
                 if best_rms < tolerance_rms:
-                    log.info(f"\tfound optimal fit with RMS error = {best_rms:.2e}, returning")
+                    log.info(
+                        f"\tfound optimal fit with RMS error = {best_rms:.2e}, returning"
+                    )
                     return best_medium, best_rms
 
         # if exited loop, did not reach tolerance (warn)
@@ -535,12 +541,24 @@ class DispersionFitter(Tidy3dBaseModel):
         dot_sizes = 25
         linewidth = 3
 
-        _ = ax.scatter(self.wvl_um, self.n_data, s=dot_sizes, c="black", label="n (data)")
-        ax.plot(wvl_um, n_model, linewidth=linewidth, color="crimson", label="n (model)")
+        _ = ax.scatter(
+            self.wvl_um, self.n_data, s=dot_sizes, c="black", label="n (data)"
+        )
+        ax.plot(
+            wvl_um, n_model, linewidth=linewidth, color="crimson", label="n (model)"
+        )
 
         if self.lossy:
-            ax.scatter(self.wvl_um, self.k_data, s=dot_sizes, c="black", label="k (data)")
-            ax.plot(wvl_um, k_model, linewidth=linewidth, color="blueviolet", label="k (model)")
+            ax.scatter(
+                self.wvl_um, self.k_data, s=dot_sizes, c="black", label="k (data)"
+            )
+            ax.plot(
+                wvl_um,
+                k_model,
+                linewidth=linewidth,
+                color="blueviolet",
+                label="k (model)",
+            )
 
         ax.set_ylabel("value")
         ax.set_xlabel("Wavelength ($\\mu m$)")
@@ -595,13 +613,17 @@ class DispersionFitter(Tidy3dBaseModel):
                 try:
                     _ = [float(x) for x in row]
                 except Exception as e:
-                    raise ValidationError("Invalid URL. Float data cannot be recognized.") from e
+                    raise ValidationError(
+                        "Invalid URL. Float data cannot be recognized."
+                    ) from e
 
         if has_k > 1:
             raise ValidationError("Invalid URL. Too many k labels.")
 
     @classmethod
-    def from_url(cls, url_file: str, delimiter: str = ",", ignore_k: bool = False, **kwargs):
+    def from_url(
+        cls, url_file: str, delimiter: str = ",", ignore_k: bool = False, **kwargs
+    ):
         """loads :class:`DispersionFitter` from url linked to a csv/txt file that
         contains wavelength (micron), n, and optionally k data. Preferred from
         refractiveindex.info.
@@ -654,10 +676,14 @@ class DispersionFitter(Tidy3dBaseModel):
         try:
             resp.raise_for_status()
         except Exception as e:  # pylint:disable=broad-except
-            raise WebError("Connection to the website failed. Please provide a valid URL.") from e
+            raise WebError(
+                "Connection to the website failed. Please provide a valid URL."
+            ) from e
 
         data_url = list(
-            csv.reader(codecs.iterdecode(resp.iter_lines(), "utf-8"), delimiter=delimiter)
+            csv.reader(
+                codecs.iterdecode(resp.iter_lines(), "utf-8"), delimiter=delimiter
+            )
         )
         data_url = list(data_url)
 
@@ -682,7 +708,9 @@ class DispersionFitter(Tidy3dBaseModel):
 
         if has_k == 1 and not ignore_k:
             if n_lam.shape == k_lam.shape and np.allclose(n_lam[:, 0], k_lam[:, 0]):
-                return cls(wvl_um=n_lam[:, 0], n_data=n_lam[:, 1], k_data=k_lam[:, 1], **kwargs)
+                return cls(
+                    wvl_um=n_lam[:, 0], n_data=n_lam[:, 1], k_data=k_lam[:, 1], **kwargs
+                )
             raise ValidationError(
                 "Invalid URL. Both n and k should be provided at each wavelength."
             )
@@ -727,7 +755,9 @@ class DispersionFitter(Tidy3dBaseModel):
             A :class:`DispersionFitter` instance.
         """
         data = np.loadtxt(fname, **loadtxt_kwargs)
-        assert len(data.shape) == 2, "data must contain [wavelength, ndata, kdata] in columns"
+        assert (
+            len(data.shape) == 2
+        ), "data must contain [wavelength, ndata, kdata] in columns"
         assert data.shape[-1] in (2, 3), "data must have either 2 or 3 rows (if k data)"
         if data.shape[-1] == 2:
             wvl_um, n_data = data.T

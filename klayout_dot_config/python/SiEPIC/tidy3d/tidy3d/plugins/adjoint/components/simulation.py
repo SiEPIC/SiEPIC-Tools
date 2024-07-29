@@ -1,4 +1,5 @@
 """Defines a jax-compatible simulation."""
+
 from __future__ import annotations
 
 from typing import Tuple, Union
@@ -101,7 +102,9 @@ class JaxSimulation(Simulation, JaxObject):
     def _subpixel_is_on(cls, val):
         """Assert subpixel is on."""
         if not val:
-            raise AdjointError("'JaxSimulation.subpixel' must be 'True' to use adjoint plugin.")
+            raise AdjointError(
+                "'JaxSimulation.subpixel' must be 'True' to use adjoint plugin."
+            )
         return val
 
     @pd.validator("input_structures", always=True)
@@ -114,8 +117,12 @@ class JaxSimulation(Simulation, JaxObject):
         # if the center and size of all structure geometries do not contain all numbers, skip check
         for struct in structures:
             geometry = struct.geometry
-            size_all_floats = all(isinstance(s, (float, int)) for s in geometry.bound_size)
-            cent_all_floats = all(isinstance(c, (float, int)) for c in geometry.bound_center)
+            size_all_floats = all(
+                isinstance(s, (float, int)) for s in geometry.bound_size
+            )
+            cent_all_floats = all(
+                isinstance(c, (float, int)) for c in geometry.bound_center
+            )
             if not (size_all_floats and cent_all_floats):
                 return val
 
@@ -126,7 +133,6 @@ class JaxSimulation(Simulation, JaxObject):
 
             # for all structures in the background
             for j, in_struct_bck in enumerate(in_structs_background):
-
                 # if the contracted geometry intersects with a background structure, raise (overlap)
                 if in_geometry.intersects(in_struct_bck.geometry):
                     log.warning(
@@ -144,7 +150,9 @@ class JaxSimulation(Simulation, JaxObject):
         """Return the single adjoint frequency stripped from the output monitors."""
 
         if len(self.output_monitors) == 0:
-            raise AdjointError("Can't get adjoint frequency as no output monitors present.")
+            raise AdjointError(
+                "Can't get adjoint frequency as no output monitors present."
+            )
 
         return self.output_monitors[0].freqs[0]
 
@@ -165,7 +173,9 @@ class JaxSimulation(Simulation, JaxObject):
 
         # if more than one forward source, use their average
         if num_sources > 1:
-            log.warning(f"{num_sources} sources, using their average 'fwidth' for adjoint source.")
+            log.warning(
+                f"{num_sources} sources, using their average 'fwidth' for adjoint source."
+            )
 
         fwidths = [src.source_time.fwidth for src in self.sources]
         return np.mean(fwidths)
@@ -188,7 +198,9 @@ class JaxSimulation(Simulation, JaxObject):
         sim = Simulation.parse_obj(sim_dict)
 
         # put all structures and monitors in one list
-        all_structures = list(self.structures) + [js.to_structure() for js in self.input_structures]
+        all_structures = list(self.structures) + [
+            js.to_structure() for js in self.input_structures
+        ]
         all_monitors = (
             list(self.monitors)
             + list(self.output_monitors)
@@ -261,10 +273,14 @@ class JaxSimulation(Simulation, JaxObject):
 
     # pylint:disable=too-many-locals
     @classmethod
-    def from_simulation(cls, simulation: Simulation, jax_info: JaxInfo) -> JaxSimulation:
+    def from_simulation(
+        cls, simulation: Simulation, jax_info: JaxInfo
+    ) -> JaxSimulation:
         """Convert :class:`.Simulation` to :class:`.JaxSimulation` with extra info."""
 
-        sim_dict = simulation.dict(exclude={"type", "structures", "monitors"})  # .copy()
+        sim_dict = simulation.dict(
+            exclude={"type", "structures", "monitors"}
+        )  # .copy()
 
         all_monitors = list(simulation.monitors)
         all_structures = list(simulation.structures)
@@ -276,7 +292,9 @@ class JaxSimulation(Simulation, JaxObject):
 
         num_structs = len(simulation.structures) - num_input_structures
         structures = all_structures[:num_structs]
-        input_structures = [JaxStructure.from_structure(s) for s in all_structures[num_structs:]]
+        input_structures = [
+            JaxStructure.from_structure(s) for s in all_structures[num_structs:]
+        ]
 
         num_mnts = (
             len(simulation.monitors)
@@ -287,9 +305,13 @@ class JaxSimulation(Simulation, JaxObject):
         monitors = all_monitors[:num_mnts]
         output_monitors = all_monitors[num_mnts : num_mnts + num_output_monitors]
         grad_monitors = all_monitors[
-            num_mnts + num_output_monitors : num_mnts + num_output_monitors + num_grad_monitors
+            num_mnts + num_output_monitors : num_mnts
+            + num_output_monitors
+            + num_grad_monitors
         ]
-        grad_eps_monitors = all_monitors[num_mnts + num_output_monitors + num_grad_monitors :]
+        grad_eps_monitors = all_monitors[
+            num_mnts + num_output_monitors + num_grad_monitors :
+        ]
 
         sim_dict.update(
             dict(
@@ -336,6 +358,8 @@ class JaxSimulation(Simulation, JaxObject):
 
         return self.copy(
             update=dict(
-                input_structures=input_structures_vjp, grad_monitors=(), grad_eps_monitors=()
+                input_structures=input_structures_vjp,
+                grad_monitors=(),
+                grad_eps_monitors=(),
             )
         )

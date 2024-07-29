@@ -1,4 +1,5 @@
-""" command-line interface. For instructions run `python -m tidy3d --help` """
+"""command-line interface. For instructions run `python -m tidy3d --help`"""
+
 import sys
 import argparse
 
@@ -16,7 +17,11 @@ def main(args):
     )
 
     parser.add_argument(
-        "--out", "-o", default="simulation.hdf5", required=False, help="path to output the data"
+        "--out",
+        "-o",
+        default="simulation.hdf5",
+        required=False,
+        help="path to output the data",
     )
 
     parser.add_argument(
@@ -103,5 +108,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-
     main(sys.argv[1:])

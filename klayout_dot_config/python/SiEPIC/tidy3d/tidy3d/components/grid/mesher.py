@@ -1,5 +1,5 @@
 # pylint:disable=too-many-lines
-"""Collection of functions for automatically generating a nonuniform grid. """
+"""Collection of functions for automatically generating a nonuniform grid."""
 
 from abc import ABC, abstractmethod
 from typing import Tuple, List, Union, Dict
@@ -127,7 +127,9 @@ class GradedMesher(Mesher):
 
         # If empty simulation, return
         if len(structures) == 1:
-            interval_coords, max_steps = self.filter_min_step(domain_bounds, structure_steps)
+            interval_coords, max_steps = self.filter_min_step(
+                domain_bounds, structure_steps
+            )
             return np.array(interval_coords), np.array(max_steps)
 
         # Bounding boxes with the meshing axis rotated to z
@@ -156,7 +158,9 @@ class GradedMesher(Mesher):
 
             # Remove all lower structures that the current structure completely contains
             inds_lower = [
-                ind for ind in query_inds if ind < str_ind and struct_bbox[ind] is not None
+                ind
+                for ind in query_inds
+                if ind < str_ind and struct_bbox[ind] is not None
             ]
             query_bbox = [struct_bbox[ind] for ind in inds_lower]
             bbox_contains_inds = self.contains_3d(bbox, query_bbox)
@@ -165,18 +169,26 @@ class GradedMesher(Mesher):
 
             # List of structure bboxes that contain the current structure in 2D
             inds_upper = [ind for ind in query_inds if ind > str_ind]
-            query_bbox = [struct_bbox[ind] for ind in inds_upper if struct_bbox[ind] is not None]
+            query_bbox = [
+                struct_bbox[ind] for ind in inds_upper if struct_bbox[ind] is not None
+            ]
             bbox_contained_2d = self.contained_2d(bbox, query_bbox)
 
             # Handle insertion of the current structure bounds in the intervals
-            intervals = self.insert_bbox(intervals, str_ind, bbox, bbox_contained_2d, min_step)
+            intervals = self.insert_bbox(
+                intervals, str_ind, bbox, bbox_contained_2d, min_step
+            )
 
         # Truncate intervals to domain bounds
         coords = np.array(intervals["coords"])
         num_ints = len(intervals["structs"])
-        in_domain = np.argwhere((coords >= domain_bounds[0]) * (coords <= domain_bounds[1]))
+        in_domain = np.argwhere(
+            (coords >= domain_bounds[0]) * (coords <= domain_bounds[1])
+        )
         intervals["coords"] = [intervals["coords"][int(i)] for i in in_domain]
-        intervals["structs"] = [intervals["structs"][int(i)] for i in in_domain if i < num_ints]
+        intervals["structs"] = [
+            intervals["structs"][int(i)] for i in in_domain if i < num_ints
+        ]
 
         # Compute the maximum allowed step size in each interval
         max_steps = []
@@ -192,7 +204,9 @@ class GradedMesher(Mesher):
                 max_steps.append(float(max_step))
 
         # Re-evaluate the absolute smallest min_step and remove intervals that are smaller than that
-        intervals["coords"], max_steps = self.filter_min_step(intervals["coords"], max_steps)
+        intervals["coords"], max_steps = self.filter_min_step(
+            intervals["coords"], max_steps
+        )
 
         return np.array(intervals["coords"]), np.array(max_steps)
 
@@ -313,7 +327,9 @@ class GradedMesher(Mesher):
 
         # filter structures
         structures_enforced = list(compress(structures, enforced_list))
-        structures_others = list(compress(structures, [not enforced for enforced in enforced_list]))
+        structures_others = list(
+            compress(structures, [not enforced for enforced in enforced_list])
+        )
 
         return len(structures_others), structures_others + structures_enforced
 
@@ -341,7 +357,10 @@ class GradedMesher(Mesher):
         return [
             structure
             for structure in structures
-            if not (isinstance(structure, MeshOverrideStructure) and structure.dl[axis] is None)
+            if not (
+                isinstance(structure, MeshOverrideStructure)
+                and structure.dl[axis] is None
+            )
         ]
 
     @staticmethod
@@ -404,7 +423,9 @@ class GradedMesher(Mesher):
             bmin, bmax = structure.geometry.bounds
             bmin_ax, bmin_plane = structure.geometry.pop_axis(bmin, axis=axis)
             bmax_ax, bmax_plane = structure.geometry.pop_axis(bmax, axis=axis)
-            bounds = np.array([list(bmin_plane) + [bmin_ax], list(bmax_plane) + [bmax_ax]])
+            bounds = np.array(
+                [list(bmin_plane) + [bmin_ax], list(bmax_plane) + [bmax_ax]]
+            )
             struct_bbox.append(bounds)
         return struct_bbox
 
@@ -442,7 +463,9 @@ class GradedMesher(Mesher):
         ]
 
     @staticmethod
-    def contains_3d(bbox0: ArrayLike[float, 1], query_bbox: List[ArrayLike[float, 1]]) -> List[int]:
+    def contains_3d(
+        bbox0: ArrayLike[float, 1], query_bbox: List[ArrayLike[float, 1]]
+    ) -> List[int]:
         """Return a list of all indexes of bounding boxes in the ``query_bbox`` list that ``bbox0``
         fully contains."""
         return [
@@ -461,7 +484,9 @@ class GradedMesher(Mesher):
         ]
 
     @staticmethod
-    def is_close(coord: float, interval_coords: List[float], coord_ind: int, atol: float) -> bool:
+    def is_close(
+        coord: float, interval_coords: List[float], coord_ind: int, atol: float
+    ) -> bool:
         """Check if a given ``coord`` is within ``atol`` of an interval coordinate at a given
         interval index. If the index is out of bounds, return ``False``."""
         return (
@@ -471,12 +496,15 @@ class GradedMesher(Mesher):
         )
 
     @staticmethod
-    def is_contained(normal_pos: float, contained_2d: List[ArrayLike[float, 1]]) -> bool:
+    def is_contained(
+        normal_pos: float, contained_2d: List[ArrayLike[float, 1]]
+    ) -> bool:
         """Check if a given ``normal_pos`` along the meshing direction is contained inside any
         of the bounding boxes that are in the ``contained_2d`` list.
         """
         return any(
-            contain_box[0, 2] <= normal_pos <= contain_box[1, 2] for contain_box in contained_2d
+            contain_box[0, 2] <= normal_pos <= contain_box[1, 2]
+            for contain_box in contained_2d
         )
 
     @staticmethod
@@ -723,7 +751,9 @@ class GradedMesher(Mesher):
         right_dl = min(max_dl, right_neighbor_dl)
 
         # classifications:
-        grid_type = self.grid_type_in_interval(left_dl, right_dl, max_dl, max_scale, len_interval)
+        grid_type = self.grid_type_in_interval(
+            left_dl, right_dl, max_dl, max_scale, len_interval
+        )
 
         # single pixel
         if grid_type == -1:
@@ -744,7 +774,9 @@ class GradedMesher(Mesher):
             # Can small_dl scale to large_dl under max_scale within interval?
             # Compute the number of steps it takes to scale from small_dl to large_dl
             # Check the remaining length in the interval
-            num_step = 1 + int(np.floor(np.log(large_dl / small_dl) / np.log(max_scale)))
+            num_step = 1 + int(
+                np.floor(np.log(large_dl / small_dl) / np.log(max_scale))
+            )
             len_scale = small_dl * (1 - max_scale**num_step) / (1 - max_scale)
             len_remaining = len_interval - len_scale
 
@@ -765,8 +797,12 @@ class GradedMesher(Mesher):
             # Will it be able to plateau?
             # Compute the number of steps it take for both sides to grow to max_it;
             # then compare the length to len_interval
-            num_left_step = 1 + int(np.floor(np.log(max_dl / left_dl) / np.log(max_scale)))
-            num_right_step = 1 + int(np.floor(np.log(max_dl / right_dl) / np.log(max_scale)))
+            num_left_step = 1 + int(
+                np.floor(np.log(max_dl / left_dl) / np.log(max_scale))
+            )
+            num_right_step = 1 + int(
+                np.floor(np.log(max_dl / right_dl) / np.log(max_scale))
+            )
             len_left = left_dl * (1 - max_scale**num_left_step) / (1 - max_scale)
             len_right = right_dl * (1 - max_scale**num_right_step) / (1 - max_scale)
 
@@ -779,7 +815,9 @@ class GradedMesher(Mesher):
                 )
 
             # unable to plateau
-            return self.grid_grow_decrease_in_interval(left_dl, right_dl, max_scale, len_interval)
+            return self.grid_grow_decrease_in_interval(
+                left_dl, right_dl, max_scale, len_interval
+            )
 
         # unlikely to reach here. For future implementation purpose.
         raise ValidationError("Unimplemented grid type.")
@@ -811,11 +849,15 @@ class GradedMesher(Mesher):
 
         # Maximum number of steps for undershooting max_dl
         num_left_step = 1 + int(np.floor(np.log(max_dl / left_dl) / np.log(max_scale)))
-        num_right_step = 1 + int(np.floor(np.log(max_dl / right_dl) / np.log(max_scale)))
+        num_right_step = 1 + int(
+            np.floor(np.log(max_dl / right_dl) / np.log(max_scale))
+        )
 
         # step list, in ascending order
         dl_list_left = np.array([left_dl * max_scale**i for i in range(num_left_step)])
-        dl_list_right = np.array([right_dl * max_scale**i for i in range(num_right_step)])
+        dl_list_right = np.array(
+            [right_dl * max_scale**i for i in range(num_right_step)]
+        )
 
         # length
         len_left = left_dl * (1 - max_scale**num_left_step) / (1 - max_scale)
@@ -892,14 +934,20 @@ class GradedMesher(Mesher):
         # The advantage is that even after taking integar number of steps cutoff,
         # the last step size from the two side will not viloate max_scale.
 
-        tmp_num_l = ((left_dl + right_dl) - len_interval * (1 - max_scale)) / 2 / left_dl
-        tmp_num_r = ((left_dl + right_dl) - len_interval * (1 - max_scale)) / 2 / right_dl
+        tmp_num_l = (
+            ((left_dl + right_dl) - len_interval * (1 - max_scale)) / 2 / left_dl
+        )
+        tmp_num_r = (
+            ((left_dl + right_dl) - len_interval * (1 - max_scale)) / 2 / right_dl
+        )
         num_left_step = max(int(np.floor(np.log(tmp_num_l) / np.log(max_scale))), 0)
         num_right_step = max(int(np.floor(np.log(tmp_num_r) / np.log(max_scale))), 0)
 
         # step list, in ascending order
         dl_list_left = np.array([left_dl * max_scale**i for i in range(num_left_step)])
-        dl_list_right = np.array([right_dl * max_scale**i for i in range(num_right_step)])
+        dl_list_right = np.array(
+            [right_dl * max_scale**i for i in range(num_right_step)]
+        )
 
         # length
         len_left = left_dl * (1 - max_scale**num_left_step) / (1 - max_scale)
@@ -968,8 +1016,12 @@ class GradedMesher(Mesher):
             A list of step sizes in the interval, in ascending order.
         """
         # steps for scaling
-        num_scale_step = 1 + int(np.floor(np.log(large_dl / small_dl) / np.log(max_scale)))
-        dl_list_scale = np.array([small_dl * max_scale**i for i in range(num_scale_step)])
+        num_scale_step = 1 + int(
+            np.floor(np.log(large_dl / small_dl) / np.log(max_scale))
+        )
+        dl_list_scale = np.array(
+            [small_dl * max_scale**i for i in range(num_scale_step)]
+        )
         len_scale = small_dl * (1 - max_scale**num_scale_step) / (1 - max_scale)
 
         # remaining part for constant large_dl
@@ -1044,7 +1096,10 @@ class GradedMesher(Mesher):
         # (3) remaining part not sufficient to insert, but will not
         # violate max_scale by repearting 1st step, and the last step to include
         # the mismatch part
-        if num_step >= 2 and len_mismatch >= small_dl - (1 - 1.0 / max_scale**2) * dl_list[-1]:
+        if (
+            num_step >= 2
+            and len_mismatch >= small_dl - (1 - 1.0 / max_scale**2) * dl_list[-1]
+        ):
             dl_list = np.append(small_dl, dl_list)
             dl_list[-1] += len_mismatch - small_dl
             return dl_list

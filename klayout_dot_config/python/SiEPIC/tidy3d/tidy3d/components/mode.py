@@ -22,11 +22,15 @@ class ModeSpec(Tidy3dBaseModel):
     """
 
     num_modes: pd.PositiveInt = pd.Field(
-        1, title="Number of modes", description="Number of modes returned by mode solver."
+        1,
+        title="Number of modes",
+        description="Number of modes returned by mode solver.",
     )
 
     target_neff: pd.PositiveFloat = pd.Field(
-        None, title="Target effective index", description="Guess for effective index of the mode."
+        None,
+        title="Target effective index",
+        description="Guess for effective index of the mode.",
     )
 
     num_pml: Tuple[pd.NonNegativeInt, pd.NonNegativeInt] = pd.Field(
@@ -104,7 +108,9 @@ class ModeSpec(Tidy3dBaseModel):
     def bend_axis_given(cls, val, values):
         """check that ``bend_axis`` is provided if ``bend_radius`` is not ``None``"""
         if val is None and values.get("bend_radius") is not None:
-            raise SetupError("bend_axis must also be defined if bend_radius is defined.")
+            raise SetupError(
+                "bend_axis must also be defined if bend_radius is defined."
+            )
         return val
 
     @pd.validator("angle_theta", allow_reuse=True, always=True)

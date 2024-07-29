@@ -45,10 +45,18 @@ SIM_MONITORS = Simulation(
     grid_spec=GridSpec(wavelength=1.0),
     run_time=1e-13,
     monitors=[
-        FieldMonitor(size=(1, 1, 1), center=(0, 1, 0), freqs=[1, 2, 5, 7, 8], name="field_freq"),
-        FieldTimeMonitor(size=(1, 1, 0), center=(1, 0, 0), interval=10, name="field_time"),
-        FluxMonitor(size=(1, 1, 0), center=(0, 0, 0), freqs=[1, 2, 5, 9], name="flux_freq"),
-        FluxTimeMonitor(size=(1, 1, 0), center=(0, 0, 0), start=1e-12, name="flux_time"),
+        FieldMonitor(
+            size=(1, 1, 1), center=(0, 1, 0), freqs=[1, 2, 5, 7, 8], name="field_freq"
+        ),
+        FieldTimeMonitor(
+            size=(1, 1, 0), center=(1, 0, 0), interval=10, name="field_time"
+        ),
+        FluxMonitor(
+            size=(1, 1, 0), center=(0, 0, 0), freqs=[1, 2, 5, 9], name="flux_freq"
+        ),
+        FluxTimeMonitor(
+            size=(1, 1, 0), center=(0, 0, 0), start=1e-12, name="flux_time"
+        ),
         ModeMonitor(
             size=(1, 1, 0),
             center=(0, 0, 0),
@@ -74,7 +82,9 @@ SIM_FULL = Simulation(
         ),
         Structure(
             geometry=Sphere(radius=1.0, center=(1.0, 0.0, 1.0)),
-            medium=Sellmeier(coeffs=[(1.03961212, 0.00600069867), (0.231792344, 0.0200179144)]),
+            medium=Sellmeier(
+                coeffs=[(1.03961212, 0.00600069867), (0.231792344, 0.0200179144)]
+            ),
         ),
         Structure(
             geometry=Box(size=(1, 1, 1), center=(-1, 0, 0)),
@@ -104,7 +114,9 @@ SIM_FULL = Simulation(
             geometry=PolySlab(
                 vertices=[(-1.5, -1.5), (-0.5, -1.5), (-0.5, -0.5)], slab_bounds=[-1, 1]
             ),
-            medium=PoleResidue(eps_inf=1.0, poles=((6206417594288582j, (-3.311074436985222e16j)),)),
+            medium=PoleResidue(
+                eps_inf=1.0, poles=((6206417594288582j, (-3.311074436985222e16j)),)
+            ),
         ),
     ],
     sources=[
@@ -187,10 +199,18 @@ SIM_FULL = Simulation(
     ],
     monitors=(
         FieldMonitor(
-            size=(0, 0, 0), center=(0, 0, 0), fields=["Ex"], freqs=[1.5e14, 2e14], name="field"
+            size=(0, 0, 0),
+            center=(0, 0, 0),
+            fields=["Ex"],
+            freqs=[1.5e14, 2e14],
+            name="field",
         ),
-        FieldTimeMonitor(size=(0, 0, 0), center=(0, 0, 0), name="field_time", interval=100),
-        FluxMonitor(size=(1, 1, 0), center=(0, 0, 0), freqs=[2e14, 2.5e14], name="flux"),
+        FieldTimeMonitor(
+            size=(0, 0, 0), center=(0, 0, 0), name="field_time", interval=100
+        ),
+        FluxMonitor(
+            size=(1, 1, 0), center=(0, 0, 0), freqs=[2e14, 2.5e14], name="flux"
+        ),
         FluxTimeMonitor(size=(1, 1, 0), center=(0, 0, 0), name="flux_time"),
         PermittivityMonitor(size=(1, 1, 0.1), name="eps", freqs=[1e14]),
         ModeMonitor(
@@ -282,12 +302,16 @@ def run_emulated(simulation: Simulation, **kwargs) -> SimulationData:
 
     from scipy.ndimage.filters import gaussian_filter
 
-    def make_data(coords: dict, data_array_type: type, is_complex: bool = False) -> "data_type":
+    def make_data(
+        coords: dict, data_array_type: type, is_complex: bool = False
+    ) -> "data_type":
         """make a random DataArray out of supplied coordinates and data_type."""
         data_shape = [len(coords[k]) for k in data_array_type._dims]
         data = np.random.random(data_shape)
         data = (1 + 1j) * data if is_complex else data
-        data = gaussian_filter(data, sigma=0.5)  # smooth out the data a little so it isnt random
+        data = gaussian_filter(
+            data, sigma=0.5
+        )  # smooth out the data a little so it isnt random
         data_array = data_array_type(data, coords=coords)
         return data_array
 
@@ -316,7 +340,7 @@ def run_emulated(simulation: Simulation, **kwargs) -> SimulationData:
             symmetry=simulation.symmetry,
             symmetry_center=simulation.center,
             grid_expanded=simulation.discretize(monitor, extend=True),
-            **field_cmps
+            **field_cmps,
         )
 
     def make_eps_data(monitor: PermittivityMonitor) -> PermittivityData:
@@ -324,7 +348,10 @@ def run_emulated(simulation: Simulation, **kwargs) -> SimulationData:
         field_mnt = FieldMonitor(**monitor.dict(exclude={"type", "fields"}))
         field_data = make_field_data(monitor=field_mnt)
         return PermittivityData(
-            monitor=monitor, eps_xx=field_data.Ex, eps_yy=field_data.Ey, eps_zz=field_data.Ez
+            monitor=monitor,
+            eps_xx=field_data.Ex,
+            eps_yy=field_data.Ey,
+            eps_zz=field_data.Ez,
         )
 
     def make_diff_data(monitor: DiffractionMonitor) -> DiffractionData:
@@ -335,8 +362,12 @@ def run_emulated(simulation: Simulation, **kwargs) -> SimulationData:
         coords = dict(orders_x=orders_x, orders_y=orders_y, f=f)
         values = np.random.random((len(orders_x), len(orders_y), len(f)))
         data = DiffractionDataArray(values, coords=coords)
-        field_data = {field: data for field in ("Er", "Etheta", "Ephi", "Hr", "Htheta", "Hphi")}
-        return DiffractionData(monitor=monitor, sim_size=(1, 1), bloch_vecs=(0, 0), **field_data)
+        field_data = {
+            field: data for field in ("Er", "Etheta", "Ephi", "Hr", "Htheta", "Hphi")
+        }
+        return DiffractionData(
+            monitor=monitor, sim_size=(1, 1), bloch_vecs=(0, 0), **field_data
+        )
 
     def make_mode_data(monitor: ModeMonitor) -> ModeData:
         """make a random ModeData from a ModeMonitor."""
@@ -350,7 +381,9 @@ def run_emulated(simulation: Simulation, **kwargs) -> SimulationData:
         )
         coords_amps = dict(direction=["+", "-"])
         coords_amps.update(coords_ind)
-        amps = make_data(coords=coords_amps, data_array_type=ModeAmpsDataArray, is_complex=True)
+        amps = make_data(
+            coords=coords_amps, data_array_type=ModeAmpsDataArray, is_complex=True
+        )
         return ModeData(monitor=monitor, n_complex=n_complex, amps=amps)
 
     MONITOR_MAKER_MAP = {

@@ -39,7 +39,7 @@ def test_dispersion_lossless():
     )
 
     # a and c for each pole should be purely imaginary
-    for (a, c) in best_medium.poles:
+    for a, c in best_medium.poles:
         assert isclose(np.real(a), 0)
         assert isclose(np.real(c), 0)
 
@@ -51,7 +51,9 @@ def test_dispersion_lossless():
 
 def test_dispersion_load_file():
     """loads dispersion model from nk data file"""
-    fitter = StableDispersionFitter.from_file("tests/data/nk_data.csv", skiprows=1, delimiter=",")
+    fitter = StableDispersionFitter.from_file(
+        "tests/data/nk_data.csv", skiprows=1, delimiter=","
+    )
 
     num_poles = 3
     num_tries = 10
@@ -64,8 +66,9 @@ def test_dispersion_load_file():
 
 
 def test_dispersion_load_url():
-
-    url_csv = "https://refractiveindex.info/data_csv.php?datafile=data/main/Ag/Johnson.yml"
+    url_csv = (
+        "https://refractiveindex.info/data_csv.php?datafile=data/main/Ag/Johnson.yml"
+    )
     fitter = StableDispersionFitter.from_url(url_csv)
 
     num_poles = 2

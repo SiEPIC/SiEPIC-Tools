@@ -1,4 +1,5 @@
 """Defines jax-compatible MonitorData and their conversion to adjoint sources."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -31,7 +32,10 @@ class JaxMonitorData(MonitorData, JaxObject, ABC):
         self_dict = mnt_data.dict(exclude={"type"}).copy()
         for field_name in cls.get_jax_field_names():
             data_array = self_dict[field_name]
-            coords = {dim: data_array.coords[dim].values.tolist() for dim in data_array.coords.dims}
+            coords = {
+                dim: data_array.coords[dim].values.tolist()
+                for dim in data_array.coords.dims
+            }
             jax_amps = JaxDataArray(values=data_array.values, coords=coords)
             self_dict[field_name] = jax_amps
         return cls.parse_obj(self_dict)
@@ -41,7 +45,9 @@ class JaxMonitorData(MonitorData, JaxObject, ABC):
         """Construct a list of adjoint sources from this :class:`.JaxMonitorData`."""
 
     @staticmethod
-    def make_source_time(amp_complex: complex, freq: float, fwidth: float) -> GaussianPulse:
+    def make_source_time(
+        amp_complex: complex, freq: float, fwidth: float
+    ) -> GaussianPulse:
         """Create a :class:`.SourceTime` for the adjoint source given an amplitude and freq."""
         # fwidth = freq * FWIDTH_FACTOR
         amp = abs(amp_complex)
@@ -80,8 +86,9 @@ class JaxModeData(JaxMonitorData, ModeData):
         mode_indices = sel_coords["mode_index"]
 
         adjoint_sources = []
-        for amp, direction, freq, mode_index in zip(amps, directions, freqs, mode_indices):
-
+        for amp, direction, freq, mode_index in zip(
+            amps, directions, freqs, mode_indices
+        ):
             # TODO: figure out where this factor comes from
             k0 = 2 * np.pi * freq / C_0
             grad_const = k0 / 4 / ETA_0
@@ -92,7 +99,9 @@ class JaxModeData(JaxMonitorData, ModeData):
             adj_mode_src = ModeSource(
                 size=self.monitor.size,
                 center=self.monitor.center,
-                source_time=self.make_source_time(amp_complex=src_amp, freq=freq, fwidth=fwidth),
+                source_time=self.make_source_time(
+                    amp_complex=src_amp, freq=freq, fwidth=fwidth
+                ),
                 mode_spec=self.monitor.mode_spec,
                 direction=str(src_direction),
                 mode_index=int(mode_index),
@@ -148,7 +157,9 @@ class JaxFieldData(JaxMonitorData, FieldData):
         """Converts a :class:`.JaxFieldData` to a list of adjoint :class:`.CustomFieldSource."""
 
         # parse the frequency from the scalar field data
-        freqs = [scalar_fld.coords["f"] for _, scalar_fld in self.field_components.items()]
+        freqs = [
+            scalar_fld.coords["f"] for _, scalar_fld in self.field_components.items()
+        ]
         if any((len(fs) != 1 for fs in freqs)):
             raise AdjointError("FieldData must have only one frequency.")
         freqs = [fs[0] for fs in freqs]
@@ -158,7 +169,9 @@ class JaxFieldData(JaxMonitorData, FieldData):
 
         # construct the source time dependence
         src_amp = 1.0  # TODO: how to normalize?
-        source_time = self.make_source_time(amp_complex=src_amp, freq=freq0, fwidth=fwidth)
+        source_time = self.make_source_time(
+            amp_complex=src_amp, freq=freq0, fwidth=fwidth
+        )
 
         # TODO: convert self to a 'CustomCurrentSource'-like object
 
@@ -273,10 +286,13 @@ class JaxDiffractionData(JaxMonitorData, DiffractionData):
         theta_data, phi_data = self.angles
 
         adjoint_sources = []
-        for amp, order_x, order_y, freq, pol in zip(amp_vals, orders_x, orders_y, freqs, pols):
-
+        for amp, order_x, order_y, freq, pol in zip(
+            amp_vals, orders_x, orders_y, freqs, pols
+        ):
             # select the propagation angles from the data
-            angle_sel_kwargs = dict(orders_x=int(order_x), orders_y=int(order_y), f=float(freq))
+            angle_sel_kwargs = dict(
+                orders_x=int(order_x), orders_y=int(order_y), f=float(freq)
+            )
             angle_theta = float(theta_data.sel(**angle_sel_kwargs))
             angle_phi = float(phi_data.sel(**angle_sel_kwargs))
 
@@ -296,7 +312,9 @@ class JaxDiffractionData(JaxMonitorData, DiffractionData):
             adj_plane_wave_src = PlaneWave(
                 size=self.monitor.size,
                 center=self.monitor.center,
-                source_time=self.make_source_time(amp_complex=src_amp, freq=freq, fwidth=fwidth),
+                source_time=self.make_source_time(
+                    amp_complex=src_amp, freq=freq, fwidth=fwidth
+                ),
                 direction=src_direction,
                 angle_theta=angle_theta,
                 angle_phi=angle_phi,

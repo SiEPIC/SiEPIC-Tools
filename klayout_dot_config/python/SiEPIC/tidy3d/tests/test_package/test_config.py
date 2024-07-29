@@ -1,11 +1,10 @@
-""" test the grid operations """
+"""test the grid operations"""
 
 import pytest
 import pydantic
 
 import tidy3d as td
 from tidy3d.log import log, DEFAULT_LEVEL, LEVEL_MAP
-
 
 
 def test_logging_level():

@@ -37,13 +37,14 @@ def test_exception_message():
 
 
 def test_reset_logging_level():
-
     import logging
     from rich.logging import RichHandler
 
     td.config.logging_level = DEFAULT_LEVEL.lower()
     LEVEL = logging.ERROR
-    assert DEFAULT_LEVEL != LEVEL, "set LEVEL something different from the DEFAULT_LEVEL for tidy3d"
+    assert (
+        DEFAULT_LEVEL != LEVEL
+    ), "set LEVEL something different from the DEFAULT_LEVEL for tidy3d"
 
     logging.basicConfig(
         level=LEVEL,

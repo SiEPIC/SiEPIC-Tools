@@ -142,7 +142,9 @@ def upload(  # pylint:disable=too-many-locals,too-many-arguments
         upload_file(task_id, data_file.name, SIM_FILE_HDF5, verbose=verbose)
 
     # log the url for the task in the web UI
-    log.debug(f"{DEFAULT_CONFIG.website_endpoint}/folders/{folder.projectId}/tasks/{task_id}")
+    log.debug(
+        f"{DEFAULT_CONFIG.website_endpoint}/folders/{folder.projectId}/tasks/{task_id}"
+    )
 
     return task_id
 
@@ -219,7 +221,9 @@ def get_run_info(task_id: TaskId):
     try:
         token = get_s3_sts_token(task_id, "output/solver_progress.csv")
         client = token.get_client()
-        progress = client.get_object(Bucket=token.get_bucket(), Key=token.get_s3_key())["Body"]
+        progress = client.get_object(Bucket=token.get_bucket(), Key=token.get_s3_key())[
+            "Body"
+        ]
         progress_string = progress.read().split(b"\n")
         perc_done, field_decay = progress_string[-2].split(b",")[:2]
         return float(perc_done), float(field_decay)
@@ -308,18 +312,20 @@ def monitor(task_id: TaskId, verbose: bool = True) -> None:
 
     # while running but percentage done is available
     if verbose:
-
         # verbose case, update progressbar
         log.info("running solver")
         with Progress(console=console) as progress:
-
             pbar_pd = progress.add_task("% done", total=100)
             perc_done, _ = get_run_info(task_id)
 
-            while perc_done is not None and perc_done < 100 and get_status() == "running":
+            while (
+                perc_done is not None and perc_done < 100 and get_status() == "running"
+            ):
                 perc_done, field_decay = get_run_info(task_id)
                 new_description = f"% done (field decay = {field_decay:.2e})"
-                progress.update(pbar_pd, completed=perc_done, description=new_description)
+                progress.update(
+                    pbar_pd, completed=perc_done, description=new_description
+                )
                 time.sleep(1.0)
 
             if perc_done is not None and perc_done < 100:
@@ -328,7 +334,6 @@ def monitor(task_id: TaskId, verbose: bool = True) -> None:
             progress.update(pbar_pd, completed=100, refresh=True)
 
     else:
-
         # non-verbose case, just keep checking until status is not running or perc_done >= 100
         perc_done, _ = get_run_info(task_id)
         while perc_done is not None and perc_done < 100 and get_status() == "running":
@@ -337,12 +342,13 @@ def monitor(task_id: TaskId, verbose: bool = True) -> None:
 
     # post processing
     if verbose:
-
         status = get_status()
         if status != "running":
             log.info(f"status = {status}")
 
-        with console.status(f"[bold green]Finishing '{task_name}'...", spinner="runner"):
+        with console.status(
+            f"[bold green]Finishing '{task_name}'...", spinner="runner"
+        ):
             while status not in break_statuses:
                 new_status = get_status()
                 if new_status != status:
@@ -354,7 +360,9 @@ def monitor(task_id: TaskId, verbose: bool = True) -> None:
             time.sleep(REFRESH_TIME)
 
 
-def download(task_id: TaskId, path: str = "simulation_data.hdf5", verbose: bool = True) -> None:
+def download(
+    task_id: TaskId, path: str = "simulation_data.hdf5", verbose: bool = True
+) -> None:
     """Download results of task and log to file.
 
     Parameters
@@ -367,10 +375,14 @@ def download(task_id: TaskId, path: str = "simulation_data.hdf5", verbose: bool 
         If `True`, will print progressbars and status, otherwise, will run silently.
 
     """
-    _download_file(task_id, fname="output/monitor_data.hdf5", path=path, verbose=verbose)
+    _download_file(
+        task_id, fname="output/monitor_data.hdf5", path=path, verbose=verbose
+    )
 
 
-def download_json(task_id: TaskId, path: str = SIM_FILE_JSON, verbose: bool = True) -> None:
+def download_json(
+    task_id: TaskId, path: str = SIM_FILE_JSON, verbose: bool = True
+) -> None:
     """Download the `.json` file associated with the :class:`.Simulation` of a given task.
 
     Parameters
@@ -386,7 +398,9 @@ def download_json(task_id: TaskId, path: str = SIM_FILE_JSON, verbose: bool = Tr
     _download_file(task_id, fname=SIM_FILE_JSON, path=path, verbose=verbose)
 
 
-def download_hdf5(task_id: TaskId, path: str = SIM_FILE_HDF5, verbose: bool = True) -> None:
+def download_hdf5(
+    task_id: TaskId, path: str = SIM_FILE_HDF5, verbose: bool = True
+) -> None:
     """Download the `.hdf5` file associated with the :class:`.Simulation` of a given task.
 
     Parameters
@@ -402,7 +416,9 @@ def download_hdf5(task_id: TaskId, path: str = SIM_FILE_HDF5, verbose: bool = Tr
     _download_file(task_id, fname=SIM_FILE_HDF5, path=path, verbose=verbose)
 
 
-def load_simulation(task_id: TaskId, path: str = SIM_FILE_JSON, verbose: bool = True) -> Simulation:
+def load_simulation(
+    task_id: TaskId, path: str = SIM_FILE_JSON, verbose: bool = True
+) -> Simulation:
     """Download the `.json` file of a task and load the associated :class:`.Simulation`.
 
     Parameters
@@ -423,7 +439,9 @@ def load_simulation(task_id: TaskId, path: str = SIM_FILE_JSON, verbose: bool = 
     return Simulation.from_file(path)
 
 
-def download_log(task_id: TaskId, path: str = "tidy3d.log", verbose: bool = True) -> None:
+def download_log(
+    task_id: TaskId, path: str = "tidy3d.log", verbose: bool = True
+) -> None:
     """Download the tidy3d log file associated with a task.
 
     Parameters
@@ -645,7 +663,9 @@ def _query_or_create_folder(folder_name) -> Folder:
     return folder
 
 
-def _download_file(task_id: TaskId, fname: str, path: str, verbose: bool = True) -> None:
+def _download_file(
+    task_id: TaskId, fname: str, path: str, verbose: bool = True
+) -> None:
     """Download a specific file from server.
 
     Parameters
@@ -663,7 +683,9 @@ def _download_file(task_id: TaskId, fname: str, path: str, verbose: bool = True)
 
     task_info = get_info(task_id)
     if task_info.status in ("error", "deleted"):
-        raise WebError(f"can't download task '{task_id}', status = '{task_info.status}'")
+        raise WebError(
+            f"can't download task '{task_id}', status = '{task_info.status}'"
+        )
 
     directory, _ = os.path.split(path)
     if directory != "":

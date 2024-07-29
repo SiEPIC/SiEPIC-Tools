@@ -13,7 +13,16 @@ def test_divide_simple_events():
     # simple edge events occurs during erosion
     vertices_ero = ((0, 0), (1, 0), (1, 1), (0, 1), (0, 0.9), (0, 0.11))
     # simple edge events occurs during dilation
-    vertices_dil = ((0, 0), (3, 0), (3, 1), (0, 1), (0, 0.9), (0.5, 0.55), (0.5, 0.45), (0, 0.1))
+    vertices_dil = (
+        (0, 0),
+        (3, 0),
+        (3, 1),
+        (0, 1),
+        (0, 0.9),
+        (0.5, 0.55),
+        (0.5, 0.45),
+        (0, 0.1),
+    )
 
     vertices_list = [vertices_ero, vertices_dil]
     for vertices in vertices_list:
@@ -116,7 +125,13 @@ def test_gds_import():
         return lambda u: 0.5 * (1 + scale * np.tanh(max_arg * (u * 2 - 1)))
 
     def make_coupler(
-        length, wg_spacing_in, wg_width, wg_spacing_coup, coup_length, bend_length, npts_bend=30
+        length,
+        wg_spacing_in,
+        wg_width,
+        wg_spacing_coup,
+        coup_length,
+        bend_length,
+        npts_bend=30,
     ):
         """Make an integrated coupler using the gdstk RobustPath object."""
         # bend interpolator
@@ -134,7 +149,8 @@ def test_gds_import():
         )
         coup.segment((-0.5 * coup_length - bend_length, 0))
         coup.segment(
-            (-0.5 * coup_length, 0), offset=[lambda u: -0.5 * offset(u), lambda u: 0.5 * offset(u)]
+            (-0.5 * coup_length, 0),
+            offset=[lambda u: -0.5 * offset(u), lambda u: 0.5 * offset(u)],
         )
         coup.segment((0.5 * coup_length, 0))
         coup.segment(
@@ -158,7 +174,12 @@ def test_gds_import():
 
     # make coupler and add to the cell
     coup = make_coupler(
-        device_length, wg_spacing_in, wg_width, wg_spacing_coup, coup_length, bend_length
+        device_length,
+        wg_spacing_in,
+        wg_width,
+        wg_spacing_coup,
+        coup_length,
+        bend_length,
     )
 
     coup_cell.add(coup)

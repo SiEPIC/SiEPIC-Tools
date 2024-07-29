@@ -4,7 +4,8 @@ from .utils import LUT_processor
 from numpy import ndarray
 from pathlib import PosixPath
 from typing import Dict, List, Union
-#from SiEPIC.opics.globals import F, C
+
+# from SiEPIC.opics.globals import F, C
 from SiEPIC.opics.globals import C
 import os
 import binascii
@@ -34,14 +35,13 @@ class componentModel:
         data_folder: PosixPath = None,
         filename: str = None,
         sparam_attr: str = None,
-        **kwargs
+        **kwargs,
     ) -> None:
-
         self.f = f
         if self.f is None:
-#            raise Exception ('Frequency range not defined, in opics/network')
-            print ('Frequency range not defined, in opics/network')
-#            self.f = F
+            #            raise Exception ('Frequency range not defined, in opics/network')
+            print("Frequency range not defined, in opics/network")
+        #            self.f = F
 
         self.C = C
 
@@ -49,7 +49,7 @@ class componentModel:
         if s is None:
             self.s = np.array((nports, nports))
 
-        #self.lambda_ = self.C * 1e6 / self.f
+        # self.lambda_ = self.C * 1e6 / self.f
         self.componentParameters = []
         self.component_id = str(binascii.hexlify(os.urandom(4)))[2:-1]
         self.nports = nports
@@ -64,8 +64,9 @@ class componentModel:
         for key, value in kwargs.items():
             self.componentParameters.append([key, value])
 
-    def load_sparameters(self, data_folder: PosixPath, filename: str, 
-            verbose: bool = True) -> ndarray:
+    def load_sparameters(
+        self, data_folder: PosixPath, filename: str, verbose: bool = True
+    ) -> ndarray:
         """
         Loads sparameters either from an npz file or from a raw sparam\
              file using a look-up table.
@@ -91,7 +92,7 @@ class componentModel:
                 self.componentParameters,
                 self.nports,
                 self.sparam_attr,
-                verbose = verbose
+                verbose=verbose,
             )
             return self.interpolate_sparameters(
                 self.f, componentData[0], componentData[1]
@@ -130,11 +131,18 @@ class componentModel:
 
         fill1 = source_s[0]
         fill2 = source_s[-1]
-#        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = 0) # results in a truncated spectrum
-#        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = (1e-3,1e-2))
-        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = (fill2,fill1))
-#        func = interp1d(source_f, source_s, kind="cubic", axis=0, fill_value = "extrapolate")
-#        func = interp1d(source_f, source_s, kind="cubic", axis=0, fill_value = 0)
+        #        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = 0) # results in a truncated spectrum
+        #        func = interp1d(source_f, source_s, kind="cubic", axis=0, bounds_error=False, fill_value = (1e-3,1e-2))
+        func = interp1d(
+            source_f,
+            source_s,
+            kind="cubic",
+            axis=0,
+            bounds_error=False,
+            fill_value=(fill2, fill1),
+        )
+        #        func = interp1d(source_f, source_s, kind="cubic", axis=0, fill_value = "extrapolate")
+        #        func = interp1d(source_f, source_s, kind="cubic", axis=0, fill_value = 0)
         return func(target_f)
 
     def write_sparameters(
@@ -258,6 +266,7 @@ class componentModel:
 
         if not interactive:
             import matplotlib.pyplot as plt
+
             for each_port in ports_:
                 _, i, j = each_port.split("_")
                 if scale == "log":

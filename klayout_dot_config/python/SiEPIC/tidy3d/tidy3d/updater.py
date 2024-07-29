@@ -1,4 +1,5 @@
 """Utilities for converting between tidy3d versions."""
+
 from __future__ import annotations
 
 from typing import Dict, Callable
@@ -102,7 +103,9 @@ class Updater(pd.BaseModel):
                 elif ".yaml" in fname:
                     sim_dict = yaml.safe_load(f)
                 else:
-                    raise FileError('file extension must be ".json", ".yaml", or ".hdf5"')
+                    raise FileError(
+                        'file extension must be ".json", ".yaml", or ".hdf5"'
+                    )
 
             # except Exception as e:
             #     raise FileError(f"Could not load file {fname}") from e
@@ -127,7 +130,9 @@ class Updater(pd.BaseModel):
         """Get the highest update verion <= self.version."""
         leq_versions = [v for v in UPDATE_MAP if v <= self.version]
         if not leq_versions:
-            raise SetupError(f"An update version <= {self.version} not found in update map.")
+            raise SetupError(
+                f"An update version <= {self.version} not found in update map."
+            )
         update_version = max(leq_versions)
         return UPDATE_MAP[update_version]
 
@@ -290,7 +295,9 @@ def update_1_5(sim_dict: dict) -> dict:
         mnt_dict["type"] = "ModeSolverMonitor"
         return mnt_dict
 
-    iterate_update_dict(update_dict=sim_dict, update_types={"ModeFieldMonitor": fix_mode_field_mnt})
+    iterate_update_dict(
+        update_dict=sim_dict, update_types={"ModeFieldMonitor": fix_mode_field_mnt}
+    )
     return sim_dict
 
 

@@ -1,5 +1,6 @@
 # pylint:disable=too-many-lines
-""" Monitor Level Data, store the DataArrays associated with a single monitor."""
+"""Monitor Level Data, store the DataArrays associated with a single monitor."""
+
 from __future__ import annotations
 
 from abc import ABC
@@ -9,14 +10,24 @@ import xarray as xr
 import numpy as np
 import pydantic as pd
 
-from .data_array import FluxTimeDataArray, FluxDataArray, ModeIndexDataArray, ModeAmpsDataArray
+from .data_array import (
+    FluxTimeDataArray,
+    FluxDataArray,
+    ModeIndexDataArray,
+    ModeAmpsDataArray,
+)
 from .data_array import FieldProjectionAngleDataArray, FieldProjectionCartesianDataArray
 from .data_array import FieldProjectionKSpaceDataArray
 from .data_array import DataArray, DiffractionDataArray
 from .data_array import ScalarFieldDataArray, ScalarFieldTimeDataArray
 from .data_array import FreqDataArray, TimeDataArray, FreqModeDataArray
 from .dataset import Dataset, AbstractFieldDataset, ElectromagneticFieldDataset
-from .dataset import FieldDataset, FieldTimeDataset, ModeSolverDataset, PermittivityDataset
+from .dataset import (
+    FieldDataset,
+    FieldTimeDataset,
+    ModeSolverDataset,
+    PermittivityDataset,
+)
 from ..base import TYPE_TAG_STR, cached_property
 from ..types import Coordinate, Symmetry, ArrayLike, Size, Numpy, TrackFreq
 from ..grid.grid import Grid, Coords
@@ -56,7 +67,9 @@ class MonitorData(Dataset, ABC):
 class AbstractFieldData(MonitorData, AbstractFieldDataset, ABC):
     """Collection of scalar fields with some symmetry properties."""
 
-    monitor: Union[FieldMonitor, FieldTimeMonitor, PermittivityMonitor, ModeSolverMonitor]
+    monitor: Union[
+        FieldMonitor, FieldTimeMonitor, PermittivityMonitor, ModeSolverMonitor
+    ]
 
     symmetry: Tuple[Symmetry, Symmetry, Symmetry] = pd.Field(
         (0, 0, 0),
@@ -100,14 +113,14 @@ class AbstractFieldData(MonitorData, AbstractFieldDataset, ABC):
         update_dict = {}
 
         for field_name, scalar_data in self.field_components.items():
-
             eigenval_fn = self.symmetry_eigenvalues[field_name]
 
             # get grid locations for this field component on the expanded grid
             field_coords = self._expanded_grid_field_coords(field_name)
 
-            for sym_dim, (sym_val, sym_loc) in enumerate(zip(self.symmetry, self.symmetry_center)):
-
+            for sym_dim, (sym_val, sym_loc) in enumerate(
+                zip(self.symmetry, self.symmetry_center)
+            ):
                 dim_name = "xyz"[sym_dim]
 
                 # Continue if no symmetry along this dimension
@@ -126,7 +139,9 @@ class AbstractFieldData(MonitorData, AbstractFieldDataset, ABC):
 
                 # Interpolate. There generally shouldn't be values out of bounds except potentially
                 # when handling modes, in which case they should be at the boundary and close to 0.
-                scalar_data = scalar_data.sel({dim_name: coords_interp}, method="nearest")
+                scalar_data = scalar_data.sel(
+                    {dim_name: coords_interp}, method="nearest"
+                )
                 scalar_data = scalar_data.assign_coords({dim_name: coords})
 
                 # apply the symmetry eigenvalue (if defined) to the flipped values
@@ -154,7 +169,9 @@ class ElectromagneticFieldData(AbstractFieldData, ElectromagneticFieldDataset, A
         "which the data was computed. The factor is applied to fields defined on the primal grid "
         "locations along the normal direction.",
     )
-    grid_dual_correction: Union[float, FreqDataArray, TimeDataArray, FreqModeDataArray] = pd.Field(
+    grid_dual_correction: Union[
+        float, FreqDataArray, TimeDataArray, FreqModeDataArray
+    ] = pd.Field(
         1.0,
         title="Field correction factor",
         description="Correction factor that needs to be applied for data corresponding to a 2D "
@@ -202,12 +219,16 @@ class ElectromagneticFieldData(AbstractFieldData, ElectromagneticFieldDataset, A
 
         tan_dims = self._tangential_dims
         normal_dim = "xyz"[self.monitor.size.index(0)]
-        field_components = ["E" + dim for dim in tan_dims] + ["H" + dim for dim in tan_dims]
+        field_components = ["E" + dim for dim in tan_dims] + [
+            "H" + dim for dim in tan_dims
+        ]
         fields_expanded = self.symmetry_expanded_copy.field_components
         tan_fields = {}
         for field in field_components:
             if field not in self.field_components:
-                raise DataError(f"Tangential field component {field} is missing in data.")
+                raise DataError(
+                    f"Tangential field component {field} is missing in data."
+                )
             tan_fields[field] = fields_expanded[field]
             if field[0] == "E":
                 tan_fields[field] *= self.grid_primal_correction
@@ -271,7 +292,9 @@ class ElectromagneticFieldData(AbstractFieldData, ElectromagneticFieldDataset, A
 
         sizes_dim0 = bounds[0][1:] - bounds[0][:-1] if bounds[0].size > 1 else [1.0]
         sizes_dim1 = bounds[1][1:] - bounds[1][:-1] if bounds[1].size > 1 else [1.0]
-        return xr.DataArray(np.outer(sizes_dim0, sizes_dim1), dims=self._tangential_dims)
+        return xr.DataArray(
+            np.outer(sizes_dim0, sizes_dim1), dims=self._tangential_dims
+        )
 
     @property
     def _centered_tangential_fields(self) -> Dict[str, DataArray]:
@@ -295,7 +318,9 @@ class ElectromagneticFieldData(AbstractFieldData, ElectromagneticFieldDataset, A
         for dim, cents in zip(tan_dims, centers):
             if cents.size > 0:
                 interp_dict[dim] = cents
-        centered_fields = {key: val.interp(**interp_dict) for key, val in tan_fields.items()}
+        centered_fields = {
+            key: val.interp(**interp_dict) for key, val in tan_fields.items()
+        }
 
         return centered_fields
 
@@ -360,7 +385,9 @@ class ElectromagneticFieldData(AbstractFieldData, ElectromagneticFieldDataset, A
             fields_self = {key: field.conj() for key, field in fields_self.items()}
 
         # Drop size-1 dimensions in the other data
-        fields_other = {key: field.squeeze(drop=True) for key, field in fields_other.items()}
+        fields_other = {
+            key: field.squeeze(drop=True) for key, field in fields_other.items()
+        }
 
         # Cross products of fields
         dim1, dim2 = self._tangential_dims
@@ -418,7 +445,11 @@ class FieldData(FieldDataset, ElectromagneticFieldData):
         return self.copy(update=fields_norm)
 
     def to_source(
-        self, source_time: SourceTimeType, center: Coordinate, size: Size = None, **kwargs
+        self,
+        source_time: SourceTimeType,
+        center: Coordinate,
+        size: Size = None,
+        **kwargs,
     ) -> CustomFieldSource:
         """Create a :class:`.CustomFieldSource` from the fields stored in the :class:`.FieldData`.
 
@@ -453,7 +484,11 @@ class FieldData(FieldDataset, ElectromagneticFieldData):
 
         dataset = FieldDataset(**fields)
         return CustomFieldSource(
-            field_dataset=dataset, source_time=source_time, center=center, size=size, **kwargs
+            field_dataset=dataset,
+            source_time=source_time,
+            center=center,
+            size=size,
+            **kwargs,
         )
 
 
@@ -497,7 +532,9 @@ class FieldTimeData(FieldTimeDataset, ElectromagneticFieldData):
         d_area = self._diff_area
         return FluxTimeDataArray((self.poynting * d_area).sum(dim=d_area.dims))
 
-    def dot(self, field_data: ElectromagneticFieldData, conjugate: bool = True) -> xr.DataArray:
+    def dot(
+        self, field_data: ElectromagneticFieldData, conjugate: bool = True
+    ) -> xr.DataArray:
         """Inner product is not defined for time-domain data."""
         raise DataError("Inner product is not defined for time-domain data.")
 
@@ -515,7 +552,9 @@ class FieldTimeData(FieldTimeDataset, ElectromagneticFieldData):
             else:
                 new_data[comp] = field
             # Reverse time coordinates
-            new_data[comp] = new_data[comp].assign_coords({"t": field.t[::-1]}).sortby("t")
+            new_data[comp] = (
+                new_data[comp].assign_coords({"t": field.t[::-1]}).sortby("t")
+            )
         return self.copy(update=new_data)
 
 
@@ -597,13 +636,11 @@ class ModeSolverData(ModeSolverDataset, ElectromagneticFieldData):
 
         # Sort in two directions from the base frequency
         for step, last_ind in zip([-1, 1], [-1, num_freqs]):
-
             # Start with the base frequency
             data_template = self._isel(f=[f0_ind])
 
             # March to lower/higher frequencies
             for freq_id in range(f0_ind + step, last_ind, step):
-
                 # Get next frequency to sort
                 data_to_sort = self._isel(f=[freq_id])
 
@@ -621,7 +658,9 @@ class ModeSolverData(ModeSolverDataset, ElectromagneticFieldData):
                 )
 
                 # Check for discontinuities and show warning if any
-                for mode_ind in list(np.nonzero(overlap[freq_id, :] < overlap_thresh)[0]):
+                for mode_ind in list(
+                    np.nonzero(overlap[freq_id, :] < overlap_thresh)[0]
+                ):
                     log.warning(
                         f"WARNING: Mode '{mode_ind}' appears to undergo a discontinuous change "
                         f"between frequencies '{self.monitor.freqs[freq_id]}' "
@@ -648,7 +687,9 @@ class ModeSolverData(ModeSolverDataset, ElectromagneticFieldData):
         newly created data."""
 
         update_dict = dict(self._grid_correction_dict, **self.field_components)
-        update_dict = {key: field.isel(**isel_kwargs) for key, field in update_dict.items()}
+        update_dict = {
+            key: field.isel(**isel_kwargs) for key, field in update_dict.items()
+        }
         return self.copy(update=update_dict)
 
     def _find_ordering_one_freq(
@@ -671,13 +712,14 @@ class ModeSolverData(ModeSolverDataset, ElectromagneticFieldData):
             return pairs, complex_amps
 
         # Compute an overlap matrix for modes chosen for sorting
-        amps_reduced = np.zeros((num_modes_to_sort, num_modes_to_sort), dtype=np.complex128)
+        amps_reduced = np.zeros(
+            (num_modes_to_sort, num_modes_to_sort), dtype=np.complex128
+        )
 
         # Extract all modes of interest from template data
         data_template_reduced = self._isel(mode_index=modes_to_sort)
 
         for i, mode_index in enumerate(modes_to_sort):
-
             # Get one mode from data_to_sort
             # pylint:disable=protected-access
             one_mode = data_to_sort._isel(mode_index=[mode_index])
@@ -729,7 +771,6 @@ class ModeSolverData(ModeSolverDataset, ElectromagneticFieldData):
         # Create new dict with rearranged field components
         update_dict = {}
         for field_name, field in self.field_components.items():
-
             field_sorted = field.copy()
 
             # Rearrange modes
@@ -739,7 +780,9 @@ class ModeSolverData(ModeSolverDataset, ElectromagneticFieldData):
                 ]
 
             # Apply phase shift
-            field_sorted.data = field_sorted.data * np.exp(-1j * phase[None, None, None, :, :])
+            field_sorted.data = field_sorted.data * np.exp(
+                -1j * phase[None, None, None, :, :]
+            )
 
             update_dict[field_name] = field_sorted
 
@@ -804,7 +847,9 @@ class ModeData(MonitorData):
     monitor: ModeMonitor
 
     amps: ModeAmpsDataArray = pd.Field(
-        ..., title="Amplitudes", description="Complex-valued amplitudes associated with the mode."
+        ...,
+        title="Amplitudes",
+        description="Complex-valued amplitudes associated with the mode.",
     )
 
     n_complex: ModeIndexDataArray = pd.Field(
@@ -991,7 +1036,9 @@ class AbstractFieldProjectionData(MonitorData):
         """Make an xr.DataArray with data and same coords and dims as fields of self."""
         return xr.DataArray(data=data, coords=self.coords, dims=self.dims)
 
-    def make_dataset(self, keys: Tuple[str, ...], vals: Tuple[np.ndarray, ...]) -> xr.Dataset:
+    def make_dataset(
+        self, keys: Tuple[str, ...], vals: Tuple[np.ndarray, ...]
+    ) -> xr.Dataset:
         """Make an xr.Dataset with keys and data with same coords and dims as fields."""
         data_arrays = tuple(map(self.make_data_array, vals))
         return xr.Dataset(dict(zip(keys, data_arrays)))
@@ -1365,7 +1412,9 @@ class FieldProjectionCartesianData(AbstractFieldProjectionData):
         old_phase = self.propagation_phase(dist=r, k=k)
 
         # update the field components' projection distance
-        norm_dir, _ = self.monitor.pop_axis(["x", "y", "z"], axis=self.monitor.proj_axis)
+        norm_dir, _ = self.monitor.pop_axis(
+            ["x", "y", "z"], axis=self.monitor.proj_axis
+        )
         for field in self.field_components.values():
             field[norm_dir] = np.atleast_1d(proj_distance)
 
@@ -1586,16 +1635,20 @@ class DiffractionData(AbstractFieldProjectionData):
 
     @staticmethod
     def compute_angles(
-        reciprocal_vectors: Tuple[np.ndarray, np.ndarray]
+        reciprocal_vectors: Tuple[np.ndarray, np.ndarray],
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Compute the polar and azimuth angles associated with the given reciprocal vectors."""
         # some wave number pairs are outside the light cone, leading to warnings from numpy.arcsin
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                "ignore", message="invalid value encountered in arcsin", category=RuntimeWarning
+                "ignore",
+                message="invalid value encountered in arcsin",
+                category=RuntimeWarning,
             )
             ux, uy = reciprocal_vectors
-            thetas, phis = DiffractionMonitor.kspace_2_sph(ux[:, None, :], uy[None, :, :], axis=2)
+            thetas, phis = DiffractionMonitor.kspace_2_sph(
+                ux[:, None, :], uy[None, :, :], axis=2
+            )
         return (thetas, phis)
 
     @property
@@ -1729,11 +1782,15 @@ class DiffractionData(AbstractFieldProjectionData):
         keys = ["Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]
         return self._make_dataset(fields, keys)
 
-    def _make_dataset(self, fields: Tuple[np.ndarray, ...], keys: Tuple[str, ...]) -> xr.Dataset:
+    def _make_dataset(
+        self, fields: Tuple[np.ndarray, ...], keys: Tuple[str, ...]
+    ) -> xr.Dataset:
         """Make an xr.Dataset for fields with given field names."""
         data_arrays = []
         for field in fields:
-            data_arrays.append(xr.DataArray(data=field, coords=self.coords, dims=self.dims))
+            data_arrays.append(
+                xr.DataArray(data=field, coords=self.coords, dims=self.dims)
+            )
         return xr.Dataset(dict(zip(keys, data_arrays)))
 
 

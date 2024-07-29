@@ -1,4 +1,5 @@
-""" Defines classes specifying meshing in 1D and a collective class for 3D """
+"""Defines classes specifying meshing in 1D and a collective class for 3D"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -19,7 +20,6 @@ from ...constants import C_0, MICROMETER
 
 
 class GridSpec1d(Tidy3dBaseModel, ABC):
-
     """Abstract base class, defines 1D grid generation specifications."""
 
     def make_coords(  # pylint:disable = too-many-arguments
@@ -132,7 +132,6 @@ class GridSpec1d(Tidy3dBaseModel, ABC):
 
 
 class UniformGrid(GridSpec1d):
-
     """Uniform 1D grid.
 
     Example
@@ -170,7 +169,10 @@ class UniformGrid(GridSpec1d):
             1D coords to be used as grid boundaries.
         """
 
-        center, size = structures[0].geometry.center[axis], structures[0].geometry.size[axis]
+        center, size = (
+            structures[0].geometry.center[axis],
+            structures[0].geometry.size[axis],
+        )
 
         # Take a number of steps commensurate with the size; make dl a bit smaller if needed
         num_cells = int(np.ceil(size / self.dl))
@@ -185,7 +187,6 @@ class UniformGrid(GridSpec1d):
 
 
 class CustomGrid(GridSpec1d):
-
     """Custom 1D grid supplied as a list of grid cell sizes centered on the simulation center.
 
     Example
@@ -227,7 +228,10 @@ class CustomGrid(GridSpec1d):
             1D coords to be used as grid boundaries.
         """
 
-        center, size = structures[0].geometry.center[axis], structures[0].geometry.size[axis]
+        center, size = (
+            structures[0].geometry.center[axis],
+            structures[0].geometry.size[axis],
+        )
 
         # get bounding coordinates
         dl = np.array(self.dl)
@@ -378,7 +382,6 @@ GridType = Union[UniformGrid, CustomGrid, AutoGrid]
 
 
 class GridSpec(Tidy3dBaseModel):
-
     """Collective grid specification for all three dimensions.
 
     Example
@@ -507,13 +510,17 @@ class GridSpec(Tidy3dBaseModel):
         wavelength = self.wavelength
         if wavelength is None and self.auto_grid_used:
             wavelength = self.wavelength_from_sources(sources)
-            log.info(f"Auto meshing using wavelength {wavelength:1.4f} defined from sources.")
+            log.info(
+                f"Auto meshing using wavelength {wavelength:1.4f} defined from sources."
+            )
 
         # Warn user if ``GridType`` along some axis is not ``AutoGrid`` and
         # ``override_structures`` is not empty. The override structures
         # are not effective along those axes.
         for axis_ind, override_used_axis, grid_axis in zip(
-            ["x", "y", "z"], self.override_structures_used, [self.grid_x, self.grid_y, self.grid_z]
+            ["x", "y", "z"],
+            self.override_structures_used,
+            [self.grid_x, self.grid_y, self.grid_z],
         ):
             if override_used_axis and not isinstance(grid_axis, AutoGrid):
                 log.warning(

@@ -1,4 +1,5 @@
 """Test near field to far field transformations."""
+
 import numpy as np
 import tidy3d as td
 import pytest
@@ -111,7 +112,9 @@ def test_proj_monitors():
     fwidth = F0 / 10.0
     offset = 4.0
     gaussian = td.GaussianPulse(freq0=F0, fwidth=fwidth, offset=offset)
-    source = td.PointDipole(center=dipole_center, source_time=gaussian, polarization="Ez")
+    source = td.PointDipole(
+        center=dipole_center, source_time=gaussian, polarization="Ez"
+    )
     run_time = 40 / fwidth
     freqs = [(0.9 * F0), F0, (1.1 * F0)]
 
@@ -149,7 +152,12 @@ def test_proj_data():
     values_tp = (1 + 1j) * np.random.random((len(r), len(theta), len(phi), len(f)))
     scalar_field_tp = td.FieldProjectionAngleDataArray(values_tp, coords=coords_tp)
     monitor_tp = td.FieldProjectionAngleMonitor(
-        center=(1, 2, 3), size=(2, 2, 2), freqs=f, name="n2f_monitor_tp", phi=phi, theta=theta
+        center=(1, 2, 3),
+        size=(2, 2, 2),
+        freqs=f,
+        name="n2f_monitor_tp",
+        phi=phi,
+        theta=theta,
     )
     data_tp = td.FieldProjectionAngleData(
         monitor=monitor_tp,
@@ -196,7 +204,13 @@ def test_proj_data():
     values_u = (1 + 1j) * np.random.random((len(ux), len(uy), len(r), len(f)))
     scalar_field_u = td.FieldProjectionKSpaceDataArray(values_u, coords=coords_u)
     monitor_u = td.FieldProjectionKSpaceMonitor(
-        center=(1, 2, 3), size=(2, 2, 2), freqs=f, name="n2f_monitor_u", ux=ux, uy=uy, proj_axis=2
+        center=(1, 2, 3),
+        size=(2, 2, 2),
+        freqs=f,
+        name="n2f_monitor_u",
+        ux=ux,
+        uy=uy,
+        proj_axis=2,
     )
     data_u = td.FieldProjectionKSpaceData(
         monitor=monitor_u,
@@ -294,8 +308,8 @@ def test_proj_clientside():
     )
 
     # make near-to-far monitors
-    n2f_angle_monitor, n2f_cart_monitor, n2f_ksp_monitor, exact_cart_monitor = make_proj_monitors(
-        center, size, [f0]
+    n2f_angle_monitor, n2f_cart_monitor, n2f_ksp_monitor, exact_cart_monitor = (
+        make_proj_monitors(center, size, [f0])
     )
 
     far_fields_angular = proj.project_fields(n2f_angle_monitor)

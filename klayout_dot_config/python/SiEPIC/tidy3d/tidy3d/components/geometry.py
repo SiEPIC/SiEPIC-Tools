@@ -1,5 +1,6 @@
 # pylint:disable=too-many-lines, too-many-arguments
 """Defines spatial extent of objects."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -9,7 +10,8 @@ import functools
 
 import pydantic
 import numpy as np
-#from matplotlib import patches
+
+# from matplotlib import patches
 patches = None
 from shapely.geometry import Point, Polygon, box, MultiPolygon
 from shapely.validation import make_valid
@@ -29,6 +31,7 @@ _N_SAMPLE_POLYGON_INTERSECT = 5
 # for sampling conical frustum in visualization
 _N_SAMPLE_CURVE_SHAPELY = 40
 _IS_CLOSE_RTOL = np.finfo(float).eps
+
 
 # pylint:disable=too-many-public-methods
 class Geometry(Tidy3dBaseModel, ABC):
@@ -80,7 +83,9 @@ class Geometry(Tidy3dBaseModel, ABC):
         """Ensure all input arrays have the same shape."""
         shapes = set(np.array(arr).shape for arr in arrays)
         if len(shapes) > 1:
-            raise ValueError("All coordinate inputs (x, y, z) must have the same shape.")
+            raise ValueError(
+                "All coordinate inputs (x, y, z) must have the same shape."
+            )
 
     def _inds_inside_bounds(
         self, x: np.ndarray[float], y: np.ndarray[float], z: np.ndarray[float]
@@ -104,8 +109,12 @@ class Geometry(Tidy3dBaseModel, ABC):
         bounds = self.bounds
         inds_in = []
         for dim, coords in enumerate([x, y, z]):
-            inds = np.nonzero((bounds[0][dim] <= coords) * (coords <= bounds[1][dim]))[0]
-            inds_in.append(slice(0, 0) if inds.size == 0 else slice(inds[0], inds[-1] + 1))
+            inds = np.nonzero((bounds[0][dim] <= coords) * (coords <= bounds[1][dim]))[
+                0
+            ]
+            inds_in.append(
+                slice(0, 0) if inds.size == 0 else slice(inds[0], inds[-1] + 1)
+            )
 
         return tuple(inds_in)
 
@@ -142,7 +151,9 @@ class Geometry(Tidy3dBaseModel, ABC):
         is_inside[inds_inside] = self.inside(*coords_3d)
         return is_inside
 
-    def intersections(self, x: float = None, y: float = None, z: float = None) -> List[Shapely]:
+    def intersections(
+        self, x: float = None, y: float = None, z: float = None
+    ) -> List[Shapely]:
         """Returns list of shapely geoemtries at plane specified by one non-None value of x,y,z.
         TODO: remove for 2.0
 
@@ -220,8 +231,12 @@ class Geometry(Tidy3dBaseModel, ABC):
         shapes_plane = self.intersections_plane(**xyz_kwargs)
 
         # intersect all shapes with the input plane
-        bs_min, bs_max = [plane.pop_axis(bounds, axis=normal_ind)[1] for bounds in plane.bounds]
-        shapely_box = box(minx=bs_min[0], miny=bs_min[0], maxx=bs_max[1], maxy=bs_max[1])
+        bs_min, bs_max = [
+            plane.pop_axis(bounds, axis=normal_ind)[1] for bounds in plane.bounds
+        ]
+        shapely_box = box(
+            minx=bs_min[0], miny=bs_min[0], maxx=bs_max[1], maxy=bs_max[1]
+        )
         shapely_box = plane.evaluate_inf_shape(shapely_box)
         return [plane.evaluate_inf_shape(shape) & shapely_box for shape in shapes_plane]
 
@@ -251,7 +266,9 @@ class Geometry(Tidy3dBaseModel, ABC):
         # for intersection of bounds, both must be true
         return in_minus and in_plus
 
-    def intersects_plane(self, x: float = None, y: float = None, z: float = None) -> bool:
+    def intersects_plane(
+        self, x: float = None, y: float = None, z: float = None
+    ) -> bool:
         """Whether self intersects plane specified by one non-None value of x,y,z.
 
         Parameters
@@ -320,7 +337,9 @@ class Geometry(Tidy3dBaseModel, ABC):
         """
         return Box.from_bounds(*self.bounds)
 
-    def _pop_bounds(self, axis: Axis) -> Tuple[Coordinate2D, Tuple[Coordinate2D, Coordinate2D]]:
+    def _pop_bounds(
+        self, axis: Axis
+    ) -> Tuple[Coordinate2D, Tuple[Coordinate2D, Coordinate2D]]:
         """Returns min and max bounds in plane normal to and tangential to ``axis``.
 
         Parameters
@@ -358,7 +377,12 @@ class Geometry(Tidy3dBaseModel, ABC):
     @equal_aspect
     @add_ax_if_none
     def plot(
-        self, x: float = None, y: float = None, z: float = None, ax: Ax = None, **patch_kwargs
+        self,
+        x: float = None,
+        y: float = None,
+        z: float = None,
+        ax: Ax = None,
+        **patch_kwargs,
     ) -> Ax:
         """Plot geometry cross section at single (x,y,z) coordinate.
 
@@ -528,7 +552,9 @@ class Geometry(Tidy3dBaseModel, ABC):
         (xmin, xmax), (ymin, ymax) = self._get_plot_limits(axis=axis, buffer=buffer)
 
         # note: axes limits dont like inf values, so we need to evaluate them first if present
-        xmin, xmax, ymin, ymax = (self._evaluate_inf(v) for v in (xmin, xmax, ymin, ymax))
+        xmin, xmax, ymin, ymax = (
+            self._evaluate_inf(v) for v in (xmin, xmax, ymin, ymax)
+        )
 
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
@@ -545,7 +571,11 @@ class Geometry(Tidy3dBaseModel, ABC):
     def evaluate_inf_shape(cls, shape: Shapely) -> Shapely:
         """Returns a copy of shape with inf vertices replaced by large numbers if polygon."""
 
-        return cls.map_to_coords(cls._evaluate_inf, shape) if isinstance(shape, Polygon) else shape
+        return (
+            cls.map_to_coords(cls._evaluate_inf, shape)
+            if isinstance(shape, Polygon)
+            else shape
+        )
 
     @staticmethod
     def pop_axis(coord: Tuple[Any, Any, Any], axis: int) -> Tuple[Any, Tuple[Any, Any]]:
@@ -570,7 +600,9 @@ class Geometry(Tidy3dBaseModel, ABC):
         return axis_val, tuple(plane_vals)
 
     @staticmethod
-    def unpop_axis(ax_coord: Any, plane_coords: Tuple[Any, Any], axis: int) -> Tuple[Any, Any, Any]:
+    def unpop_axis(
+        ax_coord: Any, plane_coords: Tuple[Any, Any], axis: int
+    ) -> Tuple[Any, Any, Any]:
         """Combine coordinate along axis with coordinates on the plane tangent to the axis.
 
         Parameters
@@ -820,8 +852,12 @@ class Geometry(Tidy3dBaseModel, ABC):
         cos_theta = np.cos(theta)
         sin_phi = np.sin(phi)
         cos_phi = np.cos(phi)
-        f_x = f_r * sin_theta * cos_phi + f_theta * cos_theta * cos_phi - f_phi * sin_phi
-        f_y = f_r * sin_theta * sin_phi + f_theta * cos_theta * sin_phi + f_phi * cos_phi
+        f_x = (
+            f_r * sin_theta * cos_phi + f_theta * cos_theta * cos_phi - f_phi * sin_phi
+        )
+        f_y = (
+            f_r * sin_theta * sin_phi + f_theta * cos_theta * sin_phi + f_phi * cos_phi
+        )
         f_z = f_r * cos_theta - f_theta * sin_theta
         return f_x, f_y, f_z
 
@@ -855,7 +891,9 @@ class Geometry(Tidy3dBaseModel, ABC):
         sin_phi = np.sin(phi)
         cos_phi = np.cos(phi)
         f_r = f_x * sin_theta * cos_phi + f_y * sin_theta * sin_phi + f_z * cos_theta
-        f_theta = f_x * cos_theta * cos_phi + f_y * cos_theta * sin_phi - f_z * sin_theta
+        f_theta = (
+            f_x * cos_theta * cos_phi + f_y * cos_theta * sin_phi - f_z * sin_theta
+        )
         f_phi = -f_x * sin_phi + f_y * cos_phi
         return f_r, f_theta, f_phi
 
@@ -921,7 +959,9 @@ class Planar(Geometry, ABC):
     """Geometry with one ``axis`` that is slab-like with thickness ``height``."""
 
     axis: Axis = pydantic.Field(
-        2, title="Axis", description="Specifies dimension of the planar axis (0,1,2) -> (x,y,z)."
+        2,
+        title="Axis",
+        description="Specifies dimension of the planar axis (0,1,2) -> (x,y,z).",
     )
 
     sidewall_angle: float = pydantic.Field(
@@ -1053,7 +1093,9 @@ class Planar(Geometry, ABC):
         axis_index.insert(self.axis, 2)
         return axis_index[axis]
 
-    def _order_by_axis(self, plane_val: Any, axis_val: Any, axis: int) -> Tuple[Any, Any]:
+    def _order_by_axis(
+        self, plane_val: Any, axis_val: Any, axis: int
+    ) -> Tuple[Any, Any]:
         """Orders a value in the plane and value along axis in correct (x,y) order for plotting.
            Note: sometimes if axis=1 and we compute cross section values orthogonal to axis,
            they can either be x or y in the plots.
@@ -1188,7 +1230,9 @@ class Box(Centered):
         >>> b = Box.from_bounds(rmin=(-1, -2, -3), rmax=(3, 2, 1))
         """
 
-        center = tuple(cls._get_center(pt_min, pt_max) for pt_min, pt_max in zip(rmin, rmax))
+        center = tuple(
+            cls._get_center(pt_min, pt_max) for pt_min, pt_max in zip(rmin, rmax)
+        )
         size = tuple((pt_max - pt_min) for pt_min, pt_max in zip(rmin, rmax))
         return cls(center=center, size=size, **kwargs)
 
@@ -1227,7 +1271,6 @@ class Box(Centered):
         surface_index = 0
         for dim_index in range(3):
             for min_max_index in range(2):
-
                 new_center = centers[surface_index]
                 new_size = sizes[surface_index]
 
@@ -1276,7 +1319,6 @@ class Box(Centered):
 
         surfaces = []
         for _cent, _size, _name, _normal_dir in zip(centers, sizes, names, normal_dirs):
-
             if "normal_dir" in cls.__dict__["__fields__"]:
                 kwargs["normal_dir"] = _normal_dir
 
@@ -1315,7 +1357,9 @@ class Box(Centered):
         dz = np.abs(z0 - position)
         if dz > Lz / 2 + fp_eps:
             return []
-        return [box(minx=x0 - Lx / 2, miny=y0 - Ly / 2, maxx=x0 + Lx / 2, maxy=y0 + Ly / 2)]
+        return [
+            box(minx=x0 - Lx / 2, miny=y0 - Ly / 2, maxx=x0 + Lx / 2, maxy=y0 + Ly / 2)
+        ]
 
     def inside(
         self, x: np.ndarray[float], y: np.ndarray[float], z: np.ndarray[float]
@@ -1424,7 +1468,9 @@ class Box(Centered):
 
         # conditions to check to determine whether to plot arrow
         arrow_intersecting_plane = len(self.intersections_plane(x=x, y=y, z=z)) > 0
-        components_in_plane = any(not np.isclose(component, 0) for component in (dx, dy))
+        components_in_plane = any(
+            not np.isclose(component, 0) for component in (dx, dy)
+        )
 
         # plot if arrow in plotting plane and some non-zero component can be displayed.
         if arrow_intersecting_plane and components_in_plane:
@@ -1452,7 +1498,11 @@ class Box(Centered):
                 arrow.set_visible(False)
 
                 callback = self._arrow_shape_cb(
-                    arrow, (x0, y0), (dx, dy), sign, bend_radius if bend_axis == plot_axis else None
+                    arrow,
+                    (x0, y0),
+                    (dx, dy),
+                    sign,
+                    bend_radius if bend_axis == plot_axis else None,
                 )
                 callback_id = ax.figure.canvas.mpl_connect("draw_event", callback)
 
@@ -1624,7 +1674,10 @@ class Sphere(Centered, Circular):
 
         # a very loose upper bound on how much of sphere is in bounds
         for axis in range(3):
-            if self.center[axis] <= bounds[0][axis] or self.center[axis] >= bounds[1][axis]:
+            if (
+                self.center[axis] <= bounds[0][axis]
+                or self.center[axis] >= bounds[1][axis]
+            ):
                 volume *= 0.5
 
         return volume
@@ -1636,7 +1689,10 @@ class Sphere(Centered, Circular):
 
         # a very loose upper bound on how much of sphere is in bounds
         for axis in range(3):
-            if self.center[axis] <= bounds[0][axis] or self.center[axis] >= bounds[1][axis]:
+            if (
+                self.center[axis] <= bounds[0][axis]
+                or self.center[axis] >= bounds[1][axis]
+            ):
                 area *= 0.5
 
         return area
@@ -1731,30 +1787,44 @@ class Cylinder(Centered, Circular, Planar):
         # the vertices on the max side of top/bottom
         # The two vertices are present in all scenarios.
         vertices_max = [
-            self._local_to_global_side_cross_section([-intersect_half_length_max, 0], axis),
-            self._local_to_global_side_cross_section([intersect_half_length_max, 0], axis),
+            self._local_to_global_side_cross_section(
+                [-intersect_half_length_max, 0], axis
+            ),
+            self._local_to_global_side_cross_section(
+                [intersect_half_length_max, 0], axis
+            ),
         ]
 
         # Extending to a cone, the maximal height of the cone
         h_cone = (
-            LARGE_NUMBER if isclose(self.sidewall_angle, 0) else self.radius_max / abs(self._tanq)
+            LARGE_NUMBER
+            if isclose(self.sidewall_angle, 0)
+            else self.radius_max / abs(self._tanq)
         )
         # The maximal height of the cross section
-        height_max = min((1 - abs(position_local) / self.radius_max) * h_cone, self.length_axis)
+        height_max = min(
+            (1 - abs(position_local) / self.radius_max) * h_cone, self.length_axis
+        )
 
         # more vertices to add for conical frustum shape
         vertices_frustum_right = []
         vertices_frustum_left = []
-        if not (isclose(position, self.center[axis]) or isclose(self.sidewall_angle, 0)):
+        if not (
+            isclose(position, self.center[axis]) or isclose(self.sidewall_angle, 0)
+        ):
             # The y-coordinate for the additional vertices
             y_list = height_max * np.linspace(0, 1, _N_SAMPLE_CURVE_SHAPELY)
             # `abs()` to make sure np.sqrt(0-fp_eps) goes through
             x_list = np.sqrt(
-                np.abs(self.radius_max**2 * (1 - y_list / h_cone) ** 2 - position_local**2)
+                np.abs(
+                    self.radius_max**2 * (1 - y_list / h_cone) ** 2 - position_local**2
+                )
             )
             for i in range(_N_SAMPLE_CURVE_SHAPELY):
                 vertices_frustum_right.append(
-                    self._local_to_global_side_cross_section([x_list[i], y_list[i]], axis)
+                    self._local_to_global_side_cross_section(
+                        [x_list[i], y_list[i]], axis
+                    )
                 )
                 vertices_frustum_left.append(
                     self._local_to_global_side_cross_section(
@@ -1783,10 +1853,17 @@ class Cylinder(Centered, Circular, Planar):
             )
         ## early termination
         else:
-            vertices_min.append(self._local_to_global_side_cross_section([0, height_max], axis))
+            vertices_min.append(
+                self._local_to_global_side_cross_section([0, height_max], axis)
+            )
 
         return [
-            Polygon(vertices_max + vertices_frustum_right + vertices_min + vertices_frustum_left)
+            Polygon(
+                vertices_max
+                + vertices_frustum_right
+                + vertices_min
+                + vertices_frustum_left
+            )
         ]
 
     def inside(
@@ -1852,7 +1929,10 @@ class Cylinder(Centered, Circular, Planar):
         # a very loose upper bound on how much of the cylinder is in bounds
         for axis in range(3):
             if axis != self.axis:
-                if self.center[axis] <= bounds[0][axis] or self.center[axis] >= bounds[1][axis]:
+                if (
+                    self.center[axis] <= bounds[0][axis]
+                    or self.center[axis] >= bounds[1][axis]
+                ):
                     volume *= 0.5
 
         return volume
@@ -1882,7 +1962,10 @@ class Cylinder(Centered, Circular, Planar):
         # a very loose upper bound on how much of the cylinder is in bounds
         for axis in range(3):
             if axis != self.axis:
-                if self.center[axis] <= bounds[0][axis] or self.center[axis] >= bounds[1][axis]:
+                if (
+                    self.center[axis] <= bounds[0][axis]
+                    or self.center[axis] >= bounds[1][axis]
+                ):
                     area *= 0.5
 
         return area
@@ -1919,7 +2002,9 @@ class Cylinder(Centered, Circular, Planar):
         )
         return radius_base - (z - self.center_axis + self.length_axis / 2) * self._tanq
 
-    def _local_to_global_side_cross_section(self, coords: List[float], axis: int) -> List[float]:
+    def _local_to_global_side_cross_section(
+        self, coords: List[float], axis: int
+    ) -> List[float]:
         """Map a point (x,y) from local to global coordinate system in the
         side cross section.
 
@@ -2118,7 +2203,9 @@ class PolySlab(Planar):
         # capture vertex crossing events
         max_thick = []
         for dist_val in dist:
-            max_dist = PolySlab._neighbor_vertices_crossing_detection(poly_ref, dist_val)
+            max_dist = PolySlab._neighbor_vertices_crossing_detection(
+                poly_ref, dist_val
+            )
 
             if max_dist is not None:
                 max_thick.append(max_dist / abs(dist_val) * length)
@@ -2276,17 +2363,24 @@ class PolySlab(Planar):
             )
 
         all_vertices = gds_loader_fn(
-            gds_cell=gds_cell, gds_layer=gds_layer, gds_dtype=gds_dtype, gds_scale=gds_scale
+            gds_cell=gds_cell,
+            gds_layer=gds_layer,
+            gds_dtype=gds_dtype,
+            gds_scale=gds_scale,
         )
 
         # convert vertices into polyslabs
         polygons = (Polygon(vertices) for vertices in all_vertices)
-        polys_union = functools.reduce(lambda poly1, poly2: poly1.union(poly2), polygons)
+        polys_union = functools.reduce(
+            lambda poly1, poly2: poly1.union(poly2), polygons
+        )
 
         if isinstance(polys_union, Polygon):
             all_vertices = [PolySlab.strip_coords(polys_union)[0]]
         elif isinstance(polys_union, MultiPolygon):
-            all_vertices = [PolySlab.strip_coords(polygon)[0] for polygon in polys_union.geoms]
+            all_vertices = [
+                PolySlab.strip_coords(polygon)[0] for polygon in polys_union.geoms
+            ]
         return all_vertices
 
     @staticmethod
@@ -2324,7 +2418,9 @@ class PolySlab(Planar):
             # performance on large layouts
             all_vertices = [
                 polygon.scale(gds_scale).points
-                for polygon in gds_cell.get_polygons(layer=gds_layer, datatype=gds_dtype)
+                for polygon in gds_cell.get_polygons(
+                    layer=gds_layer, datatype=gds_dtype
+                )
             ]
         else:
             all_vertices = [
@@ -2375,7 +2471,9 @@ class PolySlab(Planar):
         vert_dict = gds_cell.get_polygons(by_spec=True)
         all_vertices = []
         for (gds_layer_file, gds_dtype_file), vertices in vert_dict.items():
-            if gds_layer_file == gds_layer and (gds_dtype is None or gds_dtype == gds_dtype_file):
+            if gds_layer_file == gds_layer and (
+                gds_dtype is None or gds_dtype == gds_dtype_file
+            ):
                 all_vertices.extend(iter(vertices))
         # make sure something got loaded, otherwise error
         if not all_vertices:
@@ -2535,7 +2633,9 @@ class PolySlab(Planar):
                         (x_axis[:, :, 0].flatten(), y_axis[:, :, 0].flatten()), axis=1
                     )
                     inside_polygon_slab = contains_vectorized(points_stacked)
-                    inside_polygon_axis[:, :, z_i] = inside_polygon_slab.reshape(x_axis.shape[:2])
+                    inside_polygon_axis[:, :, z_i] = inside_polygon_slab.reshape(
+                        x_axis.shape[:2]
+                    )
                 inside_polygon = _move_axis_reverse(inside_polygon_axis)
         else:
             vertices_z = self._shift_vertices(self.middle_polygon, dist)[0]
@@ -2636,8 +2736,12 @@ class PolySlab(Planar):
             for y_index in range(len(ints_y) // 2):
                 y_min = ints_y[2 * y_index]
                 y_max = ints_y[2 * y_index + 1]
-                minx, miny = self._order_by_axis(plane_val=y_min, axis_val=z_min, axis=axis)
-                maxx, maxy = self._order_by_axis(plane_val=y_max, axis_val=z_max, axis=axis)
+                minx, miny = self._order_by_axis(
+                    plane_val=y_min, axis_val=z_min, axis=axis
+                )
+                maxx, maxy = self._order_by_axis(
+                    plane_val=y_max, axis_val=z_max, axis=axis
+                )
 
                 if isclose(self.sidewall_angle, 0):
                     polys.append(box(minx=minx, miny=miny, maxx=maxx, maxy=maxy))
@@ -2645,14 +2749,22 @@ class PolySlab(Planar):
                     angle_min = ints_angle[2 * y_index]
                     angle_max = ints_angle[2 * y_index + 1]
 
-                    angle_min = np.arctan(np.tan(self.sidewall_angle) / np.sin(angle_min))
-                    angle_max = np.arctan(np.tan(self.sidewall_angle) / np.sin(angle_max))
+                    angle_min = np.arctan(
+                        np.tan(self.sidewall_angle) / np.sin(angle_min)
+                    )
+                    angle_max = np.arctan(
+                        np.tan(self.sidewall_angle) / np.sin(angle_max)
+                    )
 
                     dy_min = h_length * np.tan(angle_min)
                     dy_max = h_length * np.tan(angle_max)
 
-                    x1, y1 = self._order_by_axis(plane_val=y_min, axis_val=z_min, axis=axis)
-                    x2, y2 = self._order_by_axis(plane_val=y_max, axis_val=z_min, axis=axis)
+                    x1, y1 = self._order_by_axis(
+                        plane_val=y_min, axis_val=z_min, axis=axis
+                    )
+                    x2, y2 = self._order_by_axis(
+                        plane_val=y_max, axis_val=z_min, axis=axis
+                    )
                     x3, y3 = self._order_by_axis(
                         plane_val=y_max - dy_max, axis_val=z_max, axis=axis
                     )
@@ -2689,7 +2801,9 @@ class PolySlab(Planar):
         dist = 1.0
         shift_x, shift_y = PolySlab._shift_vertices(self.middle_polygon, dist)[2]
         shift_val = shift_x if axis == 0 else shift_y
-        shift_val[np.isclose(shift_val, 0, rtol=_IS_CLOSE_RTOL)] = np.inf  # for static vertices
+        shift_val[np.isclose(shift_val, 0, rtol=_IS_CLOSE_RTOL)] = (
+            np.inf
+        )  # for static vertices
 
         # distance to the plane in the direction of vertex shifting
         distance = self.middle_polygon[:, axis] - position
@@ -2704,7 +2818,11 @@ class PolySlab(Planar):
         return height
 
     def _find_intersecting_ys_angle_vertical(  # pylint:disable=too-many-locals
-        self, vertices: np.ndarray, position: float, axis: int, exclude_on_vertices: bool = False
+        self,
+        vertices: np.ndarray,
+        position: float,
+        axis: int,
+        exclude_on_vertices: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Finds pairs of forward and backwards vertices where polygon intersects position at axis,
         Find intersection point (in y) assuming straight line,and intersecting angle between plane
@@ -2754,7 +2872,9 @@ class PolySlab(Planar):
         if exclude_on_vertices:
             intersects_on = np.isclose(x_vertices_axis, position, rtol=_IS_CLOSE_RTOL)
             intersects_f_on = np.isclose(x_vertices_f, position, rtol=_IS_CLOSE_RTOL)
-            intersects_both_off = np.logical_not(np.logical_or(intersects_on, intersects_f_on))
+            intersects_both_off = np.logical_not(
+                np.logical_or(intersects_on, intersects_f_on)
+            )
             intersects_f &= intersects_both_off
             intersects_b &= intersects_both_off
         intersects_segment = np.logical_or(intersects_b, intersects_f)
@@ -3060,7 +3180,9 @@ class PolySlab(Planar):
                 return True
 
             # 2) reduction in vertex number
-            offset_vertices = PolySlab._proper_vertices(list(poly_offset.exterior.coords))
+            offset_vertices = PolySlab._proper_vertices(
+                list(poly_offset.exterior.coords)
+            )
             if offset_vertices.shape[0] != num_vertices:
                 return True
 
@@ -3069,7 +3191,10 @@ class PolySlab(Planar):
             poly_offset_back = make_valid(
                 Polygon(PolySlab._shift_vertices(offset_vertices, -dist)[0])
             )
-            if isinstance(poly_offset_back, MultiPolygon) or len(poly_offset_back.interiors) > 0:
+            if (
+                isinstance(poly_offset_back, MultiPolygon)
+                or len(poly_offset_back.interiors) > 0
+            ):
                 return True
             offset_back_vertices = list(poly_offset_back.exterior.coords)
             if PolySlab._proper_vertices(offset_back_vertices).shape[0] != num_vertices:
@@ -3176,7 +3301,8 @@ class PolySlab(Planar):
         tan_half_angle = np.where(
             np.isclose(det, 0, rtol=_IS_CLOSE_RTOL),
             0.0,
-            cross(asm, rot90(asm - asp)) / (det + np.isclose(det, 0, rtol=_IS_CLOSE_RTOL)),
+            cross(asm, rot90(asm - asp))
+            / (det + np.isclose(det, 0, rtol=_IS_CLOSE_RTOL)),
         )
         parallel_shift = dist * tan_half_angle
 
@@ -3184,10 +3310,16 @@ class PolySlab(Planar):
         shift_x = shift_total[0, :]
         shift_y = shift_total[1, :]
 
-        return np.swapaxes(vs_orig + shift_total, -2, -1), parallel_shift, (shift_x, shift_y)
+        return (
+            np.swapaxes(vs_orig + shift_total, -2, -1),
+            parallel_shift,
+            (shift_x, shift_y),
+        )
 
     @staticmethod
-    def _edge_length_and_reduction_rate(vertices: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _edge_length_and_reduction_rate(
+        vertices: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Edge length of reduction rate of each edge with unit offset length.
 
         Parameters
@@ -3246,7 +3378,9 @@ class PolySlab(Planar):
         base_area = abs(self._area(self.base_polygon))
 
         # https://mathworld.wolfram.com/PyramidalFrustum.html
-        return 1.0 / 3.0 * length * (top_area + base_area + np.sqrt(top_area * base_area))
+        return (
+            1.0 / 3.0 * length * (top_area + base_area + np.sqrt(top_area * base_area))
+        )
 
     def _surface_area(self, bounds: Bound) -> float:
         """Returns object's surface area given bounds."""
@@ -3372,7 +3506,9 @@ class GeometryGroup(Geometry):
             Whether this geometry intersects the plane.
         """
 
-        return any(geom.intersects_axis_position(axis, position) for geom in self.geometries)
+        return any(
+            geom.intersects_axis_position(axis, position) for geom in self.geometries
+        )
 
     def inside(
         self, x: np.ndarray[float], y: np.ndarray[float], z: np.ndarray[float]
@@ -3435,7 +3571,9 @@ class GeometryGroup(Geometry):
     def _surface_area(self, bounds: Bound) -> float:
         """Returns object's surface area given bounds."""
 
-        individual_areas = (geometry.surface_area(bounds) for geometry in self.geometries)
+        individual_areas = (
+            geometry.surface_area(bounds) for geometry in self.geometries
+        )
 
         return np.sum(individual_areas)
 

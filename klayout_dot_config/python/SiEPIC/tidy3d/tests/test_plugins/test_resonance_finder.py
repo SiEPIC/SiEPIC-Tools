@@ -99,7 +99,9 @@ def test_scalar_field_time():
     t = np.arange(NTIME) / time_step
     signal = generate_signal(freqs, decays, amplitudes, phases, time_step)
     coords = dict(x=[0], y=[0], z=[0], t=t)
-    fd = ScalarFieldTimeDataArray(np.reshape(signal, (1, 1, 1, len(signal))), coords=coords)
+    fd = ScalarFieldTimeDataArray(
+        np.reshape(signal, (1, 1, 1, len(signal))), coords=coords
+    )
     resonance_finder = ResonanceFinder(freq_window=(0.2, 0.5), init_num_freqs=100)
     resonances = resonance_finder.run_scalar_field_time(fd)
     check_resonances(freqs, decays, amplitudes, phases, resonances)
@@ -116,9 +118,15 @@ def test_field_time_single():
     t = np.arange(NTIME) / time_step
     signal = generate_signal(freqs, decays, amplitudes, phases, time_step)
     coords = dict(x=[0], y=[0], z=[0], t=t)
-    fd = ScalarFieldTimeDataArray(np.reshape(signal, (1, 1, 1, len(signal))), coords=coords)
-    fd2 = ScalarFieldTimeDataArray(np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords)
-    monitor = FieldTimeMonitor(size=(0, 0, 0), interval=1, name="field", fields=["Hx", "Hy"])
+    fd = ScalarFieldTimeDataArray(
+        np.reshape(signal, (1, 1, 1, len(signal))), coords=coords
+    )
+    fd2 = ScalarFieldTimeDataArray(
+        np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords
+    )
+    monitor = FieldTimeMonitor(
+        size=(0, 0, 0), interval=1, name="field", fields=["Hx", "Hy"]
+    )
     field = FieldTimeData(monitor=monitor, Hx=fd, Hy=fd2)
     resonance_finder = ResonanceFinder(freq_window=(0.2, 0.5), init_num_freqs=100)
     resonances = resonance_finder.run(field)
@@ -137,9 +145,15 @@ def test_field_time_mult():
     t = np.arange(NTIME) / time_step
     signal = generate_signal(freqs, decays, amplitudes, phases, time_step)
     coords = dict(x=[0], y=[0], z=[0], t=t)
-    fd = ScalarFieldTimeDataArray(np.reshape(signal, (1, 1, 1, len(signal))), coords=coords)
-    fd2 = ScalarFieldTimeDataArray(np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords)
-    monitor = FieldTimeMonitor(size=(0, 0, 0), interval=1, name="field", fields=["Hx", "Hy"])
+    fd = ScalarFieldTimeDataArray(
+        np.reshape(signal, (1, 1, 1, len(signal))), coords=coords
+    )
+    fd2 = ScalarFieldTimeDataArray(
+        np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords
+    )
+    monitor = FieldTimeMonitor(
+        size=(0, 0, 0), interval=1, name="field", fields=["Hx", "Hy"]
+    )
     field = FieldTimeData(monitor=monitor, Hx=fd, Hy=fd2)
     field2 = FieldTimeData(monitor=monitor, Hx=fd2, Hy=fd)
     resonance_finder = ResonanceFinder(freq_window=(0.2, 0.5), init_num_freqs=100)
@@ -159,9 +173,15 @@ def test_field_time_e_and_m():
     t = np.arange(NTIME) / time_step
     signal = generate_signal(freqs, decays, amplitudes, phases, time_step)
     coords = dict(x=[0], y=[0], z=[0], t=t)
-    fd = ScalarFieldTimeDataArray(np.reshape(signal, (1, 1, 1, len(signal))), coords=coords)
-    fd2 = ScalarFieldTimeDataArray(np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords)
-    monitor = FieldTimeMonitor(size=(0, 0, 0), interval=1, name="field", fields=["Ex", "Hy"])
+    fd = ScalarFieldTimeDataArray(
+        np.reshape(signal, (1, 1, 1, len(signal))), coords=coords
+    )
+    fd2 = ScalarFieldTimeDataArray(
+        np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords
+    )
+    monitor = FieldTimeMonitor(
+        size=(0, 0, 0), interval=1, name="field", fields=["Ex", "Hy"]
+    )
     field = FieldTimeData(monitor=monitor, Ex=fd, Hy=fd2)
     field2 = FieldTimeData(monitor=monitor, Ex=fd, Hy=fd2)
     resonance_finder = ResonanceFinder(freq_window=(0.2, 0.5), init_num_freqs=100)
@@ -181,8 +201,12 @@ def test_field_time_use_e_only():
     t = np.arange(NTIME) / time_step
     signal = generate_signal(freqs, decays, amplitudes, phases, time_step)
     coords = dict(x=[0], y=[0], z=[0], t=t)
-    fd = ScalarFieldTimeDataArray(np.reshape(signal, (1, 1, 1, len(signal))), coords=coords)
-    fd2 = ScalarFieldTimeDataArray(np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords)
+    fd = ScalarFieldTimeDataArray(
+        np.reshape(signal, (1, 1, 1, len(signal))), coords=coords
+    )
+    fd2 = ScalarFieldTimeDataArray(
+        np.reshape(signal * 2, (1, 1, 1, len(signal))), coords=coords
+    )
     monitor = FieldTimeMonitor(size=(0, 0, 0), interval=1, name="field", fields=["Hy"])
     monitor2 = FieldTimeMonitor(size=(0, 0, 0), interval=1, name="field", fields=["Ex"])
     field = FieldTimeData(monitor=monitor, Hy=fd2)

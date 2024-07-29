@@ -1,4 +1,5 @@
 """Tests GridSpec."""
+
 import pytest
 import numpy as np
 
@@ -23,7 +24,9 @@ def test_make_coords():
         axis=0,
         structures=[
             td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=td.Medium()),
-            td.Structure(geometry=td.Box(size=(2, 0.3, 1)), medium=td.Medium(permittivity=2)),
+            td.Structure(
+                geometry=td.Box(size=(2, 0.3, 1)), medium=td.Medium(permittivity=2)
+            ),
         ],
         symmetry=(1, 0, -1),
         wavelength=1.0,
@@ -37,7 +40,9 @@ def test_make_coords_2d():
         axis=1,
         structures=[
             td.Structure(geometry=td.Box(size=(1, 0, 1)), medium=td.Medium()),
-            td.Structure(geometry=td.Box(size=(2, 0, 1)), medium=td.Medium(permittivity=2)),
+            td.Structure(
+                geometry=td.Box(size=(2, 0, 1)), medium=td.Medium(permittivity=2)
+            ),
         ],
         symmetry=(1, 0, -1),
         wavelength=1.0,
@@ -46,14 +51,15 @@ def test_make_coords_2d():
 
 
 def test_wvl_from_sources():
-
     # no sources
     with pytest.raises(SetupError):
         td.GridSpec.wavelength_from_sources(sources=[])
 
     freqs = [2e14, 3e14]
     sources = [
-        td.PointDipole(source_time=td.GaussianPulse(freq0=f0, fwidth=1e14), polarization="Ex")
+        td.PointDipole(
+            source_time=td.GaussianPulse(freq0=f0, fwidth=1e14), polarization="Ex"
+        )
         for f0 in freqs
     ]
 
@@ -64,15 +70,21 @@ def test_wvl_from_sources():
     # sources at same frequency
     freq0 = 2e14
     sources = [
-        td.PointDipole(source_time=td.GaussianPulse(freq0=freq0, fwidth=1e14), polarization="Ex")
+        td.PointDipole(
+            source_time=td.GaussianPulse(freq0=freq0, fwidth=1e14), polarization="Ex"
+        )
         for _ in range(4)
     ]
     wvl = td.GridSpec.wavelength_from_sources(sources=sources)
-    assert np.isclose(wvl, td.C_0 / freq0), "wavelength did not match source central wavelengths."
+    assert np.isclose(
+        wvl, td.C_0 / freq0
+    ), "wavelength did not match source central wavelengths."
 
 
 def test_auto_grid_from_sources():
-    src = td.PointDipole(source_time=td.GaussianPulse(freq0=2e14, fwidth=1e14), polarization="Ex")
+    src = td.PointDipole(
+        source_time=td.GaussianPulse(freq0=2e14, fwidth=1e14), polarization="Ex"
+    )
     grid_spec = td.GridSpec.auto()
     assert grid_spec.wavelength is None
     assert grid_spec.auto_grid_used

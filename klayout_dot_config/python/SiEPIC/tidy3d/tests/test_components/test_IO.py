@@ -1,4 +1,5 @@
 """Tests file export and loading."""
+
 import os
 import json
 
@@ -32,26 +33,27 @@ def set_datasets_to_none(sim):
 
 @clear_tmp
 def test_simulation_load_export():
-
     major, minor, patch = __version__.split(".")
     path = os.path.join(SIM_DIR, f"simulation_{major}_{minor}_{patch}.json")
     SIM.to_file(path)
     SIM2 = td.Simulation.from_file(path)
-    assert set_datasets_to_none(SIM) == SIM2, "original and loaded simulations are not the same"
+    assert (
+        set_datasets_to_none(SIM) == SIM2
+    ), "original and loaded simulations are not the same"
 
 
 @clear_tmp
 def test_simulation_load_export_yaml():
-
     path = "tests/tmp/simulation.yaml"
     SIM.to_file(path)
     SIM2 = td.Simulation.from_file(path)
-    assert set_datasets_to_none(SIM) == SIM2, "original and loaded simulations are not the same"
+    assert (
+        set_datasets_to_none(SIM) == SIM2
+    ), "original and loaded simulations are not the same"
 
 
 @clear_tmp
 def test_component_load_export():
-
     path = "tests/tmp/medium.json"
     td.Medium().to_file(path)
     M2 = td.Medium.from_file(path)
@@ -60,7 +62,6 @@ def test_component_load_export():
 
 @clear_tmp
 def test_component_load_export_yaml():
-
     path = "tests/tmp/medium.yaml"
     td.Medium().to_file(path)
     M2 = td.Medium.from_file(path)
@@ -69,7 +70,6 @@ def test_component_load_export_yaml():
 
 @clear_tmp
 def test_simulation_load_export_hdf5():
-
     path = "tests/tmp/simulation.hdf5"
     SIM.to_file(path)
     SIM2 = td.Simulation.from_file(path)
@@ -78,7 +78,6 @@ def test_simulation_load_export_hdf5():
 
 @clear_tmp
 def test_simulation_load_export_hdf5_explicit():
-
     path = "tests/tmp/simulation.hdf5"
     SIM.to_hdf5(path)
     SIM2 = td.Simulation.from_hdf5(path)
@@ -87,7 +86,6 @@ def test_simulation_load_export_hdf5_explicit():
 
 @clear_tmp
 def test_simulation_load_export_pckl():
-
     path = "tests/tmp/simulation.pckl"
     with open(path, "wb") as pickle_file:
         pickle.dump(SIM, pickle_file)
@@ -136,7 +134,6 @@ def test_1a_simulation_load_export2():
 
 
 def test_validation_speed():
-
     sizes_bytes = []
     times_sec = []
     path = "tests/tmp/simulation.json"
@@ -164,7 +161,9 @@ def test_validation_speed():
         size = os.path.getsize(path)
         sizes_bytes.append(size)
 
-        print(f"{n} structures \t {size:.1e} bytes \t {time_validate:.1f} seconds to validate")
+        print(
+            f"{n} structures \t {size:.1e} bytes \t {time_validate:.1f} seconds to validate"
+        )
 
 
 SIM_FILES = [os.path.join(SIM_DIR, file) for file in os.listdir(SIM_DIR)]
@@ -229,13 +228,17 @@ def test_none_hdf5():
         normalize_index=None,
     )
 
-    assert sim.normalize_index is None, "'normalize_index' of 'None' not initialized correctly."
+    assert (
+        sim.normalize_index is None
+    ), "'normalize_index' of 'None' not initialized correctly."
 
     fname = "tests/tmp/sim_none.hdf5"
     sim.to_file(fname)
     sim2 = td.Simulation.from_file(fname)
 
-    assert sim2.normalize_index is None, "'normalize_index' of 'None' not loaded correctly."
+    assert (
+        sim2.normalize_index is None
+    ), "'normalize_index' of 'None' not loaded correctly."
 
 
 def test_group_name_tuple():

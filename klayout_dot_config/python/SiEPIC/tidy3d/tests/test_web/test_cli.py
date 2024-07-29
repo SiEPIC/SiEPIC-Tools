@@ -8,7 +8,6 @@ from tidy3d.web.cli.app import CONFIG_FILE
 
 
 def test_tidy3d_cli():
-
     if os.path.exists(CONFIG_FILE):
         shutil.move(CONFIG_FILE, f"{CONFIG_FILE}.bak")
 

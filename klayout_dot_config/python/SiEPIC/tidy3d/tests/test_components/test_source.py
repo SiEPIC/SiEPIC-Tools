@@ -1,4 +1,5 @@
 """Tests sources."""
+
 import pytest
 import pydantic
 import matplotlib.pylab as plt
@@ -23,13 +24,14 @@ def test_plot_source_time():
 
 
 def test_dir_vector():
-    MS = td.ModeSource(size=(1, 0, 1), mode_spec=td.ModeSpec(), source_time=ST, direction="+")
+    MS = td.ModeSource(
+        size=(1, 0, 1), mode_spec=td.ModeSpec(), source_time=ST, direction="+"
+    )
     DirectionalSource._dir_vector.fget(MS)
     assert DirectionalSource._dir_vector.fget(S) is None
 
 
 def test_UniformCurrentSource():
-
     g = td.GaussianPulse(freq0=1, fwidth=0.1)
 
     # test we can make generic UniformCurrentSource
@@ -37,7 +39,6 @@ def test_UniformCurrentSource():
 
 
 def test_source_times():
-
     # test we can make gaussian pulse
     g = td.GaussianPulse(freq0=1, fwidth=0.1)
     ts = np.linspace(0, 30, 1001)
@@ -53,13 +54,14 @@ def test_source_times():
 
 
 def test_dipole():
-
     g = td.GaussianPulse(freq0=1, fwidth=0.1)
     p = td.PointDipole(center=(1, 2, 3), source_time=g, polarization="Ex")
     # p.plot(y=2)
 
     with pytest.raises(pydantic.ValidationError) as e_info:
-        p = td.PointDipole(size=(1, 1, 1), source_time=g, center=(1, 2, 3), polarization="Ex")
+        p = td.PointDipole(
+            size=(1, 1, 1), source_time=g, center=(1, 2, 3), polarization="Ex"
+        )
 
 
 def test_FieldSource():
@@ -67,11 +69,15 @@ def test_FieldSource():
     mode_spec = td.ModeSpec(num_modes=2)
 
     # test we can make planewave
-    s = td.PlaneWave(size=(0, td.inf, td.inf), source_time=g, pol_angle=np.pi / 2, direction="+")
+    s = td.PlaneWave(
+        size=(0, td.inf, td.inf), source_time=g, pol_angle=np.pi / 2, direction="+"
+    )
     # s.plot(y=0)
 
     # test we can make gaussian beam
-    s = td.GaussianBeam(size=(0, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+")
+    s = td.GaussianBeam(
+        size=(0, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+"
+    )
     # s.plot(y=0)
 
     # test we can make an astigmatic gaussian beam
@@ -92,9 +98,13 @@ def test_FieldSource():
 
     # test that non-planar geometry crashes plane wave and gaussian beams
     with pytest.raises(ValidationError) as e_info:
-        s = td.PlaneWave(size=(1, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+")
+        s = td.PlaneWave(
+            size=(1, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+"
+        )
     with pytest.raises(ValidationError) as e_info:
-        s = td.GaussianBeam(size=(1, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+")
+        s = td.GaussianBeam(
+            size=(1, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+"
+        )
     with pytest.raises(ValidationError) as e_info:
         s = td.AstigmaticGaussianBeam(
             size=(1, 1, 1),
@@ -114,11 +124,9 @@ def test_FieldSource():
 
 
 def test_pol_arrow():
-
     g = td.GaussianPulse(freq0=1, fwidth=0.1)
 
     def get_pol_dir(axis, pol_angle=0, angle_theta=0, angle_phi=0):
-
         size = [td.inf, td.inf, td.inf]
         size[axis] = 0
 
@@ -143,13 +151,16 @@ def test_pol_arrow():
     assert np.allclose(get_pol_dir(axis=1, pol_angle=np.pi / 2), (0, 0, -1))
     assert np.allclose(get_pol_dir(axis=2, pol_angle=np.pi / 2), (0, +1, 0))
     assert np.allclose(
-        get_pol_dir(axis=0, angle_theta=np.pi / 4), (+1 / np.sqrt(2), -1 / np.sqrt(2), 0)
+        get_pol_dir(axis=0, angle_theta=np.pi / 4),
+        (+1 / np.sqrt(2), -1 / np.sqrt(2), 0),
     )
     assert np.allclose(
-        get_pol_dir(axis=1, angle_theta=np.pi / 4), (-1 / np.sqrt(2), +1 / np.sqrt(2), 0)
+        get_pol_dir(axis=1, angle_theta=np.pi / 4),
+        (-1 / np.sqrt(2), +1 / np.sqrt(2), 0),
     )
     assert np.allclose(
-        get_pol_dir(axis=2, angle_theta=np.pi / 4), (-1 / np.sqrt(2), 0, +1 / np.sqrt(2))
+        get_pol_dir(axis=2, angle_theta=np.pi / 4),
+        (-1 / np.sqrt(2), 0, +1 / np.sqrt(2)),
     )
 
 
@@ -173,7 +184,11 @@ def test_broadband_source():
     # test we can make a broadband gaussian beam
     num_freqs = 3
     s = td.GaussianBeam(
-        size=(0, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+", num_freqs=num_freqs
+        size=(0, 1, 1),
+        source_time=g,
+        pol_angle=np.pi / 2,
+        direction="+",
+        num_freqs=num_freqs,
     )
     freq_grid = s.frequency_grid
     check_freq_grid(freq_grid, num_freqs)
@@ -208,7 +223,11 @@ def test_broadband_source():
     # check validators for num_freqs
     with pytest.raises(pydantic.ValidationError) as e_info:
         s = td.GaussianBeam(
-            size=(0, 1, 1), source_time=g, pol_angle=np.pi / 2, direction="+", num_freqs=200
+            size=(0, 1, 1),
+            source_time=g,
+            pol_angle=np.pi / 2,
+            direction="+",
+            num_freqs=200,
         )
     with pytest.raises(pydantic.ValidationError) as e_info:
         s = td.AstigmaticGaussianBeam(

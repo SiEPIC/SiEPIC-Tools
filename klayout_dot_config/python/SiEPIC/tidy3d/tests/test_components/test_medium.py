@@ -1,4 +1,5 @@
 """Tests mediums."""
+
 import numpy as np
 import pytest
 import pydantic
@@ -46,7 +47,6 @@ def test_from_n_less_than_1():
 
 
 def test_medium():
-
     # mediums error with unacceptable values
     with pytest.raises(pydantic.ValidationError) as e_info:
         m = td.Medium(permittivity=0.0)
@@ -78,14 +78,14 @@ def test_medium_conversions():
 
 
 def test_PEC():
-
     struct = td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=td.PEC)
 
 
 def test_medium_dispersion():
-
     # construct media
-    m_PR = td.PoleResidue(eps_inf=1.0, poles=[((1 + 2j), (1 + 3j)), ((2 + 4j), (1 + 5j))])
+    m_PR = td.PoleResidue(
+        eps_inf=1.0, poles=[((1 + 2j), (1 + 3j)), ((2 + 4j), (1 + 5j))]
+    )
     m_SM = td.Sellmeier(coeffs=[(2, 3), (2, 4)])
     m_LZ = td.Lorentz(eps_inf=1.0, coeffs=[(1, 3, 2), (2, 4, 1)])
     m_LZ2 = td.Lorentz(eps_inf=1.0, coeffs=[(1, 2, 3), (2, 1, 4)])
@@ -111,8 +111,9 @@ def test_medium_dispersion():
 
 
 def test_medium_dispersion_conversion():
-
-    m_PR = td.PoleResidue(eps_inf=1.0, poles=[((1 + 2j), (1 + 3j)), ((2 + 4j), (1 + 5j))])
+    m_PR = td.PoleResidue(
+        eps_inf=1.0, poles=[((1 + 2j), (1 + 3j)), ((2 + 4j), (1 + 5j))]
+    )
     m_SM = td.Sellmeier(coeffs=[(2, 3), (2, 4)])
     m_LZ = td.Lorentz(eps_inf=1.0, coeffs=[(1, 3, 2), (2, 4, 1)])
     m_LZ2 = td.Lorentz(eps_inf=1.0, coeffs=[(1, 2, 3), (2, 1, 4)])
@@ -127,8 +128,9 @@ def test_medium_dispersion_conversion():
 
 
 def test_medium_dispersion_create():
-
-    m_PR = td.PoleResidue(eps_inf=1.0, poles=[((1 + 2j), (1 + 3j)), ((2 + 4j), (1 + 5j))])
+    m_PR = td.PoleResidue(
+        eps_inf=1.0, poles=[((1 + 2j), (1 + 3j)), ((2 + 4j), (1 + 5j))]
+    )
     m_SM = td.Sellmeier(coeffs=[(2, 3), (2, 4)])
     m_LZ = td.Lorentz(eps_inf=1.0, coeffs=[(1, 3, 2), (2, 4, 1)])
     m_LZ2 = td.Lorentz(eps_inf=1.0, coeffs=[(1, 2, 3), (2, 1, 4)])
@@ -159,7 +161,6 @@ def test_sellmeier_from_dispersion():
 
 
 def eps_compare(medium: td.Medium, expected: Dict, tol: float = 1e-5):
-
     for freq, val in expected.items():
         assert np.abs(medium.eps_model(freq) - val) < tol
 
@@ -219,7 +220,9 @@ def test_epsilon_eval():
 
     eps_diag_2 = material.eps_diagonal(2e14)
     eps_diag_5 = material.eps_diagonal(5e14)
-    assert np.all(np.array(eps_diag_2) == np.array([medium.eps_model(2e14) for medium in mediums]))
+    assert np.all(
+        np.array(eps_diag_2) == np.array([medium.eps_model(2e14) for medium in mediums])
+    )
 
     expected = {2e14: np.mean(eps_diag_2), 5e14: np.mean(eps_diag_5)}
     eps_compare(material, expected)
@@ -236,7 +239,9 @@ def test_epsilon_eval():
 
     eps_diag_2 = material.eps_diagonal(2e14)
     eps_diag_5 = material.eps_diagonal(5e14)
-    assert np.all(np.array(eps_diag_2) == np.array([medium.eps_model(2e14) for medium in mediums]))
+    assert np.all(
+        np.array(eps_diag_2) == np.array([medium.eps_model(2e14) for medium in mediums])
+    )
 
     expected = {2e14: np.mean(eps_diag_2), 5e14: np.mean(eps_diag_5)}
     eps_compare(material, expected)

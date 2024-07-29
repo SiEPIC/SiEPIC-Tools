@@ -1,6 +1,7 @@
 """
 Commandline interface for tidy3d.
 """
+
 import os.path
 from os.path import expanduser
 
@@ -29,7 +30,8 @@ def tidy3d_cli():
 
 @click.command()
 @click.option(
-    "--apikey", prompt=config_description if "config_description" in globals() else "API Key"
+    "--apikey",
+    prompt=config_description if "config_description" in globals() else "API Key",
 )
 def configure(apikey):
     """Click command to configure the api key.

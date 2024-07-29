@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines, too-many-arguments
-""" Container holding all information about simulation and its components"""
+"""Container holding all information about simulation and its components"""
+
 from __future__ import annotations
 from typing import Dict, Tuple, List, Set, Union
 from math import isclose
@@ -7,9 +8,9 @@ from math import isclose
 import pydantic
 import numpy as np
 import xarray as xr
-#import matplotlib.pylab as plt
-#import matplotlib as mpl
-#from mpl_toolkits.axes_grid1 import make_axes_locatable
+# import matplotlib.pylab as plt
+# import matplotlib as mpl
+# from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from .base import cached_property
 from .validators import assert_unique_names, assert_objects_in_sim_bounds
@@ -22,13 +23,29 @@ from .medium import Medium, MediumType, AbstractMedium, PECMedium, CustomMedium
 from .boundary import BoundarySpec, BlochBoundary, PECBoundary, PMCBoundary, Periodic
 from .boundary import PML, StablePML, Absorber, AbsorberSpec
 from .structure import Structure
-from .source import SourceType, PlaneWave, GaussianBeam, AstigmaticGaussianBeam, CustomFieldSource
+from .source import (
+    SourceType,
+    PlaneWave,
+    GaussianBeam,
+    AstigmaticGaussianBeam,
+    CustomFieldSource,
+)
 from .monitor import MonitorType, Monitor, FreqMonitor
-from .monitor import AbstractFieldMonitor, DiffractionMonitor, AbstractFieldProjectionMonitor
+from .monitor import (
+    AbstractFieldMonitor,
+    DiffractionMonitor,
+    AbstractFieldProjectionMonitor,
+)
 from .data.dataset import Dataset
 from .viz import add_ax_if_none, equal_aspect
 
-from .viz import MEDIUM_CMAP, STRUCTURE_EPS_CMAP, PlotParams, plot_params_symmetry, polygon_path
+from .viz import (
+    MEDIUM_CMAP,
+    STRUCTURE_EPS_CMAP,
+    PlotParams,
+    plot_params_symmetry,
+    polygon_path,
+)
 from .viz import plot_params_structure, plot_params_pml, plot_params_override_structures
 from .viz import plot_params_pec, plot_params_pmc, plot_params_bloch
 
@@ -311,7 +328,10 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
                 if num_bloch > 0:
                     # make a dummy Bloch boundary to check for correctness
                     dummy_bnd = BlochBoundary.from_source(
-                        source=source, domain_size=size[tan_dir], axis=tan_dir, medium=medium
+                        source=source,
+                        domain_size=size[tan_dir],
+                        axis=tan_dir,
+                        medium=medium,
                     )
                     expected_bloch_vec = dummy_bnd.bloch_vec
 
@@ -347,7 +367,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         boundaries = val.to_list
         size = values.get("size")
         for dim, (boundary, size_dim) in enumerate(zip(boundaries, size)):
-            num_absorbing_bdries = sum(isinstance(bnd, AbsorberSpec) for bnd in boundary)
+            num_absorbing_bdries = sum(
+                isinstance(bnd, AbsorberSpec) for bnd in boundary
+            )
             if num_absorbing_bdries > 0 and size_dim == 0:
                 log.warning(
                     f"If the simulation is intended to be 2D in the plane normal to the "
@@ -388,7 +410,6 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
             struct_bounds = list(struct_bound_min) + list(struct_bound_max)
 
             for sim_val, struct_val in zip(sim_bounds, struct_bounds):
-
                 if isclose(sim_val, struct_val):
                     log.warning(
                         f"Structure at structures[{istruct}] has bounds that extend exactly to "
@@ -413,7 +434,6 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         sources = values.get("sources")
 
         if (not structures) or (not sources):
-
             return val
 
         def warn(istruct, side):
@@ -432,7 +452,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
             for source in sources:
                 lambda0 = C_0 / source.source_time.freq0
 
-                zipped = zip(["x", "y", "z"], sim_bound_min, struct_bound_min, boundaries)
+                zipped = zip(
+                    ["x", "y", "z"], sim_bound_min, struct_bound_min, boundaries
+                )
                 for axis, sim_val, struct_val, boundary in zipped:
                     # The test is required only for PML and stable PML
                     if not isinstance(boundary[0], (PML, StablePML)):
@@ -445,7 +467,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
                         warn(istruct, axis + "-min")
                         return val
 
-                zipped = zip(["x", "y", "z"], sim_bound_max, struct_bound_max, boundaries)
+                zipped = zip(
+                    ["x", "y", "z"], sim_bound_max, struct_bound_max, boundaries
+                )
                 for axis, sim_val, struct_val, boundary in zipped:
                     # The test is required only for PML and stable PML
                     if not isinstance(boundary[1], (PML, StablePML)):
@@ -478,7 +502,6 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
 
             freqs = np.array(monitor.freqs)
             for medium_index, medium in enumerate(mediums):
-
                 # skip mediums that have no freq range (all freqs valid)
                 if medium.frequency_range is None:
                     continue
@@ -489,7 +512,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
                     if medium_index == 0:
                         medium_str = "The simulation background medium"
                     else:
-                        medium_str = f"The medium associated with structures[{medium_index-1}]"
+                        medium_str = (
+                            f"The medium associated with structures[{medium_index-1}]"
+                        )
 
                     log.warning(
                         f"{medium_str}has a frequency range: ({fmin_med:2e}, {fmax_med:2e}) "
@@ -514,7 +539,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
                 "as `sources` failed validation"
             )
 
-        source_ranges = [source.source_time.frequency_range() for source in values["sources"]]
+        source_ranges = [
+            source.source_time.frequency_range() for source in values["sources"]
+        ]
         if not source_ranges:
             log.warning("No sources in simulation.")
             return val
@@ -543,7 +570,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         boundary_spec = values.get("boundary_spec")
         for monitor in monitors:
             if isinstance(monitor, DiffractionMonitor):
-                _, (n_x, n_y) = monitor.pop_axis(["x", "y", "z"], axis=monitor.normal_axis)
+                _, (n_x, n_y) = monitor.pop_axis(
+                    ["x", "y", "z"], axis=monitor.normal_axis
+                )
                 boundaries = [
                     boundary_spec[n_x].plus,
                     boundary_spec[n_x].minus,
@@ -580,7 +609,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         total_structures = [structure_bg] + list(structures)
 
         for monitor in val:
-            if isinstance(monitor, (AbstractFieldProjectionMonitor, DiffractionMonitor)):
+            if isinstance(
+                monitor, (AbstractFieldProjectionMonitor, DiffractionMonitor)
+            ):
                 mediums = cls.intersecting_media(monitor, total_structures)
                 # make sure there is no more than one medium in the returned list
                 if len(mediums) > 1:
@@ -632,7 +663,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
                 medium = medium_set.pop() if medium_set else medium
                 _, index_k = medium.nk_model(frequency=np.array(monitor.freqs))
                 if not np.all(index_k == 0):
-                    raise SetupError("Diffraction monitors must not lie in a lossy medium.")
+                    raise SetupError(
+                        "Diffraction monitors must not lie in a lossy medium."
+                    )
         return val
 
     @pydantic.validator("grid_spec", always=True)
@@ -651,7 +684,6 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
             freq0 = source.source_time.freq0
 
             for medium_index, medium in enumerate(mediums):
-
                 # min wavelength in PEC is meaningless and we'll get divide by inf errors
                 if isinstance(medium, PECMedium):
                     continue
@@ -724,7 +756,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         num_sources = len(values.get("sources"))
         if num_sources > 0:
             # No check if no sources, but it should be irrelevant anyway
-            assert val < num_sources, f"{num_sources} sources smaller than normalize_index of {val}"
+            assert (
+                val < num_sources
+            ), f"{num_sources} sources smaller than normalize_index of {val}"
 
         return val
 
@@ -857,7 +891,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         """
         if test_object.size.count(0.0) == 1:
             # get all merged structures on the test_object, which is already planar
-            structures_merged = Simulation._filter_structures_plane(structures, test_object)
+            structures_merged = Simulation._filter_structures_plane(
+                structures, test_object
+            )
             mediums = {medium for medium, _ in structures_merged}
             return mediums
 
@@ -866,7 +902,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         exclude_surfaces = object_dict.pop("exclude_surfaces", None)
         surfaces = test_object.surfaces(**object_dict)
         if exclude_surfaces:
-            surfaces = [surf for surf in surfaces if surf.name[-2:] not in exclude_surfaces]
+            surfaces = [
+                surf for surf in surfaces if surf.name[-2:] not in exclude_surfaces
+            ]
         mediums = set()
         for surface in surfaces:
             _mediums = Simulation.intersecting_media(surface, structures)
@@ -981,7 +1019,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
             The supplied or created matplotlib axes.
         """
 
-        ax = self.plot_structures_eps(freq=freq, cbar=True, alpha=alpha, ax=ax, x=x, y=y, z=z)
+        ax = self.plot_structures_eps(
+            freq=freq, cbar=True, alpha=alpha, ax=ax, x=x, y=y, z=z
+        )
         ax = self.plot_sources(ax=ax, x=x, y=y, z=z, alpha=source_alpha)
         ax = self.plot_monitors(ax=ax, x=x, y=y, z=z, alpha=monitor_alpha)
         ax = self.plot_symmetries(ax=ax, x=x, y=y, z=z)
@@ -1014,12 +1054,16 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
             The supplied or created matplotlib axes.
         """
 
-        medium_shapes = self._get_structures_plane(structures=self.structures, x=x, y=y, z=z)
+        medium_shapes = self._get_structures_plane(
+            structures=self.structures, x=x, y=y, z=z
+        )
         medium_map = self.medium_map
 
-        for (medium, shape) in medium_shapes:
+        for medium, shape in medium_shapes:
             mat_index = medium_map[medium]
-            ax = self._plot_shape_structure(medium=medium, mat_index=mat_index, shape=shape, ax=ax)
+            ax = self._plot_shape_structure(
+                medium=medium, mat_index=mat_index, shape=shape, ax=ax
+            )
 
         ax = self._set_plot_bounds(ax=ax, x=x, y=y, z=z)
 
@@ -1030,9 +1074,13 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
 
         return ax
 
-    def _plot_shape_structure(self, medium: Medium, mat_index: int, shape: Shapely, ax: Ax) -> Ax:
+    def _plot_shape_structure(
+        self, medium: Medium, mat_index: int, shape: Shapely, ax: Ax
+    ) -> Ax:
         """Plot a structure's cross section shape for a given medium."""
-        plot_params_struct = self._get_structure_plot_params(medium=medium, mat_index=mat_index)
+        plot_params_struct = self._get_structure_plot_params(
+            medium=medium, mat_index=mat_index
+        )
         ax = self.plot_shape(shape=shape, plot_params=plot_params_struct, ax=ax)
         return ax
 
@@ -1043,7 +1091,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
 
         if mat_index == 0 or medium == self.medium:
             # background medium
-            plot_params = plot_params.copy(update={"facecolor": "white", "edgecolor": "white"})
+            plot_params = plot_params.copy(
+                update={"facecolor": "white", "edgecolor": "white"}
+            )
         elif isinstance(medium, PECMedium):
             # perfect electrical conductor
             plot_params = plot_params.copy(
@@ -1123,15 +1173,23 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
             center = Box.unpop_axis(position, (0, 0), axis=axis)
             size = Box.unpop_axis(0, (inf, inf), axis=axis)
             plane = Box(center=center, size=size)
-            medium_shapes = self._filter_structures_plane(structures=structures, plane=plane)
+            medium_shapes = self._filter_structures_plane(
+                structures=structures, plane=plane
+            )
         else:
             structures = [self.background_structure] + list(structures)
-            medium_shapes = self._get_structures_plane(structures=structures, x=x, y=y, z=z)
+            medium_shapes = self._get_structures_plane(
+                structures=structures, x=x, y=y, z=z
+            )
 
         eps_min, eps_max = self.eps_bounds(freq=freq)
-        for (medium, shape) in medium_shapes:
+        for medium, shape in medium_shapes:
             # if the background medium is custom medium, it needs to be rendered separately
-            if medium == self.medium and alpha < 1 and not isinstance(medium, CustomMedium):
+            if (
+                medium == self.medium
+                and alpha < 1
+                and not isinstance(medium, CustomMedium)
+            ):
                 continue
             # no need to add patches for custom medium
             if not isinstance(medium, CustomMedium):
@@ -1166,7 +1224,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         """Compute range of (real) permittivity present in the simulation at frequency "freq"."""
 
         medium_list = [self.medium] + list(self.mediums)
-        medium_list = [medium for medium in medium_list if not isinstance(medium, PECMedium)]
+        medium_list = [
+            medium for medium in medium_list if not isinstance(medium, PECMedium)
+        ]
         # regular medium
         eps_list = [
             medium.eps_model(freq).real
@@ -1177,7 +1237,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         eps_max = max(1, max(eps_list))
         # custom medium, the min and max in the supplied dataset over all components and
         # spatial locations.
-        for mat in [medium for medium in medium_list if isinstance(medium, CustomMedium)]:
+        for mat in [
+            medium for medium in medium_list if isinstance(medium, CustomMedium)
+        ]:
             eps_dataset_at_freq = mat.eps_dataset_freq(freq)
             for eps_component in eps_dataset_at_freq.field_components.values():
                 eps_min = min(eps_min, min(eps_component.real.values.ravel()))
@@ -1211,18 +1273,23 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         rmin, rmax = [*shape_bounds[:2]], [*shape_bounds[2:]]
         rmin.insert(normal_axis_ind, normal_position)
         rmax.insert(normal_axis_ind, normal_position)
-        span_inds = self.grid.discretize_inds(Box.from_bounds(rmin=rmin, rmax=rmax), extend=True)
+        span_inds = self.grid.discretize_inds(
+            Box.from_bounds(rmin=rmin, rmax=rmax), extend=True
+        )
         # filter negative or too large inds
         n_grid = [len(grid_comp) for grid_comp in self.grid.boundaries.to_list]
         span_inds = [
-            (max(fmin, 0), min(fmax, n_grid[f_ind])) for f_ind, (fmin, fmax) in enumerate(span_inds)
+            (max(fmin, 0), min(fmax, n_grid[f_ind]))
+            for f_ind, (fmin, fmax) in enumerate(span_inds)
         ]
 
         # assemble the coordinate in the 2d plane
         plane_coord = []
         for plane_axis in range(2):
             ind_axis = "xyz".index(plane_axes[plane_axis])
-            plane_coord.append(self.grid.boundaries.to_list[ind_axis][slice(*span_inds[ind_axis])])
+            plane_coord.append(
+                self.grid.boundaries.to_list[ind_axis][slice(*span_inds[ind_axis])]
+            )
 
         # prepare `Coords` for interpolation
         coord_dict = {
@@ -1232,7 +1299,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         }
         coord_shape = Coords(**coord_dict)
         # interpolate permittivity and take the average over components
-        eps_shape = np.mean(medium.eps_diagonal_on_grid(frequency=freq, coords=coord_shape), axis=0)
+        eps_shape = np.mean(
+            medium.eps_diagonal_on_grid(frequency=freq, coords=coord_shape), axis=0
+        )
         # remove the normal_axis and take real part
         eps_shape = eps_shape.real.mean(axis=normal_axis_ind)
         # reverse
@@ -1297,7 +1366,12 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
     ) -> Ax:
         """Plot a structure's cross section shape for a given medium, grayscale for permittivity."""
         plot_params = self._get_structure_eps_plot_params(
-            medium=medium, freq=freq, eps_min=eps_min, eps_max=eps_max, alpha=alpha, reverse=reverse
+            medium=medium,
+            freq=freq,
+            eps_min=eps_min,
+            eps_max=eps_max,
+            alpha=alpha,
+            reverse=reverse,
         )
         ax = self.plot_shape(shape=shape, plot_params=plot_params, ax=ax)
         return ax
@@ -1305,7 +1379,12 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
     @equal_aspect
     @add_ax_if_none
     def plot_sources(
-        self, x: float = None, y: float = None, z: float = None, alpha: float = None, ax: Ax = None
+        self,
+        x: float = None,
+        y: float = None,
+        z: float = None,
+        alpha: float = None,
+        ax: Ax = None,
     ) -> Ax:
         """Plot each of simulation's sources on a plane defined by one nonzero x,y,z coordinate.
 
@@ -1336,7 +1415,12 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
     @equal_aspect
     @add_ax_if_none
     def plot_monitors(
-        self, x: float = None, y: float = None, z: float = None, alpha: float = None, ax: Ax = None
+        self,
+        x: float = None,
+        y: float = None,
+        z: float = None,
+        alpha: float = None,
+        ax: Ax = None,
     ) -> Ax:
         """Plot each of simulation's monitors on a plane defined by one nonzero x,y,z coordinate.
 
@@ -1400,12 +1484,18 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         return pml_thicknesses
 
     @cached_property
-    def bounds_pml(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+    def bounds_pml(
+        self,
+    ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
         """Simulation bounds including the PML regions."""
         pml_thick = self.pml_thicknesses
         bounds_in = self.bounds
-        bounds_min = tuple((bmin - pml[0] for bmin, pml in zip(bounds_in[0], pml_thick)))
-        bounds_max = tuple((bmax + pml[1] for bmax, pml in zip(bounds_in[1], pml_thick)))
+        bounds_min = tuple(
+            (bmin - pml[0] for bmin, pml in zip(bounds_in[0], pml_thick))
+        )
+        bounds_max = tuple(
+            (bmax + pml[1] for bmax, pml in zip(bounds_in[1], pml_thick))
+        )
 
         return (bounds_min, bounds_max)
 
@@ -1459,10 +1549,14 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         for pml_axis, num_layers_dim in enumerate(self.num_pml_layers):
             if pml_axis == normal_axis:
                 continue
-            for sign, pml_height, num_layers in zip((-1, 1), pml_thicks[pml_axis], num_layers_dim):
+            for sign, pml_height, num_layers in zip(
+                (-1, 1), pml_thicks[pml_axis], num_layers_dim
+            ):
                 if num_layers == 0:
                     continue
-                pml_box = self._make_pml_box(pml_axis=pml_axis, pml_height=pml_height, sign=sign)
+                pml_box = self._make_pml_box(
+                    pml_axis=pml_axis, pml_height=pml_height, sign=sign
+                )
                 pml_boxes.append(pml_box)
         return pml_boxes
 
@@ -1517,11 +1611,19 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
 
         if sym_value == 1:
             plot_params = plot_params.copy(
-                update={"facecolor": "lightsteelblue", "edgecolor": "lightsteelblue", "hatch": "++"}
+                update={
+                    "facecolor": "lightsteelblue",
+                    "edgecolor": "lightsteelblue",
+                    "hatch": "++",
+                }
             )
         elif sym_value == -1:
             plot_params = plot_params.copy(
-                update={"facecolor": "goldenrod", "edgecolor": "goldenrod", "hatch": "--"}
+                update={
+                    "facecolor": "goldenrod",
+                    "edgecolor": "goldenrod",
+                    "hatch": "--",
+                }
             )
 
         return plot_params
@@ -1591,8 +1693,12 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         )
         for structure in self.grid_spec.override_structures:
             bounds = list(zip(*structure.geometry.bounds))
-            _, ((xmin, xmax), (ymin, ymax)) = structure.geometry.pop_axis(bounds, axis=axis)
-            xmin, xmax, ymin, ymax = (self._evaluate_inf(v) for v in (xmin, xmax, ymin, ymax))
+            _, ((xmin, xmax), (ymin, ymax)) = structure.geometry.pop_axis(
+                bounds, axis=axis
+            )
+            xmin, xmax, ymin, ymax = (
+                self._evaluate_inf(v) for v in (xmin, xmax, ymin, ymax)
+            )
             rect = mpl.patches.Rectangle(
                 xy=(xmin, ymin),
                 width=(xmax - xmin),
@@ -1674,7 +1780,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         thickness_v = (vmax - vmin) * size_factor
 
         # boundary along the u axis, minus side
-        plot_params, ulim_minus = set_plot_params(boundaries[dim_u][0], umin, -1, thickness_u)
+        plot_params, ulim_minus = set_plot_params(
+            boundaries[dim_u][0], umin, -1, thickness_u
+        )
         rect = mpl.patches.Rectangle(
             xy=(umin - thickness_u, vmin),
             width=thickness_u,
@@ -1686,7 +1794,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         ax.add_patch(rect)
 
         # boundary along the u axis, plus side
-        plot_params, ulim_plus = set_plot_params(boundaries[dim_u][1], umax, 1, thickness_u)
+        plot_params, ulim_plus = set_plot_params(
+            boundaries[dim_u][1], umax, 1, thickness_u
+        )
         rect = mpl.patches.Rectangle(
             xy=(umax, vmin),
             width=thickness_u,
@@ -1698,7 +1808,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         ax.add_patch(rect)
 
         # boundary along the v axis, minus side
-        plot_params, vlim_minus = set_plot_params(boundaries[dim_v][0], vmin, -1, thickness_v)
+        plot_params, vlim_minus = set_plot_params(
+            boundaries[dim_v][0], vmin, -1, thickness_v
+        )
         rect = mpl.patches.Rectangle(
             xy=(umin, vmin - thickness_v),
             width=(umax - umin),
@@ -1710,7 +1822,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         ax.add_patch(rect)
 
         # boundary along the v axis, plus side
-        plot_params, vlim_plus = set_plot_params(boundaries[dim_v][1], vmax, 1, thickness_v)
+        plot_params, vlim_plus = set_plot_params(
+            boundaries[dim_v][1], vmax, 1, thickness_v
+        )
         rect = mpl.patches.Rectangle(
             xy=(umin, vmax),
             width=(umax - umin),
@@ -1727,7 +1841,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
 
         return ax
 
-    def _set_plot_bounds(self, ax: Ax, x: float = None, y: float = None, z: float = None) -> Ax:
+    def _set_plot_bounds(
+        self, ax: Ax, x: float = None, y: float = None, z: float = None
+    ) -> Ax:
         """Sets the xy limits of the simulation at a plane, useful after plotting.
 
         Parameters
@@ -1814,7 +1930,6 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
 
         shapes = []
         for structure in structures:
-
             # get list of Shapely shapes that intersect at the plane
             shapes_plane = structure.geometry.intersections_2dbox(plane)
 
@@ -1824,12 +1939,10 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
 
         background_shapes = []
         for medium, shape, bounds in shapes:
-
             minx, miny, maxx, maxy = bounds
 
             # loop through background_shapes (note: all background are non-intersecting or merged)
             for index, (_medium, _shape, _bounds) in enumerate(background_shapes):
-
                 _minx, _miny, _maxx, _maxy = _bounds
 
                 # do a bounding box check to see if any intersection to do anything about
@@ -1869,7 +1982,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         Tuple[float, float]
             Minumum and maximum frequencies of the power spectrum of the sources.
         """
-        source_ranges = [source.source_time.frequency_range() for source in self.sources]
+        source_ranges = [
+            source.source_time.frequency_range() for source in self.sources
+        ]
         freq_min = min((freq_range[0] for freq_range in source_ranges), default=0.0)
         freq_max = max((freq_range[1] for freq_range in source_ranges), default=0.0)
 
@@ -1953,7 +2068,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         """
         freq_max = max(source.source_time.freq0 for source in self.sources)
         wvl_min = C_0 / freq_max
-        eps_max = max(abs(structure.medium.eps_model(freq_max)) for structure in self.structures)
+        eps_max = max(
+            abs(structure.medium.eps_model(freq_max)) for structure in self.structures
+        )
         n_max, _ = AbstractMedium.eps_complex_to_nk(eps_max)
         return wvl_min / n_max
 
@@ -1967,7 +2084,10 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         bool
             Whether the time-stepping fields are real or complex.
         """
-        if any(isinstance(boundary[0], BlochBoundary) for boundary in self.boundary_spec.to_list):
+        if any(
+            isinstance(boundary[0], BlochBoundary)
+            for boundary in self.boundary_spec.to_list
+        ):
             return True
         return False
 
@@ -2009,8 +2129,10 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         sim_bs_min, sim_bs_max = self.bounds_pml
         bmin_new, bmax_new = [], []
 
-        zipped = zip(self.center, self.symmetry, bounds_min, bounds_max, sim_bs_min, sim_bs_max)
-        for (center, sym, bmin, bmax, sim_bmin, sim_bmax) in zipped:
+        zipped = zip(
+            self.center, self.symmetry, bounds_min, bounds_max, sim_bs_min, sim_bs_max
+        )
+        for center, sym, bmin, bmax, sim_bmin, sim_bmax in zipped:
             if sym == 0 or center < bmin:
                 bmin_tmp, bmax_tmp = bmin, bmax
             elif bmax < center:
@@ -2170,7 +2292,9 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
                     continue
 
                 red_coords = Coords(**dict(zip("xyz", coords_reduced)))
-                eps_structure = get_eps(structure=structure, frequency=freq, coords=red_coords)
+                eps_structure = get_eps(
+                    structure=structure, frequency=freq, coords=red_coords
+                )
 
                 # Update permittivity array at selected indexes within the geometry
                 is_inside = structure.geometry.inside_meshgrid(*coords_reduced)
@@ -2189,7 +2313,11 @@ class Simulation(Box):  # pylint:disable=too-many-public-methods
         the simulation needs to be exported to hdf5 to store the data.
         """
         datasets_source = [
-            src.field_dataset for src in self.sources if isinstance(src, CustomFieldSource)
+            src.field_dataset
+            for src in self.sources
+            if isinstance(src, CustomFieldSource)
         ]
-        datasets_medium = [mat.eps_dataset for mat in self.mediums if isinstance(mat, CustomMedium)]
+        datasets_medium = [
+            mat.eps_dataset for mat in self.mediums if isinstance(mat, CustomMedium)
+        ]
         return datasets_source + datasets_medium

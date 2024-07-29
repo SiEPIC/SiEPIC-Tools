@@ -1,5 +1,6 @@
 # pylint:disable=unused-argument
-""" Defines various validation functions that get used to ensure inputs are legit """
+"""Defines various validation functions that get used to ensure inputs are legit"""
+
 from typing import Any
 
 import pydantic
@@ -55,7 +56,9 @@ def assert_plane():
     def is_plane(cls, val):
         """Raise validation error if not planar."""
         if val.count(0.0) != 1:
-            raise ValidationError(f"'{cls.__name__}' object must be planar, given size={val}")
+            raise ValidationError(
+                f"'{cls.__name__}' object must be planar, given size={val}"
+            )
         return val
 
     return is_plane
@@ -127,7 +130,9 @@ def assert_unique_names(field_name: str):
         field_names = [field.name for field in val if field.name]
         unique_names = set(field_names)
         if len(unique_names) != len(field_names):
-            raise SetupError(f"'{field_name}' names are not unique, given {field_names}.")
+            raise SetupError(
+                f"'{field_name}' names are not unique, given {field_names}."
+            )
         return val
 
     return field_has_unique_names

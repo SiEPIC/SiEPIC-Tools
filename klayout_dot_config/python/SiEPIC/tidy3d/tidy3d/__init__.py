@@ -1,10 +1,10 @@
-
-# Enable the importing of the tidy3d module, 
+# Enable the importing of the tidy3d module,
 # even while it is a subfolder
 import os
 import sys
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
-dir_path = os.path.join(dir_path,'..')
+dir_path = os.path.join(dir_path, "..")
 if dir_path not in sys.path:
     sys.path.append(dir_path)
 import tidy3d
@@ -40,9 +40,17 @@ from .components.source import GaussianBeam, AstigmaticGaussianBeam
 from .components.source import CustomFieldSource
 
 # monitors
-from .components.monitor import FieldMonitor, FieldTimeMonitor, FluxMonitor, FluxTimeMonitor
+from .components.monitor import (
+    FieldMonitor,
+    FieldTimeMonitor,
+    FluxMonitor,
+    FluxTimeMonitor,
+)
 from .components.monitor import ModeMonitor, ModeSolverMonitor, PermittivityMonitor
-from .components.monitor import FieldProjectionAngleMonitor, FieldProjectionCartesianMonitor
+from .components.monitor import (
+    FieldProjectionAngleMonitor,
+    FieldProjectionCartesianMonitor,
+)
 from .components.monitor import FieldProjectionKSpaceMonitor, FieldProjectionSurface
 from .components.monitor import DiffractionMonitor
 
@@ -68,7 +76,10 @@ from .components.data.monitor_data import FieldData, FieldTimeData, Permittivity
 from .components.data.monitor_data import FluxData, FluxTimeData
 from .components.data.monitor_data import ModeData, ModeSolverData
 from .components.data.monitor_data import AbstractFieldProjectionData
-from .components.data.monitor_data import FieldProjectionAngleData, FieldProjectionCartesianData
+from .components.data.monitor_data import (
+    FieldProjectionAngleData,
+    FieldProjectionCartesianData,
+)
 from .components.data.monitor_data import FieldProjectionKSpaceData
 from .components.data.monitor_data import DiffractionData
 from .components.data.sim_data import SimulationData
@@ -77,7 +88,14 @@ from .components.data.sim_data import DATA_TYPE_MAP
 # boundary
 from .components.boundary import BoundarySpec, Boundary, BoundaryEdge, BoundaryEdgeType
 from .components.boundary import BlochBoundary, Periodic, PECBoundary, PMCBoundary
-from .components.boundary import PML, StablePML, Absorber, PMLParams, AbsorberParams, PMLTypes
+from .components.boundary import (
+    PML,
+    StablePML,
+    Absorber,
+    PMLParams,
+    AbsorberParams,
+    PMLTypes,
+)
 from .components.boundary import DefaultPMLParameters, DefaultStablePMLParameters
 from .components.boundary import DefaultAbsorberParameters
 

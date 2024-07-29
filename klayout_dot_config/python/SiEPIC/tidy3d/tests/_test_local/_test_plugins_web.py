@@ -13,15 +13,21 @@ def test_dispersion_load_list():
 
 def test_dispersion_load_file():
     """loads dispersion model from nk data file"""
-    fitter = StableDispersionFitter.from_file("tests/data/nk_data.csv", skiprows=1, delimiter=",")
+    fitter = StableDispersionFitter.from_file(
+        "tests/data/nk_data.csv", skiprows=1, delimiter=","
+    )
 
 
 def test_dispersion_load_url():
     """performs a fit on some random data"""
 
     # both n and k
-    url_csv = "https://refractiveindex.info/data_csv.php?datafile=data/main/Ag/Johnson.yml"
-    url_txt = "https://refractiveindex.info/data_txt.php?datafile=data/main/Ag/Johnson.yml"
+    url_csv = (
+        "https://refractiveindex.info/data_csv.php?datafile=data/main/Ag/Johnson.yml"
+    )
+    url_txt = (
+        "https://refractiveindex.info/data_txt.php?datafile=data/main/Ag/Johnson.yml"
+    )
     fitter = DispersionFitter.from_url(url_csv, delimiter=",")
     fitter = StableDispersionFitter.from_url(url_csv, delimiter=",")
     fitter_txt = DispersionFitter.from_url(url_txt, delimiter="\t")
@@ -30,7 +36,11 @@ def test_dispersion_load_url():
     assert len(fitter_txt.freqs) < len(fitter.freqs)
 
     # only k
-    url_csv = "https://refractiveindex.info/data_csv.php?datafile=data/main/N2/Peck-0C.yml"
-    url_txt = "https://refractiveindex.info/data_txt.php?datafile=data/main/N2/Peck-0C.yml"
+    url_csv = (
+        "https://refractiveindex.info/data_csv.php?datafile=data/main/N2/Peck-0C.yml"
+    )
+    url_txt = (
+        "https://refractiveindex.info/data_txt.php?datafile=data/main/N2/Peck-0C.yml"
+    )
     fitter = DispersionFitter.from_url(url_csv, delimiter=",")
     fitter_txt = DispersionFitter.from_url(url_txt, delimiter="\t")

@@ -1,4 +1,5 @@
 """Tests type definitions."""
+
 import pytest
 from tidy3d.components.types import ArrayLike, Complex
 from tidy3d.components.base import Tidy3dBaseModel

@@ -1,4 +1,5 @@
 """Defines electromagnetic boundary conditions"""
+
 from __future__ import annotations
 
 from abc import ABC
@@ -19,7 +20,9 @@ from ..constants import EPSILON_0, MU_0, PML_SIGMA
 class BoundaryEdge(ABC, Tidy3dBaseModel):
     """Electromagnetic boundary condition at a domain edge."""
 
-    name: str = pd.Field(None, title="Name", description="Optional unique name for boundary.")
+    name: str = pd.Field(
+        None, title="Name", description="Optional unique name for boundary."
+    )
 
 
 # PBC keyword
@@ -66,7 +69,11 @@ class BlochBoundary(BoundaryEdge):
 
     @classmethod
     def from_source(
-        cls, source: BlochSourceType, domain_size: float, axis: Axis, medium: Medium = None
+        cls,
+        source: BlochSourceType,
+        domain_size: float,
+        axis: Axis,
+        medium: Medium = None,
     ) -> BlochBoundary:
         """Set the Bloch vector component based on a given angled source and its center frequency.
            Note that if a broadband angled source is used, only the frequency components near the
@@ -191,9 +198,13 @@ class PMLParams(AbsorberParams):
         "(kappa~dist^kappa_order).",
     )
 
-    kappa_min: pd.NonNegativeFloat = pd.Field(0.0, title="Kappa Minimum", description="")
+    kappa_min: pd.NonNegativeFloat = pd.Field(
+        0.0, title="Kappa Minimum", description=""
+    )
 
-    kappa_max: pd.NonNegativeFloat = pd.Field(1.5, title="Kappa Maximum", description="")
+    kappa_max: pd.NonNegativeFloat = pd.Field(
+        1.5, title="Kappa Maximum", description=""
+    )
 
     alpha_order: pd.NonNegativeInt = pd.Field(
         3,
@@ -203,11 +214,17 @@ class PMLParams(AbsorberParams):
     )
 
     alpha_min: pd.NonNegativeFloat = pd.Field(
-        0.0, title="Alpha Minimum", description="Minimum value of the PML alpha.", units=PML_SIGMA
+        0.0,
+        title="Alpha Minimum",
+        description="Minimum value of the PML alpha.",
+        units=PML_SIGMA,
     )
 
     alpha_max: pd.NonNegativeFloat = pd.Field(
-        1.5, title="Alpha Maximum", description="Maximum value of the PML alpha.", units=PML_SIGMA
+        1.5,
+        title="Alpha Maximum",
+        description="Maximum value of the PML alpha.",
+        units=PML_SIGMA,
     )
 
 
@@ -360,7 +377,9 @@ class Boundary(Tidy3dBaseModel):
     def _deprecation_2_0_missing_defaults(cls, values):
         """Raise deprecation warning if a default `plus` or `minus` is used."""
 
-        fields_use_default = [field for field in ("plus", "minus") if values.get(field) is None]
+        fields_use_default = [
+            field for field in ("plus", "minus") if values.get(field) is None
+        ]
 
         for field in fields_use_default:
             log.warning(
@@ -408,7 +427,9 @@ class Boundary(Tidy3dBaseModel):
         if isinstance(minus, (PECBoundary, PMCBoundary)) and isinstance(plus, Periodic):
             plus = minus
             switched = True
-        elif isinstance(plus, (PECBoundary, PMCBoundary)) and isinstance(minus, Periodic):
+        elif isinstance(plus, (PECBoundary, PMCBoundary)) and isinstance(
+            minus, Periodic
+        ):
             minus = plus
             switched = True
         if switched:
@@ -452,7 +473,11 @@ class Boundary(Tidy3dBaseModel):
 
     @classmethod
     def bloch_from_source(
-        cls, source: BlochSourceType, domain_size: float, axis: Axis, medium: Medium = None
+        cls,
+        source: BlochSourceType,
+        domain_size: float,
+        axis: Axis,
+        medium: Medium = None,
     ):
         """Bloch boundary specification on both sides along a dimension based on a given source.
 
@@ -509,7 +534,11 @@ class Boundary(Tidy3dBaseModel):
         return cls(plus=plus, minus=minus)
 
     @classmethod
-    def pml(cls, num_layers: pd.NonNegativeInt = 12, parameters: PMLParams = DefaultPMLParameters):
+    def pml(
+        cls,
+        num_layers: pd.NonNegativeInt = 12,
+        parameters: PMLParams = DefaultPMLParameters,
+    ):
         """PML boundary specification on both sides along a dimension.
 
         Parameters
@@ -529,7 +558,9 @@ class Boundary(Tidy3dBaseModel):
 
     @classmethod
     def stable_pml(
-        cls, num_layers: pd.NonNegativeInt = 40, parameters: PMLParams = DefaultStablePMLParameters
+        cls,
+        num_layers: pd.NonNegativeInt = 40,
+        parameters: PMLParams = DefaultStablePMLParameters,
     ):
         """Stable PML boundary specification on both sides along a dimension.
 
@@ -550,7 +581,9 @@ class Boundary(Tidy3dBaseModel):
 
     @classmethod
     def absorber(
-        cls, num_layers: pd.NonNegativeInt = 40, parameters: PMLParams = DefaultAbsorberParameters
+        cls,
+        num_layers: pd.NonNegativeInt = 40,
+        parameters: PMLParams = DefaultAbsorberParameters,
     ):
         """Adiabatic absorber boundary specification on both sides along a dimension.
 
@@ -741,6 +774,8 @@ class BoundarySpec(Tidy3dBaseModel):
             for edge_key, bound_edge in bound_edges.items():
                 if isinstance(bound_edge, BlochBoundary):
                     new_bloch_vec = -1 * bound_edge.bloch_vec
-                    bound_edges[edge_key] = bound_edge.copy(update=dict(bloch_vec=new_bloch_vec))
+                    bound_edges[edge_key] = bound_edge.copy(
+                        update=dict(bloch_vec=new_bloch_vec)
+                    )
             bound_dims[dim_key] = bound_edges
         return self.copy(update=bound_dims)

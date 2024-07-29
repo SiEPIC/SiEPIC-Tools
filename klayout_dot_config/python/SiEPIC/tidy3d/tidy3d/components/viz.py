@@ -1,15 +1,16 @@
 # pylint: disable=invalid-name
-""" utilities for plotting """
+"""utilities for plotting"""
+
 from __future__ import annotations
 
 from typing import Any
 from functools import wraps
 
 # import matplotlib.pylab as plt
-#from matplotlib.patches import PathPatch, ArrowStyle
+# from matplotlib.patches import PathPatch, ArrowStyle
 PathPath = None
 ArrowStyle = None
-#from matplotlib.path import Path
+# from matplotlib.path import Path
 Path = None
 from numpy import array, concatenate, ones
 import pydantic as pd
@@ -106,14 +107,20 @@ class PlotParams(Tidy3dBaseModel):
 # defaults for different tidy3d objects
 plot_params_geometry = PlotParams()
 plot_params_structure = PlotParams()
-plot_params_source = PlotParams(alpha=0.4, facecolor="limegreen", edgecolor="limegreen", lw=3)
-plot_params_monitor = PlotParams(alpha=0.4, facecolor="orange", edgecolor="orange", lw=3)
+plot_params_source = PlotParams(
+    alpha=0.4, facecolor="limegreen", edgecolor="limegreen", lw=3
+)
+plot_params_monitor = PlotParams(
+    alpha=0.4, facecolor="orange", edgecolor="orange", lw=3
+)
 plot_params_pml = PlotParams(alpha=0.7, facecolor="gray", edgecolor="gray", hatch="x")
 plot_params_pec = PlotParams(alpha=1.0, facecolor="gold", edgecolor="black")
 plot_params_pmc = PlotParams(alpha=1.0, facecolor="lightsteelblue", edgecolor="black")
 plot_params_bloch = PlotParams(alpha=1.0, facecolor="orchid", edgecolor="black")
 plot_params_symmetry = PlotParams(edgecolor="gray", facecolor="gray", alpha=0.6)
-plot_params_override_structures = PlotParams(linewidth=0.4, edgecolor="black", fill=False)
+plot_params_override_structures = PlotParams(
+    linewidth=0.4, edgecolor="black", fill=False
+)
 
 # stores color of simulation.structures for given index in simulation.medium_map
 MEDIUM_CMAP = [
@@ -131,7 +138,7 @@ MEDIUM_CMAP = [
 STRUCTURE_EPS_CMAP = "gist_yarg"
 
 # default arrow style
-#arrow_style = ArrowStyle.Simple(head_length=12, head_width=9, tail_width=4)
+# arrow_style = ArrowStyle.Simple(head_length=12, head_width=9, tail_width=4)
 arrow_style = None
 
 """=================================================================================================
@@ -194,13 +201,17 @@ def polygon_path(polygon):
     vertices = concatenate(
         [
             concatenate(
-                [array(t.exterior.coords)[:, :2]] + [array(r.coords)[:, :2] for r in t.interiors]
+                [array(t.exterior.coords)[:, :2]]
+                + [array(r.coords)[:, :2] for r in t.interiors]
             )
             for t in polygon
         ]
     )
     codes = concatenate(
-        [concatenate([coding(t.exterior)] + [coding(r) for r in t.interiors]) for t in polygon]
+        [
+            concatenate([coding(t.exterior)] + [coding(r) for r in t.interiors])
+            for t in polygon
+        ]
     )
 
     return Path(vertices, codes)

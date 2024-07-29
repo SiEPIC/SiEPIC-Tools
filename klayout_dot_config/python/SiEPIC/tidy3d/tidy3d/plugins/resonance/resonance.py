@@ -1,5 +1,4 @@
-"""Find resonances in time series data
-"""
+"""Find resonances in time series data"""
 
 from typing import Tuple, List, Union
 from functools import partial
@@ -22,6 +21,7 @@ INIT_NUM_FREQS = 200
 TIME_STEP_RTOL = 1e-5
 
 RCOND = 1e-4
+
 
 # ResonanceData will be used internally
 class ResonanceData(Tidy3dBaseModel):
@@ -112,7 +112,9 @@ class ResonanceFinder(Tidy3dBaseModel):
             )
         return val
 
-    def run(self, signals: Union[FieldTimeData, Tuple[FieldTimeData, ...]]) -> xr.Dataset:
+    def run(
+        self, signals: Union[FieldTimeData, Tuple[FieldTimeData, ...]]
+    ) -> xr.Dataset:
         """Finds resonances in a :class:`.FieldTimeData` or a Tuple of such.
         The time coordinates must be uniformly spaced, and the spacing must be the same
         across all supplied data. The resonance finder runs on the sum of the
@@ -317,11 +319,13 @@ class ResonanceFinder(Tidy3dBaseModel):
 
         u_matrices = np.zeros((3, nfreqs, nfreqs), dtype=complex)
         for pval in range(3):
-
             u_matrices[pval, :, :] = prefactor * (
-                np.outer(zvals, zinvl[:, : half_len + 1] @ signal[pval:][: half_len + 1])
+                np.outer(
+                    zvals, zinvl[:, : half_len + 1] @ signal[pval:][: half_len + 1]
+                )
                 + np.outer(
-                    zinvl[:, :half_len] @ signal[pval:][half_len + 1 : 2 * half_len + 1],
+                    zinvl[:, :half_len]
+                    @ signal[pval:][half_len + 1 : 2 * half_len + 1],
                     zinvl[:, half_len],
                 )
             )
@@ -330,7 +334,9 @@ class ResonanceFinder(Tidy3dBaseModel):
             for i in range(nfreqs):
                 u_matrices[pval, i, i] = np.dot(
                     zinvl[i, : 2 * half_len + 1],
-                    np.concatenate((np.arange(1, half_len + 2), np.arange(half_len, 0, -1)))
+                    np.concatenate(
+                        (np.arange(1, half_len + 2), np.arange(half_len, 0, -1))
+                    )
                     * signal[pval:][: 2 * half_len + 1],
                 )
 
@@ -345,11 +351,16 @@ class ResonanceFinder(Tidy3dBaseModel):
                 new_a_matrix[:, i] -= new_a_matrix[:, j] * np.dot(
                     new_a_matrix[:, j], a_matrix[:, i]
                 )
-            new_a_matrix[:, i] /= np.sqrt(np.dot(new_a_matrix[:, i], new_a_matrix[:, i]))
+            new_a_matrix[:, i] /= np.sqrt(
+                np.dot(new_a_matrix[:, i], new_a_matrix[:, i])
+            )
         return new_a_matrix
 
     def _solve_gen_eig_prob(
-        self, a_matrix: ArrayLike[complex, 2], b_matrix: ArrayLike[complex, 2], rcond: float
+        self,
+        a_matrix: ArrayLike[complex, 2],
+        b_matrix: ArrayLike[complex, 2],
+        rcond: float,
     ) -> Tuple[ArrayLike[complex, 1], ArrayLike[complex, 2]]:
         """Solve a generalized eigenvalue problem of the form
 
@@ -415,16 +426,22 @@ class ResonanceFinder(Tidy3dBaseModel):
             )
         return errors
 
-    def _iterate(self, signal: ArrayLike[complex, 1], prev_resdata: ResonanceData) -> ResonanceData:
+    def _iterate(
+        self, signal: ArrayLike[complex, 1], prev_resdata: ResonanceData
+    ) -> ResonanceData:
         """Run a single iteration of the resonance finder."""
         prev_eigvals = prev_resdata.eigvals
 
         u_matrices = self._evaluate_matrices(signal, prev_eigvals)
 
-        eigvals, eigvecs = self._solve_gen_eig_prob(u_matrices[1], u_matrices[0], self.rcond)
+        eigvals, eigvecs = self._solve_gen_eig_prob(
+            u_matrices[1], u_matrices[0], self.rcond
+        )
 
         errors = self._find_errors(eigvals, u_matrices, eigvecs)
 
         amplitudes = self._find_amplitudes(signal, prev_eigvals, eigvals, eigvecs)
 
-        return ResonanceData(eigvals=eigvals, errors=errors, complex_amplitudes=amplitudes)
+        return ResonanceData(
+            eigvals=eigvals, errors=errors, complex_amplitudes=amplitudes
+        )

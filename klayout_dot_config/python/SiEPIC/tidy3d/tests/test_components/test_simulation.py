@@ -1,4 +1,5 @@
 """Tests the simulation and its validators."""
+
 import pytest
 import matplotlib.pylab as plt
 
@@ -9,7 +10,9 @@ from tidy3d.components import simulation
 from tidy3d.components.simulation import MAX_NUM_MEDIUMS
 from ..utils import assert_log_level, SIM_FULL
 
-SIM = td.Simulation(size=(1, 1, 1), run_time=1e-12, grid_spec=td.GridSpec(wavelength=1.0))
+SIM = td.Simulation(
+    size=(1, 1, 1), run_time=1e-12, grid_spec=td.GridSpec(wavelength=1.0)
+)
 
 _, AX = plt.subplots()
 
@@ -30,10 +33,13 @@ def test_sim_init():
                 medium=td.Medium(permittivity=1.0, conductivity=3.0),
             ),
             td.Structure(
-                geometry=td.Sphere(radius=1.4, center=(1.0, 0.0, 1.0)), medium=td.Medium()
+                geometry=td.Sphere(radius=1.4, center=(1.0, 0.0, 1.0)),
+                medium=td.Medium(),
             ),
             td.Structure(
-                geometry=td.Cylinder(radius=1.4, length=2.0, center=(1.0, 0.0, -1.0), axis=1),
+                geometry=td.Cylinder(
+                    radius=1.4, length=2.0, center=(1.0, 0.0, -1.0), axis=1
+                ),
                 medium=td.Medium(),
             ),
         ],
@@ -58,8 +64,12 @@ def test_sim_init():
             ),
         ],
         monitors=[
-            td.FieldMonitor(size=(0, 0, 0), center=(0, 0, 0), freqs=[1, 2], name="point"),
-            td.FluxTimeMonitor(size=(1, 1, 0), center=(0, 0, 0), interval=10, name="plane"),
+            td.FieldMonitor(
+                size=(0, 0, 0), center=(0, 0, 0), freqs=[1, 2], name="point"
+            ),
+            td.FluxTimeMonitor(
+                size=(1, 1, 0), center=(0, 0, 0), interval=10, name="plane"
+            ),
         ],
         symmetry=(0, 1, -1),
         boundary_spec=td.BoundarySpec(
@@ -94,7 +104,10 @@ def test_sim_init():
 def test_deprecation_defaults(caplog):
     """Make sure deprecation warnings thrown if defaults used."""
     s = td.Simulation(
-        size=(1, 1, 1), run_time=1e-12, grid_spec=td.GridSpec.uniform(dl=0.1), boundary_spec=None
+        size=(1, 1, 1),
+        run_time=1e-12,
+        grid_spec=td.GridSpec.uniform(dl=0.1),
+        boundary_spec=None,
     )
     assert_log_level(caplog, "warning")
 
@@ -106,7 +119,6 @@ def test_sim_bounds():
     CENTER_SHIFT = (-1.0, 1.0, 100.0)
 
     def place_box(center_offset):
-
         shifted_center = tuple(c + s for (c, s) in zip(center_offset, CENTER_SHIFT))
 
         sim = td.Simulation(
@@ -116,7 +128,8 @@ def test_sim_bounds():
             run_time=1e-12,
             structures=[
                 td.Structure(
-                    geometry=td.Box(size=(1, 1, 1), center=shifted_center), medium=td.Medium()
+                    geometry=td.Box(size=(1, 1, 1), center=shifted_center),
+                    medium=td.Medium(),
                 )
             ],
             boundary_spec=td.BoundarySpec.all_sides(boundary=td.Periodic()),
@@ -145,7 +158,6 @@ def test_sim_bounds():
 
 
 def test_sim_size():
-
     mesh1d = td.UniformGrid(dl=1e-6)
     grid_spec = td.GridSpec(grid_x=mesh1d, grid_y=mesh1d, grid_z=mesh1d)
 
@@ -168,14 +180,15 @@ def test_sim_size():
 
 
 def _test_monitor_size():
-
     with pytest.raises(SetupError):
         s = td.Simulation(
             size=(1, 1, 1),
             grid_spec=td.GridSpec.uniform(1e-3),
             monitors=[
                 td.FieldMonitor(
-                    size=(td.inf, td.inf, td.inf), freqs=np.linspace(0, 200e12, 10001), name="test"
+                    size=(td.inf, td.inf, td.inf),
+                    freqs=np.linspace(0, 200e12, 10001),
+                    name="test",
                 )
             ],
             run_time=1e-12,
@@ -184,7 +197,9 @@ def _test_monitor_size():
         s.validate_pre_upload()
 
 
-@pytest.mark.parametrize("freq, log_level", [(1.5, "warning"), (2.5, None), (3.5, "warning")])
+@pytest.mark.parametrize(
+    "freq, log_level", [(1.5, "warning"), (2.5, None), (3.5, "warning")]
+)
 def test_monitor_medium_frequency_range(caplog, freq, log_level):
     # monitor frequency above or below a given medium's range should throw a warning
 
@@ -323,7 +338,6 @@ def test_validate_plane_wave_boundaries(caplog):
 
 
 def test_validate_zero_dim_boundaries(caplog):
-
     # zero-dim simulation with an absorbing boundary in that direction should warn
     src = td.PlaneWave(
         source_time=td.GaussianPulse(freq0=2.5e14, fwidth=1e13),
@@ -359,11 +373,15 @@ def test_validate_zero_dim_boundaries(caplog):
 
 
 def test_validate_components_none():
-
     assert SIM._structures_not_at_edges(val=None, values=SIM.dict()) is None
     assert SIM._validate_num_mediums(val=None) is None
-    assert SIM._warn_monitor_mediums_frequency_range(val=None, values=SIM.dict()) is None
-    assert SIM._warn_monitor_simulation_frequency_range(val=None, values=SIM.dict()) is None
+    assert (
+        SIM._warn_monitor_mediums_frequency_range(val=None, values=SIM.dict()) is None
+    )
+    assert (
+        SIM._warn_monitor_simulation_frequency_range(val=None, values=SIM.dict())
+        is None
+    )
     assert SIM._warn_grid_size_too_small(val=None, values=SIM.dict()) is None
     assert SIM._source_homogeneous(val=None, values=SIM.dict()) is None
 
@@ -392,7 +410,11 @@ def test_validate_size_spatial_and_time(monkeypatch):
 def test_validate_mnt_size(monkeypatch):
     monkeypatch.setattr(simulation, "MAX_MONITOR_DATA_SIZE_BYTES", 1)
     with pytest.raises(SetupError):
-        s = SIM.copy(update=dict(monitors=(td.FieldMonitor(name="f", freqs=[1], size=(1, 1, 1)),)))
+        s = SIM.copy(
+            update=dict(
+                monitors=(td.FieldMonitor(name="f", freqs=[1], size=(1, 1, 1)),)
+            )
+        )
         s._validate_monitor_size()
 
 
@@ -417,7 +439,8 @@ def test_structure_alpha():
     _ = SIM_FULL.plot_structures_eps(x=0, ax=AX, alpha=0.5)
     _ = SIM_FULL.plot_structures_eps(x=0, ax=AX, alpha=0.5, cbar=True)
     new_structs = [
-        td.Structure(geometry=s.geometry, medium=SIM_FULL.medium) for s in SIM_FULL.structures
+        td.Structure(geometry=s.geometry, medium=SIM_FULL.medium)
+        for s in SIM_FULL.structures
     ]
     S2 = SIM_FULL.copy(update=dict(structures=new_structs))
     ax5 = S2.plot_structures_eps(x=0, ax=AX, alpha=0.5)
@@ -431,7 +454,9 @@ def test_plot_symmetries():
 def test_plot_grid():
     override = td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=td.Medium())
     S2 = SIM_FULL.copy(
-        update=dict(grid_spec=td.GridSpec(wavelength=1.0, override_structures=[override]))
+        update=dict(
+            grid_spec=td.GridSpec(wavelength=1.0, override_structures=[override])
+        )
     )
     S2.plot_grid(x=0)
 
@@ -470,7 +495,8 @@ def test_nyquist():
         update=dict(
             sources=(
                 td.PointDipole(
-                    polarization="Ex", source_time=td.GaussianPulse(freq0=2e14, fwidth=1e11)
+                    polarization="Ex",
+                    source_time=td.GaussianPulse(freq0=2e14, fwidth=1e11),
                 ),
             ),
         )
@@ -503,7 +529,9 @@ def test_discretize_non_intersect(caplog):
 
 def test_filter_structures():
     s1 = td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=SIM.medium)
-    s2 = td.Structure(geometry=td.Box(size=(1, 1, 1), center=(1, 1, 1)), medium=SIM.medium)
+    s2 = td.Structure(
+        geometry=td.Box(size=(1, 1, 1), center=(1, 1, 1)), medium=SIM.medium
+    )
     plane = td.Box(center=(0, 0, 1.5), size=(td.inf, td.inf, 0))
     SIM._filter_structures_plane(structures=[s1, s2], plane=plane)
 
@@ -517,7 +545,9 @@ def test_get_structure_plot_params():
         medium=SIM_FULL.medium, freq=1, eps_min=1, eps_max=2
     )
     assert float(pp.facecolor) == 1.0
-    pp = SIM_FULL._get_structure_eps_plot_params(medium=td.PEC, freq=1, eps_min=1, eps_max=2)
+    pp = SIM_FULL._get_structure_eps_plot_params(
+        medium=td.PEC, freq=1, eps_min=1, eps_max=2
+    )
     assert pp.facecolor == "gold"
 
 
@@ -526,7 +556,8 @@ def test_warn_sim_background_medium_freq_range(caplog):
         update=dict(
             sources=(
                 td.PointDipole(
-                    polarization="Ex", source_time=td.GaussianPulse(freq0=2e14, fwidth=1e11)
+                    polarization="Ex",
+                    source_time=td.GaussianPulse(freq0=2e14, fwidth=1e11),
                 ),
             ),
             monitors=(td.FluxMonitor(name="test", freqs=[2], size=(1, 1, 0)),),
@@ -558,11 +589,15 @@ def test_large_grid_size(caplog, grid_size, log_level):
     assert_log_level(caplog, log_level)
 
 
-@pytest.mark.parametrize("box_size,log_level", [(0.001, None), (9.9, "warning"), (20, None)])
+@pytest.mark.parametrize(
+    "box_size,log_level", [(0.001, None), (9.9, "warning"), (20, None)]
+)
 def test_sim_structure_gap(caplog, box_size, log_level):
     """Make sure the gap between a structure and PML is not too small compared to lambda0."""
     medium = td.Medium(permittivity=2)
-    box = td.Structure(geometry=td.Box(size=(box_size, box_size, box_size)), medium=medium)
+    box = td.Structure(
+        geometry=td.Box(size=(box_size, box_size, box_size)), medium=medium
+    )
     src = td.UniformCurrentSource(
         source_time=td.GaussianPulse(freq0=3e14, fwidth=1e13),
         size=(0, 0, 0),
@@ -590,7 +625,9 @@ def test_sim_plane_wave_error():
 
     box = td.Structure(geometry=td.Box(size=(0.1, 0.1, 0.1)), medium=medium_air)
 
-    box_transparent = td.Structure(geometry=td.Box(size=(0.1, 0.1, 0.1)), medium=medium_bg)
+    box_transparent = td.Structure(
+        geometry=td.Box(size=(0.1, 0.1, 0.1)), medium=medium_bg
+    )
 
     src = td.PlaneWave(
         source_time=td.GaussianPulse(freq0=2.5e14, fwidth=1e13),
@@ -631,7 +668,9 @@ def test_sim_monitor_homogeneous():
 
     box = td.Structure(geometry=td.Box(size=(0.2, 0.1, 0.1)), medium=medium_air)
 
-    box_transparent = td.Structure(geometry=td.Box(size=(0.2, 0.1, 0.1)), medium=medium_bg)
+    box_transparent = td.Structure(
+        geometry=td.Box(size=(0.2, 0.1, 0.1)), medium=medium_bg
+    )
 
     monitor_n2f = td.FieldProjectionAngleMonitor(
         center=(0, 0, 0),
@@ -800,8 +839,12 @@ def test_diffraction_medium():
     medium_cond = td.Medium(permittivity=2, conductivity=1)
     medium_disp = td.Lorentz(eps_inf=1.0, coeffs=[(1, 3, 2), (2, 4, 1)])
 
-    box_cond = td.Structure(geometry=td.Box(size=(td.inf, td.inf, 1)), medium=medium_cond)
-    box_disp = td.Structure(geometry=td.Box(size=(td.inf, td.inf, 1)), medium=medium_disp)
+    box_cond = td.Structure(
+        geometry=td.Box(size=(td.inf, td.inf, 1)), medium=medium_cond
+    )
+    box_disp = td.Structure(
+        geometry=td.Box(size=(td.inf, td.inf, 1)), medium=medium_disp
+    )
 
     monitor = td.DiffractionMonitor(
         center=(0, 0, 0),
@@ -876,7 +919,9 @@ def test_num_mediums():
     grid_spec = td.GridSpec.auto(wavelength=1.0)
     for i in range(MAX_NUM_MEDIUMS):
         structures.append(
-            td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=td.Medium(permittivity=i + 1))
+            td.Structure(
+                geometry=td.Box(size=(1, 1, 1)), medium=td.Medium(permittivity=i + 1)
+            )
         )
     sim = td.Simulation(
         size=(5, 5, 5),
@@ -888,7 +933,9 @@ def test_num_mediums():
 
     with pytest.raises(SetupError):
         structures.append(
-            td.Structure(geometry=td.Box(size=(1, 1, 1)), medium=td.Medium(permittivity=i + 2))
+            td.Structure(
+                geometry=td.Box(size=(1, 1, 1)), medium=td.Medium(permittivity=i + 2)
+            )
         )
         sim = td.Simulation(
             size=(5, 5, 5), grid_spec=grid_spec, structures=structures, run_time=1e-12
@@ -911,10 +958,13 @@ def _test_names_default():
                 medium=td.Medium(permittivity=2.0),
             ),
             td.Structure(
-                geometry=td.Sphere(radius=1.4, center=(1.0, 0.0, 1.0)), medium=td.Medium()
+                geometry=td.Sphere(radius=1.4, center=(1.0, 0.0, 1.0)),
+                medium=td.Medium(),
             ),
             td.Structure(
-                geometry=td.Cylinder(radius=1.4, length=2.0, center=(1.0, 0.0, -1.0), axis=1),
+                geometry=td.Cylinder(
+                    radius=1.4, length=2.0, center=(1.0, 0.0, -1.0), axis=1
+                ),
                 medium=td.Medium(),
             ),
         ],
@@ -954,7 +1004,6 @@ def _test_names_default():
 
 
 def test_names_unique():
-
     with pytest.raises(SetupError) as e:
         sim = td.Simulation(
             size=(2.0, 2.0, 2.0),
@@ -1002,8 +1051,12 @@ def test_names_unique():
             size=(2.0, 2.0, 2.0),
             run_time=1e-12,
             monitors=[
-                td.FluxMonitor(size=(1, 1, 0), center=(0, -0.5, 0), freqs=[1], name="mon1"),
-                td.FluxMonitor(size=(0, 1, 1), center=(0, -0.5, 0), freqs=[1], name="mon1"),
+                td.FluxMonitor(
+                    size=(1, 1, 0), center=(0, -0.5, 0), freqs=[1], name="mon1"
+                ),
+                td.FluxMonitor(
+                    size=(0, 1, 1), center=(0, -0.5, 0), freqs=[1], name="mon1"
+                ),
             ],
             boundary_spec=td.BoundarySpec.all_sides(boundary=td.Periodic()),
         )
@@ -1034,7 +1087,9 @@ def test_mode_object_syms():
             run_time=1e-12,
             symmetry=(1, -1, 0),
             monitors=[
-                td.ModeMonitor(size=(2, 2, 0), name="mnt", freqs=[2], mode_spec=td.ModeSpec())
+                td.ModeMonitor(
+                    size=(2, 2, 0), name="mnt", freqs=[2], mode_spec=td.ModeSpec()
+                )
             ],
             boundary_spec=td.BoundarySpec.all_sides(boundary=td.Periodic()),
         )
@@ -1046,7 +1101,11 @@ def test_mode_object_syms():
         grid_spec=td.GridSpec.auto(wavelength=td.C_0 / 1.0),
         run_time=1e-12,
         symmetry=(1, -1, 0),
-        sources=[td.ModeSource(center=(1, -1, 1), size=(2, 2, 0), direction="+", source_time=g)],
+        sources=[
+            td.ModeSource(
+                center=(1, -1, 1), size=(2, 2, 0), direction="+", source_time=g
+            )
+        ],
         boundary_spec=td.BoundarySpec.all_sides(boundary=td.Periodic()),
     )
 
@@ -1059,7 +1118,11 @@ def test_mode_object_syms():
         symmetry=(1, -1, 0),
         monitors=[
             td.ModeMonitor(
-                center=(2, 0, 1), size=(2, 2, 0), name="mnt", freqs=[2], mode_spec=td.ModeSpec()
+                center=(2, 0, 1),
+                size=(2, 2, 0),
+                name="mnt",
+                freqs=[2],
+                mode_spec=td.ModeSpec(),
             )
         ],
         boundary_spec=td.BoundarySpec.all_sides(boundary=td.Periodic()),
@@ -1067,7 +1130,8 @@ def test_mode_object_syms():
 
 
 @pytest.mark.parametrize(
-    "size, num_struct, log_level", [(1, 1, None), (50, 1, "warning"), (1, 11000, "warning")]
+    "size, num_struct, log_level",
+    [(1, 1, None), (50, 1, "warning"), (1, 11000, "warning")],
 )
 def test_warn_large_epsilon(caplog, size, num_struct, log_level):
     """Make sure we get a warning if the epsilon grid is too large."""

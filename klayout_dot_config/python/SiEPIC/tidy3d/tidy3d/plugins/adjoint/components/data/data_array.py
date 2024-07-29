@@ -1,4 +1,5 @@
 """Defines jax-compatible DataArrays."""
+
 from __future__ import annotations
 
 from typing import Tuple, Any, Dict, List
@@ -104,7 +105,9 @@ class JaxDataArray(Tidy3dBaseModel):
         """Get a coordinate list by name."""
 
         if coord_name not in self.coords:
-            raise Tidy3dKeyError(f"Could not select '{coord_name}', not found in coords dict.")
+            raise Tidy3dKeyError(
+                f"Could not select '{coord_name}', not found in coords dict."
+            )
         return self.coords.get(coord_name)
 
     def isel_single(self, coord_name: str, coord_index: int) -> JaxDataArray:
@@ -119,7 +122,6 @@ class JaxDataArray(Tidy3dBaseModel):
 
         # return just the values if no coordinate remain
         if not new_coords:
-
             if new_values.shape:
                 raise AdjointError(
                     "All coordinates selected out, but raw data values are still multi-dimensional."
@@ -143,7 +145,9 @@ class JaxDataArray(Tidy3dBaseModel):
                     f"'isel' kwarg '{coord_name}={coord_index}' is out of range "
                     f"for the coordinate '{coord_name}' with {len(coord_list)} values."
                 )
-            self_sel = self_sel.isel_single(coord_name=coord_name, coord_index=coord_index)
+            self_sel = self_sel.isel_single(
+                coord_name=coord_name, coord_index=coord_index
+            )
 
         return self_sel
 
@@ -153,7 +157,9 @@ class JaxDataArray(Tidy3dBaseModel):
         for coord_name, sel_kwarg in sel_kwargs.items():
             coord_list = self.get_coord_list(coord_name)
             if sel_kwarg not in coord_list:
-                raise DataError(f"Could not select '{coord_name}={sel_kwarg}', value not found.")
+                raise DataError(
+                    f"Could not select '{coord_name}={sel_kwarg}', value not found."
+                )
             coord_index = coord_list.index(sel_kwarg)
             isel_kwargs[coord_name] = coord_index
         return self.isel(**isel_kwargs)
@@ -161,7 +167,9 @@ class JaxDataArray(Tidy3dBaseModel):
     def interp(self, **interp_kwargs):
         """Interpolate into the :class:`.JaxDataArray`. Not yet supported."""
 
-        raise NotImplementedError("Interpolation is not currently supported in the 'output_data'.")
+        raise NotImplementedError(
+            "Interpolation is not currently supported in the 'output_data'."
+        )
 
     @cached_property
     def nonzero_val_coords(self) -> Tuple[List[complex], Dict[str, Any]]:

@@ -1,4 +1,5 @@
-"""test slanted polyslab can be correctly setup and visualized. """
+"""test slanted polyslab can be correctly setup and visualized."""
+
 import pytest
 import numpy as np
 from shapely.geometry import Polygon, Point
@@ -26,7 +27,9 @@ def setup_polyslab(vertices, dilation, angle, bounds, axis=2, reference_plane="b
 
 def convert_polyslab_other_reference_plane(poly, reference_plane):
     """Convert a polyslab defined at ``bottom`` to other plane"""
-    offset_distance = -poly.offset_distance_to_base(reference_plane, poly.length_axis, poly._tanq)
+    offset_distance = -poly.offset_distance_to_base(
+        reference_plane, poly.length_axis, poly._tanq
+    )
     vertices = poly._shift_vertices(poly.base_polygon, offset_distance)[0]
     return poly.copy(update={"vertices": vertices, "reference_plane": reference_plane})
 
@@ -43,7 +46,9 @@ def convert_valid_polygon(vertices):
     """Given vertices that might have intersecting edges, converted to
     vertices of a valid polygon
     """
-    poly = Polygon(vertices).buffer(0, **_BUFFER_PARAM)  # make sure no intersecting edges
+    poly = Polygon(vertices).buffer(
+        0, **_BUFFER_PARAM
+    )  # make sure no intersecting edges
     if type(poly) is not Polygon:
         poly = poly.geoms[0]
 
@@ -123,7 +128,9 @@ def test_crossing_square_poly():
     angle = 0
     for ref_plane in ["bottom", "middle", "top"]:
         with pytest.raises(SetupError) as e_info:
-            s = setup_polyslab(vertices, dilation, angle, bounds, reference_plane=ref_plane)
+            s = setup_polyslab(
+                vertices, dilation, angle, bounds, reference_plane=ref_plane
+            )
 
     # angle too large, self-intersecting
     dilation = 0
@@ -178,7 +185,9 @@ def test_crossing_concave_poly():
     for bounds in [(0, 0.3), (0, 0.5)]:
         with pytest.raises(SetupError) as e_info:
             s = setup_polyslab(vertices, dilation, angle, bounds)
-            s = setup_polyslab(vertices, dilation, -angle, bounds, reference_plane="top")
+            s = setup_polyslab(
+                vertices, dilation, -angle, bounds, reference_plane="top"
+            )
 
     # middle plane
     angle = np.pi / 4
@@ -214,7 +223,9 @@ def test_edge_events():
     vertices = vertice1 + vertice2 + vertice3 + vertice4
 
     angle = -np.pi / 20
-    s = td.PolySlab(vertices=vertices, axis=0, slab_bounds=(-1, 1), sidewall_angle=angle)
+    s = td.PolySlab(
+        vertices=vertices, axis=0, slab_bounds=(-1, 1), sidewall_angle=angle
+    )
 
 
 def test_max_erosion_polygon():
@@ -235,7 +246,9 @@ def test_max_erosion_polygon():
         # verify it is indeed maximal allowed
         dilation = -max_dist + 1e-10
         # avoid polygon splitting etc. case
-        if s._edge_events_detection(s.reference_polygon, dilation, ignore_at_dist=False):
+        if s._edge_events_detection(
+            s.reference_polygon, dilation, ignore_at_dist=False
+        ):
             continue
         s = setup_polyslab(vertices, dilation, angle, bounds)
         assert np.isclose(minimal_edge_length(s.reference_polygon), 0, atol=1e-4)
@@ -298,7 +311,9 @@ def test_intersection_with_inside_poly():
     vertices_list.append([[0, -1], [0, 0], [0, 1], [0, 2], [-1, 2], [-1, -1]])
     # random vertices
     for i in range(Ntest):
-        vertices_list.append(np.array(convert_valid_polygon(np.random.random((N, 2)) * Lx)))
+        vertices_list.append(
+            np.array(convert_valid_polygon(np.random.random((N, 2)) * Lx))
+        )
 
     # different polyslab axis
     for axis in range(3):
@@ -310,15 +325,21 @@ def test_intersection_with_inside_poly():
                 if angle > 0:
                     angle_tmp = 0
                     bounds = (0, 1)
-                    s_bottom = setup_polyslab(vertices, dilation, angle_tmp, bounds, axis=axis)
+                    s_bottom = setup_polyslab(
+                        vertices, dilation, angle_tmp, bounds, axis=axis
+                    )
                     # set up proper thickness
-                    max_dist = s_bottom._neighbor_vertices_crossing_detection(s.base_polygon, -100)
+                    max_dist = s_bottom._neighbor_vertices_crossing_detection(
+                        s.base_polygon, -100
+                    )
 
                 bounds = (-(max_dist * 0.95) / 2, (max_dist * 0.95) / 2)
 
                 # avoid vertex-edge crossing case
                 try:
-                    s_bottom = setup_polyslab(vertices, dilation, angle, bounds, axis=axis)
+                    s_bottom = setup_polyslab(
+                        vertices, dilation, angle, bounds, axis=axis
+                    )
                 except:
                     continue
                 s_top = convert_polyslab_other_reference_plane(s_bottom, "top")
@@ -421,7 +442,9 @@ def test_bound_poly():
             dilation = 0
             angle = 0
             bounds = (0, 1)
-            s = setup_polyslab(vertices, dilation, angle, bounds, reference_plane=reference_plane)
+            s = setup_polyslab(
+                vertices, dilation, angle, bounds, reference_plane=reference_plane
+            )
             max_dist = s._neighbor_vertices_crossing_detection(s.base_polygon, 100)
             # verify it is indeed maximal allowed
             dilation = 1
@@ -478,8 +501,12 @@ def test_normal_intersection_with_inside_cylinder():
     s_list = [cyl]
     s_list.append(cyl.copy(update={"sidewall_angle": np.pi / 2.1}))
     s_list.append(cyl.copy(update={"sidewall_angle": np.pi / 4}))
-    s_list.append(cyl.copy(update={"reference_plane": "top", "sidewall_angle": np.pi / 4.1}))
-    s_list.append(cyl.copy(update={"reference_plane": "middle", "sidewall_angle": np.pi / 4}))
+    s_list.append(
+        cyl.copy(update={"reference_plane": "top", "sidewall_angle": np.pi / 4.1})
+    )
+    s_list.append(
+        cyl.copy(update={"reference_plane": "middle", "sidewall_angle": np.pi / 4})
+    )
 
     x_list = np.linspace(-3 * radius, 3 * radius, num_test_point)
     y_list = np.linspace(-3 * radius, 3 * radius, num_test_point)

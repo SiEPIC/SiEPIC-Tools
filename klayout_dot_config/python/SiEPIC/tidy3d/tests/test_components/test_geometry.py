@@ -17,7 +17,9 @@ GEO = td.Box(size=(1, 1, 1))
 GEO_INF = td.Box(size=(1, 1, td.inf))
 BOX = td.Box(size=(1, 1, 1))
 BOX_2D = td.Box(size=(1, 0, 1))
-POLYSLAB = td.PolySlab(vertices=((0, 0), (1, 0), (1, 1), (0, 1)), slab_bounds=(-0.5, 0.5), axis=2)
+POLYSLAB = td.PolySlab(
+    vertices=((0, 0), (1, 0), (1, 1), (0, 1)), slab_bounds=(-0.5, 0.5), axis=2
+)
 SPHERE = td.Sphere(radius=1)
 CYLINDER = td.Cylinder(axis=2, length=1, radius=1)
 
@@ -33,8 +35,12 @@ def test_plot(component):
 
 def test_base_inside():
     assert Geometry.inside(GEO, x=0, y=0, z=0)
-    assert np.all(Geometry.inside(GEO, np.array([0, 0]), np.array([0, 0]), np.array([0, 0])))
-    assert np.all(Geometry.inside(GEO, np.array([[0, 0]]), np.array([[0, 0]]), np.array([[0, 0]])))
+    assert np.all(
+        Geometry.inside(GEO, np.array([0, 0]), np.array([0, 0]), np.array([0, 0]))
+    )
+    assert np.all(
+        Geometry.inside(GEO, np.array([[0, 0]]), np.array([[0, 0]]), np.array([[0, 0]]))
+    )
 
 
 def test_base_inside_meshgrid():
@@ -72,7 +78,9 @@ def test_map_to_coords_not_polygon():
 @pytest.mark.parametrize("points_shape", [(3,), (3, 10)])
 def test_rotate_points(points_shape):
     points = np.random.random(points_shape)
-    points_rotated = Geometry.rotate_points(points=points, axis=(0, 0, 1), angle=2 * np.pi)
+    points_rotated = Geometry.rotate_points(
+        points=points, axis=(0, 0, 1), angle=2 * np.pi
+    )
     assert np.allclose(points, points_rotated)
     points_rotated = Geometry.rotate_points(points=points, axis=(0, 0, 1), angle=np.pi)
 
@@ -80,9 +88,13 @@ def test_rotate_points(points_shape):
 @pytest.mark.parametrize("axis", [0, 1, 2])
 def test_reflect_points(axis):
     points = np.random.random((3, 10))
-    pr = GEO.reflect_points(points=points, polar_axis=2, angle_theta=2 * np.pi, angle_phi=0)
+    pr = GEO.reflect_points(
+        points=points, polar_axis=2, angle_theta=2 * np.pi, angle_phi=0
+    )
     assert np.allclose(pr, points)
-    pr = GEO.reflect_points(points=points, polar_axis=2, angle_theta=0, angle_phi=2 * np.pi)
+    pr = GEO.reflect_points(
+        points=points, polar_axis=2, angle_theta=0, angle_phi=2 * np.pi
+    )
     assert np.allclose(pr, points)
 
 
@@ -224,9 +236,13 @@ def test_gds_cell():
     gds_cell = gdstk.Cell("name")
     gds_cell.add(gdstk.rectangle((0, 0), (1, 1)))
     td.PolySlab.from_gds(gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=0)
-    td.PolySlab.from_gds(gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=0, gds_dtype=0)
+    td.PolySlab.from_gds(
+        gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=0, gds_dtype=0
+    )
     with pytest.raises(Tidy3dKeyError):
-        td.PolySlab.from_gds(gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=1)
+        td.PolySlab.from_gds(
+            gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=1
+        )
     with pytest.raises(Tidy3dKeyError):
         td.PolySlab.from_gds(
             gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=1, gds_dtype=0
@@ -250,8 +266,12 @@ def test_geo_group_methods():
 
     geo_group = make_geo_group()
     geo_group.inside(0, 1, 2)
-    geo_group.inside(np.linspace(0, 1, 10), np.linspace(0, 1, 10), np.linspace(0, 1, 10))
-    geo_group.inside_meshgrid(np.linspace(0, 1, 10), np.linspace(0, 1, 10), np.linspace(0, 1, 10))
+    geo_group.inside(
+        np.linspace(0, 1, 10), np.linspace(0, 1, 10), np.linspace(0, 1, 10)
+    )
+    geo_group.inside_meshgrid(
+        np.linspace(0, 1, 10), np.linspace(0, 1, 10), np.linspace(0, 1, 10)
+    )
     geo_group.intersections_plane(y=0)
     geo_group.intersects(td.Box(size=(1, 1, 1)))
     rmin, rmax = geo_group.bounds
@@ -278,7 +298,6 @@ def test_geo_group_surface_area():
 
 
 def test_geometry():
-
     b = td.Box(size=(1, 1, 1), center=(0, 0, 0))
     s = td.Sphere(radius=1, center=(0, 0, 0))
     s = td.Cylinder(radius=1, center=(0, 0, 0), axis=1, length=1)
@@ -306,17 +325,20 @@ def test_geometry():
 
 
 def test_geometry_sizes():
-
     # negative in size kwargs errors
     for size in (-1, 1, 1), (1, -1, 1), (1, 1, -1):
         with pytest.raises(pydantic.ValidationError) as e_info:
             a = td.Box(size=size, center=(0, 0, 0))
         with pytest.raises(pydantic.ValidationError) as e_info:
-            s = td.Simulation(size=size, run_time=1e-12, grid_spec=td.GridSpec(wavelength=1.0))
+            s = td.Simulation(
+                size=size, run_time=1e-12, grid_spec=td.GridSpec(wavelength=1.0)
+            )
 
     # negative grid sizes error?
     with pytest.raises(pydantic.ValidationError) as e_info:
-        s = td.Simulation(size=(1, 1, 1), grid_spec=td.GridSpec.uniform(dl=-1.0), run_time=1e-12)
+        s = td.Simulation(
+            size=(1, 1, 1), grid_spec=td.GridSpec.uniform(dl=-1.0), run_time=1e-12
+        )
 
 
 @pytest.mark.parametrize("x0", [5])
@@ -364,7 +386,9 @@ def test_polyslab_merge():
         rect1 = gdstk.rectangle((gap_size / 2, 0), (1, 1))
         rect2 = gdstk.rectangle((-1, 0), (-gap_size / 2, 1))
         cell.add(rect1, rect2)
-        return td.PolySlab.from_gds(gds_cell=cell, gds_layer=0, axis=2, slab_bounds=(-1, 1))
+        return td.PolySlab.from_gds(
+            gds_cell=cell, gds_layer=0, axis=2, slab_bounds=(-1, 1)
+        )
 
     polyslabs_gap = make_polyslabs(gap_size=0.3)
     assert len(polyslabs_gap) == 2, "untouching polylsabs were merged incorrectly."
@@ -375,7 +399,9 @@ def test_polyslab_merge():
 
 @pytest.mark.parametrize("axis", [0, 1, 2])
 def test_polyslab_axis(axis):
-    ps = td.PolySlab(slab_bounds=(-1, 1), vertices=((-5, -5), (-5, 5), (5, 5), (5, -5)), axis=axis)
+    ps = td.PolySlab(
+        slab_bounds=(-1, 1), vertices=((-5, -5), (-5, 5), (5, 5), (5, -5)), axis=axis
+    )
 
     # bound test
     bounds_ideal = [-5, -5]
@@ -392,9 +418,15 @@ def test_polyslab_axis(axis):
     # intersections
     plane_coord = [None] * 3
     plane_coord[axis] = 3
-    assert ps.intersects_plane(x=plane_coord[0], y=plane_coord[1], z=plane_coord[2]) == False
+    assert (
+        ps.intersects_plane(x=plane_coord[0], y=plane_coord[1], z=plane_coord[2])
+        == False
+    )
     plane_coord[axis] = -3
-    assert ps.intersects_plane(x=plane_coord[0], y=plane_coord[1], z=plane_coord[2]) == False
+    assert (
+        ps.intersects_plane(x=plane_coord[0], y=plane_coord[1], z=plane_coord[2])
+        == False
+    )
 
 
 ANGLE = 0.01
@@ -454,7 +486,9 @@ def test_cylinder_deprecation_field(caplog, sidewall_angle, reference_plane, log
     "sidewall_angle, reference_plane, log_level",
     zip(SIDEWALL_ANGLES, REFERENCE_PLANES, LOG_LEVELS_EXPECTED),
 )
-def test_polyslab_deprecation_classmethod(caplog, sidewall_angle, reference_plane, log_level):
+def test_polyslab_deprecation_classmethod(
+    caplog, sidewall_angle, reference_plane, log_level
+):
     """Test that deprectaion warnings thrown if polyslab reference plane not specified."""
 
     reference_plane_kwargs = make_ref_plane_kwargs(reference_plane)
@@ -487,7 +521,9 @@ def test_polyslab_merge():
         rect2 = gdspy.Rectangle((-1, 0), (-gap_size / 2, 1))
         cell.add(rect1)
         cell.add(rect2)
-        return td.PolySlab.from_gds(gds_cell=cell, gds_layer=0, axis=2, slab_bounds=(-1, 1))
+        return td.PolySlab.from_gds(
+            gds_cell=cell, gds_layer=0, axis=2, slab_bounds=(-1, 1)
+        )
 
     polyslabs_gap = make_polyslabs(gap_size=0.3)
     assert len(polyslabs_gap) == 2, "untouching polylsabs were merged incorrectly."
@@ -501,4 +537,6 @@ def test_gds_cell():
     gds_cell.add(gdspy.Rectangle((0, 0), (1, 1)))
     td.PolySlab.from_gds(gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=0)
     with pytest.raises(Tidy3dKeyError):
-        td.PolySlab.from_gds(gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=1)
+        td.PolySlab.from_gds(
+            gds_cell=gds_cell, axis=2, slab_bounds=(-1, 1), gds_layer=1
+        )

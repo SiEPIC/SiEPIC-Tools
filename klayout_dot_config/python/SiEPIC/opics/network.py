@@ -4,7 +4,8 @@ from typing import List, Optional, Dict, Union
 from numpy import ndarray
 from SiEPIC.opics.sparam_ops import connect_s
 from SiEPIC.opics.components import componentModel
-#from SiEPIC.opics.globals import F
+
+# from SiEPIC.opics.globals import F
 import multiprocessing as mp
 
 
@@ -51,7 +52,7 @@ def solve_tasks(
 
     # If pin occurances are in different components:
     else:
-#        combination_f = F
+        #        combination_f = F
         combination_f = None
         combination_s = connect_s(components[0].s, ntp[1], components[1].s, ntp[3])
 
@@ -87,12 +88,11 @@ class Network:
         f: Optional[ndarray] = None,
         mp_config: Dict = {"enabled": False, "proc_count": 0, "close_pool": False},
     ) -> None:
-
         self.f = f
         if self.f is None:
-            print('Frequency range not defined, in opics/network')
-#            raise Exception ('Frequency range not defined, in opics/network')
-#            self.f = F
+            print("Frequency range not defined, in opics/network")
+        #            raise Exception ('Frequency range not defined, in opics/network')
+        #            self.f = F
 
         self.network_id = (
             network_id if network_id else str(binascii.hexlify(os.urandom(4)))[2:-1]
@@ -280,24 +280,22 @@ class Network:
 
         t_components = self.current_components
         t_nets = self.global_netlist
-        
+
         # Lukas: this line worked for a single circuit, but failed
         # when there were two separate circuits on the same layout
         # Lukas: I don't know why these don't have the same type
-        if type(self.current_connections[0])==int:
+        if type(self.current_connections[0]) == int:
             # this is the case for SPICE imported files, as fixed by Mustafa
             # ex. [10, 11, 12, 13]
             t_connections = self.current_connections
         else:
             # this is the case for circuits created using Python, circuit.connect, etc, by Jaspreet
-            # [['Ebeam_GC_48a2e40d', 1, 'Ebeam_Y_25eaf721', 0], ['Ebeam_Y_25eaf721', 1, 'Ebeam_WG_0fc722dc', 0], 
+            # [['Ebeam_GC_48a2e40d', 1, 'Ebeam_Y_25eaf721', 0], ['Ebeam_Y_25eaf721', 1, 'Ebeam_WG_0fc722dc', 0],
             t_connections = [i for i in range(len(self.current_connections))]
-            
 
         _connections_in_use = set()
 
         while len(t_connections) > 0:
-
             # track components and connections in use
             _components_in_use = set()
             _nets_in_use = set()

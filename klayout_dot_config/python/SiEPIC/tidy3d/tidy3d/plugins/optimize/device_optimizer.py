@@ -1,4 +1,4 @@
-""" 
+"""
 Point of this plugin:
 
 Provide way for users to optimize their devce/

@@ -1,5 +1,6 @@
 # pylint: disable=invalid-name, too-many-lines
 """Defines properties of the medium / materials"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -12,7 +13,15 @@ import xarray as xr
 
 from .base import Tidy3dBaseModel, cached_property
 from .grid.grid import Coords, Grid
-from .types import PoleAndResidue, Ax, FreqBound, TYPE_TAG_STR, InterpMethod, Numpy, Bound
+from .types import (
+    PoleAndResidue,
+    Ax,
+    FreqBound,
+    TYPE_TAG_STR,
+    InterpMethod,
+    Numpy,
+    Bound,
+)
 from .data.dataset import PermittivityDataset
 from .data.data_array import ScalarFieldDataArray
 from .viz import add_ax_if_none
@@ -28,7 +37,9 @@ FREQ_EVAL_INF = 1e50
 FILL_VALUE = "extrapolate"
 
 
-def ensure_freq_in_range(eps_model: Callable[[float], complex]) -> Callable[[float], complex]:
+def ensure_freq_in_range(
+    eps_model: Callable[[float], complex],
+) -> Callable[[float], complex]:
     """Decorate ``eps_model`` to log warning if frequency supplied is out of bounds."""
 
     @functools.wraps(eps_model)
@@ -64,7 +75,9 @@ def ensure_freq_in_range(eps_model: Callable[[float], complex]) -> Callable[[flo
 class AbstractMedium(ABC, Tidy3dBaseModel):
     """A medium within which electromagnetic waves propagate."""
 
-    name: str = pd.Field(None, title="Name", description="Optional unique name for medium.")
+    name: str = pd.Field(
+        None, title="Name", description="Optional unique name for medium."
+    )
 
     frequency_range: FreqBound = pd.Field(
         None,
@@ -243,7 +256,9 @@ class AbstractMedium(ABC, Tidy3dBaseModel):
         return eps_real + 1j * sigma / omega / EPSILON_0
 
     @staticmethod
-    def eps_complex_to_eps_sigma(eps_complex: complex, freq: float) -> Tuple[float, float]:
+    def eps_complex_to_eps_sigma(
+        eps_complex: complex, freq: float
+    ) -> Tuple[float, float]:
         """Convert complex permittivity at frequency ``freq``
         to permittivity and conductivity values.
 
@@ -267,6 +282,7 @@ class AbstractMedium(ABC, Tidy3dBaseModel):
 
 """ Dispersionless Medium """
 
+
 # PEC keyword
 class PECMedium(AbstractMedium):
     """Perfect electrical conductor class.
@@ -277,7 +293,6 @@ class PECMedium(AbstractMedium):
     """
 
     def eps_model(self, frequency: float) -> complex:
-
         # return something like frequency with value of pec_val + 0j
         return 0j * frequency + pec_val
 
@@ -296,7 +311,11 @@ class Medium(AbstractMedium):
     """
 
     permittivity: float = pd.Field(
-        1.0, ge=1.0, title="Permittivity", description="Relative permittivity.", units=PERMITTIVITY
+        1.0,
+        ge=1.0,
+        title="Permittivity",
+        description="Relative permittivity.",
+        units=PERMITTIVITY,
     )
 
     conductivity: float = pd.Field(
@@ -426,7 +445,8 @@ class CustomMedium(AbstractMedium):
         for name, eps_dataset_component in self.eps_dataset.field_components.items():
             freq = eps_dataset_component.coords["f"][0]
             eps_freq = (
-                eps_dataset_component.real + 1j * eps_dataset_component.imag * freq / frequency
+                eps_dataset_component.real
+                + 1j * eps_dataset_component.imag * freq / frequency
             )
             eps_freq = eps_freq.assign_coords({"f": [frequency]})
             new_field_components.update({name: eps_freq})
@@ -458,7 +478,9 @@ class CustomMedium(AbstractMedium):
         interp_shape = [len(coord_comp) for coord_comp in coords.to_list]
         eps_list = [
             np.array(
-                self._interp(eps_freq.field_components[comp], coords, self.interp_method)
+                self._interp(
+                    eps_freq.field_components[comp], coords, self.interp_method
+                )
             ).reshape(interp_shape)
             for comp in ["eps_xx", "eps_yy", "eps_zz"]
         ]
@@ -472,7 +494,8 @@ class CustomMedium(AbstractMedium):
         """
         eps_freq = self.eps_dataset_freq(frequency)
         eps_np_list = [
-            np.array(sclr_fld).ravel() for _, sclr_fld in eps_freq.field_components.items()
+            np.array(sclr_fld).ravel()
+            for _, sclr_fld in eps_freq.field_components.items()
         ]
         eps_list = [eps_comp[np.argmax(np.abs(eps_comp))] for eps_comp in eps_np_list]
         return tuple(eps_list)
@@ -483,7 +506,9 @@ class CustomMedium(AbstractMedium):
         as a function of frequency.
         """
         eps_freq = self.eps_dataset_freq(frequency)
-        eps_array_avgs = [np.mean(eps_array) for _, eps_array in eps_freq.field_components.items()]
+        eps_array_avgs = [
+            np.mean(eps_array) for _, eps_array in eps_freq.field_components.items()
+        ]
         return np.mean(eps_array_avgs)
 
     @classmethod
@@ -505,7 +530,9 @@ class CustomMedium(AbstractMedium):
         :class:`.CustomMedium`
             Medium containing the spatially varying permittivity data.
         """
-        field_components = {field_name: eps.copy() for field_name in ("eps_xx", "eps_yy", "eps_zz")}
+        field_components = {
+            field_name: eps.copy() for field_name in ("eps_xx", "eps_yy", "eps_zz")
+        }
         eps_dataset = PermittivityDataset(**field_components)
         return cls(eps_dataset=eps_dataset, interp_method=interp_method)
 
@@ -579,7 +606,9 @@ class CustomMedium(AbstractMedium):
         all_coords = "xyz"
         is_single_entry = [scalar_dataset.sizes[ax] == 1 for ax in all_coords]
         interp_ax = [
-            ax for (ax, single_entry) in zip(all_coords, is_single_entry) if not single_entry
+            ax
+            for (ax, single_entry) in zip(all_coords, is_single_entry)
+            if not single_entry
         ]
         isel_ax = [ax for ax in all_coords if ax not in interp_ax]
 
@@ -596,7 +625,9 @@ class CustomMedium(AbstractMedium):
 
         # Apply interp for the rest
         #   first check if it's sorted
-        is_sorted = all((np.all(np.diff(scalar_dataset.coords[f]) > 0) for f in interp_ax))
+        is_sorted = all(
+            (np.all(np.diff(scalar_dataset.coords[f]) > 0) for f in interp_ax)
+        )
         interp_param = dict(
             kwargs={"fill_value": FILL_VALUE},
             assume_sorted=is_sorted,
@@ -626,7 +657,9 @@ class CustomMedium(AbstractMedium):
         def make_grid(scalar_field: ScalarFieldDataArray) -> Grid:
             """Make a grid for a single dataset."""
 
-            def make_bound_coords(coords: np.ndarray, pt_min: float, pt_max: float) -> List[float]:
+            def make_bound_coords(
+                coords: np.ndarray, pt_min: float, pt_max: float
+            ) -> List[float]:
                 """Convert user supplied coords into boundary coords to use in :class:`.Grid`."""
 
                 # get coordinates of the bondaries halfway between user-supplied data
@@ -648,7 +681,9 @@ class CustomMedium(AbstractMedium):
             for key, coords in spatial_coords.items():
                 pt_min = pt_mins[key]
                 pt_max = pt_maxs[key]
-                bound_coords[key] = make_bound_coords(coords=coords, pt_min=pt_min, pt_max=pt_max)
+                bound_coords[key] = make_bound_coords(
+                    coords=coords, pt_min=pt_min, pt_max=pt_max
+                )
 
             # construct grid
             boundaries = Coords(**bound_coords)
@@ -656,7 +691,6 @@ class CustomMedium(AbstractMedium):
 
         grids = {}
         for field_name in ("eps_xx", "eps_yy", "eps_zz"):
-
             # grab user supplied data long this dimension
             scalar_field = self.eps_dataset.field_components[field_name]
 
@@ -729,7 +763,7 @@ class PoleResidue(DispersiveMedium):
 
         omega = 2 * np.pi * frequency
         eps = self.eps_inf + np.zeros_like(frequency) + 0.0j
-        for (a, c) in self.poles:
+        for a, c in self.poles:
             a_cc = np.conj(a)
             c_cc = np.conj(c)
             eps -= c / (1j * omega + a)
@@ -785,7 +819,7 @@ class Sellmeier(DispersiveMedium):
         wvl = C_0 / frequency
         wvl2 = wvl**2
         n_squared = 1.0
-        for (B, C) in self.coeffs:
+        for B, C in self.coeffs:
             n_squared += B * wvl2 / (wvl2 - C)
         return np.sqrt(n_squared)
 
@@ -801,7 +835,7 @@ class Sellmeier(DispersiveMedium):
         """Representation of Medium as a pole-residue model."""
 
         poles = []
-        for (B, C) in self.coeffs:
+        for B, C in self.coeffs:
             beta = 2 * np.pi * C_0 / np.sqrt(C)
             alpha = -0.5 * beta * B
             a = 1j * beta
@@ -885,7 +919,7 @@ class Lorentz(DispersiveMedium):
         """Complex-valued permittivity as a function of frequency."""
 
         eps = self.eps_inf + 0.0j
-        for (de, f, delta) in self.coeffs:
+        for de, f, delta in self.coeffs:
             eps += (de * f**2) / (f**2 - 2j * frequency * delta - frequency**2)
         return eps
 
@@ -894,8 +928,7 @@ class Lorentz(DispersiveMedium):
         """Representation of Medium as a pole-residue model."""
 
         poles = []
-        for (de, f, delta) in self.coeffs:
-
+        for de, f, delta in self.coeffs:
             w = 2 * np.pi * f
             d = 2 * np.pi * delta
 
@@ -956,7 +989,7 @@ class Drude(DispersiveMedium):
         """Complex-valued permittivity as a function of frequency."""
 
         eps = self.eps_inf + 0.0j
-        for (f, delta) in self.coeffs:
+        for f, delta in self.coeffs:
             eps -= (f**2) / (frequency**2 + 1j * frequency * delta)
         return eps
 
@@ -967,8 +1000,7 @@ class Drude(DispersiveMedium):
         poles = []
         a0 = 0j
 
-        for (f, delta) in self.coeffs:
-
+        for f, delta in self.coeffs:
             w = 2 * np.pi * f
             d = 2 * np.pi * delta
 
@@ -1021,7 +1053,7 @@ class Debye(DispersiveMedium):
         """Complex-valued permittivity as a function of frequency."""
 
         eps = self.eps_inf + 0.0j
-        for (de, tau) in self.coeffs:
+        for de, tau in self.coeffs:
             eps += de / (1 - 1j * frequency * tau)
         return eps
 
@@ -1030,7 +1062,7 @@ class Debye(DispersiveMedium):
         """Representation of Medium as a pole-residue model."""
 
         poles = []
-        for (de, tau) in self.coeffs:
+        for de, tau in self.coeffs:
             a = -2 * np.pi / tau + 0j
             c = -0.5 * de * a
 
@@ -1113,8 +1145,9 @@ class AnisotropicMedium(AbstractMedium):
         freqs = np.array(freqs)
         freqs_thz = freqs / 1e12
 
-        for label, medium_component in zip(("xx", "yy", "zz"), (self.xx, self.yy, self.zz)):
-
+        for label, medium_component in zip(
+            ("xx", "yy", "zz"), (self.xx, self.yy, self.zz)
+        ):
             eps_complex = medium_component.eps_model(freqs)
             n, k = AbstractMedium.eps_complex_to_nk(eps_complex)
             ax.plot(freqs_thz, n, label=f"n, eps_{label}")

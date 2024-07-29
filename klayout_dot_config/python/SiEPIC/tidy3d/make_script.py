@@ -16,8 +16,9 @@ from black import format_str, FileMode
 
 
 def main(args):
-
-    parser = argparse.ArgumentParser(description="Generate tidy3d script from a simulation file.")
+    parser = argparse.ArgumentParser(
+        description="Generate tidy3d script from a simulation file."
+    )
 
     parser.add_argument(
         "simulation_file",
@@ -27,7 +28,10 @@ def main(args):
     )
 
     parser.add_argument(
-        "script_file", type=str, default="simulation.py", help="path to the .py script to write to."
+        "script_file",
+        type=str,
+        default="simulation.py",
+        help="path to the .py script to write to.",
     )
 
     args = parser.parse_args(args)

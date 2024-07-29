@@ -1,4 +1,5 @@
-""" unit test authentication of python client """
+"""unit test authentication of python client"""
+
 import json
 
 import pytest
@@ -15,7 +16,9 @@ from ..utils import get_test_root_dir
 @pytest.fixture
 def mock_credential_path(monkeypatch):
     monkeypatch.setattr(
-        tidy3d_auth, "CREDENTIAL_PATH", str(get_test_root_dir().joinpath("/tmp/auth.json"))
+        tidy3d_auth,
+        "CREDENTIAL_PATH",
+        str(get_test_root_dir().joinpath("/tmp/auth.json")),
     )
 
 
@@ -25,7 +28,9 @@ def test__save_credential_to_stored_file(mock_credential_path):
         auth_json = json.load(fp)
         log.info(auth_json)
 
-    assert sorted(auth_json.items()) == sorted({"email": "user", "password": "pwd"}.items())
+    assert sorted(auth_json.items()) == sorted(
+        {"email": "user", "password": "pwd"}.items()
+    )
 
 
 def test__get_credential_from_stored_file(mock_credential_path):
@@ -80,7 +85,6 @@ def test_get_credentials_with_env(monkeypatch):
 
 
 def test_get_config_with_env(monkeypatch):
-
     for TIDY3D_ENV in ("prod", "dev", "uat"):
         monkeypatch.setenv("TIDY3D_ENV", TIDY3D_ENV)
         importlib.reload(config)
@@ -106,8 +110,12 @@ def test_get_credentials_with_console(monkeypatch, mock_credential_path):
         json.dump({"email": "user", "password": "pwd"}, fp)
     auth_resps = iter(
         [
-            MockResponse(401, {"data": {"user": {"name": "mock_user"}, "auth": "mock_auth"}}),
-            MockResponse(200, {"data": {"user": {"name": "mock_user"}, "auth": "mock_auth"}}),
+            MockResponse(
+                401, {"data": {"user": {"name": "mock_user"}, "auth": "mock_auth"}}
+            ),
+            MockResponse(
+                200, {"data": {"user": {"name": "mock_user"}, "auth": "mock_auth"}}
+            ),
         ]
     )
     monkeypatch.setattr("builtins.input", lambda _: "user")

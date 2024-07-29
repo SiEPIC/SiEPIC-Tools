@@ -15,7 +15,15 @@ from ...components.grid.grid import Grid
 from ...components.mode import ModeSpec
 from ...components.monitor import ModeSolverMonitor, ModeMonitor
 from ...components.source import ModeSource, SourceTime
-from ...components.types import Direction, ArrayLike, FreqArray, Ax, Literal, Axis, Symmetry
+from ...components.types import (
+    Direction,
+    ArrayLike,
+    FreqArray,
+    Ax,
+    Literal,
+    Axis,
+    Symmetry,
+)
 from ...components.data.data_array import ModeIndexDataArray, ScalarModeFieldDataArray
 from ...components.data.data_array import FreqModeDataArray
 from ...components.data.sim_data import SimulationData
@@ -37,11 +45,15 @@ class ModeSolver(Tidy3dBaseModel):
     """
 
     simulation: Simulation = pydantic.Field(
-        ..., title="Simulation", description="Simulation defining all structures and mediums."
+        ...,
+        title="Simulation",
+        description="Simulation defining all structures and mediums.",
     )
 
     plane: Box = pydantic.Field(
-        ..., title="Plane", description="Cross-sectional plane in which the mode will be computed."
+        ...,
+        title="Plane",
+        description="Cross-sectional plane in which the mode will be computed.",
     )
 
     mode_spec: ModeSpec = pydantic.Field(
@@ -89,7 +101,9 @@ class ModeSolver(Tidy3dBaseModel):
         to get epsilon from the simulation. The mode fields coordinate along the normal direction
         will be reset to the exact plane position after the solve."""
         plane_sym = self.simulation.min_sym_box(self.plane)
-        boundaries = self.simulation.discretize(plane_sym, extend=True).boundaries.to_list
+        boundaries = self.simulation.discretize(
+            plane_sym, extend=True
+        ).boundaries.to_list
         # Do not extend if simulation has a single pixel along a dimension
         for dim, num_cells in enumerate(self.simulation.grid.num_cells):
             if num_cells <= 1:
@@ -100,7 +114,9 @@ class ModeSolver(Tidy3dBaseModel):
         for dim, sym in enumerate(self.solver_symmetry):
             if sym != 0:
                 bounds_plane[dim] = bounds_plane[dim][1:]
-        boundaries = plane_sym.unpop_axis(bounds_norm, bounds_plane, axis=self.normal_axis)
+        boundaries = plane_sym.unpop_axis(
+            bounds_norm, bounds_plane, axis=self.normal_axis
+        )
         return Grid(boundaries=dict(zip("xyz", boundaries)))
 
     def solve(self) -> ModeSolverData:
@@ -144,7 +160,6 @@ class ModeSolver(Tidy3dBaseModel):
 
         # Construct and add all the data for the fields
         for field_name in ("Ex", "Ey", "Ez", "Hx", "Hy", "Hz"):
-
             xyz_coords = self._solver_grid[field_name].to_list
             # Snap to plane center along normal direction
             xyz_coords[self.normal_axis] = [self.plane.center[self.normal_axis]]
@@ -186,7 +201,8 @@ class ModeSolver(Tidy3dBaseModel):
         scaling = np.sqrt(np.abs(mode_solver_data.flux))
         mode_solver_data = mode_solver_data.copy(
             update={
-                key: field / scaling for key, field in mode_solver_data.field_components.items()
+                key: field / scaling
+                for key, field in mode_solver_data.field_components.items()
             }
         )
 
@@ -287,7 +303,9 @@ class ModeSolver(Tidy3dBaseModel):
         fields = {key: [] for key in ("Ex", "Ey", "Ez", "Hx", "Hy", "Hz")}
         for mode_index in range(self.mode_spec.num_modes):
             # Get E and H fields at the current mode_index
-            ((Ex, Ey, Ez), (Hx, Hy, Hz)) = self._process_fields(solver_fields, mode_index)
+            ((Ex, Ey, Ez), (Hx, Hy, Hz)) = self._process_fields(
+                solver_fields, mode_index
+            )
 
             # Note: back in original coordinates
             fields_mode = {"Ex": Ex, "Ey": Ey, "Ez": Ez, "Hx": Hx, "Hy": Hy, "Hz": Hz}
@@ -302,7 +320,9 @@ class ModeSolver(Tidy3dBaseModel):
     def _rotate_field_coords(self, field: FIELD) -> FIELD:
         """Move the propagation axis=z to the proper order in the array."""
         f_x, f_y, f_z = np.moveaxis(field, source=3, destination=1 + self.normal_axis)
-        return np.stack(self.plane.unpop_axis(f_z, (f_x, f_y), axis=self.normal_axis), axis=0)
+        return np.stack(
+            self.plane.unpop_axis(f_z, (f_x, f_y), axis=self.normal_axis), axis=0
+        )
 
     def _process_fields(
         self, mode_fields: ArrayLike[complex, 4], mode_index: pydantic.NonNegativeInt
@@ -339,15 +359,25 @@ class ModeSolver(Tidy3dBaseModel):
                 e_edge, e_norm = 0, 0
                 # Sum up the total field intensity
                 for E in (field_data.Ex, field_data.Ey, field_data.Ez):
-                    e_norm += np.sum(np.abs(E[{"f": freq_index, "mode_index": mode_index}]) ** 2)
+                    e_norm += np.sum(
+                        np.abs(E[{"f": freq_index, "mode_index": mode_index}]) ** 2
+                    )
                 # Sum up the field intensity at the edges
                 if field_sizes[plane_dims[0]] > 1:
                     for E in (field_data.Ex, field_data.Ey, field_data.Ez):
-                        isel = {plane_dims[0]: [0, -1], "f": freq_index, "mode_index": mode_index}
+                        isel = {
+                            plane_dims[0]: [0, -1],
+                            "f": freq_index,
+                            "mode_index": mode_index,
+                        }
                         e_edge += np.sum(np.abs(E[isel]) ** 2)
                 if field_sizes[plane_dims[1]] > 1:
                     for E in (field_data.Ex, field_data.Ey, field_data.Ez):
-                        isel = {plane_dims[1]: [0, -1], "f": freq_index, "mode_index": mode_index}
+                        isel = {
+                            plane_dims[1]: [0, -1],
+                            "f": freq_index,
+                            "mode_index": mode_index,
+                        }
                         e_edge += np.sum(np.abs(E[isel]) ** 2)
                 # Warn if needed
                 if e_edge / e_norm > FIELD_DECAY_CUTOFF:

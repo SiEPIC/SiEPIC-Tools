@@ -31,11 +31,16 @@ class SourceTime(ABC, Tidy3dBaseModel):
     """Base class describing the time dependence of a source."""
 
     amplitude: pydantic.NonNegativeFloat = pydantic.Field(
-        1.0, title="Amplitude", description="Real-valued maximum amplitude of the time dependence."
+        1.0,
+        title="Amplitude",
+        description="Real-valued maximum amplitude of the time dependence.",
     )
 
     phase: float = pydantic.Field(
-        0.0, title="Phase", description="Phase shift of the time dependence.", units=RADIAN
+        0.0,
+        title="Phase",
+        description="Phase shift of the time dependence.",
+        units=RADIAN,
     )
 
     @abstractmethod
@@ -89,12 +94,16 @@ class SourceTime(ABC, Tidy3dBaseModel):
             time_amps = np.real(time_amps)
 
         # Cut to only relevant times
-        count_times = np.where(np.abs(time_amps) / np.amax(np.abs(time_amps)) > DFT_CUTOFF)
+        count_times = np.where(
+            np.abs(time_amps) / np.amax(np.abs(time_amps)) > DFT_CUTOFF
+        )
         time_amps = time_amps[count_times]
         times_cut = times[count_times]
 
         # (Nf, Nt_cut) matrix that gives DFT when matrix multiplied with signal
-        dft_matrix = np.exp(2j * np.pi * freqs[:, None] * times_cut) / np.sqrt(2 * np.pi)
+        dft_matrix = np.exp(2j * np.pi * freqs[:, None] * times_cut) / np.sqrt(
+            2 * np.pi
+        )
         return dt * dft_matrix @ time_amps
 
     @add_ax_if_none
@@ -167,7 +176,9 @@ class SourceTime(ABC, Tidy3dBaseModel):
         fmin, fmax = self.frequency_range()
         freqs = np.linspace(fmin, fmax, num_freqs)
 
-        spectrum = self.spectrum(times=times, dt=dt, freqs=freqs, complex_fields=complex_fields)
+        spectrum = self.spectrum(
+            times=times, dt=dt, freqs=freqs, complex_fields=complex_fields
+        )
 
         ax.plot(freqs, spectrum.real, color="blueviolet", label="real")
         ax.plot(freqs, spectrum.imag, color="crimson", label="imag")
@@ -187,7 +198,10 @@ class Pulse(SourceTime, ABC):
     """A source time that ramps up with some ``fwidth`` and oscillates at ``freq0``."""
 
     freq0: pydantic.PositiveFloat = pydantic.Field(
-        ..., title="Central Frequency", description="Central frequency of the pulse.", units=HERTZ
+        ...,
+        title="Central Frequency",
+        description="Central frequency of the pulse.",
+        units=HERTZ,
     )
     fwidth: pydantic.PositiveFloat = pydantic.Field(
         ...,
@@ -281,10 +295,14 @@ class Source(Box, ABC):
     """Abstract base class for all sources."""
 
     source_time: SourceTimeType = pydantic.Field(
-        ..., title="Source Time", description="Specification of the source time-dependence."
+        ...,
+        title="Source Time",
+        description="Specification of the source time-dependence.",
     )
 
-    name: str = pydantic.Field(None, title="Name", description="Optional name for the source.")
+    name: str = pydantic.Field(
+        None, title="Name", description="Optional name for the source."
+    )
 
     @cached_property
     def plot_params(self) -> PlotParams:
@@ -492,7 +510,9 @@ class BroadbandSource(Source, ABC):
     @cached_property
     def frequency_grid(self) -> np.ndarray:
         """A Chebyshev grid used to approximate frequency dependence."""
-        freq_min, freq_max = self.source_time.frequency_range(num_fwidth=CHEB_GRID_WIDTH)
+        freq_min, freq_max = self.source_time.frequency_range(
+            num_fwidth=CHEB_GRID_WIDTH
+        )
         freq_avg = 0.5 * (freq_min + freq_max)
         freq_diff = 0.5 * (freq_max - freq_min)
         uni_points = (2 * np.arange(self.num_freqs) + 1) / (2 * self.num_freqs)
@@ -573,7 +593,9 @@ class CustomFieldSource(FieldSource, PlanarSource):
         return val
 
     @pydantic.validator("field_dataset", always=True)
-    def _single_frequency_in_range(cls, val: FieldDataset, values: dict) -> FieldDataset:
+    def _single_frequency_in_range(
+        cls, val: FieldDataset, values: dict
+    ) -> FieldDataset:
         """Assert only one frequency supplied and it's in source time range."""
         if val is None:
             return val
@@ -595,7 +617,9 @@ class CustomFieldSource(FieldSource, PlanarSource):
         return val
 
     @pydantic.validator("field_dataset", always=True)
-    def _tangential_component_defined(cls, val: FieldDataset, values: dict) -> FieldDataset:
+    def _tangential_component_defined(
+        cls, val: FieldDataset, values: dict
+    ) -> FieldDataset:
         """Assert that at least one tangential field component is provided."""
         if val is None:
             return val
@@ -610,7 +634,9 @@ class CustomFieldSource(FieldSource, PlanarSource):
         raise SetupError("No tangential field found in the suppled 'field_dataset'.")
 
     @pydantic.validator("field_dataset", always=True)
-    def _tangential_fields_span_source(cls, val: FieldDataset, values: dict) -> FieldDataset:
+    def _tangential_fields_span_source(
+        cls, val: FieldDataset, values: dict
+    ) -> FieldDataset:
         """Assert that provided data spans source bounds in the frame with the source center as the
         origin."""
         if val is None:
@@ -618,10 +644,16 @@ class CustomFieldSource(FieldSource, PlanarSource):
         size = get_value(key="size", values=values)
         for name, field in val.field_components.items():
             for dim, dim_name in enumerate("xyz"):
-                in_bounds_min = np.amin(field.coords[dim_name]) <= -size[dim] / 2 + DATA_SPAN_TOL
-                in_bounds_max = np.amax(field.coords[dim_name]) >= size[dim] / 2 - DATA_SPAN_TOL
+                in_bounds_min = (
+                    np.amin(field.coords[dim_name]) <= -size[dim] / 2 + DATA_SPAN_TOL
+                )
+                in_bounds_max = (
+                    np.amax(field.coords[dim_name]) >= size[dim] / 2 - DATA_SPAN_TOL
+                )
                 if not (in_bounds_min and in_bounds_max):
-                    raise SetupError(f"Data for field {name} does not span the source plane.")
+                    raise SetupError(
+                        f"Data for field {name} does not span the source plane."
+                    )
         return val
 
 
@@ -691,8 +723,14 @@ class AngledFieldSource(DirectionalSource, ABC):
         normal_dir[int(self._injection_axis)] = 1.0
         propagation_dir = list(self._dir_vector)
         if self.angle_theta == 0.0:
-            pol_vector_p = np.array((0, 1, 0)) if self._injection_axis == 0 else np.array((1, 0, 0))
-            pol_vector_p = self.rotate_points(pol_vector_p, normal_dir, angle=self.angle_phi)
+            pol_vector_p = (
+                np.array((0, 1, 0))
+                if self._injection_axis == 0
+                else np.array((1, 0, 0))
+            )
+            pol_vector_p = self.rotate_points(
+                pol_vector_p, normal_dir, angle=self.angle_phi
+            )
         else:
             pol_vector_s = np.cross(normal_dir, propagation_dir)
             pol_vector_p = np.cross(propagation_dir, pol_vector_s)

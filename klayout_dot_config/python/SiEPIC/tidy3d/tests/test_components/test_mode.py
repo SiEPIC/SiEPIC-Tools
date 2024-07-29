@@ -1,4 +1,5 @@
 """Tests mode objects."""
+
 import pytest
 import pydantic
 import numpy as np
@@ -7,7 +8,6 @@ from tidy3d.log import SetupError
 
 
 def test_modes():
-
     m = td.ModeSpec(num_modes=2)
     m = td.ModeSpec(num_modes=1, target_neff=1.0)
 

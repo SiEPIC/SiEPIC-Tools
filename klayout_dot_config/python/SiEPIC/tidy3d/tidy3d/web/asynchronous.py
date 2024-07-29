@@ -1,4 +1,5 @@
 """Interface to run several jobs in batch using asyncio."""
+
 import asyncio
 from typing import Dict
 
@@ -65,7 +66,6 @@ async def _run_async(
         """Defines a worker that runs a job."""
 
         while True:
-
             # grab a job from the queue
             job = await queue.get()
 
@@ -84,7 +84,6 @@ async def _run_async(
 
     # for each simulation provided
     for task_name, simulation in simulations.items():
-
         # make and start a job
         job = Job(
             simulation=simulation,

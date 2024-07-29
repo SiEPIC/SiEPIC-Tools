@@ -1,5 +1,5 @@
-"""Fit PoleResidue Dispersion models to optical NK data based on web service
-"""
+"""Fit PoleResidue Dispersion models to optical NK data based on web service"""
+
 import ssl
 from typing import Tuple, Optional
 from enum import Enum
@@ -150,7 +150,6 @@ class ExceptionCodes(Enum):
 
 
 class StableDispersionFitter(DispersionFitter):
-
     """Stable fitter based on web service"""
 
     @staticmethod
@@ -201,7 +200,9 @@ class StableDispersionFitter(DispersionFitter):
         try:
             resp.raise_for_status()
         except Exception as e:
-            raise WebError("Authorization to the server failed. Please try again.") from e
+            raise WebError(
+                "Authorization to the server failed. Please try again."
+            ) from e
 
         return headers
 
@@ -234,7 +235,10 @@ class StableDispersionFitter(DispersionFitter):
 
         # set up bound_f, bound_amp
         if advanced_param.bound_f is None:
-            new_bound_f = advanced_param.bound_f_lower + self.frequency_range[1] * BOUND_MAX_FACTOR
+            new_bound_f = (
+                advanced_param.bound_f_lower
+                + self.frequency_range[1] * BOUND_MAX_FACTOR
+            )
             advanced_param = advanced_param.copy(update={"bound_f": new_bound_f})
         if advanced_param.bound_amp is None:
             new_bound_amp = self.frequency_range[1] * BOUND_MAX_FACTOR
@@ -297,7 +301,9 @@ class StableDispersionFitter(DispersionFitter):
         headers = self._setup_server(url_server)
 
         # setup web_data
-        web_data = self._setup_webdata(num_poles, num_tries, tolerance_rms, advanced_param)
+        web_data = self._setup_webdata(
+            num_poles, num_tries, tolerance_rms, advanced_param
+        )
 
         resp = requests.post(
             f"{url_server}/dispersion/fit",

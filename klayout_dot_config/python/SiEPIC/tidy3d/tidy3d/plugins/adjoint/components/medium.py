@@ -1,4 +1,5 @@
 """Defines jax-compatible mediums."""
+
 from __future__ import annotations
 
 from typing import Dict, Tuple, Union
@@ -58,7 +59,6 @@ class JaxMedium(Medium, JaxObject):
         d_vol = 1.0
         vol_coords = {}
         for coord_name, min_edge, max_edge in zip("xyz", rmin, rmax):
-
             size = max_edge - min_edge
 
             # ignore this dimension if there is no thickness along it
@@ -71,7 +71,9 @@ class JaxMedium(Medium, JaxObject):
             d_vol *= d_len
 
             # construct the interpolation coordinates along this dimension
-            coords_interp = np.linspace(min_edge + d_len / 2, max_edge - d_len / 2, num_cells_dim)
+            coords_interp = np.linspace(
+                min_edge + d_len / 2, max_edge - d_len / 2, num_cells_dim
+            )
             vol_coords[coord_name] = coords_interp
 
         return vol_coords, d_vol
@@ -247,7 +249,9 @@ class JaxCustomMedium(CustomMedium, JaxObject):
             field_name = f"eps_{dim}{dim}"
             data_array = eps_dataset.field_components[field_name]
             values = data_array.values.tolist()
-            coords = {key: np.array(val).tolist() for key, val in data_array.coords.items()}
+            coords = {
+                key: np.array(val).tolist() for key, val in data_array.coords.items()
+            }
             field_components[field_name] = JaxDataArray(values=values, coords=coords)
         eps_dataset = JaxPermittivityDataset(**field_components)
         obj_dict["eps_dataset"] = eps_dataset
@@ -272,7 +276,6 @@ class JaxCustomMedium(CustomMedium, JaxObject):
 
         vjp_field_components = {}
         for dim in "xyz":
-
             eps_field_name = f"eps_{dim}{dim}"
             field_name = f"E{dim}"
 
@@ -281,7 +284,9 @@ class JaxCustomMedium(CustomMedium, JaxObject):
             coords = orig_data_array.coords
 
             # construct the coordinates for interpolation and selection within the custom medium
-            interp_coords = {dim_pt: coords[dim_pt] for dim_pt in "xyz" if len(coords[dim_pt]) > 1}
+            interp_coords = {
+                dim_pt: coords[dim_pt] for dim_pt in "xyz" if len(coords[dim_pt]) > 1
+            }
             isel_coords = {dim_pt: 0 for dim_pt in "xyz" if len(coords[dim_pt]) <= 1}
 
             # interpolate into the forward and adjoint fields along this dimension and dot them

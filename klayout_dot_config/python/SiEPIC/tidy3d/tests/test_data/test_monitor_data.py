@@ -1,4 +1,5 @@
 """Tests tidy3d/components/data/monitor_data.py"""
+
 import numpy as np
 import pytest
 
@@ -7,19 +8,31 @@ import tidy3d as td
 from tidy3d.log import DataError, SetupError
 
 from tidy3d.components.data.data_array import FreqModeDataArray
-from tidy3d.components.data.monitor_data import FieldData, FieldTimeData, PermittivityData
+from tidy3d.components.data.monitor_data import (
+    FieldData,
+    FieldTimeData,
+    PermittivityData,
+)
 
 from tidy3d.components.data.monitor_data import ModeSolverData, ModeData
 from tidy3d.components.data.monitor_data import FluxData, FluxTimeData, DiffractionData
 
-from .test_data_arrays import make_scalar_field_data_array, make_scalar_field_time_data_array
+from .test_data_arrays import (
+    make_scalar_field_data_array,
+    make_scalar_field_time_data_array,
+)
 from .test_data_arrays import make_scalar_mode_field_data_array
 from .test_data_arrays import make_scalar_mode_field_data_array_smooth
 from .test_data_arrays import make_flux_data_array, make_flux_time_data_array
 from .test_data_arrays import make_mode_amps_data_array, make_mode_index_data_array
 from .test_data_arrays import make_diffraction_data_array
 from .test_data_arrays import FIELD_MONITOR, FIELD_TIME_MONITOR, MODE_SOLVE_MONITOR
-from .test_data_arrays import MODE_MONITOR, PERMITTIVITY_MONITOR, FLUX_MONITOR, FLUX_TIME_MONITOR
+from .test_data_arrays import (
+    MODE_MONITOR,
+    PERMITTIVITY_MONITOR,
+    FLUX_MONITOR,
+    FLUX_TIME_MONITOR,
+)
 from .test_data_arrays import FIELD_MONITOR_2D, FIELD_TIME_MONITOR_2D
 from .test_data_arrays import DIFFRACTION_MONITOR, SIM_SYM, SIM
 from ..utils import clear_tmp, assert_log_level
@@ -62,7 +75,9 @@ def make_field_time_data(symmetry: bool = True):
         Hx=make_scalar_field_time_data_array("Hx", symmetry),
         symmetry=sim.symmetry,
         symmetry_center=sim.center,
-        grid_expanded=sim.discretize(FIELD_TIME_MONITOR, extend=True, snap_zero_dim=True),
+        grid_expanded=sim.discretize(
+            FIELD_TIME_MONITOR, extend=True, snap_zero_dim=True
+        ),
     )
 
 
@@ -92,7 +107,9 @@ def make_field_time_data_2d(symmetry: bool = True):
         Hz=make_scalar_field_time_data_array("Hz", symmetry).interp(y=[0]),
         symmetry=sim.symmetry,
         symmetry_center=sim.center,
-        grid_expanded=sim.discretize(FIELD_TIME_MONITOR_2D, extend=True, snap_zero_dim=True),
+        grid_expanded=sim.discretize(
+            FIELD_TIME_MONITOR_2D, extend=True, snap_zero_dim=True
+        ),
     )
 
 
@@ -107,14 +124,18 @@ def make_mode_solver_data():
         Hz=make_scalar_mode_field_data_array("Hz"),
         symmetry=SIM_SYM.symmetry,
         symmetry_center=SIM_SYM.center,
-        grid_expanded=SIM_SYM.discretize(MODE_SOLVE_MONITOR, extend=True, snap_zero_dim=True),
+        grid_expanded=SIM_SYM.discretize(
+            MODE_SOLVE_MONITOR, extend=True, snap_zero_dim=True
+        ),
         n_complex=N_COMPLEX.copy(),
         grid_primal_correction=GRID_CORRECTION,
         grid_dual_correction=GRID_CORRECTION,
     )
     # Mode solver data needs to be normalized
     scaling = np.sqrt(np.abs(mode_data.symmetry_expanded_copy.flux))
-    norm_data_dict = {key: val / scaling for key, val in mode_data.field_components.items()}
+    norm_data_dict = {
+        key: val / scaling for key, val in mode_data.field_components.items()
+    }
     mode_data_norm = mode_data.copy(update=norm_data_dict)
     return mode_data_norm
 
@@ -130,14 +151,18 @@ def make_mode_solver_data_smooth():
         Hz=make_scalar_mode_field_data_array_smooth("Hz", rot=0.78 * np.pi),
         symmetry=SIM_SYM.symmetry,
         symmetry_center=SIM_SYM.center,
-        grid_expanded=SIM_SYM.discretize(MODE_SOLVE_MONITOR, extend=True, snap_zero_dim=True),
+        grid_expanded=SIM_SYM.discretize(
+            MODE_SOLVE_MONITOR, extend=True, snap_zero_dim=True
+        ),
         n_complex=N_COMPLEX.copy(),
         grid_primal_correction=GRID_CORRECTION,
         grid_dual_correction=GRID_CORRECTION,
     )
     # Mode solver data needs to be normalized
     scaling = np.sqrt(np.abs(mode_data.symmetry_expanded_copy.flux))
-    norm_data_dict = {key: val / scaling for key, val in mode_data.field_components.items()}
+    norm_data_dict = {
+        key: val / scaling for key, val in mode_data.field_components.items()
+    }
     mode_data_norm = mode_data.copy(update=norm_data_dict)
     return mode_data_norm
 
@@ -203,11 +228,19 @@ def test_field_data():
 
 def test_field_data_to_source():
     data = make_field_data_2d(symmetry=True)
-    data = data.copy(update={key: val.isel(f=[-1]) for key, val in data.field_components.items()})
-    source = data.to_source(source_time=td.GaussianPulse(freq0=2e14, fwidth=2e13), center=(1, 2, 3))
+    data = data.copy(
+        update={key: val.isel(f=[-1]) for key, val in data.field_components.items()}
+    )
+    source = data.to_source(
+        source_time=td.GaussianPulse(freq0=2e14, fwidth=2e13), center=(1, 2, 3)
+    )
     data = make_field_data_2d(symmetry=False)
-    data = data.copy(update={key: val.isel(f=[-1]) for key, val in data.field_components.items()})
-    source = data.to_source(source_time=td.GaussianPulse(freq0=2e14, fwidth=2e13), center=(1, 2, 3))
+    data = data.copy(
+        update={key: val.isel(f=[-1]) for key, val in data.field_components.items()}
+    )
+    source = data.to_source(
+        source_time=td.GaussianPulse(freq0=2e14, fwidth=2e13), center=(1, 2, 3)
+    )
 
 
 def test_field_time_data():
@@ -241,7 +274,9 @@ def test_mode_solver_data():
     # Also try with a feild data at a single frequency that is not in the data frequencies
     freq = 0.9 * field_data.Ex.f[0]
     fields = field_data.field_components.items()
-    fields_single_f = {key: val.isel(f=[0]).assign_coords(f=[freq]) for key, val in fields}
+    fields_single_f = {
+        key: val.isel(f=[0]).assign_coords(f=[freq]) for key, val in fields
+    }
     field_data = field_data.copy(update=fields_single_f)
     dot = data.dot(field_data)
     # Check that broadcasting worked
@@ -336,14 +371,16 @@ def _test_eq():
 
 def test_empty_array():
     coords = {"x": np.arange(10), "y": np.arange(10), "z": np.arange(10), "t": []}
-    fields = {"Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)}
+    fields = {
+        "Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)
+    }
     monitor = td.FieldTimeMonitor(size=(1, 1, 1), fields=["Ex"], name="test")
     field_data = td.FieldTimeData(
         monitor=monitor,
         symmetry=SIM.symmetry,
         symmetry_center=SIM.center,
         grid_expanded=SIM.discretize(monitor, extend=True),
-        **fields
+        **fields,
     )
 
 
@@ -357,7 +394,7 @@ def _test_empty_list():
         symmetry=SIM.symmetry,
         symmetry_center=SIM.center,
         grid_expanded=SIM.discretize(monitor, extend=True),
-        **fields
+        **fields,
     )
 
 
@@ -371,21 +408,23 @@ def _test_empty_tuple():
         symmetry=SIM.symmetry,
         symmetry_center=SIM.center,
         grid_expanded=SIM.discretize(monitor, extend=True),
-        **fields
+        **fields,
     )
 
 
 @clear_tmp
 def test_empty_io():
     coords = {"x": np.arange(10), "y": np.arange(10), "z": np.arange(10), "t": []}
-    fields = {"Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)}
+    fields = {
+        "Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)
+    }
     monitor = td.FieldTimeMonitor(size=(1, 1, 1), name="test", fields=["Ex"])
     field_data = td.FieldTimeData(
         monitor=monitor,
         symmetry=SIM.symmetry,
         symmetry_center=SIM.center,
         grid_expanded=SIM.discretize(monitor, extend=True),
-        **fields
+        **fields,
     )
     field_data.to_file("tests/tmp/field_data.hdf5")
     field_data = td.FieldTimeData.from_file("tests/tmp/field_data.hdf5")
@@ -400,9 +439,10 @@ def test_mode_solver_plot_field():
 
 
 def test_field_data_symmetry_present():
-
     coords = {"x": np.arange(10), "y": np.arange(10), "z": np.arange(10), "t": []}
-    fields = {"Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)}
+    fields = {
+        "Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)
+    }
     monitor = td.FieldTimeMonitor(size=(1, 1, 1), name="test", fields=["Ex"])
 
     # works if no symmetry specified
@@ -414,7 +454,7 @@ def test_field_data_symmetry_present():
             monitor=monitor,
             symmetry=(1, -1, 0),
             grid_expanded=SIM.discretize(monitor, extend=True),
-            **fields
+            **fields,
         )
 
     # fails if symmetry specified but missing etended grid
@@ -481,10 +521,14 @@ def test_mode_solver_data_sort():
     # check that sorted data coincides with original
     for data_sorted in [data_first, data_last, data_center]:
         for comp, field in data.field_components.items():
-            assert np.allclose(np.abs(field), np.abs(data_sorted.field_components[comp]))
+            assert np.allclose(
+                np.abs(field), np.abs(data_sorted.field_components[comp])
+            )
         assert np.allclose(data.n_complex, data_sorted.n_complex)
         assert np.allclose(data.grid_dual_correction, data_sorted.grid_dual_correction)
-        assert np.allclose(data.grid_primal_correction, data_sorted.grid_primal_correction)
+        assert np.allclose(
+            data.grid_primal_correction, data_sorted.grid_primal_correction
+        )
 
         # make sure neighboring frequencies are in phase
         data_1 = data._isel(f=[0])

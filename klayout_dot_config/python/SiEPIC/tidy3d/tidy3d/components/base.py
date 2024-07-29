@@ -1,5 +1,6 @@
 # pylint:disable=too-many-public-methods
 """global configuration / base class for pydantic models used to make simulation."""
+
 from __future__ import annotations
 
 import json
@@ -102,7 +103,9 @@ class Tidy3dBaseModel(pydantic.BaseModel):
     def copy(self, **kwargs) -> Tidy3dBaseModel:
         """Copy a Tidy3dBaseModel.  With ``deep=True`` as default."""
         if "deep" in kwargs and kwargs["deep"] is False:
-            raise ValueError("Can't do shallow copy of component, set `deep=True` in copy().")
+            raise ValueError(
+                "Can't do shallow copy of component, set `deep=True` in copy()."
+            )
         kwargs.update(dict(deep=True))
         new_copy = pydantic.BaseModel.copy(self, **kwargs)
         return self.validate(new_copy.dict())
@@ -126,7 +129,9 @@ class Tidy3dBaseModel(pydantic.BaseModel):
         rich.inspect(self, methods=methods)
 
     @classmethod
-    def from_file(cls, fname: str, group_path: str = None, **parse_obj_kwargs) -> Tidy3dBaseModel:
+    def from_file(
+        cls, fname: str, group_path: str = None, **parse_obj_kwargs
+    ) -> Tidy3dBaseModel:
         """Loads a :class:`Tidy3dBaseModel` from .yaml, .json, or .hdf5 file.
 
         Parameters
@@ -173,7 +178,9 @@ class Tidy3dBaseModel(pydantic.BaseModel):
         """
 
         if (".json" in fname or ".yaml" in fname) and (group_path is not None):
-            log.warning("'group_path' provided, but this feature only works with '.hdf5' files.")
+            log.warning(
+                "'group_path' provided, but this feature only works with '.hdf5' files."
+            )
 
         if ".json" in fname:
             return cls.dict_from_json(fname=fname)
@@ -371,7 +378,9 @@ class Tidy3dBaseModel(pydantic.BaseModel):
     @classmethod
     def tuple_to_dict(cls, tuple_values: tuple) -> dict:
         """How we generate a dictionary mapping new keys to tuple values for hdf5."""
-        return {cls.get_tuple_group_name(index=i): val for i, val in enumerate(tuple_values)}
+        return {
+            cls.get_tuple_group_name(index=i): val for i, val in enumerate(tuple_values)
+        }
 
     @classmethod
     def get_sub_model(cls, group_path: str, model_dict: dict | list) -> dict:
@@ -411,13 +420,14 @@ class Tidy3dBaseModel(pydantic.BaseModel):
             """For every DataArray item in dictionary, load path of hdf5 group as value."""
 
             for key, value in model_dict.items():
-
                 subpath = f"{group_path}/{key}"
 
                 # write the path to the element of the json dict where the data_array should be
                 if isinstance(value, str) and value in DATA_ARRAY_MAP:
                     data_array_type = DATA_ARRAY_MAP[value]
-                    model_dict[key] = data_array_type.from_hdf5(fname=fname, group_path=subpath)
+                    model_dict[key] = data_array_type.from_hdf5(
+                        fname=fname, group_path=subpath
+                    )
                     continue
 
                 # if a list, assign each element a unique key, recurse
@@ -439,7 +449,9 @@ class Tidy3dBaseModel(pydantic.BaseModel):
         return model_dict
 
     @classmethod
-    def from_hdf5(cls, fname: str, group_path: str = "", **parse_obj_kwargs) -> Tidy3dBaseModel:
+    def from_hdf5(
+        cls, fname: str, group_path: str = "", **parse_obj_kwargs
+    ) -> Tidy3dBaseModel:
         """Loads :class:`Tidy3dBaseModel` instance to .hdf5 file.
 
         Parameters
@@ -475,14 +487,12 @@ class Tidy3dBaseModel(pydantic.BaseModel):
         """
 
         with h5py.File(fname, "w") as f_handle:
-
             f_handle[JSON_TAG] = self._json_string
 
             def add_data_to_file(data_dict: dict, group_path: str = "") -> None:
                 """For every DataArray item in dictionary, write path of hdf5 group as value."""
 
                 for key, value in data_dict.items():
-
                     # append the key to the path
                     subpath = f"{group_path}/{key}"
 
@@ -576,7 +586,6 @@ class Tidy3dBaseModel(pydantic.BaseModel):
         # create the list of parameters (arguments) for the model
         doc += "\n\n    Parameters\n    ----------\n"
         for field_name, field in cls.__fields__.items():
-
             # ignore the type tag
             if field_name == TYPE_TAG_STR:
                 continue

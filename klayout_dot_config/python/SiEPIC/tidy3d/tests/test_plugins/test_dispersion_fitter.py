@@ -44,13 +44,17 @@ def test_dispersion():
 
 def test_dispersion_load():
     """loads dispersion model from nk data file"""
-    fitter = DispersionFitter.from_file("tests/data/nk_data.csv", skiprows=1, delimiter=",")
+    fitter = DispersionFitter.from_file(
+        "tests/data/nk_data.csv", skiprows=1, delimiter=","
+    )
     medium, rms = fitter.fit(num_tries=20)
 
 
 def test_dispersion_plot():
     """plots a medium fit from file"""
-    fitter = DispersionFitter.from_file("tests/data/nk_data.csv", skiprows=1, delimiter=",")
+    fitter = DispersionFitter.from_file(
+        "tests/data/nk_data.csv", skiprows=1, delimiter=","
+    )
     medium, rms = fitter.fit(num_tries=20)
     fitter.plot(medium)
 

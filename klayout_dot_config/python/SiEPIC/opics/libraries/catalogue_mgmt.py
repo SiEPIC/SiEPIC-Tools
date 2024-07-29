@@ -24,7 +24,6 @@ def remove_library(library_name):
 
     # if the library is installed
     if lib_catalogue[f"{library_name}"]["installed"] is True:
-
         # get local installation _Path
         library_dirpath = lib_catalogue[f"{library_name}"]["library_path"]
 
@@ -115,7 +114,6 @@ def download_and_extract(library_url, library_path):
         return False
 
     with _urlopen(library_url) as Response:
-
         Length = Response.getheader("content-length")
         BlockSize = 1000000  # default blocksize value
 

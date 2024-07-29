@@ -32,7 +32,9 @@ def test_MaterialItem():
         medium=td.PoleResidue(),
         reference=[ReferenceData(doi="etc2.com", journal="paper2", url="www2")],
     )
-    material = MaterialItem(name="material", variants=dict(v1=variant1, v2=variant2), default="v1")
+    material = MaterialItem(
+        name="material", variants=dict(v1=variant1, v2=variant2), default="v1"
+    )
     assert material["v1"] == material.medium
 
     with pytest.raises(SetupError):
@@ -52,7 +54,9 @@ def test_library():
             freqs = np.linspace(fmin, fmax, 10011)
             # two ways of access
             eps_complex1 = variant.medium.eps_model(freqs)
-            eps_complex2 = material_library[material_name][variant_name].eps_model(freqs)
+            eps_complex2 = material_library[material_name][variant_name].eps_model(
+                freqs
+            )
             assert np.allclose(eps_complex1, eps_complex2)
 
 

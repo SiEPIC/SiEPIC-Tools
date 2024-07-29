@@ -1,4 +1,5 @@
 """Collections of DataArrays."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -9,7 +10,11 @@ import numpy as np
 import pydantic as pd
 
 from .data_array import DataArray
-from .data_array import ScalarFieldDataArray, ScalarFieldTimeDataArray, ScalarModeFieldDataArray
+from .data_array import (
+    ScalarFieldDataArray,
+    ScalarFieldTimeDataArray,
+    ScalarModeFieldDataArray,
+)
 from .data_array import ModeIndexDataArray
 
 from ..base import Tidy3dBaseModel
@@ -68,14 +73,15 @@ class AbstractFieldDataset(Dataset, ABC):
         """
 
         # convert supplied coordinates to array and assign string mapping to them
-        supplied_coord_map = {k: np.array(v) for k, v in zip("xyz", (x, y, z)) if v is not None}
+        supplied_coord_map = {
+            k: np.array(v) for k, v in zip("xyz", (x, y, z)) if v is not None
+        }
 
         # dict of data arrays to combine in dataset and return
         centered_fields = {}
 
         # loop through field components
         for field_name, field_data in self.field_components.items():
-
             # loop through x, y, z dimensions and raise an error if only one element along dim
             for coord_name, coords_supplied in supplied_coord_map.items():
                 coord_data = field_data.coords[coord_name]
@@ -95,7 +101,9 @@ class AbstractFieldDataset(Dataset, ABC):
         return xr.Dataset(centered_fields)
 
 
-EMSCALARFIELDTYPE = Union[ScalarFieldDataArray, ScalarFieldTimeDataArray, ScalarModeFieldDataArray]
+EMSCALARFIELDTYPE = Union[
+    ScalarFieldDataArray, ScalarFieldTimeDataArray, ScalarModeFieldDataArray
+]
 
 
 class ElectromagneticFieldDataset(AbstractFieldDataset, ABC):
@@ -135,8 +143,14 @@ class ElectromagneticFieldDataset(AbstractFieldDataset, ABC):
     @property
     def field_components(self) -> Dict[str, DataArray]:
         """Maps the field components to thier associated data."""
-        fields = dict(Ex=self.Ex, Ey=self.Ey, Ez=self.Ez, Hx=self.Hx, Hy=self.Hy, Hz=self.Hz)
-        return {field_name: field for field_name, field in fields.items() if field is not None}
+        fields = dict(
+            Ex=self.Ex, Ey=self.Ey, Ez=self.Ez, Hx=self.Hx, Hy=self.Hy, Hz=self.Hz
+        )
+        return {
+            field_name: field
+            for field_name, field in fields.items()
+            if field is not None
+        }
 
     @property
     def grid_locations(self) -> Dict[str, str]:
@@ -316,7 +330,10 @@ class ModeSolverDataset(ElectromagneticFieldDataset):
     def field_components(self) -> Dict[str, DataArray]:
         """Maps the field components to thier associated data."""
         # pylint:disable=no-member
-        return {field: getattr(self, field) for field in ["Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]}
+        return {
+            field: getattr(self, field)
+            for field in ["Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]
+        }
 
     @property
     def n_eff(self):

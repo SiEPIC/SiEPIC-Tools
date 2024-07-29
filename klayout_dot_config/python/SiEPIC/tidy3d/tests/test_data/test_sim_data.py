@@ -1,4 +1,5 @@
 """Tests SimulationData"""
+
 import pytest
 import numpy as np
 import matplotlib.pylab as plt
@@ -11,7 +12,11 @@ from tidy3d.components.data.data_array import ScalarFieldTimeDataArray
 from tidy3d.components.data.monitor_data import FieldTimeData
 from tidy3d.components.monitor import FieldMonitor, FieldTimeMonitor, ModeSolverMonitor
 
-from .test_monitor_data import make_field_data, make_field_time_data, make_permittivity_data
+from .test_monitor_data import (
+    make_field_data,
+    make_field_time_data,
+    make_permittivity_data,
+)
 from .test_monitor_data import make_mode_data, make_mode_solver_data
 from .test_monitor_data import make_flux_data, make_flux_time_data
 from .test_monitor_data import make_diffraction_data
@@ -36,7 +41,16 @@ FLUX_TIME = make_flux_time_data()
 DIFFRACTION = make_diffraction_data()
 
 # for constructing SimulationData
-MONITOR_DATA = (FIELD, FIELD_TIME, MODE_SOLVER, PERMITTIVITY, MODE, FLUX, FLUX_TIME, DIFFRACTION)
+MONITOR_DATA = (
+    FIELD,
+    FIELD_TIME,
+    MODE_SOLVER,
+    PERMITTIVITY,
+    MODE,
+    FLUX,
+    FLUX_TIME,
+    DIFFRACTION,
+)
 MONITOR_DATA_SYM = (
     FIELD_SYM,
     FIELD_TIME_SYM,
@@ -129,7 +143,9 @@ def test_plot():
         field_data = sim_data["field"].field_components[field_cmp]
         for axis_name in "xyz":
             xyz_kwargs = {axis_name: field_data.coords[axis_name][0]}
-            _ = sim_data.plot_field("field", field_cmp, val="imag", f=1e14, ax=AX, **xyz_kwargs)
+            _ = sim_data.plot_field(
+                "field", field_cmp, val="imag", f=1e14, ax=AX, **xyz_kwargs
+            )
     for axis_name in "xyz":
         xyz_kwargs = {axis_name: 0}
         _ = sim_data.plot_field("field", "int", f=1e14, ax=AX, **xyz_kwargs)
@@ -139,14 +155,18 @@ def test_plot():
         field_data = sim_data["field_time"].field_components[field_cmp]
         for axis_name in "xyz":
             xyz_kwargs = {axis_name: field_data.coords[axis_name][0]}
-            _ = sim_data.plot_field("field_time", field_cmp, val="real", t=0.0, ax=AX, **xyz_kwargs)
+            _ = sim_data.plot_field(
+                "field_time", field_cmp, val="real", t=0.0, ax=AX, **xyz_kwargs
+            )
     for axis_name in "xyz":
         xyz_kwargs = {axis_name: 0}
         _ = sim_data.plot_field("field_time", "int", t=0.0, ax=AX, **xyz_kwargs)
 
     # plot mode field data
     for field_cmp in ("Ex", "Ey", "Ez", "Hx", "Hy", "Hz"):
-        _ = sim_data.plot_field("mode_solver", field_cmp, val="real", f=1e14, mode_index=1, ax=AX)
+        _ = sim_data.plot_field(
+            "mode_solver", field_cmp, val="real", f=1e14, mode_index=1, ax=AX
+        )
     _ = sim_data.plot_field("mode_solver", "int", f=1e14, mode_index=1, ax=AX)
 
 
@@ -185,7 +205,9 @@ def test_to_json():
 def test_sel_kwarg_freq():
     """Use freq in sel_kwarg, should still work (but warning) for 1.6.x"""
     sim_data = make_sim_data()
-    sim_data.plot_field("mode_solver", "Ex", y=0.0, val="real", freq=1e14, mode_index=1, ax=AX)
+    sim_data.plot_field(
+        "mode_solver", "Ex", y=0.0, val="real", freq=1e14, mode_index=1, ax=AX
+    )
 
 
 def test_sel_kwarg_time():
@@ -200,11 +222,15 @@ def test_sel_kwarg_len1():
     # data has no y dimension (only exists at y=0)
 
     # passing y=0 sel kwarg should still work
-    sim_data.plot_field("mode_solver", "Ex", y=0.0, val="real", f=1e14, mode_index=1, ax=AX)
+    sim_data.plot_field(
+        "mode_solver", "Ex", y=0.0, val="real", f=1e14, mode_index=1, ax=AX
+    )
 
     # passing y=1 sel kwarg should error
     with pytest.raises(KeyError):
-        sim_data.plot_field("mode_solver", "Ex", y=-1.0, val="real", f=1e14, mode_index=1, ax=AX)
+        sim_data.plot_field(
+            "mode_solver", "Ex", y=-1.0, val="real", f=1e14, mode_index=1, ax=AX
+        )
 
 
 @clear_tmp
@@ -238,7 +264,9 @@ def test_from_hdf5_group_path():
 @clear_tmp
 def test_empty_io():
     coords = {"x": np.arange(10), "y": np.arange(10), "z": np.arange(10), "t": []}
-    fields = {"Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)}
+    fields = {
+        "Ex": td.ScalarFieldTimeDataArray(np.random.rand(10, 10, 10, 0), coords=coords)
+    }
     monitor = td.FieldTimeMonitor(size=(1, 1, 1), name="test", fields=["Ex"])
     sim = td.Simulation(
         size=(1, 1, 1),
@@ -264,7 +292,6 @@ def test_empty_io():
 
 @clear_tmp
 def test_run_time_lt_start():
-
     # Point source inside a box
     box = td.Structure(
         geometry=td.Box(center=(0, 0, 0), size=(1, 1, 1)),

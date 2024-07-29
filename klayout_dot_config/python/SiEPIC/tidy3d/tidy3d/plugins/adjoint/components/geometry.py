@@ -1,5 +1,6 @@
 # pylint: disable=invalid-name
 """Defines jax-compatible geometries and their conversion to grad monitors."""
+
 from __future__ import annotations
 
 from abc import ABC
@@ -125,16 +126,16 @@ class JaxBox(JaxGeometry, Box, JaxObject):
     ) -> JaxBox:
         """Stores the gradient of the box parameters given forward and adjoint field data."""
 
-        rmin, rmax = bounds_intersect = self.bounds_intersection(self.bounds, sim_bounds)
+        rmin, rmax = bounds_intersect = self.bounds_intersection(
+            self.bounds, sim_bounds
+        )
 
         # stores vjps for the min and max surfaces on all dimensions
         vjp_surfs = {dim: np.array([0.0, 0.0]) for dim in "xyz"}
 
         # loop through all 6 surfaces (x,y,z) & (-, +)
         for dim_index, dim_normal in enumerate("xyz"):
-
             for min_max_index, min_max_val in enumerate(bounds_intersect):
-
                 # get the normal coordinate of this surface
                 normal_coord = {dim_normal: min_max_val[dim_index]}
 
@@ -154,14 +155,17 @@ class JaxBox(JaxGeometry, Box, JaxObject):
                 # construct differential area value and coordinates evenly spaced along this surface
                 d_area = 1.0
                 area_coords = {}
-                for dim_plane, min_edge, max_edge in zip(dims_plane, mins_plane, maxs_plane):
-
+                for dim_plane, min_edge, max_edge in zip(
+                    dims_plane, mins_plane, maxs_plane
+                ):
                     # if there is no thickness along this dimension, skip it
                     length_edge = max_edge - min_edge
                     if length_edge == 0:
                         continue
 
-                    num_cells_dim = int(length_edge * PTS_PER_WVL_INTEGRATION / wvl_mat) + 1
+                    num_cells_dim = (
+                        int(length_edge * PTS_PER_WVL_INTEGRATION / wvl_mat) + 1
+                    )
 
                     # update the differential area value
                     d_len = length_edge / num_cells_dim
@@ -175,7 +179,6 @@ class JaxBox(JaxGeometry, Box, JaxObject):
 
                 # for each field component
                 for field_cmp_dim in "xyz":
-
                     # select the forward and adjoint E fields along this edge
                     field_name = "E" + field_cmp_dim
                     e_fwd = grad_data_fwd.field_components[field_name].isel(f=0)
@@ -194,7 +197,6 @@ class JaxBox(JaxGeometry, Box, JaxObject):
 
                     # get gradient contribution for normal component using D field
                     if field_cmp_dim == dim_normal:
-
                         # construct normal D fields, dot together at surface
                         d_fwd = e_fwd * eps_data
                         d_adj = e_adj * eps_data
@@ -202,26 +204,33 @@ class JaxBox(JaxGeometry, Box, JaxObject):
 
                         # compute adjoint contribution using perturbation theory for shifting bounds
                         delta_eps_inv = 1.0 / eps1 - 1.0 / eps2
-                        d_integrand = -(delta_eps_inv * d_normal).interp(**area_coords).real
+                        d_integrand = (
+                            -(delta_eps_inv * d_normal).interp(**area_coords).real
+                        )
                         grad_contrib = d_area * jnp.sum(d_integrand.values)
 
                     # get gradient contribution for parallel components using E fields
                     else:
-
                         # measure parallel E fields, dot together at surface
                         e_parallel = (e_fwd * e_adj).interp(**normal_coord)
 
                         # compute adjoint contribution using perturbation theory for shifting bounds
                         delta_eps = eps1 - eps2
-                        e_integrand = +(delta_eps * e_parallel).interp(**area_coords).real
+                        e_integrand = (
+                            +(delta_eps * e_parallel).interp(**area_coords).real
+                        )
                         grad_contrib = d_area * jnp.sum(e_integrand.values)
 
                     # grad_contrib *= 1 / k0**3
                     vjp_surfs[dim_normal][min_max_index] += grad_contrib
 
         # convert surface vjps to center, size vjps. Note, convert these to jax types w/ jnp.sum()
-        vjp_center = tuple(jnp.sum(vjp_surfs[dim][1] - vjp_surfs[dim][0]) for dim in "xyz")
-        vjp_size = tuple(jnp.sum(0.5 * (vjp_surfs[dim][1] + vjp_surfs[dim][0])) for dim in "xyz")
+        vjp_center = tuple(
+            jnp.sum(vjp_surfs[dim][1] - vjp_surfs[dim][0]) for dim in "xyz"
+        )
+        vjp_size = tuple(
+            jnp.sum(0.5 * (vjp_surfs[dim][1] + vjp_surfs[dim][0])) for dim in "xyz"
+        )
         return self.copy(update=dict(center=vjp_center, size=vjp_size))
 
 
@@ -344,7 +353,9 @@ class JaxPolySlab(JaxGeometry, PolySlab, JaxObject):
                 }
                 field_data = field_data.colocate(**xyz_coords)
 
-                components_xyz_basis = [field_data[component] for component in components_xyz]
+                components_xyz_basis = [
+                    field_data[component] for component in components_xyz
+                ]
 
                 Ez, (Ex, Ey) = self.pop_axis(components_xyz_basis, axis=axis)
 
@@ -353,11 +364,17 @@ class JaxPolySlab(JaxGeometry, PolySlab, JaxObject):
                 return Et, En, Ez
 
             # get forward and adjoint fields in edge basis
-            e_t_fwd, e_n_fwd, e_z_fwd = edge_basis(grad_data_fwd, components_xyz=("Ex", "Ey", "Ez"))
-            e_t_adj, e_n_adj, e_z_adj = edge_basis(grad_data_adj, components_xyz=("Ex", "Ey", "Ez"))
+            e_t_fwd, e_n_fwd, e_z_fwd = edge_basis(
+                grad_data_fwd, components_xyz=("Ex", "Ey", "Ez")
+            )
+            e_t_adj, e_n_adj, e_z_adj = edge_basis(
+                grad_data_adj, components_xyz=("Ex", "Ey", "Ez")
+            )
 
             # get displacement fields
-            _, eps_n, _ = edge_basis(grad_data_eps, components_xyz=("eps_xx", "eps_yy", "eps_zz"))
+            _, eps_n, _ = edge_basis(
+                grad_data_eps, components_xyz=("eps_xx", "eps_yy", "eps_zz")
+            )
             d_n_fwd = eps_n * e_n_fwd
             d_n_adj = eps_n * e_n_adj
 

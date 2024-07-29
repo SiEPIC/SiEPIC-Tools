@@ -1,8 +1,12 @@
 """Tests tidy3d/components/data/data_array.py"""
+
 import numpy as np
 from typing import Tuple, List
 
-from tidy3d.components.data.data_array import ScalarFieldDataArray, ScalarFieldTimeDataArray
+from tidy3d.components.data.data_array import (
+    ScalarFieldDataArray,
+    ScalarFieldTimeDataArray,
+)
 from tidy3d.components.data.data_array import ScalarModeFieldDataArray
 from tidy3d.components.data.data_array import ModeAmpsDataArray, ModeIndexDataArray
 from tidy3d.components.data.data_array import FluxDataArray, FluxTimeDataArray
@@ -11,7 +15,11 @@ from tidy3d.components.source import PointDipole, GaussianPulse, ModeSource
 from tidy3d.components.simulation import Simulation
 from tidy3d.components.grid.grid_spec import GridSpec
 from tidy3d.components.mode import ModeSpec
-from tidy3d.components.monitor import FieldMonitor, FieldTimeMonitor, PermittivityMonitor
+from tidy3d.components.monitor import (
+    FieldMonitor,
+    FieldTimeMonitor,
+    PermittivityMonitor,
+)
 from tidy3d.components.monitor import ModeSolverMonitor, ModeMonitor
 from tidy3d.components.monitor import FluxMonitor, FluxTimeMonitor, DiffractionMonitor
 from tidy3d.components.monitor import MonitorType
@@ -25,7 +33,10 @@ from tidy3d.constants import inf
 np.random.seed(4)
 
 STRUCTURES = [
-    Structure(geometry=Box(size=(1, inf, 1)), medium=material_library["cSi"]["SalzbergVilla1957"])
+    Structure(
+        geometry=Box(size=(1, inf, 1)),
+        medium=material_library["cSi"]["SalzbergVilla1957"],
+    )
 ]
 SIZE_3D = (2, 4, 5)
 SIZE_2D = list(SIZE_3D)
@@ -33,7 +44,9 @@ SIZE_2D[1] = 0
 MODE_SPEC = ModeSpec(num_modes=4)
 FREQS = [1e14, 2e14]
 SOURCES = [
-    PointDipole(source_time=GaussianPulse(freq0=FREQS[0], fwidth=1e14), polarization="Ex"),
+    PointDipole(
+        source_time=GaussianPulse(freq0=FREQS[0], fwidth=1e14), polarization="Ex"
+    ),
     ModeSource(
         size=SIZE_2D,
         mode_spec=MODE_SPEC,
@@ -60,14 +73,18 @@ FIELD_MONITOR = FieldMonitor(size=SIZE_3D, fields=FIELDS, name="field", freqs=FR
 FIELD_TIME_MONITOR = FieldTimeMonitor(
     size=SIZE_3D, fields=FIELDS, name="field_time", interval=INTERVAL
 )
-FIELD_MONITOR_2D = FieldMonitor(size=SIZE_2D, fields=FIELDS, name="field_2d", freqs=FREQS)
+FIELD_MONITOR_2D = FieldMonitor(
+    size=SIZE_2D, fields=FIELDS, name="field_2d", freqs=FREQS
+)
 FIELD_TIME_MONITOR_2D = FieldTimeMonitor(
     size=SIZE_2D, fields=FIELDS, name="field_time_2d", interval=INTERVAL
 )
 MODE_SOLVE_MONITOR = ModeSolverMonitor(
     size=SIZE_2D, name="mode_solver", mode_spec=MODE_SPEC, freqs=FS
 )
-PERMITTIVITY_MONITOR = PermittivityMonitor(size=SIZE_3D, name="permittivity", freqs=FREQS)
+PERMITTIVITY_MONITOR = PermittivityMonitor(
+    size=SIZE_3D, name="permittivity", freqs=FREQS
+)
 MODE_MONITOR = ModeMonitor(size=SIZE_2D, name="mode", mode_spec=MODE_SPEC, freqs=FREQS)
 FLUX_MONITOR = FluxMonitor(size=SIZE_2D, freqs=FREQS, name="flux")
 FLUX_TIME_MONITOR = FluxTimeMonitor(size=SIZE_2D, interval=INTERVAL, name="flux_time")
@@ -146,14 +163,18 @@ def make_scalar_field_time_data_array(grid_key: str, symmetry=True):
 
 def make_scalar_mode_field_data_array(grid_key: str, symmetry=True):
     XS, YS, ZS = get_xyz(MODE_SOLVE_MONITOR, grid_key, symmetry)
-    values = (1 + 0.1j) * np.random.random((len(XS), 1, len(ZS), len(FS), len(MODE_INDICES)))
+    values = (1 + 0.1j) * np.random.random(
+        (len(XS), 1, len(ZS), len(FS), len(MODE_INDICES))
+    )
 
     return ScalarModeFieldDataArray(
         values, coords=dict(x=XS, y=[0.0], z=ZS, f=FS, mode_index=MODE_INDICES)
     )
 
 
-def make_scalar_mode_field_data_array_smooth(grid_key: str, symmetry=True, rot: float = 0):
+def make_scalar_mode_field_data_array_smooth(
+    grid_key: str, symmetry=True, rot: float = 0
+):
     XS, YS, ZS = get_xyz(MODE_SOLVE_MONITOR, grid_key, symmetry)
 
     values = np.array([1 + 0.1j])[None, :, None, None, None] * np.sin(
@@ -199,7 +220,9 @@ def make_diffraction_data_array():
     return (
         [SIZE_2D[0], SIZE_2D[2]],
         [1.0, 2.0],
-        DiffractionDataArray(values, coords=dict(orders_x=ORDERS_X, orders_y=ORDERS_Y, f=FS)),
+        DiffractionDataArray(
+            values, coords=dict(orders_x=ORDERS_X, orders_y=ORDERS_Y, f=FS)
+        ),
     )
 
 

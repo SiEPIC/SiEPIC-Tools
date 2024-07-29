@@ -1,4 +1,4 @@
-""" Divide a complex polyslab where self-intersecting polygon can occur during extrusion."""
+"""Divide a complex polyslab where self-intersecting polygon can occur during extrusion."""
 
 from typing import List, Tuple
 from math import isclose
@@ -131,7 +131,9 @@ class ComplexPolySlab(PolySlab):
             )
             for verts in all_vertices
         ]
-        return [sub_poly for sub_polys in polyslabs for sub_poly in sub_polys.sub_polyslabs]
+        return [
+            sub_poly for sub_polys in polyslabs for sub_poly in sub_polys.sub_polyslabs
+        ]
 
     def to_structure(self, medium: MediumType) -> Structure:
         """Construct a structure containing a user-specified medium
@@ -228,7 +230,9 @@ class ComplexPolySlab(PolySlab):
                     break
                 dist_now += offset_distance
                 # new polygon vertices where collapsing vertices are removed but keep one
-                vertices_now = PolySlab._shift_vertices(vertices_now, offset_distance)[0]
+                vertices_now = PolySlab._shift_vertices(vertices_now, offset_distance)[
+                    0
+                ]
                 vertices_now = PolySlab._remove_duplicate_vertices(vertices_now)
                 # all vertices collapse
                 if len(vertices_now) < 3:
