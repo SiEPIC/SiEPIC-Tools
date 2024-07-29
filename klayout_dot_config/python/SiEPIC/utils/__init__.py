@@ -1119,9 +1119,25 @@ def arc_to_waveguide(pts, width):
 
 
 def translate_from_normal(pts, trans):
-    '''Translate each point by its normal a distance 'trans' '''
+    '''Translate each point by its normal a distance 'trans' 
+    
+    Args:
+        pts: list of pya.Point (nanometers)
+            or       pya.DPoint (microns)
+        trans: <float> (matching pts, either nm or microns)
+
+    Returns:
+        list of pya.Point or pya.DPoint, matching Arg pts type.
+    '''
     #  pts = [pya.DPoint(pt) for pt in pts]
-    pts = [pt.to_dtype(1) for pt in pts]
+    if type(pts[0]) == pya.Point:
+        # convert to float pya.DPoint
+        pts = [pt.to_dtype(1) for pt in pts]
+        in_type = 'Point'
+    elif type(pts[0]) == pya.DPoint:
+        in_type = 'DPoint'
+    else:
+        raise Exception('SiEPIC.utils.translate_from_normal expects pts=[pya.Point,...] or [pya.DPoint,...]')
     if len(pts) < 2:
         return pts    
     from math import cos, sin, pi
@@ -1146,8 +1162,10 @@ def translate_from_normal(pts, trans):
     else:
         tpts[-1].x = pts[-1].x
 #  return [pya.Point(pt) for pt in tpts]
-    return [pt.to_itype(1) for pt in tpts]
-
+    if in_type == 'Point':
+        return [pt.to_itype(1) for pt in tpts]
+    else:
+        return tpts
 
 
 def pt_intersects_segment(a, b, c):

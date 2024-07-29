@@ -349,7 +349,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             else:
                 waveguide = waveguides[0]
                 print('error: waveguide type not found in PDK waveguides')
-                raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
+                raise Exception('error: waveguide type (%s) not found in PDK. Waveguides available: %s' % (waveguide_type, [w['name'] for w in waveguides]))
         # check if the waveguide type is compound waveguide
         if 'compound_waveguide' in waveguide:
             waveguide = [w for w in waveguides if w['name']==waveguide['compound_waveguide']['singlemode']]
@@ -1780,7 +1780,8 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   if type(componentA) == type([]):
     componentA = componentA[0]
-  componentB = componentB[0]
+  if type(componentB) == type([]):
+    componentB = componentB[0]
   if verbose:
     componentA.display()
     componentB.display()
@@ -1794,9 +1795,11 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
       import re
       try:
           if cpinA==[]:
-              cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+              if re.findall(r'\d+', pinA):
+                  cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
           if cpinB==[]:
-              cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+              if re.findall(r'\d+', pinB):
+                  cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
       except:
           print('error in siepic.scripts.connect_cell')      
 
