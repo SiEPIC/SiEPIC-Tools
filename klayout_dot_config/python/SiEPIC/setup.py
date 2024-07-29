@@ -3,7 +3,7 @@ import pya
 
 def registerMenuItems():
     import os
-    from . import scripts, examples, lumerical, install
+    from . import scripts, lumerical
     import SiEPIC.__init__
 
     global ACTIONS
@@ -88,7 +88,6 @@ def registerMenuItems():
 
 
 def registerKeyBindings():
-    import os
 
     config = pya.Application.instance().get_config('key-bindings')
     if config == '':

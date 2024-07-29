@@ -74,7 +74,8 @@ def show(
     
 
 if __name__ == "__main__":
-    import sys, pya
+    import sys
+    import pya
     if 'Application' in dir(pya):
         print("this test case should be run outside of KLayout's IDE, e.g., VSCode.")
         exit(0)
@@ -84,20 +85,18 @@ if __name__ == "__main__":
     if 'SiEPIC' not in sys.modules:
         print('loading SiEPIC from GitHub')
         path_siepic = os.path.join(path_GitHub, 'SiEPIC-Tools/klayout_dot_config/python')
-        if not path_siepic in sys.path:
+        if path_siepic not in sys.path:
             sys.path.insert(0, path_siepic)
-        import SiEPIC
     from SiEPIC._globals import Python_Env
     print('KLayout running in mode: %s' % Python_Env)
-    from SiEPIC.utils.layout import new_layout, floorplan
-    from SiEPIC.scripts import load_klayout_technology, instantiate_all_library_cells, zoom_out, export_layout
+    from SiEPIC.utils.layout import new_layout
+    from SiEPIC.scripts import load_klayout_technology, export_layout
 
     # Load EBeam PDK from GitHub
     path_module = os.path.join(path_GitHub, 'SiEPIC_EBeam_PDK/klayout')
     path_lyt_file = os.path.join(path_GitHub, 'SiEPIC_EBeam_PDK/klayout/EBeam/EBeam.lyt')
     tech = load_klayout_technology('EBeam', path_module, path_lyt_file)
 
-    from SiEPIC.utils.layout import new_layout, floorplan
     tech_name = 'EBeam'
     topcell, ly = new_layout(tech_name, 'top', GUI=False, overwrite = True)
     cell = topcell.layout().create_cell("ebeam_y_1550",tech_name)

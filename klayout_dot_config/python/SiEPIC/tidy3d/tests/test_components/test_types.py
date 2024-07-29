@@ -1,6 +1,5 @@
 """Tests type definitions."""
 import pytest
-import tidy3d as td
 from tidy3d.components.types import ArrayLike, Complex
 from tidy3d.components.base import Tidy3dBaseModel
 from tidy3d.log import ValidationError

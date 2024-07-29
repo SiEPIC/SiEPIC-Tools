@@ -1,5 +1,4 @@
 """Tests tidy3d/components/data/data_array.py"""
-import pytest
 import numpy as np
 from typing import Tuple, List
 
@@ -22,7 +21,6 @@ from tidy3d.components.boundary import BoundarySpec, Periodic
 from tidy3d import material_library
 from tidy3d.constants import inf
 
-from ..utils import clear_tmp
 
 np.random.seed(4)
 

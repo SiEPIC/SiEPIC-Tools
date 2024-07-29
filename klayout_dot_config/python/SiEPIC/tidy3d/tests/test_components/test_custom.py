@@ -11,9 +11,8 @@ from tidy3d import Coords
 from tidy3d.components.source import CustomFieldSource, GaussianPulse
 from tidy3d.components.data.data_array import ScalarFieldDataArray
 from tidy3d.components.data.dataset import FieldDataset
-from tidy3d.log import SetupError, DataError, ValidationError
+from tidy3d.log import SetupError, ValidationError
 
-from ..test_data.test_monitor_data import make_field_data
 from ..utils import clear_tmp, assert_log_level
 from tidy3d.components.data.dataset import PermittivityDataset
 from tidy3d.components.medium import CustomMedium

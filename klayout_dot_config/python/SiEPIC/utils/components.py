@@ -197,7 +197,7 @@ if 0:
         in EBeam PDK
     '''
 
-    from SiEPIC.utils import get_layout_variables, load_Waveguides_by_Tech
+    from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, layout, topcell = get_layout_variables()  
 
     waveguide_type='Strip TE 1550 nm, w=500 nm'

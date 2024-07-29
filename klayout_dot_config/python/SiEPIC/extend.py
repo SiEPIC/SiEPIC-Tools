@@ -257,7 +257,7 @@ def unique_points(self):
 
 
 def translate_from_center(self, offset):
-    from math import pi, cos, sin, acos, sqrt
+    from math import pi, cos, sin
     from .utils import angle_vector
     pts = [pt for pt in self.get_dpoints()]
     tpts = [pt for pt in self.get_dpoints()]
@@ -724,7 +724,7 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     pins = []
 
     # Pin Recognition layer
-    if not 'PinRec' in TECHNOLOGY:
+    if 'PinRec' not in TECHNOLOGY:
         if GUI:
             pya.MessageBox.warning(
                 "Problem with Technology", "Problem with active Technology %s: missing layer PinRec" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
@@ -804,7 +804,7 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
         it.next()
 
     # Optical IO (Fibre) Recognition layer
-    if not 'FbrTgt' in TECHNOLOGY:
+    if 'FbrTgt' not in TECHNOLOGY:
         if GUI:
             pya.MessageBox.warning(
                 "Problem with Technology", "Problem with active Technology %s: missing layer FbrTgt"% (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
@@ -841,7 +841,7 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
         it.next()
 
     # Metal Pin Recognition layer 
-    if not 'PinRecM' in TECHNOLOGY:
+    if 'PinRecM' not in TECHNOLOGY:
         if GUI:
             pya.MessageBox.warning(
                 "Problem with Technology", "Problem with active Technology %s: missing layer PinRecM" % (TECHNOLOGY['technology_name']), pya.MessageBox.Ok)
@@ -990,7 +990,6 @@ def find_components(self, cell_selected=None, inst=None, verbose=False, raiseExc
     components = []
 
     from .core import Component
-    from . import _globals
     from .utils import get_technology_by_name
     if 'TECHNOLOGY' in dir(self.layout()):
         TECHNOLOGY = self.layout().TECHNOLOGY
@@ -1016,7 +1015,7 @@ def find_components(self, cell_selected=None, inst=None, verbose=False, raiseExc
         subcell = iter1.cell()  # cell (component) to which this shape belongs
         if verbose:
           print(' - looking at shape in cell %s. ' % subcell.name)
-        if cell_selected and not subcell in cell_selected:
+        if cell_selected and subcell not in cell_selected:
             # check if subcell is one of the arguments to this function: cell_selected
             if verbose:
               print(' - cell_selected and not subcell (%s) in cell_selected (%s). ' % (subcell.name, cell_selected[0].name))
@@ -1243,7 +1242,7 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
     topcell = self
 
     from . import _globals
-    from .utils import select_paths, get_technology_by_name
+    from .utils import get_technology_by_name
     from .core import Net
     TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
 
@@ -1407,7 +1406,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         if tunable_lasers[i]['wavelength'] == opt_in_dict[0]['wavelength'] and tunable_lasers[i]['polarization'] == opt_in_dict[0]['pol']:
             wavelength_start, wavelength_stop, wavelength_points = float(tunable_lasers[i]['wavelength-start']), float(
                 tunable_lasers[i]['wavelength-stop']), int(tunable_lasers[i]['wavelength-points'])
-    if not('wavelength_start' in locals()):
+    if 'wavelength_start' not in locals():
         warning = pya.QMessageBox()
         warning.setStandardButtons(pya.QMessageBox.Ok)
         warning.setText("No laser at %s nm is available. Tunable laser definition is in the technology's DFT.xml file." %
@@ -1780,7 +1779,6 @@ def plot(self, width = 800, show_labels = True, show_ruler = True, retina = True
             retina: IPython.display.Image configuration for retina display, True
         '''
         
-        from io import BytesIO
         from IPython.display import Image, display
         
         # Create a LayoutView, and populate it with the current cell & layout

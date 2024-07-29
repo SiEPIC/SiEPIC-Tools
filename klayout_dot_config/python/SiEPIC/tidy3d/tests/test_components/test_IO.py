@@ -3,27 +3,20 @@ import os
 import json
 
 import pytest
-import pydantic
 import numpy as np
-import os
 from time import time
-import xarray as xr
-import h5py
-from dask.base import tokenize
 import dill as pickle
 
 
 from tidy3d import __version__
 import tidy3d as td
-from tidy3d.components.base import Tidy3dBaseModel, DATA_ARRAY_MAP
+from tidy3d.components.base import DATA_ARRAY_MAP
 from ..utils import SIM_FULL as SIM
 from ..utils import SIM_MONITORS as SIM2
 from ..utils import clear_tmp
-from ..test_data.test_monitor_data import make_flux_data, make_flux_time_data
+from ..test_data.test_monitor_data import make_flux_data
 from ..test_data.test_sim_data import make_sim_data
-from tidy3d.components.data.data_array import FluxDataArray
 from tidy3d.components.data.sim_data import DATA_TYPE_MAP
-from tidy3d.components.data.monitor_data import FluxData
 
 # Store an example of every minor release simulation to test updater in the future
 SIM_DIR = "tests/sims"

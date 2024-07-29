@@ -1,7 +1,8 @@
 
 # Enable the importing of the tidy3d module, 
 # even while it is a subfolder
-import os, sys
+import os
+import sys
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path = os.path.join(dir_path,'..')
 if dir_path not in sys.path:

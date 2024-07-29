@@ -55,7 +55,6 @@ if 'json' not in sys.modules:
 
 def github_check_SiEPICTools_version():
 
-    import sys
     import pya
 
     try:
@@ -69,7 +68,6 @@ def github_check_SiEPICTools_version():
         return []
 
     import json
-    import os
     try:
         r = requests.get("https://api.github.com/repos/lukasc-ubc/SiEPIC-Tools/releases/latest")
     except:
@@ -97,7 +95,6 @@ def github_check_SiEPICTools_version():
 
 def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbose=None):
 
-    import sys
     import pya
 
     try:
@@ -111,7 +108,6 @@ def github_get_filenames(user, repo, filesearch, extension='', auth=None, verbos
         return []
 
     import json
-    import os
     filenames = []
     folders = []
     filesearch = filesearch.replace('%20', ' ')

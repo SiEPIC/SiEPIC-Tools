@@ -1,13 +1,10 @@
 """Tests webapi bits that dont require authentication."""
 import pytest
-import requests
-import datetime
 
-from requests import Session
 
 import tidy3d as td
 import tidy3d.web as web
-from tidy3d.web import httputils, s3utils, webapi
+from tidy3d.web import httputils, webapi
 from tidy3d.log import DataError, WebError
 
 from ..utils import clear_tmp
@@ -97,7 +94,7 @@ class MockResponseFolder(MockResponse):
 RESPONSE_MAP = {
     # get responses
     f"tidy3d/tasks/{TASK_ID}/detail": MockResponseInfoOk(),
-    f"tidy3d/tasks/None/detail": MockResponseInfoNotFound(),
+    "tidy3d/tasks/None/detail": MockResponseInfoNotFound(),
     f"tidy3d/project?projectName={FOLDER_NAME}": MockResponseFolder(),
     # f'tidy3d/tasks/{TASK_ID}/file?filename=simulation.json': MockResponseUploadString()
     # post responses

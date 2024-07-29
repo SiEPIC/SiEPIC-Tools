@@ -36,20 +36,21 @@ with:
 folder = 'pcells_GSiP'
 verbose = False
 
-import os, sys, pathlib
+import os
+import sys
+import pathlib
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 if dir_path not in sys.path:
     sys.path.append(dir_path)
 
 try:
-    import SiEPIC
+    pass
 except:
     dir_path_SiEPIC = os.path.join(dir_path, '../../../python')
     sys.path.append(dir_path_SiEPIC)
-    import SiEPIC
 
-from SiEPIC._globals import KLAYOUT_VERSION, KLAYOUT_VERSION_3
+from SiEPIC._globals import KLAYOUT_VERSION
 if KLAYOUT_VERSION < 28:
     question = pya.QMessageBox()
     question.setStandardButtons(pya.QMessageBox.Ok)
@@ -93,7 +94,8 @@ class GSiP(pya.Library):
     self.path = os.path.dirname(os.path.realpath(__file__))
 
     # Import all the GDS files from the tech folder
-    import os, fnmatch
+    import os
+    import fnmatch
     dir_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../gds/building_blocks"))
     if verbose:
         print('  library path: %s' % dir_path)

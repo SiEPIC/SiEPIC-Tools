@@ -4,13 +4,8 @@ import pytest
 
 import tidy3d as td
 
-from tidy3d.components.monitor import FieldMonitor, FieldTimeMonitor, PermittivityMonitor
-from tidy3d.components.monitor import ModeSolverMonitor, ModeMonitor
-from tidy3d.components.monitor import FluxMonitor, FluxTimeMonitor
-from tidy3d.components.mode import ModeSpec
 from tidy3d.log import DataError, SetupError
 
-from tidy3d.components.data.dataset import FieldDataset
 from tidy3d.components.data.data_array import FreqModeDataArray
 from tidy3d.components.data.monitor_data import FieldData, FieldTimeData, PermittivityData
 

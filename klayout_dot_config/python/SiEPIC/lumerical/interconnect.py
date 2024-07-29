@@ -75,7 +75,8 @@ def INTC_installdesignkit(verbose=False):
   '''Install a Compact Model Library into Lumerical INTERCONNECT,
   using a compressed (.cml) in the PDK, placing it in the KLayout folder.'''
 
-  import sys, os, string, pya
+  import os
+  import pya
   from ..utils import get_technology, get_technology_by_name
 
   # get current technology
@@ -141,14 +142,14 @@ def INTC_installdesignkit(verbose=False):
   # Install technology CML if missing in INTC
   # check if the latest version of the CML is in KLayout's tech
   if 'INTC_CMLs_path' in TECHNOLOGY and TECHNOLOGY['INTC_CML_path']:
-    if not ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
+    if ("design kits::"+TECHNOLOGY['technology_name'].lower()+"::"+TECHNOLOGY['INTC_CML_version'].lower().replace('.cml','').lower()) not in _globals.INTC_ELEMENTS:
       # install CML
       print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
       lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CML_path'], dir_path ) )
     
     # Install other CMLs within technology
     for i in range(0,len(TECHNOLOGY['INTC_CMLs_name'])):
-      if not ("design kits::"+TECHNOLOGY['INTC_CMLs_name'][i].lower()+"::"+TECHNOLOGY['INTC_CMLs_version'][i].lower().replace('.cml','').lower()) in _globals.INTC_ELEMENTS:
+      if ("design kits::"+TECHNOLOGY['INTC_CMLs_name'][i].lower()+"::"+TECHNOLOGY['INTC_CMLs_version'][i].lower().replace('.cml','').lower()) not in _globals.INTC_ELEMENTS:
         # install CML
         print("Lumerical INTC, installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CMLs_path'][i], dir_path ) )
         lumapi.evalScript(_globals.INTC, "installdesignkit ('%s', '%s', true);" % (TECHNOLOGY['INTC_CMLs_path'][i], dir_path ) )
@@ -219,7 +220,7 @@ def INTC_loaddesignkit(folder_CML, verbose=False):
     folder_names = []
     new_loaded = False
     for folder_name in next(os.walk(folder_CML))[1]:
-        if not ("design kits::"+folder_name.lower()+"::" in _globals.INTC_ELEMENTS):
+        if "design kits::"+folder_name.lower()+"::" not in _globals.INTC_ELEMENTS:
             folder_path = os.path.join(folder_CML,folder_name)
             lumapi.evalScript(_globals.INTC, "loaddesignkit ('%s', '%s');" % (folder_name, folder_path ) )
             new_loaded = True
@@ -277,7 +278,8 @@ def Setup_Lumerical_KLayoutPython_integration(verbose=False):
 
 def INTC_commandline(filename2):
   print ("Running Lumerical INTERCONNECT using the command interface.")
-  import sys, os, string
+  import sys
+  import os
   
   if sys.platform.startswith('linux'):
     import subprocess
@@ -321,7 +323,7 @@ def INTC_commandline(filename2):
       warning_window = pya.QMessageBox()
       warning_window.setText("Warning: The program could not find INTERCONNECT.")
       warning_window.setInformativeText("Do you want to specify it manually?")
-      warning_window.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel);
+      warning_window.setStandardButtons(pya.QMessageBox.Yes | pya.QMessageBox.Cancel)
       warning_window.setDefaultButton(pya.QMessageBox.Yes)
       response = warning_window.exec_()        
       if(pya.QMessageBox_StandardButton(response) == pya.QMessageBox.Yes):
@@ -332,7 +334,7 @@ def INTC_commandline(filename2):
 
 
 def component_simulation(verbose=False, simulate=True):
-  import sys, os, string
+  import os
   from .. import _globals
 
   # get selected instances
@@ -454,7 +456,6 @@ def component_simulation(verbose=False, simulate=True):
 
     from .. import _globals
     tmp_folder = _globals.TEMP_FOLDER
-    import os    
     filename = os.path.join(tmp_folder, '%s_main.spi' % c.component)
     filename2 = os.path.join(tmp_folder, '%s.lsf' % c.component)
     filename_icp = os.path.join(tmp_folder, '%s.icp' % c.component)
@@ -562,7 +563,6 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
   if '_' in circuit_name[0]:
     circuit_name = ''.join(circuit_name.split('_', 1))  # remove leading _
   
-  from .. import _globals
   tmp_folder = _globals.TEMP_FOLDER
   import os
   filename = os.path.join(tmp_folder, '%s_main.spi' % circuit_name)

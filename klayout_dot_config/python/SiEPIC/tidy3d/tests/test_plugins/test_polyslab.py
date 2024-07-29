@@ -1,6 +1,4 @@
-import pytest
 import numpy as np
-import matplotlib.pyplot as plt
 import gdstk
 
 import tidy3d as td

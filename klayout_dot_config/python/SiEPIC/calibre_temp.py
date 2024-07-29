@@ -111,7 +111,6 @@ def calibreDRC(params = None, cell = None):
        
     version = sys.version
     if version.find("2.") > -1:
-      import commands
 
       progress.set(2, True)
       progress.format = "Uploading Layout and Scripts"

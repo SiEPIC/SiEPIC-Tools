@@ -1,13 +1,9 @@
 """Tests the base model."""
-from typing import Dict, Union, List
 import pytest
 import numpy as np
-import pydantic
 
 import tidy3d as td
 from tidy3d.components.base import Tidy3dBaseModel
-from tidy3d.log import ValidationError, SetupError, Tidy3dKeyError
-from ..utils import assert_log_level
 
 
 M = td.Medium()

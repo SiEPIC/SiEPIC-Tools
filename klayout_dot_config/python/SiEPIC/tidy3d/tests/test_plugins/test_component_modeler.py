@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-import pydantic
 
 import gdstk
 
@@ -8,7 +7,7 @@ import tidy3d as td
 from tidy3d.web.container import Batch
 from tidy3d.plugins.smatrix.smatrix import Port, ComponentModeler
 from tidy3d.log import SetupError, Tidy3dKeyError
-from ..utils import clear_tmp, run_emulated
+from ..utils import run_emulated
 
 # Waveguide height
 wg_height = 0.22

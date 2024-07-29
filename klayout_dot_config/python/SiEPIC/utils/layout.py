@@ -278,7 +278,7 @@ def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
                  angle_vector(pts[-1]-pts[-2]) % 360)
         LayerDevRecN = layout.layer(TECHNOLOGY['DevRec'])
 
-    from pya import Trans, Text, Path, Point
+    from pya import Trans, Text, Point
 
     # Compact model information
     angle_vec = angle_vector(pts[0]-pts[1])/90
@@ -520,7 +520,7 @@ def layout_waveguide(cell, layer, points_list, width):
 
     """
     if len(points_list) < 2:
-        raise NotImplemented("ERROR: points_list too short")
+        raise NotImplementedError("ERROR: points_list too short")
         return
 
     if type(width) == type(0.0):
@@ -856,7 +856,7 @@ def layout_waveguide_sbend_bezier(cell, layer, trans, w=0.5, wo=None, h=2.0, len
         wo = w
 
     from SiEPIC.utils.geometry import bezier_parallel, translate_from_normal2
-    from pya import DPoint, DPolygon, Point, Polygon
+    from pya import DPoint
 
     if type(w) == type(int()):
         dbu = cell.layout().dbu
@@ -895,7 +895,7 @@ def layout_waveguide_sbend(cell, layer, trans, w=500, r=25000, h=2000, length=15
 
     """
 
-    from math import pi, cos, sin, log, sqrt, acos
+    from math import pi, cos, sin, acos
     from SiEPIC.utils import points_per_circle
     import pya
 
@@ -1182,7 +1182,6 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
 
     from SiEPIC.scripts import connect_pins_with_waveguide
     from SiEPIC.extend import to_itype
-    from math import floor
 
     # create a new sub-cell where the tree will go
     ly = cell.layout()

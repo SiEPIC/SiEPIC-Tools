@@ -16,10 +16,7 @@ if not install("plotly", requested_by="Contra Directional Coupler design"):
 
 
 from SiEPIC.simulation.contraDC.contra_directional_coupler.ContraDC import *
-import sys
 import pya
-import plotly.graph_objs as go
-import plotly.offline as pyo
 import plotly.io as pio
 
 pio.renderers.default = "browser"
@@ -330,8 +327,6 @@ class MyWindow(pya.QWidget):
 
         if self.tech_plot_fill.isChecked():
             import plotly.graph_objs as go
-            import plotly.offline as pyo
-            import plotly.io as pio
 
             # pio.renderers.default = "browser"
 

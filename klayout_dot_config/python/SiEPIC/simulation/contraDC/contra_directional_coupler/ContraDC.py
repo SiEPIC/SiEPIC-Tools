@@ -608,7 +608,6 @@ class ContraDC():
         # Make plots
         if make_plot:
             import plotly.graph_objs as go
-            import plotly.offline as pyo
 
             passivity = go.Scatter(x=lambda0, y=S_norm, mode='lines', name='Norm |S|')
             layout = go.Layout(title='Compact model passivity test', xaxis=dict(title='X Axis'), yaxis=dict(title='Y Axis'))

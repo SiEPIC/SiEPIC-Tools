@@ -1,7 +1,6 @@
 """Test the logging."""
 
 import pytest
-import pydantic as pd
 import tidy3d as td
 from tidy3d.log import Tidy3dError, ConfigError, set_logging_level
 from tidy3d.log import DEFAULT_LEVEL, _get_level_int

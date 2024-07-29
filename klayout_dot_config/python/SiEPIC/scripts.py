@@ -993,7 +993,6 @@ This allows the user to migrate designs to the new Waveguide PCell.
 '''
 def roundpath_to_waveguide(verbose=False):
 
-    from . import _globals
     from .utils import get_layout_variables
 #  from .scripts import path_to_waveguide
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
@@ -1110,7 +1109,6 @@ def roundpath_to_waveguide(verbose=False):
 Find all Waveguide cells, extract the path and add it to the layout, delete the Waveguide
 '''
 def waveguide_to_path(cell=None, save_waveguide_type=True):
-    from . import _globals
     from .utils import select_waveguides, get_layout_variables
 
     if cell is None:
@@ -1196,7 +1194,6 @@ def waveguide_length():
 
     from .utils import get_layout_variables, select_waveguides
     TECHNOLOGY, lv, ly, cell = get_layout_variables()
-    import SiEPIC.utils
 
     selection = select_waveguides(cell)
     if len(selection) == 1:
@@ -1213,11 +1210,10 @@ def waveguide_length():
 def waveguide_length_diff():
     import SiEPIC
     TECHNOLOGY, lv, ly, cell = SiEPIC.utils.get_layout_variables()
-    from math import exp, sqrt, pi
+    from math import exp, sqrt
     from copy import deepcopy
     import numpy as np
     import fnmatch
-    import pathlib
     import pya
     import os
 
@@ -1958,9 +1954,7 @@ def compute_area():
 
 
 def calibreDRC(params=None, cell=None):
-    import sys
     import os
-    import pipes
     import codecs
     from . import _globals
     from .utils import get_layout_variables
@@ -2183,7 +2177,6 @@ def calibreDRC(params=None, cell=None):
 
 def auto_coord_extract():
     import os
-    import time
     from .utils import get_technology
     from .utils import get_layout_variables
     TECHNOLOGY, lv, ly, topcell = get_layout_variables()
@@ -2284,9 +2277,8 @@ def find_SEM_labels_gui(topcell=None, LayerSEMN=None, MarkersInTopCell=False):
     from .utils import get_technology
     TECHNOLOGY = get_technology()
 
-    import string
     if not LayerSEMN:
-        from .utils import get_technology, find_paths
+        from .utils import get_technology
         TECHNOLOGY = get_technology()
         dbu = TECHNOLOGY['dbu']
         if 'SEM' in TECHNOLOGY:
@@ -2610,7 +2602,7 @@ def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
     import pya
     from . import _globals
     tmp_folder = _globals.TEMP_FOLDER
-    from .github import github_get_filenames, github_get_files, github_get_file
+    from .github import github_get_filenames, github_get_files
 
     user = 'lukasc-ubc'
     repo = 'edX-Phot1x'
@@ -2716,7 +2708,6 @@ def fetch_measurement_data_from_github(verbose=None, opt_in_selection_text=[]):
                     file_selection = f
             if verbose:
                 print('   File selection: %s' % file_selection)
-            import os
             savefilepath = github_get_files(user=user, repo=repo, filename_search=file_selection[0].replace(
                 '.' + extension, '.'), save_folder=tmp_folder,  include_path=include_path, verbose=verbose)
 

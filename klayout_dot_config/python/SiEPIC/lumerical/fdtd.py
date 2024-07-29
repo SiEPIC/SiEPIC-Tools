@@ -28,7 +28,7 @@ if 'pya' in sys.modules: # check if in KLayout
   import pya
 
 try:
-    import pyparsing
+    pass
 except:
     try:
         import pip
@@ -202,7 +202,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     else:
         fdtd_extra = 0  # 200e-9
     FDTDxmin,FDTDxmax,FDTDymin,FDTDymax = (devrec_box.left)*dbum-fdtd_extra, (devrec_box.right)*dbum+fdtd_extra, (devrec_box.bottom)*dbum-fdtd_extra, (devrec_box.top)*dbum+fdtd_extra
-    sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5;
+    sim_time = max(devrec_box.width(),devrec_box.height())*dbum * 4.5
     lumapi.evalScript(_globals.FDTD, " \
       newproject; closeall; \
       addfdtd; set('x min',%s); set('x max',%s); set('y min',%s); set('y max',%s); set('z span',%s);\
@@ -297,7 +297,7 @@ def generate_component_sparam(do_simulation = True, addto_CML = True, verbose = 
     # Calculate mode sources
     # Get field profiles, to find |E| = 1e-6 points to find spans
     import sys
-    if not 'win' in sys.platform:  # Windows getVar ("E") doesn't work.
+    if 'win' not in sys.platform:  # Windows getVar ("E") doesn't work.
       min_z, max_z = 0,0
       for p in [pins[0]]:  # if all pins are the same, only do it once
         for m in mode_selection_index:
@@ -744,7 +744,6 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
   dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
 
   if do_simulation:
-    import numpy as np
     # run Lumerical FDTD Solutions
     from .. import _globals
     run_FDTD()
@@ -807,7 +806,8 @@ def generate_GC_sparam(do_simulation = True, addto_CML = True, verbose = False, 
     TECHNOLOGY = get_technology()
     tech_name = TECHNOLOGY['technology_name']
 
-    import os, fnmatch
+    import os
+    import fnmatch
     dir_path = pya.Application.instance().application_data_path()
     search_str = 'grating_coupler_2D.fsp'
     matches = []
@@ -955,7 +955,6 @@ def generate_CDC_bandstructure(W_1 = 450e-9, W_2 = 550e-9, dW_1 = 20e-9, dW_2 = 
   TECHNOLOGY, lv, ly, cell = get_layout_variables()
   dbum = TECHNOLOGY['dbu']*1e-6 # dbu to m conversion
   
-  import numpy as np
   # run Lumerical FDTD Solutions
   from .. import _globals
   
@@ -970,7 +969,8 @@ def generate_CDC_bandstructure(W_1 = 450e-9, W_2 = 550e-9, dW_1 = 20e-9, dW_2 = 
   TECHNOLOGY = get_technology()
   tech_name = TECHNOLOGY['technology_name']
 
-  import os, fnmatch
+  import os
+  import fnmatch
   dir_path = pya.Application.instance().application_data_path()
   search_str = 'FDTD_CDC_unit_cell.fsp'
   matches = []
@@ -1005,4 +1005,4 @@ def generate_CDC_bandstructure(W_1 = 450e-9, W_2 = 550e-9, dW_1 = 20e-9, dW_2 = 
   #lambda_0 = lumapi.getVar(_globals.FDTD, "lambda_0")
   [bandwidth, lambda_0] = [6e-9, 1550e-9]
 
-  return [bandwidth, lambda_0];
+  return [bandwidth, lambda_0]

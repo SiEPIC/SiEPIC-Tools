@@ -31,7 +31,7 @@ if Python_Env == "KLayout_GUI":
 # Define global Net object that implements netlists and pin searching/connecting
 # NET = Net()
 
-from .core import Net, Component
+from .core import Net
 NET_DISCONNECTED = Net()
 
 # don't use a global one.. based on cells

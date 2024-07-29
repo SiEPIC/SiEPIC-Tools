@@ -275,7 +275,7 @@ class Component():
             spice_str = self.pdic2str(arg)
         else:
           return False
-        newSPICE_text =  'Spice_param:' + spice_str;  
+        newSPICE_text =  'Spice_param:' + spice_str  
         
         cell = self.cell
         cell_idx = cell.cell_index()
@@ -286,10 +286,10 @@ class Component():
 
         while not(iter_sh.at_end()): # Find cell where SPICE params are stored
             if iter_sh.shape().is_text():
-              shape = iter_sh.shape();
+              shape = iter_sh.shape()
               text = shape.text
               if text.string.find("Spice_param:") > -1:
-                  new_text = pya.Text(newSPICE_text, shape.text_trans,shape.text_size ,-1);
+                  new_text = pya.Text(newSPICE_text, shape.text_trans,shape.text_size ,-1)
                   new_text.halign = text.halign
                   shape.text = new_text
                   self.params = spice_str
@@ -302,7 +302,7 @@ class Component():
             cell_inst = cell
 
         t = pya.Trans(pya.Trans.R0,pya.Point(0,0)) # Coordinates are with respect to the cell center
-        new_text  = pya.Text(newSPICE_text, t,0.1/ly.dbu ,-1);
+        new_text  = pya.Text(newSPICE_text, t,0.1/ly.dbu ,-1)
         cell_inst.shapes(LayerDevRecN).insert(new_text)
         self.params = spice_str
         return True
@@ -401,7 +401,7 @@ class WaveguideGUI():
         # print ('SiEPIC.core, Waveguide GUI: tech %s, waveguide_types: %s' % (tech_name, waveguide_types) )
         if 0:
             # keep only simple waveguides (not compound ones)
-            waveguide_types_simple = [t for t in waveguide_types if not 'compound_waveguide' in t.keys()]
+            waveguide_types_simple = [t for t in waveguide_types if 'compound_waveguide' not in t.keys()]
             self.waveguides = waveguide_types_simple
         try:
             self.options = [waveguide['name'] for waveguide in self.waveguides]

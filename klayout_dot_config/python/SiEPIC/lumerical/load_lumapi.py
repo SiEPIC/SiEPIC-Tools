@@ -1,7 +1,5 @@
-import pya
 
 def load_lumapi(verbose=False):
-  import pya
   if verbose:
     print("SiEPIC.lumerical.load_lumapi")
 
@@ -10,7 +8,7 @@ def load_lumapi(verbose=False):
 
 
   try:
-    import numpy
+    pass
   except:
       try:
           import pip
@@ -26,7 +24,9 @@ def load_lumapi(verbose=False):
           pass
   
 
-  import os, platform, sys, inspect
+  import os
+  import platform
+  import inspect
 
   # Load the Lumerical software location from KLayout configuration
   path = pya.Application.instance().get_config('siepic_tools_Lumerical_Python_folder')
@@ -114,7 +114,8 @@ def load_lumapi(verbose=False):
             
       # Copy the launch control file into user's Library folder
       # execute launctl to register the new paths
-      import os, fnmatch
+      import os
+      import fnmatch
       siepic_tools_lumerical_folder = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
       os.environ['PATH'] += ':/Applications/Lumerical/FDTD Solutions/FDTD Solutions.app/Contents/MacOS' 
@@ -137,7 +138,7 @@ def load_lumapi(verbose=False):
         file.write (text_bash)
         file.close()
 
-      if not path in sys.path:
+      if path not in sys.path:
         sys.path.append(path)
       # Fix for Lumerical Python OSX API, for < March 5 2018 versions:
       if not os.path.exists(os.path.join(path, 'libinterop-api.1.dylib')):
@@ -161,13 +162,13 @@ def load_lumapi(verbose=False):
   # Windows
   elif platform.system() == 'Windows': 
     if os.path.exists(path):
-      if not path in sys.path:
+      if path not in sys.path:
         sys.path.append(path) # windows
       os.chdir(path) 
   # Linux    
   elif platform.system() == 'Linux': 
     if os.path.exists(path):
-      if not path in sys.path:
+      if path not in sys.path:
         sys.path.append(path) # windows
       os.chdir(path) 
 

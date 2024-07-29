@@ -20,7 +20,6 @@ wireguide_to_path
 '''
 
 import pya
-import os
 
 # ORIGINAL FUNCTION - get_layout_variables()
 # The changes to the original function are as follows:
@@ -283,7 +282,6 @@ def path_to_wireguide(cell=None, lv_commit=True, verbose=False, select_wireguide
 # 1) Have the path maintain the same layer as it previuosly had as a Wireguide
 # 2) Changed all "waveguide" names and variables to "wireguides"
 def wireguide_to_path(cell=None):
-    from . import _globals
     from .utils import get_layout_variables
 
     if cell is None:

@@ -1,11 +1,12 @@
-import sys, os, platform
+import sys
+import os
+import platform
 
 
 # Start Lumerical INTERCONNECT
 
 # Try using SiEPIC.lumerical
 try:
-    import SiEPIC
     isSiEPIC=True
 except:
     isSiEPIC=False

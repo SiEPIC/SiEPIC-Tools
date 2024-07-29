@@ -69,8 +69,8 @@ def swap_rows(arr, frm, to):
 #%% the bread and butter
 def contraDC_model(params, verbose = True):
 
-    import cmath, math
-    import sys, os, time
+    import cmath
+    import math
     import numpy as np
     import scipy.linalg    
   
@@ -365,7 +365,6 @@ def cdc_simulation(verbose=True, FDTD_settings = None):
   
   # get selected instances; only one
   from ..utils import select_instances
-  from .. import _globals
   
   # print error message if no or more than one component selected
   selected_instances = select_instances()
@@ -398,9 +397,9 @@ def cdc_simulation(verbose=True, FDTD_settings = None):
   params['wavelength_points'] = wavelength_points
           
   if params["sinusoidal"] == False:
-    sinusoidal = 0;
+    sinusoidal = 0
   else:
-    sinusoidal = 1;
+    sinusoidal = 1
     error.setText("Error: The simulation model currently does not support sinusoidal gratings.")
     response = error.exec_()
     return

@@ -209,13 +209,14 @@ def load_klayout_technology(techname, path_module, path_lyt_file=None):
     # if running in KLayout in PyPI mode, the technology needs to be
     # loaded separately
     if techname not in sys.modules:
-        if not path_module in sys.path:
+        if path_module not in sys.path:
             sys.path.append(path_module)
         tech = pya.Technology().create_technology('EBeam')
         if path_lyt_file:
             tech = tech.load(path_lyt_file)
         else:
-            import fnmatch, os
+            import fnmatch
+            import os
             search_str = techname + '.lyt'
             matches = []
             for root, dirnames, filenames in os.walk(path_module, followlinks=True):
@@ -264,7 +265,7 @@ def get_technology_by_name(tech_name, verbose=False):
         if file.lower().endswith(".cml"):
             # Only store newest CMLs
             cml_name, cml_version = file.split('_v', 1)
-            if not cml_name in cml_names:
+            if cml_name not in cml_names:
                 cml_files.insert(0, file)
                 cml_paths.insert(0, os.path.join(technology['base_path'], file))
                 cml_names.insert(0, cml_name)
@@ -281,7 +282,7 @@ def get_technology_by_name(tech_name, verbose=False):
             if file.lower().endswith('.cml'):
                 # Only store newest CMLs
                 cml_name, cml_version = file.split('_v', 1)
-                if not cml_name in cml_names:
+                if cml_name not in cml_names:
                     cml_files.append(file)
                     cml_paths.append(os.path.join(technology['base_path'], 'cml', file))
                     cml_names.append(cml_name)
@@ -473,14 +474,14 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
             if 'component' in waveguide.keys():
                 if not isinstance(waveguide['component'], list):
                     waveguide['component'] = [waveguide['component']]
-            if not 'bezier' in waveguide.keys():
+            if 'bezier' not in waveguide.keys():
                 waveguide['adiabatic'] = False
                 waveguide['bezier'] = ''
             else:
                 waveguide['adiabatic'] = True
-            if not 'CML' in waveguide.keys():
+            if 'CML' not in waveguide.keys():
                 waveguide['CML'] = ''
-            if not 'model' in waveguide.keys():
+            if 'model' not in waveguide.keys():
                 waveguide['model'] = ''
     if not(waveguides):
         print('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and WAVEGUIDES.xml file' % (tech_name, tech_name) )
@@ -511,7 +512,6 @@ def load_Calibre():
     search_str = 'CALIBRE.xml'
 
 
-    import fnmatch
     dir_path = technology['base_path']
     matches = []
     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
@@ -569,7 +569,8 @@ def load_Verification(TECHNOLOGY=None, debug=True):
             raise Exception('SiEPIC.utils.load_DFT: TECHNOLOGY not specified.')
     tech_name = TECHNOLOGY['technology_name']
 
-    import os, fnmatch
+    import os
+    import fnmatch
 
     # then check for Verification.xml in the PDK Technology folder
     search_str = 'Verification.xml'
@@ -613,7 +614,8 @@ def load_DFT(TECHNOLOGY=None, debug=True):
             raise Exception('SiEPIC.utils.load_DFT: TECHNOLOGY not specified.')
     tech_name = TECHNOLOGY['technology_name']
 
-    import os, fnmatch
+    import os
+    import fnmatch
 
     # first check for filename_DFT.xml file in local directory
     matches = None

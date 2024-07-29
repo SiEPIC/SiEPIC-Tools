@@ -58,8 +58,6 @@ class Waveguide(pya.PCellDeclarationHelper):
 
     from SiEPIC.utils.layout import layout_waveguide2
     from SiEPIC.utils import  angle_vector
-    from math import cos, sin, pi, sqrt
-    import pya
     from SiEPIC.extend import to_itype
     
     # print("GSiP.Waveguide")

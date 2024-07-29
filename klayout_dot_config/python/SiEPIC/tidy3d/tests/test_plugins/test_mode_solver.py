@@ -1,17 +1,11 @@
-import pytest
 import numpy as np
 import matplotlib.pyplot as plt
-import pydantic
 
 import tidy3d as td
 
-from tidy3d.plugins import DispersionFitter
 from tidy3d.plugins import ModeSolver
 from tidy3d.plugins.mode.solver import compute_modes
-from tidy3d import FieldData, ScalarFieldDataArray, FieldMonitor
-from tidy3d.plugins.smatrix.smatrix import Port, ComponentModeler
-from tidy3d.plugins.smatrix.smatrix import ComponentModeler
-from ..utils import clear_tmp, run_emulated
+from tidy3d import ScalarFieldDataArray
 
 WAVEGUIDE = td.Structure(geometry=td.Box(size=(100, 0.5, 0.5)), medium=td.Medium(permittivity=4.0))
 PLANE = td.Box(center=(0, 0, 0), size=(5, 0, 5))

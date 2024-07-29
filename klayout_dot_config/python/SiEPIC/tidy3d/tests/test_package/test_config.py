@@ -6,7 +6,6 @@ import pydantic
 import tidy3d as td
 from tidy3d.log import log, DEFAULT_LEVEL, LEVEL_MAP
 
-from ..utils import assert_log_level
 
 
 def test_logging_level():

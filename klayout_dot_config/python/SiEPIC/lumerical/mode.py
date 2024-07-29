@@ -25,7 +25,7 @@ if 'pya' in sys.modules: # check if in KLayout
   import pya
 
 try:
-    import pyparsing
+    pass
 except:
     try:
         import pip
@@ -89,7 +89,8 @@ def find_neff_supermode(w_1 = 500e-9, w_2 = 500e-9, gap = 200e-9, pol = 'TE', ve
   TECHNOLOGY = get_technology()
   tech_name = TECHNOLOGY['technology_name']
 
-  import os, fnmatch
+  import os
+  import fnmatch
   dir_path = pya.Application.instance().application_data_path()
   search_str = 'blank.lms'
   matches = []
@@ -117,7 +118,8 @@ def find_neff_supermode(w_1 = 500e-9, w_2 = 500e-9, gap = 200e-9, pol = 'TE', ve
   #n_eff2_fit = lumapi.getVar(_globals.MODE, "n_eff2_fit")
   
   # Temporary cave-man parsing solution
-  import os, fnmatch
+  import os
+  import fnmatch
   dir_path = pya.Application.instance().application_data_path()
   search_str = 'n_eff1_fit'
   matches = []
@@ -178,7 +180,8 @@ def dispersion_2WG(params, verbose = False):
   TECHNOLOGY = get_technology()
   tech_name = TECHNOLOGY['technology_name']
 
-  import os, fnmatch
+  import os
+  import fnmatch
   dir_path = pya.Application.instance().application_data_path()
   search_str = 'dispersion_2WG.lsf'
   matches = []
@@ -237,7 +240,8 @@ def cdc_EME(params, verbose = False):
   TECHNOLOGY = get_technology()
   tech_name = TECHNOLOGY['technology_name']
 
-  import os, fnmatch
+  import os
+  import fnmatch
   dir_path = pya.Application.instance().application_data_path()
   search_str = 'ContraDC_EME.lms'
   matches = []

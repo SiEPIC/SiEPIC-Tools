@@ -1,26 +1,21 @@
 """Tests adjoint plugin."""
 
-from typing import Callable, Tuple
+from typing import Tuple
 
 import pytest
 import pydantic
-import jax.numpy as jnp
 import numpy as np
-from jax import grad, custom_vjp
+from jax import grad
 import jax
-from numpy.random import random
 
 import tidy3d as td
-from typing import Tuple, Any
 
 from tidy3d.log import DataError, Tidy3dKeyError
-from tidy3d.plugins.adjoint.components.base import JaxObject
 from tidy3d.plugins.adjoint.components.geometry import JaxBox, JaxPolySlab
 from tidy3d.plugins.adjoint.components.medium import JaxMedium, JaxAnisotropicMedium
 from tidy3d.plugins.adjoint.components.medium import JaxCustomMedium
 from tidy3d.plugins.adjoint.components.structure import JaxStructure
 from tidy3d.plugins.adjoint.components.simulation import JaxSimulation
-from tidy3d.plugins.adjoint.components.data.sim_data import JaxSimulationData
 from tidy3d.plugins.adjoint.components.data.monitor_data import JaxModeData, JaxDiffractionData
 from tidy3d.plugins.adjoint.components.data.data_array import JaxDataArray
 from tidy3d.plugins.adjoint.components.data.dataset import JaxPermittivityDataset

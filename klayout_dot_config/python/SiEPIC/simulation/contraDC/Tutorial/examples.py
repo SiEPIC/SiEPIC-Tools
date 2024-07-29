@@ -1,7 +1,5 @@
 #%% append Python path to code location
-import os,sys,inspect
 import plotly.graph_objs as go
-import plotly.offline as pyo
 import plotly.io as pio
 pio.renderers.default = "browser"
 

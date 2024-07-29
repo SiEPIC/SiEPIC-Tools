@@ -1,7 +1,6 @@
 # SiEPIC-Tools
 # Netlist extraction
 
-import pya
 
 def export_spice_layoutview(verbose=False,opt_in_selection_text=[], require_save=True):
     '''From the Layout View open in the GUI, 
@@ -20,7 +19,6 @@ def export_spice_layoutview(verbose=False,opt_in_selection_text=[], require_save
     if not any([sys.platform.startswith(p) for p in {"win","linux","darwin"}]):
         raise Exception("Unsupported operating system: %s" % sys.platform)
   
-    from . import _globals
     from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, layout, topcell = get_layout_variables()
   

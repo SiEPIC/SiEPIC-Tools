@@ -63,7 +63,7 @@ class MaterialItem(Tidy3dBaseModel):
     @pd.validator("default", always=True)
     def _default_in_variants(cls, val, values):
         """Make sure the default variant is already included in the ``variants``."""
-        if not val in values["variants"]:
+        if val not in values["variants"]:
             raise SetupError(
                 f"The data of the default variant '{val}' is not supplied; "
                 "please include it in the 'variants'."

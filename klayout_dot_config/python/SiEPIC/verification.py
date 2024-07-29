@@ -62,15 +62,13 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     import pya
     try:
         from . import _globals
-        from .utils import get_technology, find_paths, find_automated_measurement_labels, angle_vector
+        from .utils import get_technology, find_paths, find_automated_measurement_labels
         from .utils import advance_iterator
-        from ._globals import KLAYOUT_VERSION
         from .scripts import trim_netlist
     except:
         from SiEPIC import _globals
-        from SiEPIC.utils import get_technology, find_paths, find_automated_measurement_labels, angle_vector
+        from SiEPIC.utils import get_technology, find_paths, find_automated_measurement_labels
         from SiEPIC.utils import advance_iterator
-        from SiEPIC._globals import KLAYOUT_VERSION
         from SiEPIC.scripts import trim_netlist
     
     from SiEPIC._globals import Python_Env
@@ -540,13 +538,13 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                             rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
     
                 # opt_in format check:
-                if not opt_in[ti1]['wavelength'] in DFT_wavelengths:
+                if opt_in[ti1]['wavelength'] not in DFT_wavelengths:
                     if verbose:
                         print(" - DFT error: wavelength")
                     rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_wavelength.rdb_id())
                     rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
     
-                if not (opt_in[ti1]['pol'] in DFT_polarizations):
+                if opt_in[ti1]['pol'] not in DFT_polarizations:
                     if verbose:
                         print(" - DFT error: polarization")
                     rdb_item = rdb.create_item(
@@ -619,7 +617,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
         # subtract components connected to opt_in labels from all components to
         # find circuits with missing opt_in
         components_without_opt_in = [
-            c for c in components if not (c in components_connected_opt_in)]
+            c for c in components if c not in components_connected_opt_in]
         i = 0  # to avoid getting stuck in the loop in case of an error
         while components_without_opt_in and i < 50:
             # find the first GC
@@ -638,7 +636,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                     rdb_item.add_value(pya.RdbItemValue(p.to_dtype(dbu)))
                 # remove from the list of components without opt_in:
                 components_without_opt_in = [
-                    c for c in components_without_opt_in if not (c in trimmed_components)]
+                    c for c in components_without_opt_in if c not in trimmed_components]
                 i += 1
             else:
                 break

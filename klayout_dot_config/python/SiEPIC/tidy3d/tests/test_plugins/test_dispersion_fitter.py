@@ -1,17 +1,8 @@
-import pytest
 import numpy as np
-import matplotlib.pyplot as plt
-import pydantic
 
-import tidy3d as td
 
 from tidy3d.plugins import DispersionFitter
-from tidy3d.plugins import ModeSolver
-from tidy3d.plugins.mode.solver import compute_modes
-from tidy3d import FieldData, ScalarFieldDataArray, FieldMonitor
-from tidy3d.plugins.smatrix.smatrix import Port, ComponentModeler
-from tidy3d.plugins.smatrix.smatrix import ComponentModeler
-from ..utils import clear_tmp, run_emulated
+from ..utils import clear_tmp
 
 
 def _test_coeffs():

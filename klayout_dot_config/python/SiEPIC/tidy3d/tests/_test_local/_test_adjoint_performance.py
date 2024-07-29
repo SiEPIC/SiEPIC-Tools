@@ -1,53 +1,30 @@
 import pytest
 import numpy as np
-import os
 import sys
 from memory_profiler import profile
 import matplotlib.pylab as plt
 import time
 
-from tidy3d.components.data.sim_data import SimulationData
-from tidy3d.components.data.monitor_data import FieldData
-from tidy3d.components.data.data_array import ScalarFieldDataArray
-from tidy3d.components.monitor import FieldMonitor
-from tidy3d.components.simulation import Simulation
-from tidy3d.components.source import PointDipole, GaussianPulse
-from tidy3d.components.grid.grid_spec import GridSpec
 
 
-from typing import Callable, Tuple
 
-import pytest
-import pydantic
 import jax.numpy as jnp
-import numpy as np
-from jax import grad, custom_vjp
-import jax
-from numpy.random import random
+from jax import grad
 
 import tidy3d as td
-from typing import Tuple, Any
 
-from tidy3d.log import DataError, Tidy3dKeyError
-from tidy3d.plugins.adjoint.components.base import JaxObject
-from tidy3d.plugins.adjoint.components.geometry import JaxBox, JaxPolySlab
+from tidy3d.plugins.adjoint.components.geometry import JaxBox
 from tidy3d.plugins.adjoint.components.medium import (
-    JaxMedium,
-    JaxAnisotropicMedium,
     JaxCustomMedium,
 )
 from tidy3d.plugins.adjoint.components.structure import JaxStructure
 from tidy3d.plugins.adjoint.components.simulation import JaxSimulation
-from tidy3d.plugins.adjoint.components.data.sim_data import JaxSimulationData
-from tidy3d.plugins.adjoint.components.data.monitor_data import JaxModeData
 from tidy3d.plugins.adjoint.components.data.data_array import JaxDataArray
 from tidy3d.plugins.adjoint.components.data.dataset import JaxPermittivityDataset
 from tidy3d.plugins.adjoint.web import run
-from tidy3d.plugins.adjoint.log import AdjointError
 
-from ..utils import run_emulated, assert_log_level
+from ..utils import run_emulated
 
-import tidy3d as td
 
 sys.path.append("/users/twhughes/Documents/Flexcompute/tidy3d-core")
 from tidy3d_backend.utils import Profile

@@ -7,7 +7,6 @@ import tidy3d as td
 from tidy3d.constants import fp_eps
 
 from tidy3d.components.grid.mesher import GradedMesher
-from ..utils import assert_log_level
 
 np.random.seed(4)
 

@@ -60,8 +60,8 @@ def path_intersection(path1, path2, xbox = None, radius = 0):
     w = 0
     h = 0
     if isinstance(xbox, pya.Box):
-      w = xbox.width();
-      h = xbox.height();
+      w = xbox.width()
+      h = xbox.height()
 
     intersects = []   
     points_p1 = path1.each_point()
@@ -70,7 +70,7 @@ def path_intersection(path1, path2, xbox = None, radius = 0):
     for  i in range(path1.num_points()-1):
       p1_1 = next(points_p1)
       line_01 = myline([p1_0.x, p1_0.y],[p1_1.x,p1_1.y])
-      points_p2 = path2.each_point();
+      points_p2 = path2.each_point()
       p2_0 = next(points_p2)
       for  j in range(path2.num_points()-1):      
         
@@ -192,7 +192,7 @@ class myPath(pya.Path):
                   dist = p0.distance(pya.Point(c[0],c[1]))
                   new_list.append([dist, c])
               new_list.sort(key=lambda arg:arg[0])
-              p0 = p1;
+              p0 = p1
             data_out = [row[1] for row in new_list]
             return data_out
       
@@ -203,7 +203,7 @@ class myPath(pya.Path):
                 # Needs work to make it more general (jvillegas, Aug 2022)
                 
             newp = []
-            itp = self.each_point();
+            itp = self.each_point()
             
             def subs_point(p, op, bb):
               if(p.x == op.x): 
@@ -227,7 +227,7 @@ class myPath(pya.Path):
                   subs_point(p,op,bb)
                   newp.append(p)   
                 else:   
-                  nextp = next(itp);
+                  nextp = next(itp)
                   subs_point(p,nextp,bb)
                   newp.append(p)
                   if bb.contains(nextp):
@@ -283,20 +283,20 @@ def breakPath(path, list_inter, crossing_bbox, obj, verbose = False):
     newp_points = []
     new_list = []
     
-    old_bbox = myBox(0,0,0,0); 
+    old_bbox = myBox(0,0,0,0) 
     
     points = path.each_point()
     p0 = next(points)
     newp_points.append(p0)
     
-    new_list_inter = path.order(list_inter);
+    new_list_inter = path.order(list_inter)
     
     for i in range(path.num_points()-1):
         p1 = next(points)
         for center in new_list_inter:
             if on_segment((p0,p1), center):
                 newp_points.append(pya.Point(center[0],center[1])) 
-                bbox.move_to((center[0],center[1]));
+                bbox.move_to((center[0],center[1]))
                 newPath = myPath(newp_points,path.width)
                 newPath = newPath - bbox - old_bbox
                 
@@ -310,7 +310,7 @@ def breakPath(path, list_inter, crossing_bbox, obj, verbose = False):
                 newp_points.append(pya.Point(center[0],center[1]))
 
         newp_points.append(p1)
-        p0 = p1;
+        p0 = p1
     newPath = myPath(newp_points,path.width)
     new_list.append(new_OIP(newPath - old_bbox, layer=obj.layer, _cell = obj.top, cv_index = obj.cv_index))
     if verbose:	 
@@ -376,7 +376,7 @@ def cross_2paths(oip_path1, oip_path2, xcell, offset = 0, origin = pya.Trans(0,0
 def insert_crossing(selected_paths, params = None, verbose = False):
     import time
     start = time.time()
-    from SiEPIC.utils import select_paths, get_layout_variables
+    from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, ly, top_cell = get_layout_variables()
     dbu = TECHNOLOGY['dbu']
     
@@ -392,7 +392,7 @@ def insert_crossing(selected_paths, params = None, verbose = False):
     if xcell == None:
       if verbose:
         print("SiEPIC.utils.insert_crossing(): No available crossing cell in technology ", TECHNOLOGY['technology_name'])
-      return selected_paths;
+      return selected_paths
     
     global SiEPIC_crossings_UI_insertcrossing_flag 
     SiEPIC_crossings_UI_insertcrossing_flag = True
