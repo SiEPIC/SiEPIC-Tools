@@ -3347,15 +3347,16 @@ def instantiate_all_library_cells(topcell, terminator_cells = None, terminator_l
     x,y,xmax=0,0,0
     for lib in pya.Library().library_ids():
         li = pya.Library().library_by_id(lib)
-        if not li.is_for_technology(ly.technology_name) or li.name() == 'Basic':
-            print(' - skipping: %s' % li.name())
+        if not li.is_for_technology(ly.technology_name) or li.name() == "Basic":
+            print(" - skipping library: %s" % li.name())
             continue
 
         # all the pcells
-        print('All PCells: %s' % li.layout().pcell_names())
+        print(" - Library: %s" % li.name())
+        print("   All PCells: %s" % li.layout().pcell_names())
         for n in li.layout().pcell_names():
-            print(" - PCell: ", li.name(), n)
-            pcell = ly.create_cell(n,li.name(), {})
+            print("   - PCell: ", li.name(), n)
+            pcell = ly.create_cell(n, li.name(), {})
             if pcell:
                 subcell = ly.create_cell('c_'+n)
                 t = pya.Trans(pya.Trans.R0, pcell.bbox().left, pcell.bbox().bottom)
@@ -3381,8 +3382,8 @@ def instantiate_all_library_cells(topcell, terminator_cells = None, terminator_l
         for c in li.layout().each_top_cell():
             # instantiate
             if not li.layout().cell(c).is_pcell_variant():
-                print(" - Fixed cell: ", li.name(), li.layout().cell(c).name)
-                pcell = ly.create_cell(li.layout().cell(c).name,li.name(), {})
+                print("   - Fixed cell: ", li.name(), li.layout().cell(c).name)
+                pcell = ly.create_cell(li.layout().cell(c).name, li.name(), {})
                 if not pcell:
                     pcell = ly.create_cell(li.layout().cell(c).name,li.name())
                 if pcell:

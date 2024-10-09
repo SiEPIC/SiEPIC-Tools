@@ -309,6 +309,18 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     if verification:
         if verbose:
             print(verification)
+            
+        # perform minimum-radius-check: True or False
+        try:
+            minimum_radius_check = eval(
+                verification["verification"]["minimum-radius-check"]
+            )
+        except:
+            minimum_radius_check = True
+    else:
+        minimum_radius_check = True
+
+    if verification:
         # define device-only layers
         try:
             deviceonly_layers = eval(verification['verification']['shapes-inside-components']['deviceonly-layers'])
@@ -389,19 +401,27 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
         # it could be done perhaps as a parameter (points)
         if c.basic_name == "Waveguide" and c.cell.is_pcell_variant():
             pcell_params = c.cell.pcell_parameters_by_name()
-            Dpath = pcell_params['path']
-            if 'radius' in pcell_params:
-                radius = pcell_params['radius']
-            else:
-                radius = 5
-            if verbose:
-                print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius))
-
-            # Radius check:
-            if not Dpath.radius_check(radius):
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_radius.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue( "The minimum radius is set at %s microns for this waveguide." % (radius) ))
-                rdb_item.add_value(pya.RdbItemValue(Dpath))
+            Dpath = pcell_params["path"]
+            if minimum_radius_check:
+                if "radius" in pcell_params:
+                    radius = pcell_params["radius"]
+                else:
+                    radius = 5
+                if verbose:
+                    print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius))
+    
+                # Radius check:
+                if not Dpath.radius_check(radius):
+                    rdb_item = rdb.create_item(
+                        rdb_cell.rdb_id(), rdb_cat_id_wg_radius.rdb_id()
+                    )
+                    rdb_item.add_value(
+                        pya.RdbItemValue(
+                            "The minimum radius is set at %s microns for this waveguide."
+                            % (radius)
+                        )
+                    )
+                    rdb_item.add_value(pya.RdbItemValue(Dpath))
 
             # Check for waveguides with too few bend points
 
