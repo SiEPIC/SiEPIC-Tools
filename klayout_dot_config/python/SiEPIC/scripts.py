@@ -3484,7 +3484,7 @@ def load_klayout_library(technology, library_name=None, library_description='', 
         importlib.invalidate_caches()
 
         # Import the Python folder as a module
-        folder_pcell_abs = os.path.join(tech.default_base_path, folder_pcell)
+        folder_pcell_abs = os.path.abspath(os.path.join(tech.default_base_path, folder_pcell))
         module_name = os.path.split(folder_pcell)[-1]
         if verbose:
             print(' - PCell module name: %s' % module_name)
@@ -3528,10 +3528,11 @@ def load_klayout_library(technology, library_name=None, library_description='', 
             # Import all the GDS/OASIS files from the tech folder
             if folder_gds:
                 import os, fnmatch
-                dir_path = os.path.join(tech.default_base_path, folder_gds)
+                dir_path = os.path.abspath(os.path.join(tech.default_base_path, folder_gds))
                 if verbose:
                     print(' - GDS/OAS folder path: %s' % dir_path)
                 search_strs = ['*.[Oo][Aa][Ss]', '*.[Gg][Dd][Ss]'] # OAS, GDS
+                found = False
                 for search_str in search_strs:
                     for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
                         for filename in fnmatch.filter(filenames, search_str):
@@ -3539,9 +3540,15 @@ def load_klayout_library(technology, library_name=None, library_description='', 
                             if verbose:
                                 print(" - reading %s" % filename )
                             self.layout().read(file1)
+                            found = True
+                if not found:
+                    print(' - Warning: no fixed GDS/OAS files found for library: %s, in folder: %s' % (library_name, dir_path))
+
 
             # Create the PCell declarations
             if folder_pcell:
+                if not pcells_:
+                    print(' - Warning: no PCells found for library: %s' % library_name)
                 for m in pcells_:
                     mm = m.__name__.replace('%s.' % module_name,'')
                     # mm2 = m.__name__+'.'+mm+'()'
@@ -3562,19 +3569,34 @@ def load_klayout_library(technology, library_name=None, library_description='', 
 
     return library_name
 
-def technology_libraries(tech):
+def technology_libraries(technology):
     '''
     Function to get a list of all the pya.Library associated with a pya.Technology
     missing in KLayout: https://github.com/KLayout/klayout/issues/879
                         https://www.klayout.de/doc-qt5/code/class_Technology.html
+    Inputs:
+        technology: name of the technology, e.g., "EBeam", or pya.Technology
     '''
-    import pya
+
+    if type(technology) == str:
+        tech = pya.Technology.technology_by_name(technology)
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology
+    elif type(technology) == pya.Technology:
+        tech = technology
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology.name
+    else:
+        raise Exception('SiEPIC.load_klayout_library requires a technology as input.')
+        
     tech_libs = []
     libs = pya.Library.library_ids()
     for lib in libs:
         l = pya.Library.library_by_id(lib)
-        if tech in l.technologies():
+        if tech_name in l.technologies():
             tech_libs.append(l.name())
-            #print("%s" % (l.name()))
-    print('Libraries associated with Technology %s: %s' % (tech, tech_libs))     
+
+    print('Libraries associated with Technology %s: %s' % (tech_name, tech_libs))     
     
