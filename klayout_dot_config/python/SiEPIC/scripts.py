@@ -4,6 +4,8 @@
 #################################################################################
 '''
 
+Functions in this file:
+
 connect_pins_with_waveguide
 path_to_waveguide
 path_to_waveguide2
@@ -34,6 +36,8 @@ svg_from_cell
 zoom_out: When running in the GUI, Zoom out and show full hierarchy
 export_layout
 instantiate_all_library_cells
+load_klayout_library
+technology_libraries
 
 '''
 
@@ -3410,3 +3414,166 @@ def instantiate_all_library_cells(topcell, terminator_cells = None, terminator_l
     if True or Python_Env == "KLayout_GUI":
         p.destroy
 
+def load_klayout_library(technology, library_name=None, library_description='', folder_gds=None, folder_pcell=None, verbose=True):
+    '''
+    Load KLayout Library
+        Loads PCells and fixed cells from sub folders, 
+        creates a KLayout pya.Library,
+        registers the library with the technology name.
+    Inputs:
+        technology: name of the technology, e.g., "EBeam", or pya.Technology
+        library_name: name of the library
+        library_description: description of the library
+        folder_gds: relative sub-folder (within the technology folder) from which to load .gds/.oas fixed cells
+        folder_pcell: relative sub-folder (within the technology folder) from which to load .py PCells
+    returns:
+        pya.Library name
+    '''
+
+    if type(technology) == str:
+        tech = pya.Technology.technology_by_name(technology)
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology
+    elif type(technology) == pya.Technology:
+        tech = technology
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology.name
+    else:
+        raise Exception('SiEPIC.load_klayout_library requires a technology as input.')
+        
+    if not library_name:
+        library_name = tech_name
+        
+    import os
+    import pathlib
+    import sys
+
+    if verbose:
+        print(' - Technology path: %s' % tech.default_base_path)
+        print(' - PCell folder path: %s' % os.path.join(tech.default_base_path, folder_pcell))
+
+    import importlib.util
+    import sys
+    
+    def import_module_from_path(module_name, file_path):
+        '''
+        import a Python module given a path 
+        '''
+        import importlib.util
+        import sys
+        from pathlib import Path
+        
+        file_path = os.path.join(file_path, '__init__.py')
+        path = Path(file_path).resolve()
+        if verbose:
+            print(' - PCell init file: %s' % path)
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if not spec:
+            raise Exception('SiEPIC.load_klayout_library cannot import module: %s, from path: %s ' % (module_name,path))
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module  # Add it to sys.modules
+        spec.loader.exec_module(module)  # Execute the module code   
+             
+        return module
+
+    # Load all Python PCells
+    if folder_pcell:
+        import importlib
+        importlib.invalidate_caches()
+
+        # Import the Python folder as a module
+        folder_pcell_abs = os.path.join(tech.default_base_path, folder_pcell)
+        module_name = os.path.split(folder_pcell)[-1]
+        if verbose:
+            print(' - PCell module name: %s' % module_name)
+        module = import_module_from_path(module_name, folder_pcell_abs)
+        globals()[module_name] = module
+        
+        # Import all the PCell python files
+        pcells_=[]
+        files = [f for f in os.listdir(folder_pcell_abs) if '.py' in pathlib.Path(f).suffixes  and '__init__' not in f]
+        for f in files:
+            submodule = '%s.%s' % (module_name, f.replace('.py','')) 
+            # m = importlib.import_module(submodule)  
+            m = importlib.import_module('.'+f.replace('.py',''), package=module_name)  
+            if not m:
+                raise Exception('SiEPIC.load_klayout_library cannot import module: %s, from path: %s ' % (submodule,folder_pcell_abs))
+            if verbose:
+                print(' - imported PCell: %s' % submodule)
+            pcells_.append(importlib.reload(m))
+        if verbose:
+            print(' - module dir(): %s' % dir(module))
+
+    if not type(module) == type(os):
+        raise Exception('SiEPIC.load_klayout_library cannot import module.')
+        
+    # Create the KLayout library, using GDS and Python PCells
+    class library(pya.Library):
+        def __init__(self):
+            self.technology=tech_name
+            if verbose:
+                print(" - Initializing '%s' Library." % library_name)
+
+            # Set the description
+            self.description = library_description 
+
+            self.register(library_name)
+
+            # Save the path, used for loading WAVEGUIDES.XML
+            # import os
+            # self.path = os.path.dirname(os.path.realpath(__file__))
+
+            # Import all the GDS files from the tech folder
+            # GDS files
+            import os, fnmatch
+            dir_path = os.path.join(tech.default_base_path, folder_gds)
+            if verbose:
+                print(' - GDS/OAS folder path: %s' % dir_path)
+            search_strs = ['*.[Oo][Aa][Ss]', '*.[Gg][Dd][Ss]'] # OAS, GDS
+            for search_str in search_strs:
+                for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+                    for filename in fnmatch.filter(filenames, search_str):
+                        file1=os.path.join(root, filename)
+                        if verbose:
+                            print(" - reading %s" % filename )
+                        self.layout().read(file1)
+
+            # Create the PCell declarations
+            for m in pcells_:
+                mm = m.__name__.replace('%s.' % module_name,'')
+                # mm2 = m.__name__+'.'+mm+'()'
+                mm2 = 'module'+'.'+mm+'.'+mm+'()'
+                if verbose:
+                    print(' - register_pcell %s, %s' % (mm,mm2))
+                # self.layout().register_pcell(mm, eval(mm2))
+                self.layout().register_pcell(mm, getattr(m,mm)())
+                        
+            if verbose:
+                print(' - done loading pcells')
+            
+            # Register us the library with the technology name
+            # If a library with that name already existed, it will be replaced then.
+            self.register(library_name)
+        
+    library()
+
+    return library_name
+
+def technology_libraries(tech):
+    '''
+    Function to get a list of all the pya.Library associated with a pya.Technology
+    missing in KLayout: https://github.com/KLayout/klayout/issues/879
+                        https://www.klayout.de/doc-qt5/code/class_Technology.html
+    '''
+    import pya
+    tech_libs = []
+    libs = pya.Library.library_ids()
+    for lib in libs:
+        l = pya.Library.library_by_id(lib)
+        if tech in l.technologies():
+            tech_libs.append(l.name())
+            #print("%s" % (l.name()))
+    print('Libraries associated with Technology %s: %s' % (tech, tech_libs))     
+    
