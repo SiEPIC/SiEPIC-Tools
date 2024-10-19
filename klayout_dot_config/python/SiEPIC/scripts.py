@@ -3506,8 +3506,8 @@ def load_klayout_library(technology, library_name=None, library_description='', 
         if verbose:
             print(' - module dir(): %s' % dir(module))
 
-    if not type(module) == type(os):
-        raise Exception('SiEPIC.load_klayout_library cannot import module.')
+        if not type(module) == type(os):
+            raise Exception('SiEPIC.load_klayout_library cannot import module.')
         
     # Create the KLayout library, using GDS and Python PCells
     class library(pya.Library):
@@ -3525,33 +3525,34 @@ def load_klayout_library(technology, library_name=None, library_description='', 
             # import os
             # self.path = os.path.dirname(os.path.realpath(__file__))
 
-            # Import all the GDS files from the tech folder
-            # GDS files
-            import os, fnmatch
-            dir_path = os.path.join(tech.default_base_path, folder_gds)
-            if verbose:
-                print(' - GDS/OAS folder path: %s' % dir_path)
-            search_strs = ['*.[Oo][Aa][Ss]', '*.[Gg][Dd][Ss]'] # OAS, GDS
-            for search_str in search_strs:
-                for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
-                    for filename in fnmatch.filter(filenames, search_str):
-                        file1=os.path.join(root, filename)
-                        if verbose:
-                            print(" - reading %s" % filename )
-                        self.layout().read(file1)
+            # Import all the GDS/OASIS files from the tech folder
+            if folder_gds:
+                import os, fnmatch
+                dir_path = os.path.join(tech.default_base_path, folder_gds)
+                if verbose:
+                    print(' - GDS/OAS folder path: %s' % dir_path)
+                search_strs = ['*.[Oo][Aa][Ss]', '*.[Gg][Dd][Ss]'] # OAS, GDS
+                for search_str in search_strs:
+                    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+                        for filename in fnmatch.filter(filenames, search_str):
+                            file1=os.path.join(root, filename)
+                            if verbose:
+                                print(" - reading %s" % filename )
+                            self.layout().read(file1)
 
             # Create the PCell declarations
-            for m in pcells_:
-                mm = m.__name__.replace('%s.' % module_name,'')
-                # mm2 = m.__name__+'.'+mm+'()'
-                mm2 = 'module'+'.'+mm+'.'+mm+'()'
+            if folder_pcell:
+                for m in pcells_:
+                    mm = m.__name__.replace('%s.' % module_name,'')
+                    # mm2 = m.__name__+'.'+mm+'()'
+                    mm2 = 'module'+'.'+mm+'.'+mm+'()'
+                    if verbose:
+                        print(' - register_pcell %s, %s' % (mm,mm2))
+                    # self.layout().register_pcell(mm, eval(mm2))
+                    self.layout().register_pcell(mm, getattr(m,mm)())
+                            
                 if verbose:
-                    print(' - register_pcell %s, %s' % (mm,mm2))
-                # self.layout().register_pcell(mm, eval(mm2))
-                self.layout().register_pcell(mm, getattr(m,mm)())
-                        
-            if verbose:
-                print(' - done loading pcells')
+                    print(' - done loading pcells')
             
             # Register us the library with the technology name
             # If a library with that name already existed, it will be replaced then.
