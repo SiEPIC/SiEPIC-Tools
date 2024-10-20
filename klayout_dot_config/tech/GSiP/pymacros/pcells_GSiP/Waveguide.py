@@ -26,6 +26,8 @@ class Waveguide(pya.PCellDeclarationHelper):
     return "%s_%s" % (self.cellName, self.path)
   
   def coerce_parameters_impl(self):
+    return
+    
     from SiEPIC.extend import to_itype
     print("GSiP.Waveguide coerce parameters")
     

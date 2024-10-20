@@ -1,0 +1,31 @@
+[tool.setuptools]
+packages = [
+  "GSiP",
+]
+
+
+[project]
+name = "GSiP"
+version = "0.4.24"
+authors = [
+  { name="Lukas Chrostowski", email="lukasc@ece.ubc.ca" },
+]
+description = "GSiP: generatic process design kit (PDK). "
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "SiEPIC>=0.5.4",
+  "numpy",
+  "packaging",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/SiEPIC/SiEPIC-Tools"
+Issues = "https://github.com/SiEPIC/SiEPIC-Tools/issues"
+
