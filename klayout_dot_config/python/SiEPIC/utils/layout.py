@@ -1332,3 +1332,40 @@ def strip2rib(cell, trans, w_slab, w_rib, w_slab_tip, w_strip, length, LayerRib,
     nLayerSlab = cell.layout().layer(cell.layout().TECHNOLOGY[LayerSlab])
     poly = DPolygon([DPoint(length,-w_slab/2), DPoint(length,w_slab/2), DPoint(0, w_slab_tip/2), DPoint(0, -w_slab_tip/2)])
     cell.shapes(nLayerSlab).insert(poly.transformed(trans))
+
+
+def FaML_two(cell, 
+             label='opt_in_TE_1550_FaML_TestCircuit', 
+             x_offset=0, 
+             y_offset=127e3/2-5e3,
+             pitch = 127e3,
+             cell_name = 'ebeam_dream_FaML_SiN_1550_BB',
+             cell_library = 'EBeam-Dream',
+             cell_params =  {'num_channels':1,
+                             'ref_wg':False},
+             ):
+    '''
+    Create a layout consisting of two facet-attached micro-lenses (FaML)
+    return the two instances
+    '''
+    from pya import Trans, CellInstArray, Text
+    ly = cell.layout()
+    # Load cell from library
+    if cell_params:
+        cell_ebeam_faml = ly.create_cell(cell_name, cell_library, cell_params)
+    else:
+        cell_ebeam_faml = ly.create_cell(cell_name, cell_library)
+    if not cell_ebeam_faml:
+        raise Exception ('Cannot load cell (%s) from library (%s) with parameters (%s).' % (cell_name, cell_library, cell_params))
+    # lens for the output to the detector
+    t = Trans(Trans.R0, x_offset, y_offset)
+    inst_faml2 = cell.insert(CellInstArray(cell_ebeam_faml.cell_index(), t))
+    # lens for the input from the laser
+    t = Trans(Trans.R0,x_offset,pitch + y_offset)
+    inst_faml1 = cell.insert(CellInstArray(cell_ebeam_faml.cell_index(), t))
+    # automated test label
+    text = Text (label, t)
+    cell.shapes(ly.layer(ly.TECHNOLOGY['Text'])).insert(text).text_size = 5/ly.dbu
+    return [inst_faml1, inst_faml2]
+
+
