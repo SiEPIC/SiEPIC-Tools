@@ -81,6 +81,8 @@ def test_FaML_two():
             label = "opt_in_TE_1550_FaML_%s_loopback" % designer_name,
             cell_name = 'FaML_Si_1550_BB',
             cell_library = 'GSiP',
+             cell_params =  {'num_channels':1,
+                             'ref_wg':False},
             )    
     # loopback waveguide
     connect_pins_with_waveguide(inst_faml[0], 'opt1', inst_faml[1], 'opt1', waveguide_type=waveguide_type1)
