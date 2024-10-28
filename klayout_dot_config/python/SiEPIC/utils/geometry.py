@@ -7,6 +7,21 @@ translate_from_normal2: curve translation
   Author: Lukas Chrostowski
 
 
+Functions:
+
+GeometryError
+Point
+Line
+
+bezier_line
+curvature_bezier
+max_curvature
+min_curvature
+curve_length
+bezier_optimal
+translate_from_normal2
+box_bezier_corners
+
 """
 import numpy as np
 from numpy import sqrt
@@ -359,7 +374,7 @@ try:
     import pya
     _bezier_optimal_pure = bezier_optimal
 
-    def bezier_optimal(P0, P3, *args, **kwargs):
+    def bezier_optimal(P0, P3, *args, accuracy = 0.001, **kwargs):
         P0 = Point(P0.x, P0.y)
         P3 = Point(P3.x, P3.y)
         scale = (P3 - P0).norm()  # rough length.
@@ -370,14 +385,14 @@ try:
         bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
 
         _, bezier_point_coordinates_sampled = \
-            sample_function(bezier_point_coordinates, [0, 1], tol=0.001 / scale)  # tol about 1 nm
+            sample_function(bezier_point_coordinates, [0, 1], tol=accuracy / scale)  # tol about 1 nm
 
         # # This yields a better polygon
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(.001 / scale),
+            np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(accuracy / scale),
                       axis=1)  # add a point right after the first one
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - .001 / scale),
+            np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - accuracy / scale),
                       axis=1)  # add a point right before the last one
         # bezier_point_coordinates_sampled = \
         #     np.append(bezier_point_coordinates_sampled, np.atleast_2d(bezier_point_coordinates(1 + .001 / scale)).T,
@@ -547,3 +562,38 @@ def translate_from_normal2(pts, trans, trans2=None):
     return tpts
 
 
+def box_bezier_corners(width, height, dt_bezier_corner, accuracy = 0.1):
+    '''
+    Input width, height: in microns
+    Return a pya.DPolygon of a box with rounded corners, using an optimal Bezier curve
+    with the control points being a fraction (dt_bezier_corner from 0 to 1) away from each corner
+    accuracy 0.001 is 1 nm
+    
+    Some call them squircles: https://arun.is/blog/apple-rounded-corners/
+    '''
+    if dt_bezier_corner == 0:
+        return pya.DBox(-width/2,-height/2,width/2,height/2)
+    else:
+        # top left corner
+        pts = []
+        pts = bezier_optimal(
+            pya.DPoint(-width/2, height/2 - dt_bezier_corner * height),
+            pya.DPoint(-width/2 + dt_bezier_corner * width, height/2),
+            90, 0, 
+            accuracy = accuracy)
+        pts += bezier_optimal(
+            pya.DPoint(width/2 - dt_bezier_corner * width, height/2),
+            pya.DPoint(width/2, height/2 - dt_bezier_corner * height),
+            0, 270,
+            accuracy = accuracy)
+        pts += bezier_optimal(
+            pya.DPoint(width/2, - height/2 + dt_bezier_corner * height),
+            pya.DPoint(width/2 - dt_bezier_corner * width, - height/2),
+            270, 180,
+            accuracy = accuracy)
+        pts += bezier_optimal(
+            pya.DPoint(-width/2 + dt_bezier_corner * width, - height/2),
+            pya.DPoint(-width/2, - height/2 + dt_bezier_corner * height),
+            180, 90,
+            accuracy = accuracy)
+        return pya.DPolygon(pts)
