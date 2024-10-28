@@ -1341,8 +1341,7 @@ def FaML_two(cell,
              pitch = 127e3,
              cell_name = 'ebeam_dream_FaML_SiN_1550_BB',
              cell_library = 'EBeam-Dream',
-             cell_params =  {'num_channels':1,
-                             'ref_wg':False},
+             cell_params =  {},
              ):
     '''
     Create a layout consisting of two facet-attached micro-lenses (FaML)
