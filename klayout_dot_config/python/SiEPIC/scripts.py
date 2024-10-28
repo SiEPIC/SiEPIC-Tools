@@ -3296,10 +3296,10 @@ def export_layout(topcell, path, filename, relative_path = '', format='oas', scr
             
     if not success:
         try:
-            layout.write(file_out,save_options)
+            topcell.write(file_out,save_options)
         except:
             try:
-                layout.write(file_out)
+                topcell.write(file_out)
             except:
                 raise Exception("Problem exporting your layout, %s." % file_out)
 
