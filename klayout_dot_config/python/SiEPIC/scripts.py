@@ -3426,6 +3426,7 @@ def load_klayout_library(technology, library_name=None, library_description='', 
         library_description: description of the library
         folder_gds: relative sub-folder (within the technology folder) from which to load .gds/.oas fixed cells
         folder_pcell: relative sub-folder (within the technology folder) from which to load .py PCells
+            or absolute; check both.
     returns:
         pya.Library name
     '''
@@ -3452,7 +3453,6 @@ def load_klayout_library(technology, library_name=None, library_description='', 
 
     if verbose:
         print(' - Technology path: %s' % tech.default_base_path)
-        print(' - PCell folder path: %s' % os.path.join(tech.default_base_path, folder_pcell))
 
     import importlib.util
     import sys
@@ -3485,6 +3485,13 @@ def load_klayout_library(technology, library_name=None, library_description='', 
 
         # Import the Python folder as a module
         folder_pcell_abs = os.path.abspath(os.path.join(tech.default_base_path, folder_pcell))
+        if not os.path.exists (folder_pcell_abs):
+            if os.path.exists (folder_pcell):
+                folder_pcell_abs = folder_pcell
+            else:
+                raise Exception('Folder paths "%s" or "%s" do not exist.' % (folder_pcell_abs, folder_pcell))
+        if verbose:
+            print(' - PCell folder path: %s' % folder_pcell_abs)
         module_name = os.path.split(folder_pcell)[-1]
         if verbose:
             print(' - PCell module name: %s' % module_name)
@@ -3521,14 +3528,18 @@ def load_klayout_library(technology, library_name=None, library_description='', 
 
             self.register(library_name)
 
-            # Save the path, used for loading WAVEGUIDES.XML
-            # import os
-            # self.path = os.path.dirname(os.path.realpath(__file__))
+            count_pcells = 0
+            count_fixed_cells = 0
 
             # Import all the GDS/OASIS files from the tech folder
             if folder_gds:
                 import os, fnmatch
                 dir_path = os.path.abspath(os.path.join(tech.default_base_path, folder_gds))
+                if not os.path.exists (dir_path):
+                    if os.path.exists (folder_gds):
+                        dir_path = folder_pcell
+                    else:
+                        raise Exception('Folder paths "%s" or "%s" do not exist.' % (dir_path, folder_gds))
                 if verbose:
                     print(' - GDS/OAS folder path: %s' % dir_path)
                 search_strs = ['*.[Oo][Aa][Ss]', '*.[Gg][Dd][Ss]'] # OAS, GDS
@@ -3541,6 +3552,7 @@ def load_klayout_library(technology, library_name=None, library_description='', 
                                 print(" - reading %s" % filename )
                             self.layout().read(file1)
                             found = True
+                            count_fixed_cells += 1
                 if not found:
                     print(' - Warning: no fixed GDS/OAS files found for library: %s, in folder: %s' % (library_name, dir_path))
 
@@ -3557,6 +3569,7 @@ def load_klayout_library(technology, library_name=None, library_description='', 
                         print(' - register_pcell %s, %s' % (mm,mm2))
                     # self.layout().register_pcell(mm, eval(mm2))
                     self.layout().register_pcell(mm, getattr(m,mm)())
+                    count_pcells += 1
                             
                 if verbose:
                     print(' - done loading pcells')
@@ -3564,10 +3577,14 @@ def load_klayout_library(technology, library_name=None, library_description='', 
             # Register us the library with the technology name
             # If a library with that name already existed, it will be replaced then.
             self.register(library_name)
-        
-    library()
-
-    return library_name
+            
+            self.count_fixed_cells = count_fixed_cells
+            self.count_pcells = count_pcells
+         
+    lib = library()
+    
+    # Return the library name, and number of cells loaded
+    return library_name, lib.count_fixed_cells, lib.count_pcells
 
 def technology_libraries(technology):
     '''
