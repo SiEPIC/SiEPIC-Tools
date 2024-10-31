@@ -3093,9 +3093,9 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
     
     import os
     if debug:
-        print(" - cell replacement for: %s, with cell %s (%s), "  % (cell_x_name, cell_y_name, os.path.basename(cell_y_file)))
+        print(" - cell replacement for: %s, with cell %s (%s or %s), "  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library))
     log = ''
-    log += "- cell replacement for: %s, with cell %s (%s)\n"  % (cell_x_name, cell_y_name, os.path.basename(cell_y_file))
+    log += "- cell replacement for: %s, with cell %s (%s or %s)\n"  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library)
 
     # Find the cells that need replacement (cell_x)
     # find cell name exactly matching cell_x_name
@@ -3555,7 +3555,10 @@ def load_klayout_library(technology, library_name=None, library_description='', 
                             count_fixed_cells += 1
                 if not found:
                     print(' - Warning: no fixed GDS/OAS files found for library: %s, in folder: %s' % (library_name, dir_path))
-
+                else:
+                    if verbose:
+                        for c in self.layout().top_cells():
+                            print("   - cell: %s" % c.name )
 
             # Create the PCell declarations
             if folder_pcell:

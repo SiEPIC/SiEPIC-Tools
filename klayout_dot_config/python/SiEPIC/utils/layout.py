@@ -18,6 +18,8 @@ y_splitter_tree
 floorplan(topcell, x, y)
 new_layout(tech, topcell_name, overwrite = False)
 strip2rib
+FaML_two
+coupler_array
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -1367,4 +1369,53 @@ def FaML_two(cell,
     cell.shapes(ly.layer(ly.TECHNOLOGY['Text'])).insert(text).text_size = 5/ly.dbu
     return [inst_faml1, inst_faml2]
 
+def coupler_array(cell, 
+             x_offset=0, 
+             y_offset=127e3/2-5e3,
+             pitch = 127e3,
+             count = 4,
+             label='opt_in_TE_1550_device_test', 
+             label_location = 2, 
+             label_size = 5,
+             cell_name = 'GC_TE_1550_8degOxide_BB',
+             cell_library = 'EBeam',
+             cell_params =  {},
+             ):
+    '''
+    Create a layout consisting of an array of optical couplers
+    return the instances
+    include automated test labels
+    
+    cell: into which to place the components
+    x_offset, y_offset: location to place them, bottom coupler
+    pitch: the pitch for the coupler array
+    
+    label: on Text layer
+    label_location: 1 is the top
+    label_size: font size
+    
+    cell_name, _library, _params: can be a fixed cell, or a PCell
+    
+    '''
+    from pya import Trans, CellInstArray, Text
+    ly = cell.layout()
+    
+    # Load cell from library, either fixed or PCell
+    cell_coupler = ly.create_cell(cell_name, cell_library, cell_params)
+    if not cell_coupler:
+        cell_coupler = ly.create_cell(cell_name, cell_library)
+    if not cell_coupler:
+        raise Exception ('Cannot load coupler cell (%s) from library (%s) with parameters (%s).' % (cell_name, cell_library, cell_params))
 
+    inst_couplers = []
+    for i in range(count):
+        t = Trans(Trans.R0, x_offset, y_offset + (count-i-1)*pitch)
+        inst_couplers.append( 
+            cell.insert(CellInstArray(cell_coupler.cell_index(), t))
+        )
+        if i==label_location-1:
+            # automated test label
+            text = Text (label, t)
+            cell.shapes(ly.layer(ly.TECHNOLOGY['Text'])).insert(text).text_size = label_size/ly.dbu
+        
+    return inst_couplers
