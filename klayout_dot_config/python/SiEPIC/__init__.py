@@ -26,3 +26,16 @@ else:
     else:
         from . import _globals, core, utils, extend, verification, scripts
         
+
+
+
+# Start timer
+import time
+start_time = time.time()
+from .scripts import version_check
+
+version_check()
+
+execution_time = time.time() - start_time
+print(f"Version check, time: {execution_time} seconds")
+

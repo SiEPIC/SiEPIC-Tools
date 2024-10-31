@@ -38,6 +38,7 @@ export_layout
 instantiate_all_library_cells
 load_klayout_library
 technology_libraries
+version_check
 
 '''
 
@@ -3619,4 +3620,89 @@ def technology_libraries(technology):
             tech_libs.append(l.name())
 
     print('Libraries associated with Technology %s: %s' % (tech_name, tech_libs))     
+    
+def version_latest():
+    '''
+    Compare to the current version
+    '''
+    
+    import requests
+    import concurrent.futures
+
+    import time
+    # Start timer
+    start_time = time.time()
+
+
+    def get_latest_version(package_name, request_timeout=1):
+        #print(f"fetching version for {package_name}.")
+        url = f"https://pypi.org/pypi/{package_name}/json"
+        try:
+            response = requests.get(url, timeout=request_timeout)
+            if response.status_code == 200:
+                data = response.json()
+                return data["info"]["version"]
+        except requests.RequestException as e:
+            print(f"Error fetching version for {package_name}: {e}")
+        return None
+
+    # Function to run the version check asynchronously
+    def check_version_async(package_name, request_timeout=1):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(get_latest_version, package_name, request_timeout)
+            # future.result() can be called later when needed, allowing for background execution
+            # print(f"future: {future}")
+            return future
+    
+    # Example usage:
+    package_name = "SiEPIC"
+    future = check_version_async(package_name)    
+    #print(f"future: {future}")
+    execution_time = time.time() - start_time
+    #print(f"Execution time: {execution_time} seconds")
+    return future
+    
+def version_check():
+    '''
+    Query the PyPI Python database to find out the latest version of SiEPIC
+    '''
+
+    import SiEPIC
+    version_future = SiEPIC.scripts.version_latest()
+    if not version_future:
+        return None
+
+    #from time import sleep 
+    #sleep(0.2)
+    
+    while not version_future.done():
+        print("Continuing with application startup tasks...")
+        time.sleep(0.05)  # Emulate work done in the main thread
+    
+    import concurrent.futures
+    # Later, when the version is needed, you can check the result (it may already be ready)
+    # with a timeout for the future (e.g., 1 second)
+    try:
+        latest_version = version_future.result(timeout=0.1)  # Set max wait for result
+    except concurrent.futures.TimeoutError:
+        print("The SiEPIC version check took too long and was cancelled.")
+        return 
+
+    if not latest_version:
+        return 
+    
+    import SiEPIC
+    from SiEPIC._globals import Python_Env
+    from packaging import version
+    if version.parse(SiEPIC.__version__) < version.parse(latest_version):
+        if Python_Env == 'KLayout_GUI':
+            pya.MessageBox.warning(
+                "Update SiEPIC-Tools", f'New version of SiEPIC-Tools is available ({latest_version} vs {SiEPIC.__version__}).' , pya.MessageBox.Ok)
+        else:
+            print(f'New version of SiEPIC-Tools is available ({latest_version} vs {SiEPIC.__version__}).' )
+    else:
+        print(f'SiEPIC-Tools is up to date ({latest_version} vs {SiEPIC.__version__}).' )
+        
+
+        
     
