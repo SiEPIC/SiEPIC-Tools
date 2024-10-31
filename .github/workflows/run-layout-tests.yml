@@ -31,7 +31,7 @@ jobs:
 
       - name: install python 3.11 packages
         run: |
-          pip install klayout numpy scipy pytest pytest-cov IPython
+          pip install pytest pytest-cov IPython
           pip install -e klayout_dot_config/python
 
       - name: Test with pytest, python 3.11
