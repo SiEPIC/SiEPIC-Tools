@@ -1409,7 +1409,7 @@ def coupler_array(cell,
 
     inst_couplers = []
     for i in range(count):
-        t = Trans(Trans.R0, x_offset, y_offset + (count-i)*pitch)
+        t = Trans(Trans.R0, x_offset, y_offset + (count-i-1)*pitch)
         inst_couplers.append( 
             cell.insert(CellInstArray(cell_coupler.cell_index(), t))
         )
