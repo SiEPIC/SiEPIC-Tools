@@ -4,6 +4,8 @@
 #################################################################################
 '''
 
+Functions in this file:
+
 connect_pins_with_waveguide
 path_to_waveguide
 path_to_waveguide2
@@ -29,10 +31,15 @@ user_select_opt_in
 fetch_measurement_data_from_github
 measurement_vs_simulation
 resize waveguide
+layout_diff
 replace_cell
 svg_from_cell
 zoom_out: When running in the GUI, Zoom out and show full hierarchy
 export_layout
+instantiate_all_library_cells
+load_klayout_library
+technology_libraries
+version_check
 
 '''
 
@@ -113,7 +120,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
      - debug_path=False
      - r=None
      - error_min_bend_radius=True
-     - relaxed_pinnames=True: finds 'opt' if the pin is called 'opt1'
+     - relaxed_pinnames=True: finds the pin 'opt1' if the input is '1'
      - parent_cell = None: move the waveguide into a specific cell
         default is the common parent of instanceA and instanceB
      
@@ -205,54 +212,77 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                 
     else:
         cell=instanceA.parent_cell
-            
+
     # Find the two components:
     from time import time
     t = time()
     # benchmarking: find_components here takes 0.015 s
-    componentA = instanceA.parent_cell.find_components(inst=instanceA)
-    componentB = instanceB.parent_cell.find_components(inst=instanceB)
 #    print('Time elapsed: %s' % (time() - t))    
-    if componentA==[]:
-        print('InstA: %s, %s' % (instanceA.cell.name, instanceA) )
-        print('componentA: %s' % (componentA) )
-        print('parent_cell A: %s, cell A: %s' % (instanceA.parent_cell, instanceA.cell) )
-        print('all found components A: instance variable: %s' %    ([n.instance for n in instanceA.parent_cell.find_components()]) )
-        print('all found components A: component variable: %s' %    ([n.component for n in instanceA.parent_cell.find_components()]) )
-        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceA.cell.name)
-    if componentB==[]:
-        print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
-        print('componentB: %s' % (componentB) )
-        print('parent_cell B: %s, cell B: %s' % (instanceB.parent_cell, instanceB.cell) )
-        print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
-        print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
-        raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
 
-    # if the instance had sub-cells, then there will be many components. Pick the first one.
-    if type(componentA) == type([]):
-        componentA = componentA[0]
-    if type(componentB) == type([]):
-        componentB = componentB[0]
+    # Find the two instances' pins, and see if they uniquely match
+    ipinA = [p for p in instanceA.find_pins()[0] if p.pin_name == pinA]
+    ipinB = [p for p in instanceB.find_pins()[0] if p.pin_name == pinB]
+    if len(ipinA) == 1:
+        cpinA = ipinA
+        if verbose:
+            print(' - connect_pins_with_waveguide: found unique pin %s' % pinA)
+    else:
+        if verbose:
+            print(' - connect_pins_with_waveguide: searching for pin %s' % pinA)
+        componentA = instanceA.parent_cell.find_components(inst=instanceA)
+        if componentA==[]:
+            print('InstA: %s, %s' % (instanceA.cell.name, instanceA) )
+            print('componentA: %s' % (componentA) )
+            print('parent_cell A: %s, cell A: %s' % (instanceA.parent_cell, instanceA.cell) )
+            print('all found components A: instance variable: %s' %    ([n.instance for n in instanceA.parent_cell.find_components()]) )
+            print('all found components A: component variable: %s' %    ([n.component for n in instanceA.parent_cell.find_components()]) )
+            raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceA.cell.name)
+        # if the instance had sub-cells, then there will be many components. Pick the first one.
+        if type(componentA) == type([]):
+            componentA = componentA[0]
+        # Find component pinA
+        cpinA = [p for p in componentA.pins if p.pin_name == pinA]     
+    if len(ipinB) == 1:
+        cpinB = ipinB
+        if verbose:
+            print(' - connect_pins_with_waveguide: found unique pin %s' % pinB)
+    else:
+        if verbose:
+            print(' - connect_pins_with_waveguide: searching for pin %s' % pinB)
+        componentB = instanceB.parent_cell.find_components(inst=instanceB)
+        if componentB==[]:
+            print('InstB: %s, %s' % (instanceB.cell.name, instanceB) )
+            print('componentB: %s' % (componentB) )
+            print('parent_cell B: %s, cell B: %s' % (instanceB.parent_cell, instanceB.cell) )
+            print('all found components B: instance variable: %s' %    ([n.instance for n in instanceB.parent_cell.find_components()]) )
+            print('all found components B: component variable: %s' %    ([n.component for n in instanceB.parent_cell.find_components()]) )
+            raise Exception("Component '%s' not found. \nCheck that the component is correctly built (DevRec and PinRec layers). \nTry SiEPIC > Layout > Show Selected Component Information for debugging." %instanceB.cell.name)
+        # if the instance had sub-cells, then there will be many components. Pick the first one.
+        if type(componentB) == type([]):
+            componentB = componentB[0]
+        # Find component pinB
+        cpinB = [p for p in componentB.pins if p.pin_name == pinB]
 
     if verbose:
         print('InstA: %s, InstB: %s' % (instanceA, instanceB) )
-        print('componentA: %s, componentB: %s' % (componentA, componentB) )
-
-        componentA.display()
-        componentB.display()
+        print('cpinA: %s, cpinB: %s' % (cpinA, cpinB) )
+        if 'componentA' in locals():
+            print('componentA: %s' % (componentA) )
+            componentA.display()
+        if 'componentB' in locals():
+            print('componentB: %s' % (componentB) )
+            componentB.display()
         
-    # Find pinA and pinB
-    cpinA = [p for p in componentA.pins if p.pin_name == pinA]
-    cpinB = [p for p in componentB.pins if p.pin_name == pinB]        
-
+    # If we haven't found the pins,
     # relaxed_pinnames:  scan for only the number
     if relaxed_pinnames==True:
-        import re
         try:
             if cpinA==[]:
+                import re
                 if re.findall(r'\d+', pinA):
                     cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
             if cpinB==[]:
+                import re
                 if re.findall(r'\d+', pinB):
                     cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
         except:
@@ -265,37 +295,20 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
             cpinA = [instanceA.find_pin(pinA)]
         except:
-              error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentA (%s). Available pins: %s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins])
-              '''
-              if _globals.Python_Env == "KLayout_GUI":
-                question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
-                question.setText("SiEPIC-Tools scripted layout, requested pin not found")
-                question.setInformativeText(error_message)
-                pya.QMessageBox_StandardButton(question.exec_())
-                return
-              else:
-              '''          
-              raise Exception(error_message)
+            error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentA (%s). Available pins: %s" % (pinA,componentA.component, [p.pin_name for p in componentA.pins])
+            raise Exception(error_message)
     if cpinB==[]:
         try:  
             # this checks if the cell (which could contain multiple components) 
             # contains only one pin matching the name, e.g. unique opt_input in a sub-circuit
             cpinB = [instanceB.find_pin(pinB)]
         except:
-              error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentB (%s). Available pins: %s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins])
-              '''
-              if _globals.Python_Env == "KLayout_GUI":
-                question = pya.QMessageBox().setStandardButtons(pya.QMessageBox.Ok)
-                question.setText("SiEPIC-Tools scripted layout, requested pin not found")
-                question.setInformativeText(error_message)
-                pya.QMessageBox_StandardButton(question.exec_())
-                return
-              else:          
-              '''
-              raise Exception(error_message)
+            error_message = "SiEPIC-Tools, in function connect_pins_with_waveguide: Pin (%s) not found in componentB (%s). Available pins: %s" % (pinB,componentB.component, [p.pin_name for p in componentB.pins])
+            raise Exception(error_message)
 
     cpinA=cpinA[0]
     cpinB=cpinB[0]
+    
     if verbose:
         cpinA.display()
         cpinB.display()
@@ -342,7 +355,7 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
             else:
                 waveguide = waveguides[0]
                 print('error: waveguide type not found in PDK waveguides')
-                raise Exception('error: waveguide type (%s) not found in PDK waveguides' % waveguide_type)
+                raise Exception('error: waveguide type (%s) not found in PDK. Waveguides available: %s' % (waveguide_type, [w['name'] for w in waveguides]))
         # check if the waveguide type is compound waveguide
         if 'compound_waveguide' in waveguide:
             waveguide = [w for w in waveguides if w['name']==waveguide['compound_waveguide']['singlemode']]
@@ -1731,14 +1744,20 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   # check cells
   if type(cellB) != pya.Cell:
-      raise Exception("cellB needs to be a cell, not a cell index")
+      raise Exception("cellB needs to be a pya.Cell, not a cell index, nor string")
   if type(instanceA) != pya.Instance:
       raise Exception("instanceA needs to be an Instance, not an index")
 
   # Find the two components:
-  componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA)
+  componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA, verbose=verbose)
   componentB = cellB.find_components()
   if componentA==[]:
+    if verbose:
+      print('*** WARNING: componentA not found, looking lower in the hierarchy')
+    componentA = instanceA.cell.find_components(inst=instanceA, verbose=verbose)
+  if componentA==[]:
+    if verbose:
+      print('*** WARNING: componentA not found, looking higher in the hierarchy which may not work correctly: instanceA.parent_cell.find_components(inst=instanceA)')
     componentA = instanceA.parent_cell.find_components(inst=instanceA)
     if componentA==[]:
       if _globals.Python_Env == "KLayout_GUI":
@@ -1767,7 +1786,8 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
 
   if type(componentA) == type([]):
     componentA = componentA[0]
-  componentB = componentB[0]
+  if type(componentB) == type([]):
+    componentB = componentB[0]
   if verbose:
     componentA.display()
     componentB.display()
@@ -1781,9 +1801,11 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
       import re
       try:
           if cpinA==[]:
-              cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
+              if re.findall(r'\d+', pinA):
+                  cpinA = [p for p in componentA.pins if re.findall(r'\d+', pinA)[0] in p.pin_name]
           if cpinB==[]:
-              cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
+              if re.findall(r'\d+', pinB):
+                  cpinB = [p for p in componentB.pins if re.findall(r'\d+', pinB)[0] in p.pin_name]
       except:
           print('error in siepic.scripts.connect_cell')      
 
@@ -2263,6 +2285,8 @@ def auto_coord_extract():
     pya.Application.instance().main_window().redraw()    
 
 def find_SEM_labels_gui(topcell=None, LayerSEMN=None, MarkersInTopCell=False):
+    '''Find all polygons on the SEM layer'''
+    
     from .utils import get_technology
     TECHNOLOGY = get_technology()
 
@@ -2356,7 +2380,7 @@ def calculate_area(ly=None, cell=None):
     elif cell == None and ly:
         cell = ly.top_cell()
     elif cell:
-        ly = cell.layout
+        ly = cell.layout()
     TECHNOLOGY = get_technology_by_name(ly.technology().name)
     dbu = TECHNOLOGY['dbu']
 
@@ -2379,8 +2403,6 @@ def calculate_area(ly=None, cell=None):
             count += cell2.shapes(l).size()
         p = pya.RelativeProgress("Calculating the area", count)
         text += 'Number of shapes: %s\n' % count
-
-    print (text)
     
     try:
         total = cell.each_shape(ly.layer(TECHNOLOGY['FloorPlan'])).__next__().polygon.area()
@@ -2412,21 +2434,7 @@ def calculate_area(ly=None, cell=None):
         v = pya.MessageBox.warning(
             "Waveguide area.", text, pya.MessageBox.Ok)
     
-    '''
-    area = 0
-    itr = cell.begin_shapes_rec(ly.layer(TECHNOLOGY['Waveguide']))
-    while not itr.at_end():
-        area += itr.shape().area()
-        itr.next()
-    print("Waveguide area: %s mm^2, chip area: %s mm^2, percentage: %s %%" % (area/1e6*dbu*dbu,total/1e6*dbu*dbu, area/total*100))
-
-    if total == 1e99:
-      v = pya.MessageBox.warning(
-        "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2)" % (area/1e6*dbu*dbu, area/1e6), pya.MessageBox.Ok)
-    else:
-      v = pya.MessageBox.warning(
-        "Waveguide area.", "Waveguide area: %.5g mm^2 \n   (%.5g micron^2),\nChip Floorplan: %.5g mm^2, \nPercentage: %.3g %%" % (area/1e6*dbu*dbu, area/1e6, total/1e6*dbu*dbu, area/total*100), pya.MessageBox.Ok)
-    '''
+    return text
 
 def trim_netlist(nets, components, selected_component, verbose=None):
     """Trim Netlist
@@ -2477,478 +2485,10 @@ def trim_netlist(nets, components, selected_component, verbose=None):
     return trimmed_nets, trimmed_components
 
 
-
-
 def layout_check(cell=None, verbose=False):
-    '''Functional Verification:
-    
-    Verification of things that are specific to photonic integrated circuits, including
-    - Waveguides: paths, radius, bend points, Manhattan
-    - Component checking: overlapping, avoiding crosstalk
-    - Connectivity check: disconnected pins, mismatched pins
-    - Simulation model check
-    - Design for Test: Specific for each technology, check of optical IO position, direction, pitch, etc.
+    '''Deprecated, moved to SiEPIC.verification.layout_check()'''
+    SiEPIC.verification.layout_check(cell=None, verbose=False)
 
-    Description: https://github.com/SiEPIC/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#functional-layout-check
-
-    Tools that can create layouts that are compatible with this Verification:
-        - KLayout SiEPIC-Tools, and various PDKs such as
-            https://github.com/SiEPIC/SiEPIC_EBeam_PDK
-        - GDSfactory 
-            "UBCPDK" https://github.com/gdsfactory/ubc
-            based on https://github.com/SiEPIC/SiEPIC_EBeam_PDK
-        - Luceda
-            https://academy.lucedaphotonics.com/pdks/siepic/siepic.html
-            https://academy.lucedaphotonics.com/pdks/siepic_shuksan/siepic_shuksan.html
-    
-    Limitations:
-    - we assume that the layout was created based on the standard defined in SiEPIC-Tools in KLayout
-      https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout
-    - The layout can contain PCells, or with $$$CONTEXT_INFO$$$ removed, i.e., fixed cells
-    - The layout cannot have been flattened. This allows us to isolate individual components
-      by their instances and cells.
-    - Parameters from cells can be extracted from the PCell, or from the text labels in the cell
-    - Working with a flattened layout would be harder, and require:
-       - reading parameters from the text labels (OK)
-       - find_components would need to look within the DevRec layer, rather than in the selected cell
-       - when pins are connected, we have two overlapping ones, so detecting them would be problematic;
-         This could be solved by putting the pins inside the cells, rather than sticking out.    
-    '''
-
-    if verbose:
-        print("*** layout_check()")
-
-    from . import _globals
-    from .utils import get_technology, find_paths, find_automated_measurement_labels, angle_vector
-    from .utils import advance_iterator
-    TECHNOLOGY = get_technology()
-    dbu = TECHNOLOGY['dbu']
-
-    lv = pya.Application.instance().main_window().current_view()
-    if lv == None:
-        raise Exception("No view selected")
-    if cell is None:
-        ly = lv.active_cellview().layout()
-        if ly == None:
-            raise Exception("No active layout")
-        cell = lv.active_cellview().cell
-        if cell == None:
-            raise Exception("No active cell")
-        cv = lv.active_cellview()
-    else:
-        ly = cell.layout()
-
-    if not TECHNOLOGY['technology_name']:
-        v = pya.MessageBox.warning("Errors", "SiEPIC-Tools verification requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
-        return
-
-    # Get the components and nets for the layout
-    nets, components = cell.identify_nets(verbose=False)
-    if verbose:
-        print("* Display list of components:")
-        [c.display() for c in components]
-
-    if not components:
-        v = pya.MessageBox.warning(
-            "Errors", "No components found (using SiEPIC-Tools DevRec and PinRec definitions).", pya.MessageBox.Ok)
-        return
-
-    # Create a Results Database
-    rdb_i = lv.create_rdb("SiEPIC-Tools Verification: %s technology" %
-                          TECHNOLOGY['technology_name'])
-    rdb = lv.rdb(rdb_i)
-    rdb.top_cell_name = cell.name
-    rdb_cell = rdb.create_cell(cell.name)
-
-    # Waveguide checking
-    rdb_cell = next(rdb.each_cell())
-    rdb_cat_id_wg = rdb.create_category("Waveguide")
-    rdb_cat_id_wg_path = rdb.create_category(rdb_cat_id_wg, "Path")
-    rdb_cat_id_wg_path.description = "Waveguide path: Only 2 points allowed in a path. Convert to a Waveguide if necessary."
-    rdb_cat_id_wg_radius = rdb.create_category(rdb_cat_id_wg, "Radius")
-    rdb_cat_id_wg_radius.description = "Not enough space to accommodate the desired bend radius for the waveguide."
-    rdb_cat_id_wg_bendpts = rdb.create_category(rdb_cat_id_wg, "Bend points")
-    rdb_cat_id_wg_bendpts.description = "Waveguide bend should have more points per circle."
-    rdb_cat_id_wg_manhattan = rdb.create_category(rdb_cat_id_wg, "Manhattan")
-    rdb_cat_id_wg_manhattan.description = "The first and last waveguide segment need to be Manhattan (vertical or horizontal) so that they can connect to device pins."
-
-    # Component checking
-    rdb_cell = next(rdb.each_cell())
-    rdb_cat_id_comp = rdb.create_category("Component")
-    rdb_cat_id_comp_flat = rdb.create_category(rdb_cat_id_comp, "Flattened component")
-    rdb_cat_id_comp_flat.description = "SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37"
-    rdb_cat_id_comp_overlap = rdb.create_category(rdb_cat_id_comp, "Overlapping component")
-    rdb_cat_id_comp_overlap.description = "Overlapping components (defined as overlapping DevRec layers; touching is ok)"
-    rdb_cat_id_comp_shapesoutside = rdb.create_category(rdb_cat_id_comp, "Shapes outside component")
-    rdb_cat_id_comp_shapesoutside.description = "Shapes need to be inside a component. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout"
-
-    # Connectivity checking
-    rdb_cell = next(rdb.each_cell())
-    rdb_cat_id = rdb.create_category("Connectivity")
-    rdb_cat_id_discpin = rdb.create_category(rdb_cat_id, "Disconnected pin")
-    rdb_cat_id_discpin.description = "Disconnected pin"
-    rdb_cat_id_mismatchedpin = rdb.create_category(rdb_cat_id, "Mismatched pin")
-    rdb_cat_id_mismatchedpin.description = "Mismatched pin widths"
-
-    # Simulation checking
-    # disabled by lukasc, 2021/05
-    if 0:
-        rdb_cell = next(rdb.each_cell())
-        rdb_cat_id = rdb.create_category("Simulation")
-        rdb_cat_id_sim_nomodel = rdb.create_category(rdb_cat_id, "Missing compact model")
-        rdb_cat_id_sim_nomodel.description = "A compact model for this component was not found. Possible reasons: 1) Please run SiEPIC | Simulation | Setup Lumerical INTERCONNECT and CML, to make sure that the Compact Model Library is installed in INTERCONNECT, and that KLayout has a list of all component models. 2) the library does not have a compact model for this component. "
-
-    # Design for Test checking
-    from SiEPIC.utils import load_DFT
-    DFT = load_DFT()
-    if DFT:
-        if verbose:
-            print(DFT)
-        rdb_cell = next(rdb.each_cell())
-        rdb_cat_id = rdb.create_category("Design for test")
-        rdb_cat_id_optin_unique = rdb.create_category(rdb_cat_id, "opt_in label: same")
-        rdb_cat_id_optin_unique.description = "Automated test opt_in labels should be unique."
-        rdb_cat_id_optin_missing = rdb.create_category(rdb_cat_id, "opt_in label: missing")
-        rdb_cat_id_optin_missing.description = "Automated test opt_in labels are required for measurements on the Text layer. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check"
-        rdb_cat_id_optin_toofar = rdb.create_category(rdb_cat_id, "opt_in label: too far away")
-        rdb_cat_id_optin_toofar.description = "Automated test opt_in labels must be placed at the tip of the grating coupler, namely near the (0,0) point of the cell."
-        rdb_cat_id_optin_wavelength = rdb.create_category(rdb_cat_id, "opt_in label: wavelength")
-        if type(DFT['design-for-test']['tunable-laser']) == list:
-            DFT_wavelengths = [w['wavelength'] for w in DFT['design-for-test']['tunable-laser']]
-        else:
-            DFT_wavelengths = DFT['design-for-test']['tunable-laser']['wavelength']
-        rdb_cat_id_optin_wavelength.description = "Automated test opt_in labels must have a wavelength for a laser specified in the DFT.xml file: %s.  \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check" % DFT_wavelengths
-        if type(DFT['design-for-test']['tunable-laser']) == list:
-            DFT_polarizations = [p['polarization']
-                                 for p in DFT['design-for-test']['tunable-laser']]
-        else:
-            if 'polarization' in DFT['design-for-test']['tunable-laser']:
-                DFT_polarizations = DFT['design-for-test']['tunable-laser']['polarization']
-            else:
-                DFT_polarizations = "TE or TM"
-        rdb_cat_id_optin_polarization = rdb.create_category(
-            rdb_cat_id, "opt_in label: polarization")
-        rdb_cat_id_optin_polarization.description = "Automated test opt_in labels must have a polarization as specified in the DFT.xml file: %s. \n\nDetails on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check" % DFT_polarizations
-#    rdb_cat_id_GCpitch = rdb.create_category(rdb_cat_id, "Grating Coupler pitch")
-#    rdb_cat_id_GCpitch.description = "Grating couplers must be on a %s micron pitch, vertically arranged, as specified in the DFT.xml." % (float(DFT['design-for-test']['grating-couplers']['gc-pitch']))
-        rdb_cat_id_GCorient = rdb.create_category(rdb_cat_id, "Grating coupler orientation")
-        rdb_cat_id_GCorient.description = "The grating coupler is not oriented (rotated) the correct way for automated testing."
-        rdb_cat_id_GCarrayconfig = rdb.create_category(rdb_cat_id, "Fibre array configuration")
-        array_angle = (float(DFT['design-for-test']['grating-couplers']['gc-array-orientation']))%360.0
-        if array_angle==0:
-          dir1 = ' right of '
-          dir2 = ' left of '
-          dir3 = 'horizontally'
-        elif array_angle==90:
-          dir1 = ' above '
-          dir2 = ' below '
-          dir3 = 'vertically'
-        elif array_angle == 180:
-          dir1 = ' left of '
-          dir2 = ' right of '
-          dir3 = 'horizontally'
-        else:
-          dir1 = ' below '
-          dir2 = ' above '
-          dir3 = 'vertically'
-        
-        rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) %s the opt_in label (laser injection port) and at most %s Grating Coupler(s) %s the opt_in label. \nGrating couplers must be on a %s micron pitch, %s arranged." % (
-            int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), dir1,int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), dir2,float(DFT['design-for-test']['grating-couplers']['gc-pitch']),dir3)
-
-    else:
-        if verbose:
-            print('  No DFT rules found.')
-
-    paths = find_paths(TECHNOLOGY['Waveguide'], cell=cell)
-    for p in paths:
-        if verbose:
-            print("%s, %s" % (type(p), p))
-        # Check for paths with > 2 vertices
-        Dpath = p.to_dtype(dbu)
-        if Dpath.num_points() > 2:
-            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_path.rdb_id())
-            rdb_item.add_value(pya.RdbItemValue(Dpath.polygon()))
-
-    '''
-    Shapes need to be inside a component. 
-    Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout
-    Method:
-        - find all shapes
-        - find all components, and their shapes
-        - substract the two, and produce errors        
-    rdb_cat_id_comp_shapesoutside
-    '''
-    for i in range(0, len(components)):
-        c = components[i]
-
-
-    for i in range(0, len(components)):
-        c = components[i]
-        # the following only works for layouts where the Waveguide is still a PCells (not flattened)
-        # basic_name is assigned in Cell.find_components, by reading the PCell parameter
-        # if the layout is flattened, we don't have an easy way to get the path
-        # it could be done perhaps as a parameter (points)
-        if c.basic_name == "Waveguide" and c.cell.is_pcell_variant():
-            pcell_params = c.cell.pcell_parameters_by_name()
-            Dpath = pcell_params['path']
-            if 'radius' in pcell_params:
-                radius = pcell_params['radius']
-            else:
-                radius = 5
-            if verbose:
-                print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius))
-
-            # Radius check:
-            if not Dpath.radius_check(radius):
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_radius.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue( "The minimum radius is set at %s microns for this waveguide." % (radius) ))
-                rdb_item.add_value(pya.RdbItemValue(Dpath))
-
-            # Check for waveguides with too few bend points
-
-            # Check if waveguide end segments are Manhattan; this ensures they can connect to a pin
-            if not Dpath.is_manhattan_endsegments():
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_manhattan.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(Dpath))
-
-        if c.basic_name == "Flattened":
-            if verbose:
-                print(" - Component: Flattened: %s" % (c.polygon))
-            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_flat.rdb_id())
-            rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
-
-        # check all the component's pins to check if they are assigned a net:
-        for pin in c.pins:
-            if pin.type == _globals.PIN_TYPES.OPTICAL and pin.net.idx == None:
-                # disconnected optical pin
-                if verbose:
-                    print(" - Found disconnected pin, type %s, at (%s)" % (pin.type, pin.center))
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_discpin.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(pin.path.to_dtype(dbu)))
-
-        # Verification: overlapping components (DevRec)
-            # automatically takes care of waveguides crossing other waveguides & components
-        # Region: put in two DevRec polygons (in raw), measure area, merge, check if are is the same
-        #  checks for touching but not overlapping DevRecs
-        for i2 in range(i + 1, len(components)):
-            c2 = components[i2]
-            r1 = pya.Region(c.polygon)
-            r2 = pya.Region(c2.polygon)
-            polygon_and = [p for p in r1 & r2]
-            if polygon_and:
-                print(" - Found overlapping components: %s, %s" % (c.component, c2.component))
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_overlap.rdb_id())
-                if c.component == c2.component:
-                    rdb_item.add_value(pya.RdbItemValue(
-                        "There are two identical components overlapping: " + c.component))
-                for p in polygon_and:
-                    rdb_item.add_value(pya.RdbItemValue(p.to_dtype(dbu)))
-                # check if these components have the same name; possibly a copy and paste error
-        if DFT:
-            # DFT verification
-            # GC facing the right way
-            if c.basic_name:
-                ci = c.basic_name  # .replace(' ','_').replace('$','_')
-                gc_orientation_error = False
-                for gc in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys():
-                    DFT_GC_angle = int(DFT['design-for-test']['grating-couplers']['gc-orientation'][gc])
-                    if ci.startswith(gc) and c.trans.angle != DFT_GC_angle:
-                        if verbose:
-                            print(" - Found DFT error, GC facing the wrong way: %s, %s" %
-                                  (c.component, c.trans.angle))
-                        rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GCorient.rdb_id())
-                        rdb_item.add_value(pya.RdbItemValue( "Cell %s should be %s degrees" % (ci,DFT_GC_angle) ))
-                        rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
-
-
-        # Pre-simulation check: do components have models?
-        # disabled by lukasc, 2021/05
-        if not c.has_model() and 0:
-            if verbose:
-                print(" - Missing compact model, for component: %s" % (c.component))
-            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_sim_nomodel.rdb_id())
-            rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
-
-    if DFT:
-        # DFT verification
-
-        text_out, opt_in = find_automated_measurement_labels(cell)
-
-        '''
-    # opt_in labels missing: 0 labels found. draw box around the entire circuit.
-    # replaced with code below that finds each circuit separately
-    if len(opt_in) == 0:
-      rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_optin_missing.rdb_id())
-      rdb_item.add_value(pya.RdbItemValue( pya.Polygon(cell.bbox()).to_dtype(dbu) ) )
-    '''
-
-        # dataset for all components found connected to opt_in labels; later
-        # subtract from all components to find circuits with missing opt_in
-        components_connected_opt_in = []
-
-        # opt_in labels
-        for ti1 in range(0, len(opt_in)):
-            if 'opt_in' in opt_in[ti1]:
-                t = opt_in[ti1]['Text']
-                box_s = 1000
-                box = pya.Box(t.x - box_s, t.y - box_s, t.x + box_s, t.y + box_s)
-                # opt_in labels check for unique
-                for ti2 in range(ti1 + 1, len(opt_in)):
-                    if 'opt_in' in opt_in[ti2]:
-                        if opt_in[ti1]['opt_in'] == opt_in[ti2]['opt_in']:
-                            if verbose:
-                                print(" - Found DFT error, non unique text labels: %s, %s, %s" %
-                                      (t.string, t.x, t.y))
-                            rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_unique.rdb_id())
-                            rdb_item.add_value(pya.RdbItemValue(t.string))
-                            rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-    
-                # opt_in format check:
-                if not opt_in[ti1]['wavelength'] in DFT_wavelengths:
-                    if verbose:
-                        print(" - DFT error: wavelength")
-                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_wavelength.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-    
-                if not (opt_in[ti1]['pol'] in DFT_polarizations):
-                    if verbose:
-                        print(" - DFT error: polarization")
-                    rdb_item = rdb.create_item(
-                        rdb_cell.rdb_id(), rdb_cat_id_optin_polarization.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-    
-                # find the GC closest to the opt_in label.
-                from ._globals import KLAYOUT_VERSION
-                components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
-                                           key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
-                # GC too far check:
-                if components_sorted:
-                    dist_optin_c = components_sorted[0].trans.disp.to_p(
-                    ).distance(pya.Point(t.x, t.y).to_dtype(1))
-                    if verbose:
-                        print(" - Found opt_in: %s, nearest GC: %s.  Locations: %s, %s. distance: %s" % (opt_in[ti1][
-                              'Text'], components_sorted[0].instance,  components_sorted[0].center, pya.Point(t.x, t.y), dist_optin_c * dbu))
-                    if dist_optin_c > float(DFT['design-for-test']['opt_in']['max-distance-to-grating-coupler']) * 1000:
-                        if verbose:
-                            print(" - opt_in label too far from the nearest grating coupler: %s, %s" %
-                                  (components_sorted[0].instance, opt_in[ti1]['opt_in']))
-                        rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_toofar.rdb_id())
-                        rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-    
-                    # starting with each opt_in label, identify the sub-circuit, then GCs, and
-                    # check for GC spacing
-                    trimmed_nets, trimmed_components = trim_netlist(
-                        nets, components, components_sorted[0])
-                    components_connected_opt_in = components_connected_opt_in + trimmed_components
-                    detector_GCs = [c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (
-                        c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0, 0)]
-                    if verbose:
-                        print("   N=%s, detector GCs: %s" %
-                              (len(detector_GCs), [c.display() for c in detector_GCs]))
-                    vect_optin_GCs = [(c.trans.disp - components_sorted[0].trans.disp).to_p()
-                                      for c in detector_GCs]
-                    # for vi in range(0,len(detector_GCs)):
-                    #  if round(angle_vector(vect_optin_GCs[vi])%180)!=int(DFT['design-for-test']['grating-couplers']['gc-array-orientation']):
-                    #    if verbose:
-                    #      print( " - DFT GC pitch or angle error: angle %s, %s"  % (round(angle_vector(vect_optin_GCs[vi])%180), opt_in[ti1]['opt_in']) )
-                    #    rdb_item = rdb.create_item(rdb_cell.rdb_id(),rdb_cat_id_GCpitch.rdb_id())
-                    #    rdb_item.add_value(pya.RdbItemValue( detector_GCs[vi].polygon.to_dtype(dbu) ) )
-    
-                    # find the GCs in the circuit that don't match the testing configuration
-                    import numpy as np
-                    array_angle = float(DFT['design-for-test']['grating-couplers']['gc-array-orientation'])
-                    pitch = float(DFT['design-for-test']['grating-couplers']['gc-pitch'])
-                    sx = np.round(np.cos(array_angle/180*np.pi))
-                    sy = np.round(np.sin(array_angle/180*np.pi))
-                    
-                    for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
-                        if pya.DPoint(d * sx* pitch * 1000, d *sy* pitch * 1000) in vect_optin_GCs:
-                            del_index = vect_optin_GCs.index(pya.DPoint(
-                                d * sx* pitch * 1000, d *sy* pitch * 1000))
-                            del vect_optin_GCs[del_index]
-                            del detector_GCs[del_index]
-                    for vi in range(0, len(vect_optin_GCs)):
-                        if verbose:
-                            print(" - DFT GC array config error: %s, %s" %
-                                  (components_sorted[0].instance, opt_in[ti1]['opt_in']))
-                        rdb_item = rdb.create_item(
-                            rdb_cell.rdb_id(), rdb_cat_id_GCarrayconfig.rdb_id())
-                        rdb_item.add_value(pya.RdbItemValue(
-                            "The label having the error is: " + opt_in[ti1]['opt_in']))
-                        rdb_item.add_value(pya.RdbItemValue(detector_GCs[vi].polygon.to_dtype(dbu)))
-                        rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-
-        # subtract components connected to opt_in labels from all components to
-        # find circuits with missing opt_in
-        components_without_opt_in = [
-            c for c in components if not (c in components_connected_opt_in)]
-        i = 0  # to avoid getting stuck in the loop in case of an error
-        while components_without_opt_in and i < 50:
-            # find the first GC
-            components_GCs = [c for c in components_without_opt_in if [
-                p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]]
-            if components_GCs:
-                trimmed_nets, trimmed_components = trim_netlist(
-                    nets, components, components_GCs[0])
-                # circuit without opt_in label, generate error
-                r = pya.Region()
-                for c in trimmed_components:
-                    r.insert(c.polygon)
-                for p in r.each_merged():
-                    rdb_item = rdb.create_item(
-                        rdb_cell.rdb_id(), rdb_cat_id_optin_missing.rdb_id())
-                    rdb_item.add_value(pya.RdbItemValue(p.to_dtype(dbu)))
-                # remove from the list of components without opt_in:
-                components_without_opt_in = [
-                    c for c in components_without_opt_in if not (c in trimmed_components)]
-                i += 1
-            else:
-                break
-
-        # GC spacing between separate GC circuits (to avoid measuring the wrong one)
-
-    for n in nets:
-        # Verification: optical pin width mismatches
-        if n.type == _globals.PIN_TYPES.OPTICAL and not n.idx == None:
-            pin_paths = [p.path for p in n.pins]
-            if pin_paths[0].width != pin_paths[-1].width:
-                if verbose:
-                    print(" - Found mismatched pin widths: %s" % (pin_paths[0]))
-                r = pya.Region([pin_paths[0].to_itype(1).polygon(),
-                                pin_paths[-1].to_itype(1).polygon()])
-                polygon_merged = advance_iterator(r.each_merged())
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_mismatchedpin.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue( "Pin widths: %s, %s" % (pin_paths[0].width, pin_paths[-1].width)  ))
-                rdb_item.add_value(pya.RdbItemValue(polygon_merged.to_dtype(dbu)))
-
-    # displays results in Marker Database Browser, using Results Database (rdb)
-    if rdb.num_items() > 0:
-        v = pya.MessageBox.warning(
-            "Errors", "%s layout errors detected.  \nPlease review errors using the 'Marker Database Browser'." % rdb.num_items(), pya.MessageBox.Ok)
-        lv.show_rdb(rdb_i, cv.cell_index)
-    else:
-        v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
-
-    # Save results of verification as a Text label on the cell. Include OS,
-    # SiEPIC-Tools and PDF version info.
-    LayerTextN = cell.layout().layer(TECHNOLOGY['Text'])
-    iter1 = cell.begin_shapes_rec(LayerTextN)
-    while not(iter1.at_end()):
-        if iter1.shape().is_text():
-            text = iter1.shape().text
-            if text.string.find("SiEPIC-Tools verification") > -1:
-                text_SiEPIC = text
-                print(" * Previous label: %s" % text_SiEPIC)
-                iter1.shape().delete()
-        iter1.next()
-
-    import SiEPIC.__init__
-    import sys
-    from time import strftime
-    text = pya.DText("SiEPIC-Tools verification: %s errors\n%s\nSiEPIC-Tools v%s\ntechnology: %s\n%s\nPython: %s, %s\n%s" % (rdb.num_items(), strftime("%Y-%m-%d %H:%M:%S"),
-                                                                                                                             SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], pya.Application.instance().version()), pya.DTrans(cell.dbbox().p1))
-    shape = cell.shapes(LayerTextN).insert(text)
-    shape.text_size = 0.1 / dbu
 
 '''
 Open all PDF files using an appropriate viewer
@@ -2996,17 +2536,17 @@ def open_folder(folder):
         print("running in windows explorer, %s" % folder)
         print(subprocess.Popen(r'explorer /select,"%s"' % folder))
 
-'''
-User to select opt_in labels, either:
- - Text object selection in the layout
- - GUI with drop-down menu from all labels in the layout
- - argument to the function, opt_in_selection_text, array of opt_in labels (strings)
-'''
 
 
-def user_select_opt_in(verbose=None, option_all=True, opt_in_selection_text=[]):
+def user_select_opt_in(cell=None, verbose=None, option_all=True, opt_in_selection_text=[]):
+    '''
+    User to select opt_in labels, either:
+     - Text object selection in the layout
+     - GUI with drop-down menu from all labels in the layout
+     - argument to the function, opt_in_selection_text, array of opt_in labels (strings)
+    '''
     from .utils import find_automated_measurement_labels
-    text_out, opt_in = find_automated_measurement_labels()
+    text_out, opt_in = find_automated_measurement_labels(topcell=cell)
     if not opt_in:
         print(' No opt_in labels found in the layout')
         return False, False
@@ -3549,7 +3089,6 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     Based on https://github.com/atait/lytest
     '''
 
-
     # Get a list of the layers 
     layers = []
     layout1 = cell1.layout()
@@ -3571,14 +3110,19 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     
             layers.append((ll1, ll2))
 
-
     # Count the differences
     diff_count = 0
 
+    # Get a list of the layers
+    layers = []
+    layout = cell1.layout()
+    for li in layout.layer_indices():
+        layers.append ( li )
+
     # Do geometry checks on each layer
-    for li1,li2 in layers:
-        r1 = pya.Region(cell1.begin_shapes_rec(li1))
-        r2 = pya.Region(cell2.begin_shapes_rec(li2))
+    for li in layers:
+        r1 = pya.Region(cell1.begin_shapes_rec(li))
+        r2 = pya.Region(cell2.begin_shapes_rec(li))
 
         rxor = r1 ^ r2
 
@@ -3623,9 +3167,9 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
     
     import os
     if debug:
-        print(" - cell replacement for: %s, with cell %s (%s), "  % (cell_x_name, cell_y_name, os.path.basename(cell_y_file)))
+        print(" - cell replacement for: %s, with cell %s (%s or %s), "  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library))
     log = ''
-    log += "- cell replacement for: %s, with cell %s (%s)\n"  % (cell_x_name, cell_y_name, os.path.basename(cell_y_file))
+    log += "- cell replacement for: %s, with cell %s (%s or %s)\n"  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library)
 
     # Find the cell name from the cell_ref_bb
     if not cell_x_name:
@@ -3737,7 +3281,7 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
                     # replace with CELL_Y
                     if inst.is_regular_array():
                         if debug:
-                            print("    - replacing %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
+                            print("    - checked, and replaced %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
                         ci = inst.cell_inst
                         cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
                         count += 1
@@ -3858,29 +3402,33 @@ def export_layout(topcell, path, filename, relative_path = '', format='oas', scr
             
     if not success:
         try:
-            layout.write(file_out,save_options)
+            topcell.write(file_out,save_options)
         except:
             try:
-                layout.write(file_out)
+                topcell.write(file_out)
             except:
                 raise Exception("Problem exporting your layout, %s." % file_out)
 
     return file_out
 
-def instantiate_all_library_cells(topcell, progress_bar = True):
+def instantiate_all_library_cells(topcell, terminator_cells = None, terminator_libraries = None, terminator_waveguide_types = None, progress_bar = True):
     '''
     Load all cells (fixed and PCells) and instantiate them on the layout. 
     One column per library, one column for fixed and PCells.
     topcell: is a cell in a pya.Layout that has already configured with Layout.technology_name 
+    terminator_cells: list of str, attach a terminator to each of the optical ports for each cell, and verify
+        terminator_libraries: list of str, the library name corresponding to each terminator
+        terminator_waveguide_types: list of str, waveguide type corresponding to each terminator
     progress_bar: True displays percentage
     '''
     
+    print('v2')
     
     from SiEPIC._globals import Python_Env
+    ly = topcell.layout()
     if True or Python_Env == "KLayout_GUI":
         # Count all the cells for the progress bar
         count = 0
-        ly = topcell.layout()
         for lib in pya.Library().library_ids():
             li = pya.Library().library_by_id(lib)
             if not li.is_for_technology(ly.technology_name) or li.name() == 'Basic':
@@ -3893,25 +3441,48 @@ def instantiate_all_library_cells(topcell, progress_bar = True):
                     count += 1
         p = pya.RelativeProgress("Instantiate all libraries' cells", count)
 
+    if terminator_cells:
+        # load terminator cell
+        from SiEPIC.utils import create_cell2
+        cell_terminators = []
+        for i in range(0, len(terminator_cells)):
+            cell_terminators.append(
+                create_cell2(ly, terminator_cells[i], terminator_libraries[i])
+            )
+        from SiEPIC.scripts import connect_cell
+        from SiEPIC import _globals
+        
     # all the libraries
     ly = topcell.layout()
     x,y,xmax=0,0,0
     for lib in pya.Library().library_ids():
         li = pya.Library().library_by_id(lib)
-        if not li.is_for_technology(ly.technology_name) or li.name() == 'Basic':
-            print(' - skipping: %s' % li.name())
+        if not li.is_for_technology(ly.technology_name) or li.name() == "Basic":
+            print(" - skipping library: %s" % li.name())
             continue
 
         # all the pcells
-        print('All PCells: %s' % li.layout().pcell_names())
+        print(" - Library: %s" % li.name())
+        print("   All PCells: %s" % li.layout().pcell_names())
         for n in li.layout().pcell_names():
-            print(" - PCell: ", li.name(), n)
-            pcell = ly.create_cell(n,li.name(), {})
+            print("   - PCell: ", li.name(), n)
+            pcell = ly.create_cell(n, li.name(), {})
             if pcell:
-                t = pya.Trans(pya.Trans.R0, x-pcell.bbox().left, y-pcell.bbox().bottom)
-                topcell.insert(pya.CellInstArray(pcell.cell_index(), t))
-                y += pcell.bbox().height()+2000
-                xmax = max(xmax, x+pcell.bbox().width()+2000)
+                subcell = ly.create_cell('c_'+n)
+                t = pya.Trans(pya.Trans.R0, pcell.bbox().left, pcell.bbox().bottom)
+                inst = subcell.insert(pya.CellInstArray(pcell.cell_index(), t))
+                # connect terminators
+                if terminator_cells:
+                    pins, _ = pcell.find_pins()
+                    if pins:
+                        for p1 in pins:
+                            if p1.type == _globals.PIN_TYPES.OPTICAL:
+                                connect_cell(inst,p1.pin_name, cell_terminators[0],'1',relaxed_pinnames=True)
+                t = pya.Trans(pya.Trans.R0, x-subcell.bbox().left, y-subcell.bbox().bottom)
+                inst = topcell.insert(pya.CellInstArray(subcell.cell_index(), t))
+
+                y += subcell.bbox().height()+2000
+                xmax = max(xmax, x+subcell.bbox().width()+2000)
             else:
                 print('Error in: %s' % n)
             p.inc()
@@ -3921,15 +3492,26 @@ def instantiate_all_library_cells(topcell, progress_bar = True):
         for c in li.layout().each_top_cell():
             # instantiate
             if not li.layout().cell(c).is_pcell_variant():
-                print(" - Fixed cell: ", li.name(), li.layout().cell(c).name)
-                pcell = ly.create_cell(li.layout().cell(c).name,li.name(), {})
+                print("   - Fixed cell: ", li.name(), li.layout().cell(c).name)
+                pcell = ly.create_cell(li.layout().cell(c).name, li.name(), {})
                 if not pcell:
                     pcell = ly.create_cell(li.layout().cell(c).name,li.name())
                 if pcell:
-                    t = pya.Trans(pya.Trans.R0, x-pcell.bbox().left, y-pcell.bbox().bottom)
-                    topcell.insert(pya.CellInstArray(pcell.cell_index(), t))
-                    y += pcell.bbox().height()+2000
-                    xmax = max(xmax, x+pcell.bbox().width()+2000)
+                    subcell = ly.create_cell('c_'+pcell.name)
+                    t = pya.Trans(pya.Trans.R0, pcell.bbox().left, pcell.bbox().bottom)
+                    inst = subcell.insert(pya.CellInstArray(pcell.cell_index(), t))
+                    # connect terminators
+                    if terminator_cells:
+                        pins, _ = pcell.find_pins()
+                        if pins:
+                            for p1 in pins:
+                                if p1.type == _globals.PIN_TYPES.OPTICAL:
+                                    connect_cell(inst,p1.pin_name, cell_terminators[0],'1',relaxed_pinnames=True)
+                    t = pya.Trans(pya.Trans.R0, x-subcell.bbox().left, y-subcell.bbox().bottom)
+                    inst = topcell.insert(pya.CellInstArray(subcell.cell_index(), t))
+
+                    y += subcell.bbox().height()+2000
+                    xmax = max(xmax, x+subcell.bbox().width()+2000)
                 else:
                     print('Error in: %s' % li.layout().cell(c).name)
             p.inc()
@@ -3938,3 +3520,294 @@ def instantiate_all_library_cells(topcell, progress_bar = True):
     if True or Python_Env == "KLayout_GUI":
         p.destroy
 
+def load_klayout_library(technology, library_name=None, library_description='', folder_gds=None, folder_pcell=None, verbose=True):
+    '''
+    Load KLayout Library
+        Loads PCells and fixed cells from sub folders, 
+        creates a KLayout pya.Library,
+        registers the library with the technology name.
+    Inputs:
+        technology: name of the technology, e.g., "EBeam", or pya.Technology
+        library_name: name of the library
+        library_description: description of the library
+        folder_gds: relative sub-folder (within the technology folder) from which to load .gds/.oas fixed cells
+        folder_pcell: relative sub-folder (within the technology folder) from which to load .py PCells
+            or absolute; check both.
+    returns:
+        pya.Library name
+    '''
+
+    if type(technology) == str:
+        tech = pya.Technology.technology_by_name(technology)
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology
+    elif type(technology) == pya.Technology:
+        tech = technology
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology.name
+    else:
+        raise Exception('SiEPIC.load_klayout_library requires a technology as input.')
+        
+    if not library_name:
+        library_name = tech_name
+        
+    import os
+    import pathlib
+    import sys
+
+    if verbose:
+        print(' - Technology path: %s' % tech.default_base_path)
+
+    import importlib.util
+    import sys
+    
+    def import_module_from_path(module_name, file_path):
+        '''
+        import a Python module given a path 
+        '''
+        import importlib.util
+        import sys
+        from pathlib import Path
+        
+        file_path = os.path.join(file_path, '__init__.py')
+        path = Path(file_path).resolve()
+        if verbose:
+            print(' - PCell init file: %s' % path)
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if not spec:
+            raise Exception('SiEPIC.load_klayout_library cannot import module: %s, from path: %s ' % (module_name,path))
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module  # Add it to sys.modules
+        spec.loader.exec_module(module)  # Execute the module code   
+             
+        return module
+
+    # Load all Python PCells
+    if folder_pcell:
+        import importlib
+        importlib.invalidate_caches()
+
+        # Import the Python folder as a module
+        folder_pcell_abs = os.path.abspath(os.path.join(tech.default_base_path, folder_pcell))
+        if not os.path.exists (folder_pcell_abs):
+            if os.path.exists (folder_pcell):
+                folder_pcell_abs = folder_pcell
+            else:
+                raise Exception('Folder paths "%s" or "%s" do not exist.' % (folder_pcell_abs, folder_pcell))
+        if verbose:
+            print(' - PCell folder path: %s' % folder_pcell_abs)
+        module_name = os.path.split(folder_pcell)[-1]
+        if verbose:
+            print(' - PCell module name: %s' % module_name)
+        module = import_module_from_path(module_name, folder_pcell_abs)
+        globals()[module_name] = module
+        
+        # Import all the PCell python files
+        pcells_=[]
+        files = [f for f in os.listdir(folder_pcell_abs) if '.py' in pathlib.Path(f).suffixes  and '__init__' not in f]
+        for f in files:
+            submodule = '%s.%s' % (module_name, f.replace('.py','')) 
+            # m = importlib.import_module(submodule)  
+            m = importlib.import_module('.'+f.replace('.py',''), package=module_name)  
+            if not m:
+                raise Exception('SiEPIC.load_klayout_library cannot import module: %s, from path: %s ' % (submodule,folder_pcell_abs))
+            if verbose:
+                print(' - imported PCell: %s' % submodule)
+            pcells_.append(importlib.reload(m))
+        if verbose:
+            print(' - module dir(): %s' % dir(module))
+
+        if not type(module) == type(os):
+            raise Exception('SiEPIC.load_klayout_library cannot import module.')
+        
+    # Create the KLayout library, using GDS and Python PCells
+    class library(pya.Library):
+        def __init__(self):
+            self.technology=tech_name
+            if verbose:
+                print(" - Initializing '%s' Library." % library_name)
+
+            # Set the description
+            self.description = library_description 
+
+            self.register(library_name)
+
+            count_pcells = 0
+            count_fixed_cells = 0
+
+            # Import all the GDS/OASIS files from the tech folder
+            if folder_gds:
+                import os, fnmatch
+                dir_path = os.path.abspath(os.path.join(tech.default_base_path, folder_gds))
+                if not os.path.exists (dir_path):
+                    if os.path.exists (folder_gds):
+                        dir_path = folder_pcell
+                    else:
+                        raise Exception('Folder paths "%s" or "%s" do not exist.' % (dir_path, folder_gds))
+                if verbose:
+                    print(' - GDS/OAS folder path: %s' % dir_path)
+                search_strs = ['*.[Oo][Aa][Ss]', '*.[Gg][Dd][Ss]'] # OAS, GDS
+                found = False
+                for search_str in search_strs:
+                    for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
+                        for filename in fnmatch.filter(filenames, search_str):
+                            file1=os.path.join(root, filename)
+                            if verbose:
+                                print(" - reading %s" % filename )
+                            self.layout().read(file1)
+                            found = True
+                            count_fixed_cells += 1
+                if not found:
+                    print(' - Warning: no fixed GDS/OAS files found for library: %s, in folder: %s' % (library_name, dir_path))
+                else:
+                    if verbose:
+                        for c in self.layout().top_cells():
+                            print("   - cell: %s" % c.name )
+
+            # Create the PCell declarations
+            if folder_pcell:
+                if not pcells_:
+                    print(' - Warning: no PCells found for library: %s' % library_name)
+                for m in pcells_:
+                    mm = m.__name__.replace('%s.' % module_name,'')
+                    # mm2 = m.__name__+'.'+mm+'()'
+                    mm2 = 'module'+'.'+mm+'.'+mm+'()'
+                    if verbose:
+                        print(' - register_pcell %s, %s' % (mm,mm2))
+                    # self.layout().register_pcell(mm, eval(mm2))
+                    self.layout().register_pcell(mm, getattr(m,mm)())
+                    count_pcells += 1
+                            
+                if verbose:
+                    print(' - done loading pcells')
+            
+            # Register us the library with the technology name
+            # If a library with that name already existed, it will be replaced then.
+            self.register(library_name)
+            
+            self.count_fixed_cells = count_fixed_cells
+            self.count_pcells = count_pcells
+         
+    lib = library()
+    
+    # Return the library name, and number of cells loaded
+    return library_name, lib.count_fixed_cells, lib.count_pcells
+
+def technology_libraries(technology):
+    '''
+    Function to get a list of all the pya.Library associated with a pya.Technology
+    missing in KLayout: https://github.com/KLayout/klayout/issues/879
+                        https://www.klayout.de/doc-qt5/code/class_Technology.html
+    Inputs:
+        technology: name of the technology, e.g., "EBeam", or pya.Technology
+    '''
+
+    if type(technology) == str:
+        tech = pya.Technology.technology_by_name(technology)
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology
+    elif type(technology) == pya.Technology:
+        tech = technology
+        if not tech:
+            raise Exception('SiEPIC.load_klayout_library cannot load technology: %s' % technology)
+        tech_name = technology.name
+    else:
+        raise Exception('SiEPIC.load_klayout_library requires a technology as input.')
+        
+    tech_libs = []
+    libs = pya.Library.library_ids()
+    for lib in libs:
+        l = pya.Library.library_by_id(lib)
+        if tech_name in l.technologies():
+            tech_libs.append(l.name())
+
+    print('Libraries associated with Technology %s: %s' % (tech_name, tech_libs))     
+    
+def version_latest():
+    '''
+    Compare to the current version
+    '''
+    
+    import requests
+    import concurrent.futures
+
+    import time
+    # Start timer
+    start_time = time.time()
+
+
+    def get_latest_version(package_name, request_timeout=1):
+        #print(f"fetching version for {package_name}.")
+        url = f"https://pypi.org/pypi/{package_name}/json"
+        try:
+            response = requests.get(url, timeout=request_timeout)
+            if response.status_code == 200:
+                data = response.json()
+                return data["info"]["version"]
+        except requests.RequestException as e:
+            print(f"Error fetching version for {package_name}: {e}")
+        return None
+
+    # Function to run the version check asynchronously
+    def check_version_async(package_name, request_timeout=1):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(get_latest_version, package_name, request_timeout)
+            # future.result() can be called later when needed, allowing for background execution
+            # print(f"future: {future}")
+            return future
+    
+    # Example usage:
+    package_name = "SiEPIC"
+    future = check_version_async(package_name)    
+    #print(f"future: {future}")
+    execution_time = time.time() - start_time
+    #print(f"Execution time: {execution_time} seconds")
+    return future
+    
+def version_check():
+    '''
+    Query the PyPI Python database to find out the latest version of SiEPIC
+    '''
+
+    import SiEPIC
+    version_future = SiEPIC.scripts.version_latest()
+    if not version_future:
+        return None
+
+    #from time import sleep 
+    #sleep(0.2)
+    
+    while not version_future.done():
+        print("Continuing with application startup tasks...")
+        time.sleep(0.05)  # Emulate work done in the main thread
+    
+    import concurrent.futures
+    # Later, when the version is needed, you can check the result (it may already be ready)
+    # with a timeout for the future (e.g., 1 second)
+    try:
+        latest_version = version_future.result(timeout=0.1)  # Set max wait for result
+    except concurrent.futures.TimeoutError:
+        print("The SiEPIC version check took too long and was cancelled.")
+        return 
+
+    if not latest_version:
+        return 
+    
+    import SiEPIC
+    from SiEPIC._globals import Python_Env
+    from packaging import version
+    if version.parse(SiEPIC.__version__) < version.parse(latest_version):
+        if Python_Env == 'KLayout_GUI':
+            pya.MessageBox.warning(
+                "Update SiEPIC-Tools", f'New version of SiEPIC-Tools is available ({latest_version} vs {SiEPIC.__version__}).' , pya.MessageBox.Ok)
+        else:
+            print(f'New version of SiEPIC-Tools is available ({latest_version} vs {SiEPIC.__version__}).' )
+    else:
+        print(f'SiEPIC-Tools is up to date ({latest_version} vs {SiEPIC.__version__}).' )
+        
+
+        
+    

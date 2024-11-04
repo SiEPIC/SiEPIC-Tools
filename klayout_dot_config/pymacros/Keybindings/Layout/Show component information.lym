@@ -77,7 +77,7 @@ def show_component_info():
     text += ('&lt;br&gt;')
     text += "  selected cell name: %s" % obj.inst().cell.name
     text += ('&lt;br&gt;')
-    c = cell.find_components(cell_selected=[obj.inst().cell],verbose=True)
+    c = cell.find_components(cell_selected=tuple([obj.inst().cell]),verbose=True, raiseException = False)
     if c and c[0].cell:
       text += c[0].display().replace(';','&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;')
       if c[0].cell.is_pcell_variant():

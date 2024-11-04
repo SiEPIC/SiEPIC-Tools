@@ -188,8 +188,28 @@ def LUT_reader(filedir: PosixPath, lutfilename: str, lutdata: List[List[str]]):
     xml = parse(filedir / lutfilename)
     root = xml.getroot()
 
+    if "contraDC" in lutfilename:
+        print(1)
+
     for node in root.iter("association"):
         sample = [[each.attrib["name"], each.text] for each in node.iter("value")]
+        '''
+        Look-up is not working. returns the last one each time.
+        Attempt to fix it.. gave up...
+        
+        sample = [[each.attrib["name"], float(each.text) if each.attrib["type"]=='double' else int(each.text) if each.attrib["type"]=='int' else bool(each.text) if each.attrib["type"]=='bool' else  each.text, each.attrib["type"]] for each in node.iter("value")]    
+
+        # Make sure the two data sets have the same datatypes
+        for q in lutdata:
+            w = [r for r in sample if r[0]==q[0]] [0]
+            if w[2] == 'double':
+                q[1] = float(q[1])
+            if w[2] == 'bool':
+                q[1] = bool(q[1])
+            if w[2] == 'int':
+                q[1] = int(q[1])
+        '''
+        
         if sorted(sample[0:-1]) == sorted(lutdata):
             break
     sparam_file = sample[-1][1].split(";")
@@ -208,6 +228,8 @@ def LUT_processor(
     start = time.time()
     sparam_file, xml, node = LUT_reader(filedir, lutfilename, lutdata)
 
+    print(' - LUT_processor: file: %s' % sparam_file)
+
     # read data
     if ".npz" in sparam_file[0] or ".npz" in sparam_file[-1]:
         npzfile = [each for each in sparam_file if ".npz" in each][0]
@@ -217,11 +239,11 @@ def LUT_processor(
 
     else:
         if verbose:
-            print("numpy datafile not found. reading sparam file instead..")
+            print("numpy datafile not found. reading sparam file instead.. %s " % sparam_file)
 
         sdata = universal_sparam_filereader(nports, sparam_file[-1], filedir, "auto")
         # create npz file name
-        npz_file = sparam_file[-1].split(".")[0]
+        npz_file = sparam_file[-1].split(".dat")[0]
 
         # save as npz file
         np.savez(filedir / npz_file, f=sdata[0], s=sdata[1])

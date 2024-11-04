@@ -49,6 +49,7 @@ pya.Cell Extensions:
   - spice_netlist_export
   - check_component_models
   - pinPoint
+  - plot: display an image for Jupyter notebook
 
 pya.Instance Extensions:
   - find_pins: find Pin objects for all pins in a cell instance
@@ -685,6 +686,11 @@ def print_parameter_values(self):
 def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     '''
     Find Pins in a Cell.
+    Inputs:
+        self: pya.Cell
+        verbose: True prints details for debugging
+        polygon_devrec:
+
     Optical Pins have:
      1) path on layer PinRec, indicating direction (out of component)
      2) text on layer PinRec, inside the path
@@ -696,6 +702,11 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     Electrical Pins have:
      1) box on layer PinRec
      2) text on layer PinRec, inside the box
+     
+    Returns:
+        pins: SiEPIC.core.Pin
+        pin_errors: text
+
     '''
 
     if verbose:
@@ -749,10 +760,14 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
             while not(iter2.at_end()):
                 if iter2.shape().is_text():
                     pin_name = iter2.shape().text.string
-                iter2.next()
                 if pin_name and pin_path.num_points()==2:
-                  # Store the pin information in the pins array
-                  pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+                    # make sure that the Pin's path and text are in the same cell:
+                    if it.shape().cell.name == iter2.shape().cell.name:
+                        # Store the pin information in the pins array
+                        pins.append(Pin(path=pin_path, _type=_globals.PIN_TYPES.OPTICAL, pin_name=pin_name))
+                        if verbose:
+                            print(' - found pin: %s in cell %s, in %s, text %s' % (pin_name, subcell.name, it.shape().cell.name, iter2.shape().cell.name ))
+                iter2.next()
             if pin_name == None or pin_path.num_points()!=2:
                 print("Invalid pin Path detected: %s. Cell: %s" % (pin_path, subcell.name))
                 error_text += ("Invalid pin Path detected: %s, in Cell: %s, Optical Pins must have a pin name.\n" %
@@ -878,7 +893,22 @@ def find_pins(self, verbose=False, polygon_devrec=None, GUI=False):
     return pins, pin_errors
 
 
-def find_pin(self, name):
+def find_pin(self, pin_name, verbose=False):
+
+    pins, _ = self.find_pins()
+
+    if pins:
+        p = [ p for p in pins if (p.pin_name==pin_name)]
+        if p:
+            if len(p)>1:
+                raise Exception ('Multiple Pins with name "%s" found in cell "%s"' % (pin_name, self.basic_name()) )
+            return p[0]
+        else:
+            raise Exception ('Pin with name "%s" not found in cell "%s". Available pins: %s' % (pin_name, self.basic_name(), [p.pin_name for p in pins]) )
+    else:
+        raise Exception ('No Pins found in cell "%s"' % (self.basic_name()) )
+    '''
+    (self, name):
     from . import _globals
     from .core import Pin
     pins = []
@@ -902,6 +932,8 @@ def find_pin(self, name):
             return Pin(pin, _globals.PIN_TYPES.OPTICAL)
 
     return None
+    '''
+
 
 # find the pins inside a component
 
@@ -917,7 +949,9 @@ def find_pins_component(self, component):
 '''
 Components:
 '''
-def find_components(self, cell_selected=None, inst=None, verbose=False):
+from functools import lru_cache
+@lru_cache(maxsize=None)
+def find_components(self, cell_selected=None, inst=None, verbose=False, raiseException = True):
     '''
     Function to traverse the cell's hierarchy and find all the components
     returns list of components (class Component)
@@ -933,13 +967,25 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     cell_selected: only find components that match this specific cell.
     
     inst: return only the component that matches the instance inst
+    
+    raiseException: False turns of exception handling, and returns None instead
+    
+    limitation:
+     - flat components only. doesn't find the component if it is buried in a hierarchy
+     - no function for instance.find_components.  Instead we find based on cell, then try to match it to the requested instance.
 
     '''
+    
+    if cell_selected != None and type(cell_selected) != type([]) and type(cell_selected) != tuple:
+          cell_selected=[cell_selected]
+
     if verbose:
         print('*** Cell.find_components:')
+        if cell_selected[0]:
+          print('  - cell_selected=%s' % (cell_selected[0].name if cell_selected[0] else None))
+        if inst:
+          print('  - inst=%s' % (inst.cell.name))
 
-    if cell_selected != None and type(cell_selected) != type([]):
-          cell_selected=[cell_selected]
 
     components = []
 
@@ -968,8 +1014,12 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
         idx = len(components)  # component index value to be assigned to Component.idx
         component_ID = idx
         subcell = iter1.cell()  # cell (component) to which this shape belongs
+        if verbose:
+          print(' - looking at shape in cell %s. ' % subcell.name)
         if cell_selected and not subcell in cell_selected:
             # check if subcell is one of the arguments to this function: cell_selected
+            if verbose:
+              print(' - cell_selected and not subcell (%s) in cell_selected (%s). ' % (subcell.name, cell_selected[0].name))
             iter1.next()
             continue
         component = subcell.basic_name().replace(' ', '_')   # name library component
@@ -984,6 +1034,10 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
                       (idx, subcell.basic_name(), box.p1, box.p2))
             polygon = pya.Polygon(box)  # Save the component outline polygon
             DevRec_polygon = pya.Polygon(iter1.shape().box)
+            found_component = True
+        if iter1.shape().is_path():
+            polygon = iter1.shape().path.polygon().transformed(iter1.itrans())  # Save the component outline polygon
+            DevRec_polygon = iter1.shape().path.polygon
             found_component = True
         if iter1.shape().is_polygon():
             polygon = iter1.shape().polygon.transformed(iter1.itrans())  # Save the component outline polygon
@@ -1095,6 +1149,11 @@ def find_components(self, cell_selected=None, inst=None, verbose=False):
     if component_matched:
         return component_matched
     
+    if components == []:
+        if raiseException:
+            raise Exception ('SiEPIC.extend.find_components: No component found for cell_selected=%s' % (cell_selected[0].name if cell_selected else None))
+        else:
+            return None
     return components
 # end def find_components
 
@@ -1184,9 +1243,9 @@ def get_LumericalINTERCONNECT_analyzers(self, components, verbose=None):
     topcell = self
 
     from . import _globals
-    from .utils import select_paths, get_technology
+    from .utils import select_paths, get_technology_by_name
     from .core import Net
-    TECHNOLOGY = get_technology()
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
 
     layout = topcell.layout()
     LayerLumericalN = self.layout().layer(TECHNOLOGY['Lumerical'])
@@ -1283,14 +1342,19 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     from .core import Net
 
     from SiEPIC.utils import load_DFT
-    DFT = load_DFT()
+    from .utils import get_technology_by_name
+    if 'TECHNOLOGY' in dir(self.layout()):
+        TECHNOLOGY = self.layout().TECHNOLOGY
+    else:
+        TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
+    DFT = load_DFT(TECHNOLOGY)
     if not DFT:
         if verbose:
             print(' no DFT rules available.')
         return False, False, False, False, False, False, False, False
 
     from .scripts import user_select_opt_in
-    opt_in_selection_text, opt_in_dict = user_select_opt_in(
+    opt_in_selection_text, opt_in_dict = user_select_opt_in(cell=self,
         verbose=verbose, option_all=False, opt_in_selection_text=opt_in_selection_text)
     if not opt_in_dict:
         if verbose:
@@ -1404,8 +1468,8 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
     from time import strftime
     from .utils import eng_str
 
-    from .utils import get_technology
-    TECHNOLOGY = get_technology()
+    from .utils import get_technology_by_name
+    TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
     if not TECHNOLOGY['technology_name']:
         v = pya.MessageBox.warning("Errors", "SiEPIC-Tools requires a technology to be chosen.  \n\nThe active technology is displayed on the bottom-left of the KLayout window, next to the T. \n\nChange the technology using KLayout File | Layout Properties, then choose Technology and find the correct one (e.g., EBeam, GSiP).", pya.MessageBox.Ok)
         return '', '', 0, []
@@ -1687,9 +1751,71 @@ def pinPoint(self, pin_name, verbose=False):
             raise Exception("Did not find matching pin (%s), in the components list of pins (%s)." %(pin_name, [p.pin_name for p in pins]) )
             return
         return matched_pins[0].center
-    else:
-        pass
 
+
+def show(self):
+    '''Show the cell in KLayout using klive'''
+
+    # Save the cell in a temporary file
+    from ._globals import TEMP_FOLDER
+    import os
+    file_out = os.path.join(TEMP_FOLDER, self.name+'.gds')
+    self.write(file_out)
+
+    # Display in KLayout
+    from SiEPIC._globals import Python_Env
+    if Python_Env == 'Script':
+        from SiEPIC.utils import klive
+        klive.show(file_out, technology=self.layout().technology().name, keep_position=True)
+
+def plot(self, width = 800, show_labels = True, show_ruler = True, retina = True):
+        '''
+        Generate an image of the layout cell, and display. Useful for Jupyter notebooks
+        
+        Args:
+            self: pya.Cell
+            width: number of pixels
+            show_labels: KLayout display config to show text = True, https://www.klayout.de/doc-qt5/code/class_LayoutView.html#method101
+            show_ruler: KLayout display config to show ruler = True
+            retina: IPython.display.Image configuration for retina display, True
+        '''
+        
+        from io import BytesIO
+        from IPython.display import Image, display
+        
+        # Create a LayoutView, and populate it with the current cell & layout
+        cell = self
+        layout_view = pya.LayoutView()
+        cell_view_index = layout_view.create_layout(True)
+        layout_view.active_cellview_index = cell_view_index
+        cell_view = layout_view.cellview(cell_view_index)
+        layout = cell_view.layout()
+        layout.assign(cell.layout())
+        cell_view.cell = layout.cell(cell.name)
+
+        # Load layer properties from the technology
+        lyp_path=layout.technology().eff_layer_properties_file()
+        if not lyp_path:
+            raise Exception ('SiEPIC.extend.plot: technology not specified.')
+        layout_view.load_layer_props(lyp_path)
+        
+        # Configure the layout view settings
+        # print(layout_view.get_config_names())
+        layout_view.set_config("text-font",3)        
+        layout_view.set_config("background-color", "#ffffff")
+        layout_view.set_config("text-visible", "true" if show_labels else "false")
+        layout_view.set_config("grid-show-ruler", "true" if show_ruler else "false")
+
+        # Zoom out and show all layout details
+        layout_view.max_hier()
+        layout_view.zoom_fit()
+
+        # Display as a PNG
+        width = width * (2 if retina else 1)
+        pixel_buffer = layout_view.get_pixels(width, cell.bbox().height()/cell.bbox().width()*width)
+        png_data = pixel_buffer.to_png_data()
+        im = Image(png_data, retina=retina)
+        display(im)
 
 #################################################################################
 
@@ -1703,6 +1829,8 @@ pya.Cell.get_LumericalINTERCONNECT_analyzers = get_LumericalINTERCONNECT_analyze
 pya.Cell.get_LumericalINTERCONNECT_analyzers_from_opt_in = get_LumericalINTERCONNECT_analyzers_from_opt_in
 pya.Cell.spice_netlist_export = spice_netlist_export
 pya.Cell.pinPoint = pinPoint
+pya.Cell.show = show
+pya.Cell.plot = plot
 
 
 #################################################################################
@@ -1750,7 +1878,7 @@ def find_pin(self, pin_name, verbose=False):
                 raise Exception ('Multiple Pins with name "%s" found in cell "%s"' % (pin_name, self.cell.basic_name()) )
             return p[0]
         else:
-            raise Exception ('Pin with name "%s" not found in cell "%s"' % (pin_name, self.cell.basic_name()) )
+            raise Exception ('Pin with name "%s" not found in cell "%s". Available pins: %s' % (pin_name, self.cell.basic_name(), [p.pin_name for p in pins]) )
     else:
         raise Exception ('No Pins found in cell "%s"' % (self.cell.basic_name()) )
 

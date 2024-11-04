@@ -11,6 +11,11 @@
       <width>0.5</width>
       <offset>0.0</offset>
     </component>
+	  <component>
+	    <layer>DevRec</layer>
+	    <width>1.5</width>
+	    <offset>0.0</offset>
+	  </component>
   </waveguide>
   <waveguide>
     <name>Slot</name>

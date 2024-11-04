@@ -14,9 +14,9 @@ class Waveguide(pya.PCellDeclarationHelper):
     self.param("width", self.TypeDouble, "Width", default = 0.5)
     self.param("adiab", self.TypeBoolean, "Adiabatic", default = False)
     self.param("bezier", self.TypeDouble, "Bezier Parameter", default = 0.35)
-    self.param("layers", self.TypeList, "Layers", default = ['Waveguide'])
-    self.param("widths", self.TypeList, "Widths", default =  [0.5])
-    self.param("offsets", self.TypeList, "Offsets", default = [0])
+    self.param("layers", self.TypeList, "Layers", default = ['Waveguide','DevRec'])
+    self.param("widths", self.TypeList, "Widths", default =  [0.5,1.5])
+    self.param("offsets", self.TypeList, "Offsets", default = [0,0])
     self.param("CML", self.TypeString, "Compact Model Library (CML)", default = 'GSiP')
     self.param("model", self.TypeString, "CML Model name", default = 'wg_strip_integral_1550') 
     self.cellName="Waveguide"
@@ -26,6 +26,8 @@ class Waveguide(pya.PCellDeclarationHelper):
     return "%s_%s" % (self.cellName, self.path)
   
   def coerce_parameters_impl(self):
+    return
+    
     from SiEPIC.extend import to_itype
     print("GSiP.Waveguide coerce parameters")
     
@@ -133,12 +135,12 @@ class Waveguide(pya.PCellDeclarationHelper):
     t = Trans(angle, False, pts[0])
     pts_txt = str([ [round(p.to_dtype(dbu).x,3), round(p.to_dtype(dbu).y,3)] for p in pts ]).replace(', ',',')
     text = Text ( \
-      'Spice_param:wg_length=%.3fu wg_width=%.3fu points="%s" radius=%s' %\
-        (waveguide_length, self.width, pts_txt,self.radius ), t, 0.1*wg_width, -1  )
+      'Spice_param:wg_length=%.6f wg_width=%.3fu points="%s" radius=%s' %\
+        (waveguide_length*dbu, self.width, pts_txt,self.radius ), t, 0.1*wg_width, -1  )
     text.halign=halign
     shape = self.cell.shapes(LayerDevRecN).insert(text)
     t = Trans(angle, False, pt4)
     text = Text ( \
-      'Length=%.3fu' %(waveguide_length), t, 0.5*wg_width, -1  )
+      'Length=%.6f' %(waveguide_length*dbu), t, 0.5*wg_width, -1  )
     text.halign=halign
     shape = self.cell.shapes(LayerDevRecN).insert(text)

@@ -7,9 +7,13 @@ by Lukas Chrostowski, 2016-2023
 '''
 
 
-def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = None):
-    '''Functional Verification:
-    cell=pya.cell, file_rbd=<str> path.
+def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = None, verify_DFT = True):
+    '''Functional Verification.
+    Input
+        cell: pya.Cell
+        file_rbd: <str> path
+        verify_DFT: True for design for test verification, False to skip.
+        
     Verification of things that are specific to photonic integrated circuits, including
     - Waveguides: paths, radius, bend points, Manhattan
     - Component checking: overlapping, avoiding crosstalk
@@ -184,7 +188,10 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
 
     # Design for Test checking
     from SiEPIC.utils import load_DFT
-    DFT = load_DFT(TECHNOLOGY=TECHNOLOGY)
+    if verify_DFT:
+        DFT = load_DFT(TECHNOLOGY=TECHNOLOGY)
+    else:
+        DFT = None
     if DFT:
         if verbose:
             print(DFT)
@@ -239,6 +246,12 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
         rdb_cat_id_GCarrayconfig.description = "Circuit must be connected such that there is at most %s Grating Coupler(s) %s the opt_in label (laser injection port) and at most %s Grating Coupler(s) %s the opt_in label. \nGrating couplers must be on a %s micron pitch, %s arranged." % (
             int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), dir1,int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']), dir2,float(DFT['design-for-test']['grating-couplers']['gc-pitch']),dir3)
 
+        # minimum-gc-spacing        
+        if 'minimum-gc-spacing' in DFT['design-for-test']['grating-couplers'].keys():
+            rdb_cat_id_GC_min_spacing= rdb.create_category(rdb_cat_id, "Grating coupler: minimum spacing")
+            rdb_cat_id_GC_min_spacing.description = "The grating coupler spacing (pitch) must be at least %s microns." % float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing'])
+
+
     else:
         if verbose:
             print('  No DFT rules found.')
@@ -269,11 +282,8 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     if pin_errors:
         for p in pin_errors:
             if p[0].polygon():
-                print (p)
-                print(p[0].polygon())
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_pinerrors.rdb_id())
                 rdb_item.add_value(pya.RdbItemValue(p[0].polygon().to_dtype(dbu)))
-                # .transformed(p[1].to_trans().to_itrans(dbu))
 
     if timing:
         print("*** layout_check(), timing; done invalid pins ")
@@ -297,7 +307,20 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     from SiEPIC.utils import load_Verification
     verification = load_Verification(TECHNOLOGY=TECHNOLOGY)
     if verification:
-        print(verification)
+        if verbose:
+            print(verification)
+            
+        # perform minimum-radius-check: True or False
+        try:
+            minimum_radius_check = eval(
+                verification["verification"]["minimum-radius-check"]
+            )
+        except:
+            minimum_radius_check = True
+    else:
+        minimum_radius_check = True
+
+    if verification:
         # define device-only layers
         try:
             deviceonly_layers = eval(verification['verification']['shapes-inside-components']['deviceonly-layers'])
@@ -330,13 +353,17 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             iter1.next()
         if verbose:
             print(" - found %s shape(s) not belonging to components " % len(extra_shapes) )
-            for e in extra_shapes:
-                print( "   - %s, %s" % (e[0], e[1]) )
         # add shapes into the results database
         for e in extra_shapes:
             if e[0].dpolygon:
+                if verbose:
+                    print( "   - %s: %s, %s: %s" % (type(e[1]), e[1], type(e[0]), e[0]) )
+                    print( "    - %s, %s" % (e[1].to_trans().to_itrans(dbu), e[0].dpolygon) )
                 rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_shapesoutside.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(e[0].dpolygon.transformed(e[1].to_trans().to_itrans(dbu))))
+                rdb_item.add_value(pya.RdbItemValue(e[0].polygon.transformed(e[1]).to_dtype(dbu)))
+
+
+
 
     if timing:
         print("*** layout_check(), timing; done shapes in component ")
@@ -344,16 +371,20 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
 
 
     # Experimental, attempt to break up the circuit into regions connected by DevRec layers
+    '''
     region = pya.Region()
     for i in range(0, len(components)):
         c = components[i]
         region += pya.Region(c.polygon)
-    print ('DevRec Regions: original %s, merged %s' % (region.count(), region.merge().count()))
+    if verbose:
+        print ('DevRec Regions: original %s, merged %s' % (region.count(), region.merge().count()))
+    '''
+
     '''
     Approach: create lists of components for each merged region, then do the verification on a per-merged-region basis
     reduce the O(n**2) to O((n/10)**2)  (assuming on average 10 components per circuit)
     '''
-
+    
     if timing:
         print("*** layout_check(), timing; counting merged DevRec regions")
         print('    Time elapsed: %s' % (time() - time1))    
@@ -370,19 +401,27 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
         # it could be done perhaps as a parameter (points)
         if c.basic_name == "Waveguide" and c.cell.is_pcell_variant():
             pcell_params = c.cell.pcell_parameters_by_name()
-            Dpath = pcell_params['path']
-            if 'radius' in pcell_params:
-                radius = pcell_params['radius']
-            else:
-                radius = 5
-            if verbose:
-                print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius))
-
-            # Radius check:
-            if not Dpath.radius_check(radius):
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_wg_radius.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue( "The minimum radius is set at %s microns for this waveguide." % (radius) ))
-                rdb_item.add_value(pya.RdbItemValue(Dpath))
+            Dpath = pcell_params["path"]
+            if minimum_radius_check:
+                if "radius" in pcell_params:
+                    radius = pcell_params["radius"]
+                else:
+                    radius = 5
+                if verbose:
+                    print(" - Waveguide: cell: %s, %s" % (c.cell.name, radius))
+    
+                # Radius check:
+                if not Dpath.radius_check(radius):
+                    rdb_item = rdb.create_item(
+                        rdb_cell.rdb_id(), rdb_cat_id_wg_radius.rdb_id()
+                    )
+                    rdb_item.add_value(
+                        pya.RdbItemValue(
+                            "The minimum radius is set at %s microns for this waveguide."
+                            % (radius)
+                        )
+                    )
+                    rdb_item.add_value(pya.RdbItemValue(Dpath))
 
             # Check for waveguides with too few bend points
 
@@ -398,23 +437,41 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
 
         # check all the component's pins to check if they are assigned a net:
+        r1 = pya.Region(c.polygon) # Component's DevRec region
         for pin in c.pins:
-            if pin.type == _globals.PIN_TYPES.OPTICAL and pin.net.idx == None:
-                # disconnected optical pin
-                if verbose:
-                    print(" - Found disconnected pin, type %s, at (%s)" % (pin.type, pin.center))
-                rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_discpin.rdb_id())
-                rdb_item.add_value(pya.RdbItemValue(pin.path.to_dtype(dbu)))
+            if pin.type == _globals.PIN_TYPES.OPTICAL:
+                if pin.net.idx == None:
+                    # disconnected optical pin
+                    if verbose:
+                        print(" - Found disconnected pin, type %s, at (%s)" % (pin.type, pin.center))
+                        pin.display()
+                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_discpin.rdb_id())
+                    rdb_item.add_value(pya.RdbItemValue(pin.path.to_dtype(dbu)))
+
+                # Check for pin errors, facing the wrong way in the Component
+                # ***** 
+                pts = pin.path.get_points()[0]
+                px, py = pts.x, pts.y
+                test_box = pya.Box(px - 1, py - 1, px + 1, py + 1)
+                r2 = pya.Region(test_box)
+                polygon_and = [p for p in r1 & r2]
+                if not polygon_and: 
+                    # Pin's first point is not inside the DevRec
+                    test_box = pya.Box(px - 5, py - 5, px + 5, py + 5)
+                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_comp_pinerrors.rdb_id())
+                    rdb_item.add_value(pya.RdbItemValue(pya.Polygon(test_box).to_dtype(dbu)))
+                    rdb_item.add_value(pya.RdbItemValue(
+                        "The components with the pin problem is: " + c.component))
+                    if verbose:
+                        print (str(test_box))
 
         # Verification: overlapping components (DevRec)
             # automatically takes care of waveguides crossing other waveguides & components
         # Region: put in two DevRec polygons (in raw), measure area, merge, check if are is the same
         #  checks for touching but not overlapping DevRecs
         for i2 in range(i + 1, len(components)):
-            
             c2 = components[i2]
-            r1 = pya.Region(c.polygon)
-            r2 = pya.Region(c2.polygon)
+            r2 = pya.Region(c2.polygon) # Component's DevRec region
             polygon_and = [p for p in r1 & r2]
             if polygon_and:
                 print(" - Found overlapping components: %s, %s" % (c.component, c2.component))
@@ -440,6 +497,28 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                         rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GCorient.rdb_id())
                         rdb_item.add_value(pya.RdbItemValue( "Cell %s should be %s degrees" % (ci,DFT_GC_angle) ))
                         rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
+
+                # minimum-gc-spacing        
+                #  grating couplers need to be far enough apart for the automated probe station so it doesn't get confused
+                # check if the component "c" in the loop is a grating coupler:
+                if 'minimum-gc-spacing' in DFT['design-for-test']['grating-couplers'].keys():
+                    test = [ci.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
+                    if any(test):
+                        min_gc_spacing = float(DFT['design-for-test']['grating-couplers']['minimum-gc-spacing']) / dbu
+                        for i2 in range(i + 1, len(components)):
+                            c2 = components[i2]
+                            c2i = c2.basic_name
+                            # check if the 2nd component "c2" in the loop is a grating coupler:
+                            test = [c2i.startswith(k) for k in DFT['design-for-test']['grating-couplers']['gc-orientation'].keys()]
+                            if any(test):
+                                # compare two grating coupler distances, versus the rule
+                                dist = (c.trans.disp-c2.trans.disp).abs()
+                                # print('dist: %s, %s' % (dist, min_gc_spacing))
+                                if dist < min_gc_spacing:
+                                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_GC_min_spacing.rdb_id())
+                                    rdb_item.add_value(pya.RdbItemValue( "Grating couplers should be at least %s microns apart (center-to-center pitch)" % (min_gc_spacing) ))
+                                    rdb_item.add_value(pya.RdbItemValue(c.polygon.to_dtype(dbu)))
+                                    rdb_item.add_value(pya.RdbItemValue(c2.polygon.to_dtype(dbu)))
 
 
         # Pre-simulation check: do components have models?
@@ -497,7 +576,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                 # find the GC closest to the opt_in label.
                 components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
                                            key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
-                # GC too far check:
+                # GC opt_in label too far check:
                 if components_sorted:
                     dist_optin_c = components_sorted[0].trans.disp.to_p(
                     ).distance(pya.Point(t.x, t.y).to_dtype(1))
@@ -510,7 +589,10 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
                                   (components_sorted[0].instance, opt_in[ti1]['opt_in']))
                         rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_optin_toofar.rdb_id())
                         rdb_item.add_value(pya.RdbItemValue(pya.Polygon(box).to_dtype(dbu)))
-    
+                        rdb_item.add_value(pya.RdbItemValue(components_sorted[0].polygon.to_dtype(dbu)))
+                        # it would be nice to highlight the entire text, but bbox returns a point https://www.klayout.de/doc-qt5/code/class_DText.html#method18
+                        # rdb_item.add_value(pya.RdbItemValue(t.bbox()))
+
                     # starting with each opt_in label, identify the sub-circuit, then GCs, and
                     # check for GC spacing
                     trimmed_nets, trimmed_components = trim_netlist(
@@ -612,8 +694,9 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             v = pya.MessageBox.warning(
                 "Errors", msg, pya.MessageBox.Ok)
             lv.show_rdb(rdb_i, cv.cell_index)
-        else: 
-            print(msg)
+        print(msg)
+        for e in rdb.each_item():
+            print('Error: %s: %s' % (rdb.category_by_id(e.category_id()).name(),rdb.category_by_id(e.category_id()).description))
     else:
         if Python_Env == 'KLayout_GUI':
             v = pya.MessageBox.warning("Errors", "No layout errors detected.", pya.MessageBox.Ok)
@@ -656,5 +739,5 @@ if __name__ == "__main__":
     print('SiEPIC-Tools functional verification')
     from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, layout, cell = get_layout_variables()  
-    num_errors = layout_check(cell=cell, verbose=True)
+    num_errors = layout_check(cell=cell, verbose=False)
     

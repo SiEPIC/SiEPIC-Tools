@@ -1,4 +1,3 @@
-# $autorun
 """
 This file is part of the SiEPIC-Tools and SiEPIC-GSiP PDK
 by Lukas Chrostowski (c) 2015-2017
@@ -35,17 +34,6 @@ Lukas 2024/10
  
 """
 
-print('SiEPIC-GSiP PDK Python module: load library GDS/OAS cells and PCells')
+from SiEPIC.scripts import load_klayout_library
 
-verbose = False
-
-tech = 'GSiP'
-
-from SiEPIC.scripts import load_klayout_library , technology_libraries
-
-# Load the library
-load_klayout_library(tech, tech, 'SiEPIC Generic SiP, v1.1', 'gds/building_blocks','pymacros/pcells_GSiP', verbose=verbose)
-
-# List the libraries loaded       
-technology_libraries(tech)
-
+load_klayout_library('GSiP', 'GSiP', 'SiEPIC Generic SiP, v1.1', 'gds/building_blocks','pymacros/pcells_GSiP', verbose=False)

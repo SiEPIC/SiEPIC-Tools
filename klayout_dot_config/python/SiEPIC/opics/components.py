@@ -62,9 +62,10 @@ class componentModel:
         self.sparam_file = filename
 
         for key, value in kwargs.items():
-            self.componentParameters.append([key, str(value)])
+            self.componentParameters.append([key, value])
 
-    def load_sparameters(self, data_folder: PosixPath, filename: str) -> ndarray:
+    def load_sparameters(self, data_folder: PosixPath, filename: str, 
+            verbose: bool = True) -> ndarray:
         """
         Loads sparameters either from an npz file or from a raw sparam\
              file using a look-up table.
@@ -90,6 +91,7 @@ class componentModel:
                 self.componentParameters,
                 self.nports,
                 self.sparam_attr,
+                verbose = verbose
             )
             return self.interpolate_sparameters(
                 self.f, componentData[0], componentData[1]

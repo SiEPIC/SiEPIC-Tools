@@ -1,0 +1,6 @@
+pytest --cov=klayout_dot_config/python/SiEPIC \
+	--ignore=klayout_dot_config/python/SiEPIC/lumerical \
+	--ignore=klayout_dot_config/python/SiEPIC/tidy3d \
+	klayout_dot_config \
+	--cov-report=xml
+

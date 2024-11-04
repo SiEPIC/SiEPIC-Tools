@@ -1,10 +1,16 @@
+[tool.setuptools]
+packages = [
+  "GSiP",
+]
+
+
 [project]
-name = "SiEPIC"
-version = "0.5.16"
+name = "GSiP"
+version = "0.4.24"
 authors = [
   { name="Lukas Chrostowski", email="lukasc@ece.ubc.ca" },
 ]
-description = "SiEPIC-Tools: for silicon photonics layout, design, verification and circuit simulation"
+description = "GSiP: generatic process design kit (PDK). "
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -13,12 +19,13 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "numpy", 
-  "scipy",
-  "pandas",
-  "requests",
-  "klayout"] 
+  "SiEPIC>=0.5.4",
+  "numpy",
+  "packaging",
+]
+
 
 [project.urls]
 Homepage = "https://github.com/SiEPIC/SiEPIC-Tools"
 Issues = "https://github.com/SiEPIC/SiEPIC-Tools/issues"
+
