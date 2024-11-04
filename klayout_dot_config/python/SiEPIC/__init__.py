@@ -28,14 +28,15 @@ else:
         
 
 
+try:
+    # Start timer
+    import time
+    start_time = time.time()
+    from .scripts import version_check
 
-# Start timer
-import time
-start_time = time.time()
-from .scripts import version_check
+    version_check()
 
-version_check()
-
-execution_time = time.time() - start_time
-print(f"Version check, time: {execution_time} seconds")
-
+    execution_time = time.time() - start_time
+    print(f"Version check, time: {execution_time} seconds")
+except:
+    pass
