@@ -15,7 +15,9 @@ classifiers = [
 dependencies = [
   "numpy", 
   "scipy",
-  "pandas"] 
+  "pandas",
+  "requests",
+  "klayout"] 
 
 [project.urls]
 Homepage = "https://github.com/SiEPIC/SiEPIC-Tools"

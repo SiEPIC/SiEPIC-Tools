@@ -31,6 +31,7 @@ user_select_opt_in
 fetch_measurement_data_from_github
 measurement_vs_simulation
 resize waveguide
+layout_diff
 replace_cell
 svg_from_cell
 zoom_out: When running in the GUI, Zoom out and show full hierarchy
@@ -38,6 +39,7 @@ export_layout
 instantiate_all_library_cells
 load_klayout_library
 technology_libraries
+version_check
 
 '''
 
@@ -3073,7 +3075,52 @@ def resize_waveguide():
             wdg.show()
 
 
-def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True, RequiredCharacter = '$', debug = False):
+def layout_diff(cell1, cell2, tol = 1, verbose=True):
+    '''
+    Check two cells to make sure they are identical, within a tolerance.
+    Arguments:
+        cell1, cell2: pya.Cell()
+        tol = 1 nm
+    Returns:
+        Number of differences
+    Limitations:
+        Both cells should be part of the same layout.
+
+    Based on https://github.com/atait/lytest
+    '''
+
+    if not cell1.layout() == cell2.layout():
+        raise Exception ('SiEPIC.scripts.layout_diff is only implement for cells in the same layout.')
+
+    # Count the differences
+    diff_count = 0
+
+    # Get a list of the layers
+    layers = []
+    layout = cell1.layout()
+    for li in layout.layer_indices():
+        layers.append ( li )
+
+    # Do geometry checks on each layer
+    for li in layers:
+        r1 = pya.Region(cell1.begin_shapes_rec(li))
+        r2 = pya.Region(cell2.begin_shapes_rec(li))
+
+        rxor = r1 ^ r2
+
+        if tol > 0:
+            rxor.size(-tol)
+
+        if not rxor.is_empty():
+            diff_count += rxor.size()
+            if verbose:
+                print(
+                    f" - SiEPIC.scripts.layout_diff: {rxor.size()} differences found in {cell1.name} on layer {layout.get_info(li)}."
+                )
+    return diff_count
+    
+    
+def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True, RequiredCharacter = '$', run_layout_diff = True, debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
@@ -3174,10 +3221,17 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
                         print('   - looking for cell. %s, %s, %s' % (cell_y_name, cell_y, layout.cell(cell_y_name)))
                         log += '   - Warning: cell destroyed, skipping replacement\n'
                         break  # skip this cell
+                    # Check if the BB cells are the same, by doing an XOR operation
+                    # from . import layout_diff
+                    if run_layout_diff:
+                        if layout_diff(inst.cell, cell_x, tol=0):
+                            if debug:
+                                print("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
+                            break;                        
                     # replace with CELL_Y
                     if inst.is_regular_array():
                         if debug:
-                            print("    - replacing %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
+                            print("    - checked, and replaced %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
                         ci = inst.cell_inst
                         cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
                     else:
@@ -3619,4 +3673,89 @@ def technology_libraries(technology):
             tech_libs.append(l.name())
 
     print('Libraries associated with Technology %s: %s' % (tech_name, tech_libs))     
+    
+def version_latest():
+    '''
+    Compare to the current version
+    '''
+    
+    import requests
+    import concurrent.futures
+
+    import time
+    # Start timer
+    start_time = time.time()
+
+
+    def get_latest_version(package_name, request_timeout=1):
+        #print(f"fetching version for {package_name}.")
+        url = f"https://pypi.org/pypi/{package_name}/json"
+        try:
+            response = requests.get(url, timeout=request_timeout)
+            if response.status_code == 200:
+                data = response.json()
+                return data["info"]["version"]
+        except requests.RequestException as e:
+            print(f"Error fetching version for {package_name}: {e}")
+        return None
+
+    # Function to run the version check asynchronously
+    def check_version_async(package_name, request_timeout=1):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(get_latest_version, package_name, request_timeout)
+            # future.result() can be called later when needed, allowing for background execution
+            # print(f"future: {future}")
+            return future
+    
+    # Example usage:
+    package_name = "SiEPIC"
+    future = check_version_async(package_name)    
+    #print(f"future: {future}")
+    execution_time = time.time() - start_time
+    #print(f"Execution time: {execution_time} seconds")
+    return future
+    
+def version_check():
+    '''
+    Query the PyPI Python database to find out the latest version of SiEPIC
+    '''
+
+    import SiEPIC
+    version_future = SiEPIC.scripts.version_latest()
+    if not version_future:
+        return None
+
+    #from time import sleep 
+    #sleep(0.2)
+    
+    while not version_future.done():
+        print("Continuing with application startup tasks...")
+        time.sleep(0.05)  # Emulate work done in the main thread
+    
+    import concurrent.futures
+    # Later, when the version is needed, you can check the result (it may already be ready)
+    # with a timeout for the future (e.g., 1 second)
+    try:
+        latest_version = version_future.result(timeout=0.1)  # Set max wait for result
+    except concurrent.futures.TimeoutError:
+        print("The SiEPIC version check took too long and was cancelled.")
+        return 
+
+    if not latest_version:
+        return 
+    
+    import SiEPIC
+    from SiEPIC._globals import Python_Env
+    from packaging import version
+    if version.parse(SiEPIC.__version__) < version.parse(latest_version):
+        if Python_Env == 'KLayout_GUI':
+            pya.MessageBox.warning(
+                "Update SiEPIC-Tools", f'New version of SiEPIC-Tools is available ({latest_version} vs {SiEPIC.__version__}).' , pya.MessageBox.Ok)
+        else:
+            print(f'New version of SiEPIC-Tools is available ({latest_version} vs {SiEPIC.__version__}).' )
+    else:
+        print(f'SiEPIC-Tools is up to date ({latest_version} vs {SiEPIC.__version__}).' )
+        
+
+        
     
