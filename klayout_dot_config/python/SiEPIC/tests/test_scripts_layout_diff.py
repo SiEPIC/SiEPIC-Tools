@@ -50,14 +50,10 @@ def test_layout_diff():
     print(num_diff)
     assert num_diff == 123
 
-    
     cell3 = cell1.dup()
     num_diff = layout_diff(cell1, cell3)
     print(num_diff)
     assert num_diff == 0
-    
-    
-                                           
 
 if __name__ == "__main__":
     test_layout_diff()
