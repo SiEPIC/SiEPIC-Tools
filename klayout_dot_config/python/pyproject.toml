@@ -1,6 +1,6 @@
 [project]
 name = "SiEPIC"
-version = "0.5.15"
+version = "0.5.16"
 authors = [
   { name="Lukas Chrostowski", email="lukasc@ece.ubc.ca" },
 ]
