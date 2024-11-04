@@ -3089,22 +3089,34 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     Based on https://github.com/atait/lytest
     '''
 
-    if not cell1.layout() == cell2.layout():
-        raise Exception ('SiEPIC.scripts.layout_diff is only implement for cells in the same layout.')
+    # Get a list of the layers 
+    layers = []
+    layout1 = cell1.layout()
+    layout2 = cell2.layout()
+    if layout1 == layout2:
+        # cells from the same layout
+        for li in layout1.layer_indices():
+            layers.append ( (li,li) )
+    else:
+        # cells from different layouts
+        #raise Exception ('SiEPIC.scripts.layout_diff is only implement for cells in the same layout.')
+        for ll1 in layout1.layer_indices():
+            li1 = layout1.get_info(ll1)
+            ll2 = layout2.find_layer(layout1.get_info(ll1))
+            if ll2 is None:
+                raise Exception(
+                    f"Layer {li1} in cell1 is not present in cell2."
+                )
+    
+            layers.append((ll1, ll2))
 
     # Count the differences
     diff_count = 0
 
-    # Get a list of the layers
-    layers = []
-    layout = cell1.layout()
-    for li in layout.layer_indices():
-        layers.append ( li )
-
     # Do geometry checks on each layer
-    for li in layers:
-        r1 = pya.Region(cell1.begin_shapes_rec(li))
-        r2 = pya.Region(cell2.begin_shapes_rec(li))
+    for li1,li2 in layers:
+        r1 = pya.Region(cell1.begin_shapes_rec(li1))
+        r2 = pya.Region(cell2.begin_shapes_rec(li2))
 
         rxor = r1 ^ r2
 
@@ -3115,22 +3127,31 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
             diff_count += rxor.size()
             if verbose:
                 print(
-                    f" - SiEPIC.scripts.layout_diff: {rxor.size()} differences found in {cell1.name} on layer {layout.get_info(li)}."
+                    f" - SiEPIC.scripts.layout_diff: {rxor.size()} differences found in {cell1.name} on layer {layout1.get_info(li1)}."
                 )
+                print(r1)
+                print(r2)
+                print(rxor)
     return diff_count
     
     
-def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True, RequiredCharacter = '$', run_layout_diff = True, debug = False):
+def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = True, debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
     useful for blackbox IP cell replacement
+    
     - load layout containing cell_y_name from cell_y_file or cell_y_library
     - replace all cell_x_name* instances with cell_y
     - Exact = True: the cell name must match exactly
             = False: the cell_y_name appears at the beginning of the cells to be replaced
                      and RequiredCharacter appears directly after, e.g,. '$' as KLayout appends during merging
               (exact match is still included)
+    run_layout_diff = True: 
+        perform an xor with the black box cell in the layout, versus the original (reference) black box
+        requires cell_ref_bb
+    cell_ref_bb: the black box cell, which will be compared with the cell_x
+    check_bbox = True: make sure the bounding box for the two cells are the same
     
     Black box                   True geometry
     Basename_BB, Basename_BB*   YES: Basename
@@ -3143,6 +3164,18 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
         print(" - cell replacement for: %s, with cell %s (%s or %s), "  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library))
     log = ''
     log += "- cell replacement for: %s, with cell %s (%s or %s)\n"  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library)
+
+    # Find the cell name from the cell_ref_bb
+    if not cell_x_name:
+        if cell_ref_bb:
+            cell_x_name = cell_ref_bb.name
+        else:
+            raise Exception ('missing replacement cell name')
+
+    # Make sure we can run the layout diff check.
+    if run_layout_diff:
+        if not cell_ref_bb:
+            raise Exception ('missing reference black box cell, required for layout diff check')
 
     # Find the cells that need replacement (cell_x)
     # find cell name exactly matching cell_x_name
@@ -3165,7 +3198,7 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
         if debug:
             print("  - none found: %s" % cell_x_name)
         log += " - none found: %s" % cell_x_name
-        return
+        return log, None, False
 
     if Exact:
         if debug:
@@ -3176,6 +3209,12 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
             print("  - non-exact match: %s" % ([c.name for c in cells_x]) )
         log += "  - non-exact match: %s" % ([c.name for c in cells_x]) 
     
+    # if you don't provide the cell name, get it from the file
+    if not cell_y_name:
+        layout1 = pya.Layout()
+        layout1.read(cell_y_file)
+        cell_y_name = layout1.top_cell().name
+
     # Load the new cell:   
     if cell_y_file:
         cell_y = layout.cell(cell_y_name)
@@ -3200,6 +3239,10 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
     if cells_x:
         log += "   - replacing cells: %s\n"  % ([c.name for c in cells_x])
         
+        
+    # Perform replacement
+    count = 0
+    error = False
     for cell_x in cells_x:
         if debug:
             print("   - replace_cell: found cells to be replaced: %s"  % (cell_x.name))
@@ -3224,10 +3267,10 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
                     # Check if the BB cells are the same, by doing an XOR operation
                     # from . import layout_diff
                     if run_layout_diff:
-                        if layout_diff(inst.cell, cell_x, tol=0):
-                            if debug:
-                                print("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
-                            raise Exception ("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
+                        if layout_diff(cell_ref_bb, cell_x, tol=0, verbose=True):
+                            print("    - ERROR: black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
+                            error = True
+                            # raise Exception ("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
                             break;                        
                     # replace with CELL_Y
                     if inst.is_regular_array():
@@ -3235,13 +3278,15 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
                             print("    - checked, and replaced %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
                         ci = inst.cell_inst
                         cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
+                        count += 1
                     else:
                         if debug:
                             print("    - replacing %s in %s, with cell: %s" % (cell_x.name, cc.name, cell_y.name))
                         cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans))
+                        count += 1
                 inst = next(itr, None)
 
-    return log
+    return log, count, error
 
 
 def svg_from_cell(verbose=True):
@@ -3435,7 +3480,7 @@ def instantiate_all_library_cells(topcell, terminator_cells = None, terminator_l
             else:
                 print('Error in: %s' % n)
             p.inc()
-        x, y = xmax, 0
+        x, y = xmax, 0 
         
         # all the fixed cells
         for c in li.layout().each_top_cell():
