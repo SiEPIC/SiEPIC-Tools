@@ -127,7 +127,7 @@ def test_bezier_bends():
     if Python_Env == 'Script':
         from SiEPIC.utils import klive
         klive.show(file_out, technology=tech_name, keep_position=True)
-
+    os.remove(file_out)
     # Plot 
     # cell.plot() # in the browser
 
@@ -223,6 +223,7 @@ def test_bezier_tapers():
     if Python_Env == 'Script':
         from SiEPIC.utils import klive
         klive.show(file_out, technology=tech_name, keep_position=True)
+    os.remove(file_out)
 
     # Plot 
     # cell.plot() # in the browser

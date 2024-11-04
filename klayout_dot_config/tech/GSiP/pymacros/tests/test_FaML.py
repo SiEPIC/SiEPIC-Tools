@@ -105,6 +105,7 @@ def test_FaML_two():
     if Python_Env == 'Script':
         from SiEPIC.utils import klive
         klive.show(file_out, lyrdb_filename=file_lyrdb, technology=tech_name)
+    os.remove(file_out)
 
     if num_errors > 0:
         raise Exception ('Errors found in test_FaML_two')

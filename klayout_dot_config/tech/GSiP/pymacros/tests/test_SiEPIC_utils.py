@@ -127,6 +127,7 @@ def test_waveguide_length():
     if Python_Env == 'Script':
         from SiEPIC.utils import klive
         klive.show(file_out, technology=tech_name, keep_position=True)
+    os.remove(file_out)
 
 
     from SiEPIC.utils import waveguide_length
