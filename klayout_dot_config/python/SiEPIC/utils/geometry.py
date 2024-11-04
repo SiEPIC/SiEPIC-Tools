@@ -7,6 +7,21 @@ translate_from_normal2: curve translation
   Author: Lukas Chrostowski
 
 
+Functions:
+
+GeometryError
+Point
+Line
+
+bezier_line
+curvature_bezier
+max_curvature
+min_curvature
+curve_length
+bezier_optimal
+translate_from_normal2
+box_bezier_corners
+
 """
 import numpy as np
 from numpy import sqrt
@@ -61,8 +76,12 @@ class Point(object):
         return str(Point({self.x}, {self.y}))
 
     def norm(self):
+        '''Euclidean length'''
         return sqrt(self.x**2 + self.y**2)
 
+    def long_edge_length(self):
+        '''return the longest segment of a Manhattan distance'''
+        return max(self.x, self.y)
 
 class Line(Point):
     """ Defines a line """
@@ -149,6 +168,13 @@ def max_curvature(P0, P1, P2, P3):
     curv = curvature_bezier(P0, P1, P2, P3)(t)
     max_curv = np.max(np.abs(curv.flatten()))
     return max_curv
+
+def min_curvature(P0, P1, P2, P3):
+    """Gets the minimum curvature of Bezier curve"""
+    t = np.linspace(0, 1, 300)
+    curv = curvature_bezier(P0, P1, P2, P3)(t)
+    min_curv = np.min(np.abs(curv.flatten()))
+    return min_curv
 
 
 def _curvature_penalty(P0, P1, P2, P3):
@@ -348,7 +374,7 @@ try:
     import pya
     _bezier_optimal_pure = bezier_optimal
 
-    def bezier_optimal(P0, P3, *args, **kwargs):
+    def bezier_optimal(P0, P3, *args, accuracy = 0.001, **kwargs):
         P0 = Point(P0.x, P0.y)
         P3 = Point(P3.x, P3.y)
         scale = (P3 - P0).norm()  # rough length.
@@ -359,14 +385,14 @@ try:
         bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
 
         _, bezier_point_coordinates_sampled = \
-            sample_function(bezier_point_coordinates, [0, 1], tol=0.001 / scale)  # tol about 1 nm
+            sample_function(bezier_point_coordinates, [0, 1], tol=accuracy / scale)  # tol about 1 nm
 
         # # This yields a better polygon
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(.001 / scale),
+            np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(accuracy / scale),
                       axis=1)  # add a point right after the first one
         bezier_point_coordinates_sampled = \
-            np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - .001 / scale),
+            np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - accuracy / scale),
                       axis=1)  # add a point right before the last one
         # bezier_point_coordinates_sampled = \
         #     np.append(bezier_point_coordinates_sampled, np.atleast_2d(bezier_point_coordinates(1 + .001 / scale)).T,
@@ -376,6 +402,71 @@ try:
 
 except ImportError:
     pass
+
+def bezier_cubic(P0, P3, angle0, angle3, a, b, accuracy = 0.001, verbose=False, plot=False, *args, **kwargs):
+    '''
+    Calculate a cubic Bezier curve between Points P0 and P3, 
+    where the control point positions P1 and P2 are determined by
+    the angles at P0 (angle0) and P3 (angle3), 
+    at a distance of a * scale from P0, and b * scale from P3,
+    where scale is the longest segment in a Manhattan route between P0 and P3.
+
+    Args:
+        P0, P3: pya.DPoint (in microns)
+        angle0, angle3: radians
+        a, b: <float>. 0 corresponds to P1=P0, and 1 corresponds to P1 at the corner of a 90º bend
+        accuracy: 0.001 = 1 nm
+
+    Returns:
+        list of pya.DPoint
+
+    Example:
+        Bezier curve can approximate a 1/4 circle (arc) for a=b=0.553
+            # https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
+    '''
+
+    P0 = Point(P0.x, P0.y)
+    P3 = Point(P3.x, P3.y)
+    scale = (P3 - P0).long_edge_length()  # longest distance between the two end points
+    P1 = a * scale * Point(np.cos(angle0), np.sin(angle0)) + P0
+    P2 = P3 - b * scale * Point(np.cos(angle3), np.sin(angle3))
+    new_bezier_line = bezier_line(P0, P1, P2, P3)
+    # new_bezier_line = _bezier_optimal_pure(P0, P3, *args, **kwargs)
+    bezier_point_coordinates = lambda t: np.array([new_bezier_line(t).x, new_bezier_line(t).y])
+
+    _, bezier_point_coordinates_sampled = \
+        sample_function(bezier_point_coordinates, [0, 1], tol=accuracy / scale) 
+
+    # # This yields a better polygon
+    bezier_point_coordinates_sampled = \
+        np.insert(bezier_point_coordinates_sampled, 1, bezier_point_coordinates(accuracy / scale),
+                    axis=1)  # add a point right after the first one
+    bezier_point_coordinates_sampled = \
+        np.insert(bezier_point_coordinates_sampled, -1, bezier_point_coordinates(1 - accuracy / scale),
+                    axis=1)  # add a point right before the last one
+
+    if verbose:
+        # print the minimum/maximum curvature
+        print ('SiEPIC.utils.geometry.bezier_cubic: minimum radius of curvature = %0.3g' % (1/max_curvature(P0, P1, P2, P3)))
+        print ('SiEPIC.utils.geometry.bezier_cubic: maximum radius of curvature = %0.3g' % (1/min_curvature(P0, P1, P2, P3)))
+    if plot:
+        t = np.linspace(0, 1, 300)
+        curv = curvature_bezier(P0, P1, P2, P3)(t)
+        rc = 1./curv.flatten()
+        import matplotlib.pyplot as plt
+        plt.plot(t, rc, '--pb', label='a=%3g, b=%3g' % (a,b), linewidth=1.5)
+        SizeFont = 19
+        plt.xlabel('Position along path (t)', fontsize=SizeFont)
+        plt.ylabel('Radius of curvature (microns)', fontsize=SizeFont)
+        plt.legend(fontsize=SizeFont)
+        plt.xticks(fontsize=SizeFont)
+        plt.ylim(bottom=0)
+        plt.yticks(fontsize=SizeFont)
+        plt.show()
+
+    return [pya.DPoint(x, y) for (x, y) in zip(*(bezier_point_coordinates_sampled))]
+
+
 
 # ####################### SIEPIC EXTENSION ##########################
 
@@ -471,3 +562,38 @@ def translate_from_normal2(pts, trans, trans2=None):
     return tpts
 
 
+def box_bezier_corners(width, height, dt_bezier_corner, accuracy = 0.1):
+    '''
+    Input width, height: in microns
+    Return a pya.DPolygon of a box with rounded corners, using an optimal Bezier curve
+    with the control points being a fraction (dt_bezier_corner from 0 to 1) away from each corner
+    accuracy 0.001 is 1 nm
+    
+    Some call them squircles: https://arun.is/blog/apple-rounded-corners/
+    '''
+    if dt_bezier_corner == 0:
+        return pya.DBox(-width/2,-height/2,width/2,height/2)
+    else:
+        # top left corner
+        pts = []
+        pts = bezier_optimal(
+            pya.DPoint(-width/2, height/2 - dt_bezier_corner * height),
+            pya.DPoint(-width/2 + dt_bezier_corner * width, height/2),
+            90, 0, 
+            accuracy = accuracy)
+        pts += bezier_optimal(
+            pya.DPoint(width/2 - dt_bezier_corner * width, height/2),
+            pya.DPoint(width/2, height/2 - dt_bezier_corner * height),
+            0, 270,
+            accuracy = accuracy)
+        pts += bezier_optimal(
+            pya.DPoint(width/2, - height/2 + dt_bezier_corner * height),
+            pya.DPoint(width/2 - dt_bezier_corner * width, - height/2),
+            270, 180,
+            accuracy = accuracy)
+        pts += bezier_optimal(
+            pya.DPoint(-width/2 + dt_bezier_corner * width, - height/2),
+            pya.DPoint(-width/2, - height/2 + dt_bezier_corner * height),
+            180, 90,
+            accuracy = accuracy)
+        return pya.DPolygon(pts)

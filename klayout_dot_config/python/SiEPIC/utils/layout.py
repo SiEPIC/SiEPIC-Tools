@@ -8,6 +8,8 @@ PDK Pcells.
 
 Functions:
 
+layout_waveguide4
+layout_waveguide3
 layout_waveguide2
 layout_waveguide
 layout_waveguide_sbend_bezier
@@ -15,7 +17,9 @@ make_pin
 y_splitter_tree
 floorplan(topcell, x, y)
 new_layout(tech, topcell_name, overwrite = False)
-
+strip2rib
+FaML_two
+coupler_array
 
 TODO: enhance documentation
 TODO: make some of the functions in util use these.
@@ -209,24 +213,24 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
     return waveguide_length
 
 
-'''
-Create a waveguide, in a specific technology
-inputs
-- cell: into which Cell we add the waveguide
-    from SiEPIC.utils import get_layout_variables
-    TECHNOLOGY, lv, layout, cell = get_layout_variables()
-- pts
-- params, obtained from load_Waveguides_by_Tech and Waveguides.XML
-    must be a primitive waveguide type containing <component> info
-output:
-- waveguide
-- DevRec, PinRec
-by Lukas Chrostowski
-'''
 
 
-def layout_waveguide3(cell, pts, params, debug=False):
 
+def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
+    '''
+    Create a waveguide, in a specific technology
+    inputs
+    - cell: into which Cell we add the waveguide
+        from SiEPIC.utils import get_layout_variables
+        TECHNOLOGY, lv, layout, cell = get_layout_variables()
+    - pts: a list of pya.Points, in database units (e.g., nm)
+    - params, obtained from load_Waveguides_by_Tech and Waveguides.XML
+        must be a primitive waveguide type containing <component> info
+    output:
+    - waveguide
+    - DevRec, PinRec
+    by Lukas Chrostowski
+    '''
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide3: ')
 
@@ -239,10 +243,18 @@ def layout_waveguide3(cell, pts, params, debug=False):
     from SiEPIC.extend import to_itype
     wg_width = to_itype(params['width'], dbu)
     radius = float(params['radius'])
-    model = params['model']
+    if 'model' not in params.keys():
+        params['model'] = ''
     cellName = 'Waveguide'
-    CML = params['CML']
-    waveguide_type = params['waveguide_type']
+    if 'CML' not in params.keys():
+        params['CML'] = ''
+    if 'bezier' not in params.keys():
+        params['adiabatic'] = False
+        params['bezier'] = ''
+    if 'waveguide_type' in params.keys():
+        waveguide_type = params['waveguide_type']
+    else:
+        waveguide_type = params['name']
 
     if debug:
         print(' - waveguide params: %s' % (params))
@@ -260,25 +272,15 @@ def layout_waveguide3(cell, pts, params, debug=False):
 
     # Draw the marking layers
     from SiEPIC.utils import angle_vector
-    LayerPinRecN = layout.layer(TECHNOLOGY['PinRec'])
-
-    make_pin(cell, 'opt1', pts[0], wg_width, LayerPinRecN, angle_vector(pts[0]-pts[1]) % 360)
-    make_pin(cell, 'opt2', pts[-1], wg_width, LayerPinRecN,
-             angle_vector(pts[-1]-pts[-2]) % 360)
+    
+    if drawRec:
+        LayerPinRecN = layout.layer(TECHNOLOGY['PinRec'])
+        make_pin(cell, 'opt1', pts[0], wg_width, LayerPinRecN, angle_vector(pts[0]-pts[1]) % 360)
+        make_pin(cell, 'opt2', pts[-1], wg_width, LayerPinRecN,
+                 angle_vector(pts[-1]-pts[-2]) % 360)
+        LayerDevRecN = layout.layer(TECHNOLOGY['DevRec'])
 
     from pya import Trans, Text, Path, Point
-
-    '''
-    t1 = Trans(angle_vector(pts[0]-pts[1])/90, False, pts[0])
-    cell.shapes(LayerPinRecN).insert(Path([Point(-10, 0), Point(10, 0)], wg_width).transformed(t1))
-    cell.shapes(LayerPinRecN).insert(Text("opt1", t1, 0.3/dbu, -1))
-    
-    t = Trans(angle_vector(pts[-1]-pts[-2])/90, False, pts[-1])
-    cell.shapes(LayerPinRecN).insert(Path([Point(-10, 0), Point(10, 0)], wg_width).transformed(t))
-    cell.shapes(LayerPinRecN).insert(Text("opt2", t, 0.3/dbu, -1))
-    '''
-
-    LayerDevRecN = layout.layer(TECHNOLOGY['DevRec'])
 
     # Compact model information
     angle_vec = angle_vector(pts[0]-pts[1])/90
@@ -309,64 +311,68 @@ def layout_waveguide3(cell, pts, params, debug=False):
 
     t = Trans(angle, False, pt3)
     import re
-    CML = re.sub('design kits/', '', CML, flags=re.IGNORECASE)
-#    CML = CML.lower().replace('design kits/','') # lower: to make it case insensitive, in case WAVEGUIDES.XML contains "Design Kits/" rather than "Design kits/"
-    text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt2)
-    text = Text('Component=%s' % model, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt5)
-    text = Text('cellName=%s' % cellName, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pts[0])
-    pts_txt = str([[round(p.to_dtype(dbu).x, 3), round(p.to_dtype(dbu).y, 3)]
-                  for p in pts]).replace(', ', ',')
-    text = Text(
-        'Spice_param:wg_length=%.9f wg_width=%.3g points="%s" radius=%.3g' %
-        (waveguide_length*1e-6, wg_width*1e-9, pts_txt, radius*1e-6), t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt4)
-    text = Text(
-        'Length=%.3f (microns)' % (waveguide_length), t, 0.5*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
-    t = Trans(angle, False, pt6)
-    text = Text('waveguide_type=%s' % waveguide_type, t, 0.1*wg_width, -1)
-    text.halign = halign
-    shape = cell.shapes(LayerDevRecN).insert(text)
+    if params['CML']:
+        CML = re.sub('design kits/', '', params['CML'], flags=re.IGNORECASE)
+    #    CML = CML.lower().replace('design kits/','') # lower: to make it case insensitive, in case WAVEGUIDES.XML contains "Design Kits/" rather than "Design kits/"
+        text = Text('Lumerical_INTERCONNECT_library=Design kits/%s' % CML, t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt2)
+        text = Text('Component=%s' % params['model'], t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt5)
+        text = Text('cellName=%s' % cellName, t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pts[0])
+
+    if drawRec:
+        pts_txt = str([[round(p.to_dtype(dbu).x, 3), round(p.to_dtype(dbu).y, 3)]
+                      for p in pts]).replace(', ', ',')
+        text = Text(
+            'Spice_param:wg_length=%.9f wg_width=%.3g points="%s" radius=%.3g' %
+            (waveguide_length*1e-6, wg_width*1e-9, pts_txt, radius*1e-6), t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt4)
+        text = Text(
+            'Length=%.3f (microns)' % (waveguide_length), t, 0.5*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
+        t = Trans(angle, False, pt6)
+        text = Text('waveguide_type=%s' % waveguide_type, t, 0.1*wg_width, -1)
+        text.halign = halign
+        shape = cell.shapes(LayerDevRecN).insert(text)
 
     return waveguide_length
 
 
-'''
-Create a waveguide, in a specific technology
-inputs
-- TECHNOLOGY, layout, cell:
-    from SiEPIC.utils import get_layout_variables
-    TECHNOLOGY, lv, layout, cell = get_layout_variables()
-- layers: list of text names, e.g., ['Waveguide']
-- widths: list of floats in units Microns, e.g., [0.50]
-- offsets: list of floats in units Microns, e.g., [0]
-- pts: a list of pya.Points, e.g. 
-    L=15/dbu
-    pts = [Point(0,0), Point(L,0), Point(L,L)]
-- radius: in Microns, e.g., 5
-- adiab: 1 = Bezier curve, 0 = radial bend (arc)
-- bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
-- sbends (optional): sbends (Boolean)
-Note: bezier parameters need to be simulated and optimized, and will depend on 
-    wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
-    most useful for TE 
-by Lukas Chrostowski
-'''
 
 
 def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier, sbends = True):
+    '''
+    Create a waveguide, in a specific technology
+    inputs
+    - TECHNOLOGY, layout, cell:
+        from SiEPIC.utils import get_layout_variables
+        TECHNOLOGY, lv, layout, cell = get_layout_variables()
+    - layers: list of text names, e.g., ['Waveguide']
+    - widths: list of floats in units Microns, e.g., [0.50]
+    - offsets: list of floats in units Microns, e.g., [0]
+    - pts: a list of pya.Points, in database units (e.g., nm)
+        e.g. 
+        L=15/dbu
+        pts = [Point(0,0), Point(L,0), Point(L,L)]
+    - radius: in Microns, e.g., 5
+    - adiab: 1 = Bezier curve, 0 = radial bend (arc)
+    - bezier: the bezier parameter, between 0 and 0.45 (almost a radial bend)
+    - sbends (optional): sbends (Boolean)
+    Note: bezier parameters need to be simulated and optimized, and will depend on 
+        wavelength, polarization, width, etc.  TM and rib waveguides don't benefit from bezier curves
+        most useful for TE 
+    by Lukas Chrostowski
+    '''
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from SiEPIC.extend import to_itype
     from SiEPIC.utils.geometry import bezier_parallel
@@ -490,6 +496,9 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
 
         wg_pts += [pts[-1]]
         wg_pts = pya.Path(wg_pts, 0).unique_points().get_points()
+        if len(wg_pts) < 2:
+            print (' - warning: SiEPIC.utils.layout.layout_waveguide2: less than 2 points.')
+            return 0            
         wg_polygon = Polygon(translate_from_normal(wg_pts, width/2 + (offset if turn > 0 else - offset)) +
                              translate_from_normal(wg_pts, -width/2 + (offset if turn > 0 else - offset))[::-1])
         cell.shapes(layer).insert(wg_polygon)
@@ -655,18 +664,22 @@ def layout_waveguide(cell, layer, points_list, width):
 
 
 def layout_ring(cell, layer, center, r, w):
-    # function to produce the layout of a ring
-    # cell: layout cell to place the layout
-    # layer: which layer to use
-    # center: origin DPoint
-    # r: radius
-    # w: waveguide width
-    # units in microns
+    '''
+    Produce the layout of a ring
+    
+    Args:
+        cell: layout cell to place the layout
+        layer: layer index to use, cell.layout.layer()
+        center: origin pya.DPoint
+        r: radius, units in microns
+        w: waveguide width, units in microns
 
-    # example usage.  Places the ring layout in the presently selected cell.
-    # cell = pya.Application.instance().main_window().current_view().active_cellview().cell
-    # layout_ring(cell, cell.layout().layer(LayerInfo(1, 0)), pya.DPoint(0,0), 10, 0.5)
-
+    Example usage:  
+    Places the ring layout in the presently selected cell.
+    cell = pya.Application.instance().main_window().current_view().active_cellview().cell
+    layout_ring(cell, cell.layout().layer(LayerInfo(1, 0)), pya.DPoint(0,0), 10, 0.5)
+    '''
+    
     layout_arc(cell, layer, center, r, w, 0, 2 * np.pi)
 
 
@@ -1028,17 +1041,19 @@ def make_pin(cell, name, center, w, layer, direction, debug=False):
     name: text label for the pin
     center: location, int [x,y]
     w: pin width
-    layer: layout.layer() type
+    layer: layout.layer() integer type, or string
     direction = 
         0: right
         90: up
         180: left
         270: down
 
-    Units: input can be float for microns, or int for nm
+    Units: input can be float for microns, or int for database units (typ. nm)
     '''
 
-
+    if type(layer) == str:
+        layer = cell.layout().layer(cell.layout().TECHNOLOGY[layer])
+         
     from SiEPIC.extend import to_itype
     from pya import Point, DPoint
     import numpy
@@ -1293,3 +1308,114 @@ def new_layout(tech, topcell_name, GUI=True, overwrite = False):
 
     return topcell, ly
 
+
+def strip2rib(cell, trans, w_slab, w_rib, w_slab_tip, w_strip, length, LayerRib, LayerSlab):
+    '''
+    PCell: Strip to Rib converter (linear)
+        cell: pya.Cell
+        trans: pya.Trans
+        w_slab: width of the slab region of the rib waveguide, in microns
+        w_rib: width of the rib region of the rib waveguide, in microns
+        w_slab_tip: width of the rib tip of the strip waveguide region, in microns
+        w_strip: width of the strip of the strip waveguide, in microns
+        length: taper length, in microns
+            at (0,0): strip waveguide
+        LayerRib, LayerSlab: string, layer names
+        
+    '''
+    from pya import DPoint, DPolygon
+    # waveguide rib
+    nLayerRib = cell.layout().layer(cell.layout().TECHNOLOGY[LayerRib])
+    # box = pya.DBox(0, -w_rib/2, length, w_rib/2)
+    # cell.shapes(LayerRib).insert(box.transformed(trans))
+    poly = DPolygon([DPoint(length,-w_rib/2), DPoint(length,w_rib/2), DPoint(0, w_strip/2), DPoint(0, -w_strip/2)])
+    cell.shapes(nLayerRib).insert(poly.transformed(trans))
+    # waveguide slab
+    nLayerSlab = cell.layout().layer(cell.layout().TECHNOLOGY[LayerSlab])
+    poly = DPolygon([DPoint(length,-w_slab/2), DPoint(length,w_slab/2), DPoint(0, w_slab_tip/2), DPoint(0, -w_slab_tip/2)])
+    cell.shapes(nLayerSlab).insert(poly.transformed(trans))
+
+
+def FaML_two(cell, 
+             label='opt_in_TE_1550_FaML_TestCircuit', 
+             x_offset=0, 
+             y_offset=127e3/2-5e3,
+             pitch = 127e3,
+             cell_name = 'ebeam_dream_FaML_SiN_1550_BB',
+             cell_library = 'EBeam-Dream',
+             cell_params =  {},
+             ):
+    '''
+    Create a layout consisting of two facet-attached micro-lenses (FaML)
+    return the two instances
+    '''
+    from pya import Trans, CellInstArray, Text
+    ly = cell.layout()
+    # Load cell from library
+    if cell_params:
+        cell_ebeam_faml = ly.create_cell(cell_name, cell_library, cell_params)
+    else:
+        cell_ebeam_faml = ly.create_cell(cell_name, cell_library)
+    if not cell_ebeam_faml:
+        raise Exception ('Cannot load cell (%s) from library (%s) with parameters (%s).' % (cell_name, cell_library, cell_params))
+    # lens for the output to the detector
+    t = Trans(Trans.R0, x_offset, y_offset)
+    inst_faml2 = cell.insert(CellInstArray(cell_ebeam_faml.cell_index(), t))
+    # lens for the input from the laser
+    t = Trans(Trans.R0,x_offset,pitch + y_offset)
+    inst_faml1 = cell.insert(CellInstArray(cell_ebeam_faml.cell_index(), t))
+    # automated test label
+    text = Text (label, t)
+    cell.shapes(ly.layer(ly.TECHNOLOGY['Text'])).insert(text).text_size = 5/ly.dbu
+    return [inst_faml1, inst_faml2]
+
+def coupler_array(cell, 
+             x_offset=0, 
+             y_offset=127e3/2-5e3,
+             pitch = 127e3,
+             count = 4,
+             label='opt_in_TE_1550_device_test', 
+             label_location = 2, 
+             label_size = 5,
+             cell_name = 'GC_TE_1550_8degOxide_BB',
+             cell_library = 'EBeam',
+             cell_params =  {},
+             ):
+    '''
+    Create a layout consisting of an array of optical couplers
+    return the instances
+    include automated test labels
+    
+    cell: into which to place the components
+    x_offset, y_offset: location to place them, bottom coupler
+    pitch: the pitch for the coupler array
+    
+    label: on Text layer
+    label_location: 1 is the top
+    label_size: font size
+    
+    cell_name, _library, _params: can be a fixed cell, or a PCell
+    
+    '''
+    from pya import Trans, CellInstArray, Text
+    ly = cell.layout()
+    
+    # Load cell from library, either fixed or PCell
+    cell_coupler = ly.create_cell(cell_name, cell_library, cell_params)
+    if not cell_coupler:
+        cell_coupler = ly.create_cell(cell_name, cell_library)
+    if not cell_coupler:
+        raise Exception ('Cannot load coupler cell (%s) from library (%s) with parameters (%s).' % (cell_name, cell_library, cell_params))
+
+    inst_couplers = []
+    for i in range(count):
+        t = Trans(Trans.R0, x_offset, y_offset + (count-i-1)*pitch)
+        inst_couplers.append( 
+            cell.insert(CellInstArray(cell_coupler.cell_index(), t))
+        )
+        if i==label_location-1:
+            # automated test label
+            text = Text (label, t)
+            cell.shapes(ly.layer(ly.TECHNOLOGY['Text'])).insert(text).text_size = label_size/ly.dbu
+        
+    return inst_couplers

@@ -2,7 +2,7 @@
 SiEPIC-Tools package for KLayout
 '''
 
-__version__ = '0.5.5'
+__version__ = "0.5.16"
 
 print("KLayout SiEPIC-Tools version %s" %__version__)
 
@@ -24,4 +24,19 @@ else:
     if _globals.Python_Env == "KLayout_GUI":
         from . import extend, _globals, core, examples, github, scripts, utils, setup, install, verification
     else:
-        from . import extend, _globals, verification
+        from . import _globals, core, utils, extend, verification, scripts
+        
+
+
+try:
+    # Start timer
+    import time
+    start_time = time.time()
+    from .scripts import version_check
+
+    version_check()
+
+    execution_time = time.time() - start_time
+    print(f"Version check, time: {execution_time} seconds")
+except:
+    pass

@@ -1,4 +1,4 @@
-print('SiEPIC-GSiP PDK Python module: siepic_gsip_pdk, KLayout technology: GSipP')
+print('SiEPIC-GSiP PDK Python module: siepic_gsip_pdk, KLayout technology: GSiP')
 
 # Load the KLayout technology, when running in Script mode
 import pya, os

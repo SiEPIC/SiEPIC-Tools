@@ -57,7 +57,7 @@ def TOP():
 
   print(params)
 
-            if instance.cell.basic_name() == "Waveguide":
+  #          if instance.cell.basic_name() == "Waveguide":
   
   # check if selected PCell is a contra DC
   if "component: ebeam_contra_dc" not in text:
