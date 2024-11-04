@@ -3227,6 +3227,7 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
                         if layout_diff(inst.cell, cell_x, tol=0):
                             if debug:
                                 print("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
+                            raise Exception ("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
                             break;                        
                     # replace with CELL_Y
                     if inst.is_regular_array():
