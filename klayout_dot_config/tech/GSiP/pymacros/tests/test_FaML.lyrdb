@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<report-database>
+ <description/>
+ <original-file/>
+ <generator/>
+ <top-cell>EBeam_LukasChrostowski_MZI2_FaML</top-cell>
+ <tags>
+ </tags>
+ <categories>
+  <category>
+   <name>Component</name>
+   <description/>
+   <categories>
+    <category>
+     <name>No components found</name>
+     <description>At minimum, shapes must be inside a cell and inside a DevRec shape. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Shapes outside component</name>
+     <description>Shapes for device layers need to be inside a component. At minimum, they must be inside a cell and inside a DevRec shape. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Flattened component</name>
+     <description>SiEPIC-Tools Verification, Netlist extraction, and Simulation only functions on hierarchical layouts, and not on flattened layouts.  Add to the discussion here: https://github.com/lukasc-ubc/SiEPIC-Tools/issues/37</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Overlapping component</name>
+     <description>Overlapping components (defined as overlapping DevRec layers; touching is ok)</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Invalid Pin</name>
+     <description>Invalid pin found. Read more about requirements for components: https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout</description>
+     <categories>
+     </categories>
+    </category>
+   </categories>
+  </category>
+  <category>
+   <name>Waveguide</name>
+   <description/>
+   <categories>
+    <category>
+     <name>Path</name>
+     <description>Waveguide path: Only 2 points allowed in a path. Convert to a Waveguide if necessary.</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Radius</name>
+     <description>Not enough space to accommodate the desired bend radius for the waveguide.</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Bend points</name>
+     <description>Waveguide bend should have more points per circle.</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Manhattan</name>
+     <description>The first and last waveguide segment need to be Manhattan (vertical or horizontal) so that they can connect to device pins.</description>
+     <categories>
+     </categories>
+    </category>
+   </categories>
+  </category>
+  <category>
+   <name>Connectivity</name>
+   <description/>
+   <categories>
+    <category>
+     <name>Disconnected pin</name>
+     <description>Disconnected pin</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Mismatched pin</name>
+     <description>Mismatched pin widths</description>
+     <categories>
+     </categories>
+    </category>
+   </categories>
+  </category>
+  <category>
+   <name>Design for test</name>
+   <description/>
+   <categories>
+    <category>
+     <name>opt_in label: same</name>
+     <description>Automated test opt_in labels should be unique.</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>opt_in label: missing</name>
+     <description>Automated test opt_in labels are required for measurements on the Text layer. 
+
+Details on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>opt_in label: too far away</name>
+     <description>Automated test opt_in labels must be placed at the tip of the grating coupler, namely near the (0,0) point of the cell.</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>opt_in label: wavelength</name>
+     <description>Automated test opt_in labels must have a wavelength for a laser specified in the DFT.xml file: 1550.  
+
+Details on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>opt_in label: polarization</name>
+     <description>Automated test opt_in labels must have a polarization as specified in the DFT.xml file: TE. 
+
+Details on the format for the opt_in labels can be found at https://github.com/lukasc-ubc/SiEPIC-Tools/wiki/SiEPIC-Tools-Menu-descriptions#connectivity-layout-check</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Grating coupler orientation</name>
+     <description>The grating coupler is not oriented (rotated) the correct way for automated testing.</description>
+     <categories>
+     </categories>
+    </category>
+    <category>
+     <name>Fibre array configuration</name>
+     <description>Circuit must be connected such that there is at most 1 Grating Coupler(s)  above  the opt_in label (laser injection port) and at most 2 Grating Coupler(s)  below  the opt_in label. 
+Grating couplers must be on a 127.0 micron pitch, vertically arranged.</description>
+     <categories>
+     </categories>
+    </category>
+   </categories>
+  </category>
+ </categories>
+ <cells>
+  <cell>
+   <name>EBeam_LukasChrostowski_MZI2_FaML</name>
+   <variant/>
+   <layout-name/>
+   <references>
+   </references>
+  </cell>
+ </cells>
+ <items>
+ </items>
+</report-database>
