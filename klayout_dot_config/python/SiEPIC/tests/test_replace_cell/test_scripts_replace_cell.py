@@ -126,9 +126,9 @@ def test_replace_cell():
         layout.read(file_in)
         top_cell = layout.top_cell()
         text_out, count, error = replace_cell(layout,
-                                cell_ref_bb = cell_bb,
                                 cell_y_file = file_wb,  
                                 Exact = False, RequiredCharacter='$',
+                                cell_ref_bb = cell_bb,
                                 run_layout_diff = True,
                                 debug = True,
                                 )
