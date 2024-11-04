@@ -31,6 +31,7 @@ user_select_opt_in
 fetch_measurement_data_from_github
 measurement_vs_simulation
 resize waveguide
+layout_diff
 replace_cell
 svg_from_cell
 zoom_out: When running in the GUI, Zoom out and show full hierarchy
@@ -3074,7 +3075,52 @@ def resize_waveguide():
             wdg.show()
 
 
-def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True, RequiredCharacter = '$', debug = False):
+def layout_diff(cell1, cell2, tol = 1, verbose=True):
+    '''
+    Check two cells to make sure they are identical, within a tolerance.
+    Arguments:
+        cell1, cell2: pya.Cell()
+        tol = 1 nm
+    Returns:
+        Number of differences
+    Limitations:
+        Both cells should be part of the same layout.
+
+    Based on https://github.com/atait/lytest
+    '''
+
+    if not cell1.layout() == cell2.layout():
+        raise Exception ('SiEPIC.scripts.layout_diff is only implement for cells in the same layout.')
+
+    # Count the differences
+    diff_count = 0
+
+    # Get a list of the layers
+    layers = []
+    layout = cell1.layout()
+    for li in layout.layer_indices():
+        layers.append ( li )
+
+    # Do geometry checks on each layer
+    for li in layers:
+        r1 = pya.Region(cell1.begin_shapes_rec(li))
+        r2 = pya.Region(cell2.begin_shapes_rec(li))
+
+        rxor = r1 ^ r2
+
+        if tol > 0:
+            rxor.size(-tol)
+
+        if not rxor.is_empty():
+            diff_count += rxor.size()
+            if verbose:
+                print(
+                    f" - SiEPIC.scripts.layout_diff: {rxor.size()} differences found in {cell1.name} on layer {layout.get_info(li)}."
+                )
+    return diff_count
+    
+    
+def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_library=None, Exact = True, RequiredCharacter = '$', run_layout_diff = True, debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
@@ -3175,10 +3221,17 @@ def replace_cell(layout, cell_x_name, cell_y_name, cell_y_file=None, cell_y_libr
                         print('   - looking for cell. %s, %s, %s' % (cell_y_name, cell_y, layout.cell(cell_y_name)))
                         log += '   - Warning: cell destroyed, skipping replacement\n'
                         break  # skip this cell
+                    # Check if the BB cells are the same, by doing an XOR operation
+                    # from . import layout_diff
+                    if run_layout_diff:
+                        if layout_diff(inst.cell, cell_x, tol=0):
+                            if debug:
+                                print("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
+                            break;                        
                     # replace with CELL_Y
                     if inst.is_regular_array():
                         if debug:
-                            print("    - replacing %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
+                            print("    - checked, and replaced %s in %s, with cell array: %s" % (cell_x.name, cc.name, cell_y.name))
                         ci = inst.cell_inst
                         cc.replace(inst, pya.CellInstArray(cell_y.cell_index(),inst.trans, ci.a, ci.b, ci.na, ci.nb))
                     else:

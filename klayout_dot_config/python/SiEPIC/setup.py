@@ -149,6 +149,7 @@ def registerKeyBindings():
     # turn the hash back into a config string
     config = ''.join('{}:{};'.format(key, val) for key, val in sorted(mapping.items()))[:-1]
     pya.Application.instance().set_config('key-bindings', config)
+    
     pya.Application.instance().set_config('edit-connect-angle-mode', 'ortho')
     pya.Application.instance().set_config('edit-inst-angle', '0')
     pya.Application.instance().set_config('edit-move-angle-mode', 'diagonal')
@@ -160,6 +161,8 @@ def registerKeyBindings():
     pya.Application.instance().set_config('guiding-shape-line-width', '0')
     pya.Application.instance().set_config('rdb-marker-color', '#ff0000')
     pya.Application.instance().set_config('rdb-marker-line-width', '8')
+#    pya.Application.instance().set_config('compression-level', '10')
+#    pya.Application.instance().set_config('write-cblocks', 'true')
 #    pya.Application.instance().set_config('default-layer-properties', os.path.join(os.path.realpath(__file__), os.pardir, os.pardir, os.pardir, 'libraries', 'klayout_Layers_EBeam.lyp'))
 
     if pya.Application.instance().get_config('edit-mode') == 'false':
