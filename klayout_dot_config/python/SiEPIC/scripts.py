@@ -3177,7 +3177,7 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     return diff_count
     
     
-def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = False, debug = False):
+def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, OptionalSuffix='_BB', RequiredCharacter = '$', run_layout_diff = False, debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
@@ -3194,18 +3194,13 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
         requires cell_ref_bb
     cell_ref_bb: the black box cell, which will be compared with the cell_x
     check_bbox = True: make sure the bounding box for the two cells are the same
+    OptionalSuffix = "_BB": some people add _BB to their black box cells, optionally remove it if found
     
     Black box                   True geometry
     Basename_BB, Basename_BB*   YES: Basename
     Basename, Basename*         NO: Basename_extension
     Basename, Basename*         YES: DifferentName
     '''
-    
-    import os
-    if debug:
-        print(" - cell replacement for: %s, with cell %s (%s or %s), "  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library))
-    log = ''
-    log += "- cell replacement for: %s, with cell %s (%s or %s)\n"  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library)
 
     # Find the cell name from the cell_ref_bb
     if not cell_x_name:
@@ -3213,6 +3208,12 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
             cell_x_name = cell_ref_bb.name
         else:
             raise Exception ('missing replacement cell name')
+    
+    import os
+    if debug:
+        print(" - cell replacement for: %s, with cell %s (%s or %s), "  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library))
+    log = ''
+    log += "- cell replacement for: %s, with cell %s (%s or %s)\n"  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library)
 
     # Make sure we can run the layout diff check.
     if run_layout_diff:
@@ -3221,13 +3222,19 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
 
     # Find the cells that need replacement (cell_x)
     # find cell name exactly matching cell_x_name
-    cells_x = [layout.cell(cell_x_name)]
+    if layout.cell(cell_x_name):
+        cells_x = [layout.cell(cell_x_name)]
+    else:
+        cells_x = []
     if not Exact:
         # replacement for all cells that:
         # 1) cell name exact matching cell_x_name, OR
         # 2) that begin with the cell name, i.e., xxx* is matched
         #    i.e., xxx and xxx* are matched
-        cells_x += [cell for cell in layout.each_cell() if cell.name.find(cell_x_name+RequiredCharacter) == 0]
+        if OptionalSuffix:
+            cells_x += [cell for cell in layout.each_cell() if cell.name.removesuffix(OptionalSuffix).find(cell_x_name+RequiredCharacter) == 0]
+        else:
+            cells_x += [cell for cell in layout.each_cell() if cell.name.find(cell_x_name+RequiredCharacter) == 0]
 
         # replacement for all cells that:
         # 1) cell name exact matching cell_x_name, OR
