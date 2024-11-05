@@ -3177,7 +3177,7 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     return diff_count
     
     
-def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, OptionalSuffix='_BB', RequiredCharacter = '$', run_layout_diff = False, debug = False):
+def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = True, debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
@@ -3194,7 +3194,6 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
         requires cell_ref_bb
     cell_ref_bb: the black box cell, which will be compared with the cell_x
     check_bbox = True: make sure the bounding box for the two cells are the same
-    OptionalSuffix = "_BB": some people add _BB to their black box cells, optionally remove it if found
     
     Black box                   True geometry
     Basename_BB, Basename_BB*   YES: Basename
@@ -3214,6 +3213,13 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
         print(" - cell replacement for: %s, with cell %s (%s or %s), "  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library))
     log = ''
     log += "- cell replacement for: %s, with cell %s (%s or %s)\n"  % (cell_x_name, cell_y_name, cell_y_file, cell_y_library)
+
+    # Find the cell name from the cell_ref_bb
+    if not cell_x_name:
+        if cell_ref_bb:
+            cell_x_name = cell_ref_bb.name
+        else:
+            raise Exception ('missing replacement cell name')
 
     # Make sure we can run the layout diff check.
     if run_layout_diff:
