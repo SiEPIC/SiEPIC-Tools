@@ -3177,7 +3177,7 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     return diff_count
     
     
-def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = True, debug = False):
+def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = False, debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
@@ -3237,10 +3237,7 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
         # 1) cell name exact matching cell_x_name, OR
         # 2) that begin with the cell name, i.e., xxx* is matched
         #    i.e., xxx and xxx* are matched
-        if OptionalSuffix:
-            cells_x += [cell for cell in layout.each_cell() if cell.name.removesuffix(OptionalSuffix).find(cell_x_name+RequiredCharacter) == 0]
-        else:
-            cells_x += [cell for cell in layout.each_cell() if cell.name.find(cell_x_name+RequiredCharacter) == 0]
+        cells_x += [cell for cell in layout.each_cell() if cell.name.find(cell_x_name+RequiredCharacter) == 0]
 
         # replacement for all cells that:
         # 1) cell name exact matching cell_x_name, OR
