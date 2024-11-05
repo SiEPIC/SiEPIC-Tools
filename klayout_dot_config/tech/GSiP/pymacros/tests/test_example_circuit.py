@@ -16,7 +16,7 @@ usage:
 
 from pya import *
 
-def example_circuit():
+def example_circuit(show_klive=False):
     designer_name = 'Test'
     top_cell_name = 'GSiP_%s' % designer_name
 
@@ -122,9 +122,10 @@ def example_circuit():
 
     # Display in KLayout
     from SiEPIC._globals import Python_Env
-    if Python_Env == 'Script':
-        from SiEPIC.utils import klive
-        klive.show(file_out, technology=tech_name, keep_position=True)
+    if show_klive:
+        if Python_Env == 'Script':
+            from SiEPIC.utils import klive
+            klive.show(file_out, technology=tech_name, keep_position=True)
     os.remove(file_out)
 
     # Plot 
@@ -143,5 +144,5 @@ def test_example_circuit():
     assert example_circuit() == 0
 
 if __name__ == "__main__":
-    example_circuit()
+    example_circuit(show_klive=True)
 

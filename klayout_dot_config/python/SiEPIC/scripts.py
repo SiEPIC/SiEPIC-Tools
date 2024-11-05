@@ -3075,6 +3075,48 @@ def resize_waveguide():
             wdg.show()
 
 
+def check_bb_geometries(topcell, BB_layerinfo=pya.LayerInfo(998,0), verbose=True):
+    '''
+    Check if there are any Black Box layers in the layout.
+    Returns:
+        Count: number of different shapes
+    Args:
+        topcell: pya.Cell
+        BB_layerinfo: pya.LayerInfo
+    '''
+    layout = topcell.layout()
+    layer_bb = layout.layer(BB_layerinfo)  # hard coded for the GSiP PDK
+    r1 = pya.Region(topcell.begin_shapes_rec(layer_bb))
+    diff_count = 0
+    if not r1.is_empty():
+        diff_count = r1.size()
+        if verbose:
+            print(
+                f" - SiEPIC.scripts.check_bb_geometries: {r1.size()} Black Box geometry(ies) found in {topcell.name} on layer {layout.get_info(layer_bb)}."
+        )
+    else:
+        if verbose:
+            print('Black box replacement -- success -- no black box layers remaining.')
+    return diff_count
+
+def cells_containing_bb_layers(topcell, BB_layerinfo=pya.LayerInfo(998,0), verbose=True):
+    '''
+    return a list of cell names that contain black box polygons
+    Args:
+        topcell: pya.Cell
+        BB_layerinfo: pya.LayerInfo
+    '''
+    layout = topcell.layout()
+    iter1 = pya.RecursiveShapeIterator(layout, topcell, layout.layer(BB_layerinfo) )
+    cells = []
+    while not iter1.at_end():
+        cells.append (iter1.cell().name)
+        if verbose:
+            print("   - %s" % iter1.cell().name)
+        iter1.next()        
+    # return unique cell names
+    return sorted(list(set(cells)))
+
 def layout_diff(cell1, cell2, tol = 1, verbose=True):
     '''
     Check two cells to make sure they are identical, within a tolerance.
@@ -3135,7 +3177,7 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     return diff_count
     
     
-def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = True, debug = False):
+def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = False, debug = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
@@ -3158,6 +3200,13 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
     Basename, Basename*         NO: Basename_extension
     Basename, Basename*         YES: DifferentName
     '''
+
+    # Find the cell name from the cell_ref_bb
+    if not cell_x_name:
+        if cell_ref_bb:
+            cell_x_name = cell_ref_bb.name
+        else:
+            raise Exception ('missing replacement cell name')
     
     import os
     if debug:
@@ -3179,7 +3228,10 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
 
     # Find the cells that need replacement (cell_x)
     # find cell name exactly matching cell_x_name
-    cells_x = [layout.cell(cell_x_name)]
+    if layout.cell(cell_x_name):
+        cells_x = [layout.cell(cell_x_name)]
+    else:
+        cells_x = []
     if not Exact:
         # replacement for all cells that:
         # 1) cell name exact matching cell_x_name, OR

@@ -15,7 +15,7 @@ usage:
 
 from pya import *
 
-def test_bezier_bends():
+def test_bezier_bends(show_klive=False):
     designer_name = 'Test_Bezier_bend'
     top_cell_name = 'GSiP_%s' % designer_name
 
@@ -124,15 +124,16 @@ def test_bezier_bends():
 
     # Display in KLayout
     from SiEPIC._globals import Python_Env
-    if Python_Env == 'Script':
-        from SiEPIC.utils import klive
-        klive.show(file_out, technology=tech_name, keep_position=True)
+    if show_klive:
+        if Python_Env == 'Script':
+            from SiEPIC.utils import klive
+            klive.show(file_out, technology=tech_name, keep_position=True)
     os.remove(file_out)
     # Plot 
     # cell.plot() # in the browser
 
 
-def test_bezier_tapers():
+def test_bezier_tapers(show_klive=False):
     designer_name = 'Test_Bezier_tapers'
     top_cell_name = 'GSiP_%s' % designer_name
 
@@ -220,9 +221,10 @@ def test_bezier_tapers():
 
     # Display in KLayout
     from SiEPIC._globals import Python_Env
-    if Python_Env == 'Script':
-        from SiEPIC.utils import klive
-        klive.show(file_out, technology=tech_name, keep_position=True)
+    if show_klive:
+        if Python_Env == 'Script':
+            from SiEPIC.utils import klive
+            klive.show(file_out, technology=tech_name, keep_position=True)
     os.remove(file_out)
 
     # Plot 
@@ -231,5 +233,5 @@ def test_bezier_tapers():
 
 if __name__ == "__main__":
     # test_bezier_bends()
-    test_bezier_tapers()
+    test_bezier_tapers(show_klive=True)
 

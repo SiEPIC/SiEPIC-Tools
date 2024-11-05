@@ -5,9 +5,9 @@ by Lukas Chrostowski 2024
 
 """
 
-def test_replace_cell():
+def test_replace_cell(show_klive=False):
     '''
-
+    show_klive: True to open the layout in KLayout using KLive
     '''
 
     import pya
@@ -29,7 +29,7 @@ def test_replace_cell():
         raise Exception("Errors", "This example requires SiEPIC-Tools version 0.5.4 or greater.")
 
 
-    from SiEPIC.scripts import replace_cell, delete_extra_topcells
+    from SiEPIC.scripts import replace_cell, delete_extra_topcells, cells_containing_bb_layers, check_bb_geometries
 
     # The circuit layout that contains BB cells
     path = os.path.dirname(os.path.realpath(__file__))
@@ -51,20 +51,6 @@ def test_replace_cell():
     ly_wb.read(file_wb)
     cell_wb = ly_wb.top_cell()
     '''
-    def check_bb_geometries(layout):
-        '''
-        check if there are any Black Box layers in the layout
-        '''
-        layer_bb = layout.layer(pya.LayerInfo(998,0))  # hard coded for the GSiP PDK
-        r1 = pya.Region(top_cell.begin_shapes_rec(layer_bb))
-        diff_count = 0
-        if not r1.is_empty():
-            diff_count = r1.size()
-            print(
-                f" - SiEPIC.scripts.layout_diff: {r1.size()} Black Box geometry(ies) found in {top_cell.name} on layer {layout.get_info(layer_bb)}."
-            )
-        return diff_count
-
     
     # Check -- exact replacement (without $)
     if 1:
@@ -77,18 +63,17 @@ def test_replace_cell():
                                 )
         print('replaced %s' %count)
         assert count == 1
-        assert check_bb_geometries(layout) == 1
+        assert check_bb_geometries(top_cell) == 1
+        assert cells_containing_bb_layers(top_cell) == ['ebeam_y_adiabatic_500pin$1']
 
         file_out = os.path.join(path,'example_replaced.gds')
         delete_extra_topcells(layout, top_cell.name)
         layout.write(file_out)
-        try:
+        if show_klive:
             # Display the layout in KLayout, using KLayout Package "klive", which needs to be installed in the KLayout Application
             if Python_Env == 'Script':
                 from SiEPIC.utils import klive
                 klive.show(file_out, technology='EBeam')
-        except:
-            pass
         os.remove(file_out)
 
 
@@ -106,18 +91,17 @@ def test_replace_cell():
                                 )
         print('replaced %s' %count)
         assert count == 2
-        assert check_bb_geometries(layout) == 0
+        assert check_bb_geometries(top_cell) == 0
+        assert cells_containing_bb_layers(top_cell) == []
 
         file_out = os.path.join(path,'example_replaced2.gds')
         delete_extra_topcells(layout, top_cell.name)
         layout.write(file_out)
-        try:
+        if show_klive:
             # Display the layout in KLayout, using KLayout Package "klive", which needs to be installed in the KLayout Application
             if Python_Env == 'Script':
                 from SiEPIC.utils import klive
                 klive.show(file_out, technology='EBeam')
-        except:
-            pass
         os.remove(file_out)
 
     # Check -- Run BB reference vs. design layout difference, non-exact replacement (with $)
@@ -134,8 +118,9 @@ def test_replace_cell():
                                 )
         print('replaced %s' %count)
         assert count == 2
-        assert check_bb_geometries(layout) == 0
+        assert check_bb_geometries(top_cell) == 0
         assert error == False
+        assert cells_containing_bb_layers(top_cell) == []
 
     # Check -- Run BB reference (changed) vs. design layout difference, non-exact replacement (with $)
     if 1:
@@ -157,4 +142,4 @@ def test_replace_cell():
         assert error == True
 
 if __name__ == "__main__":
-    test_replace_cell()
+    test_replace_cell(show_klive=True)

@@ -82,7 +82,7 @@ def test_create_cell2():
     topcell.insert(CellInstArray(cell_y.cell_index(), t))
 
 
-def test_waveguide_length():
+def test_waveguide_length(show_klive=False):
     import pya
     import SiEPIC
     from SiEPIC._globals import Python_Env
@@ -124,9 +124,10 @@ def test_waveguide_length():
 
     # Display in KLayout
     from SiEPIC._globals import Python_Env
-    if Python_Env == 'Script':
-        from SiEPIC.utils import klive
-        klive.show(file_out, technology=tech_name, keep_position=True)
+    if show_klive:
+        if Python_Env == 'Script':
+            from SiEPIC.utils import klive
+            klive.show(file_out, technology=tech_name, keep_position=True)
     os.remove(file_out)
 
 
@@ -137,4 +138,4 @@ def test_waveguide_length():
 if __name__ == "__main__":
     test_load_layout()
     test_create_cell2()
-    test_waveguide_length()
+    test_waveguide_length(show_klive=True)
