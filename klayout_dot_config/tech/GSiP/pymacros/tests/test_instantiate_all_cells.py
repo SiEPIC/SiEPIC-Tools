@@ -10,7 +10,7 @@ usage:
 
 from pya import *
 
-def test_all_library_cells():
+def test_all_library_cells(show_klive=False):
     designer_name = 'Test'
     top_cell_name = 'GSiP_%s' % designer_name
 
@@ -54,7 +54,8 @@ def test_all_library_cells():
         if c.is_empty() or c.bbox().area() == 0:
             raise Exception('Empty cell: %s' % c.name)
 
-    topcell.show()
+    if show_klive:
+        topcell.show()
 
     # Verify
     num_errors = layout_check(cell=topcell, verify_DFT=False, verbose=False, GUI=True)
@@ -64,4 +65,4 @@ def test_all_library_cells():
 
 
 if __name__ == "__main__":
-    test_all_library_cells()
+    test_all_library_cells(show_klive=True)

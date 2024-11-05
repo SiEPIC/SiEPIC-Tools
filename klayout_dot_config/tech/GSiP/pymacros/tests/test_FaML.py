@@ -5,7 +5,7 @@ by Lukas Chrostowski 2024
 
 """
 
-def test_FaML_two():
+def test_FaML_two(show_klive=False):
     '''
     --- Simple MZI, tested using Facet-Attached Micro Lenses (FaML) ---
     
@@ -102,13 +102,14 @@ def test_FaML_two():
     print('Number of errors: %s' % num_errors)
 
     # Display the layout in KLayout, using KLayout Package "klive", which needs to be installed in the KLayout Application
-    if Python_Env == 'Script':
-        from SiEPIC.utils import klive
-        klive.show(file_out, lyrdb_filename=file_lyrdb, technology=tech_name)
+    if show_klive:
+        if Python_Env == 'Script':
+            from SiEPIC.utils import klive
+            klive.show(file_out, lyrdb_filename=file_lyrdb, technology=tech_name)
     os.remove(file_out)
 
     if num_errors > 0:
         raise Exception ('Errors found in test_FaML_two')
 
 if __name__ == "__main__":
-    test_FaML_two()
+    test_FaML_two(show_klive=True)

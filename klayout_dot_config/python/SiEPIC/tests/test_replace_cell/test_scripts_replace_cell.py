@@ -5,9 +5,9 @@ by Lukas Chrostowski 2024
 
 """
 
-def test_replace_cell():
+def test_replace_cell(show_klive=False):
     '''
-
+    show_klive: True to open the layout in KLayout using KLive
     '''
 
     import pya
@@ -69,13 +69,11 @@ def test_replace_cell():
         file_out = os.path.join(path,'example_replaced.gds')
         delete_extra_topcells(layout, top_cell.name)
         layout.write(file_out)
-        try:
+        if show_klive:
             # Display the layout in KLayout, using KLayout Package "klive", which needs to be installed in the KLayout Application
             if Python_Env == 'Script':
                 from SiEPIC.utils import klive
                 klive.show(file_out, technology='EBeam')
-        except:
-            pass
         os.remove(file_out)
 
 
@@ -99,13 +97,11 @@ def test_replace_cell():
         file_out = os.path.join(path,'example_replaced2.gds')
         delete_extra_topcells(layout, top_cell.name)
         layout.write(file_out)
-        try:
+        if show_klive:
             # Display the layout in KLayout, using KLayout Package "klive", which needs to be installed in the KLayout Application
             if Python_Env == 'Script':
                 from SiEPIC.utils import klive
                 klive.show(file_out, technology='EBeam')
-        except:
-            pass
         os.remove(file_out)
 
     # Check -- Run BB reference vs. design layout difference, non-exact replacement (with $)
@@ -146,4 +142,4 @@ def test_replace_cell():
         assert error == True
 
 if __name__ == "__main__":
-    test_replace_cell()
+    test_replace_cell(show_klive=True)
