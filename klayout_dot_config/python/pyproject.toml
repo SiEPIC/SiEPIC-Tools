@@ -1,6 +1,6 @@
 [project]
 name = "SiEPIC"
-version = "0.5.17"
+version = "0.5.18"
 authors = [
   { name="Lukas Chrostowski", email="lukasc@ece.ubc.ca" },
 ]
@@ -17,6 +17,7 @@ dependencies = [
   "scipy",
   "pandas",
   "requests",
+  "IPython",
   "klayout"] 
 
 [project.urls]
