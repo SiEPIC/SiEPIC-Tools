@@ -1753,69 +1753,102 @@ def pinPoint(self, pin_name, verbose=False):
         return matched_pins[0].center
 
 
-def show(self):
-    '''Show the cell in KLayout using klive'''
+def show(self, file_path = None, lyrdb_filename=None):
+    '''
+    Show the cell in KLayout using klive
+    
+    args
+        file_path: os.path folder location to save
+    '''
 
-    # Save the cell in a temporary file
-    from ._globals import TEMP_FOLDER
     import os
-    file_out = os.path.join(TEMP_FOLDER, self.name+'.gds')
+
+    if not file_path:
+        # Save the cell in a temporary file
+        from ._globals import TEMP_FOLDER
+        file_path = TEMP_FOLDER
+        
+    file_out = os.path.join(file_path, self.name+'.gds')
     self.write(file_out)
 
     # Display in KLayout
     from SiEPIC._globals import Python_Env
     if Python_Env == 'Script':
         from SiEPIC.utils import klive
-        klive.show(file_out, technology=self.layout().technology().name, keep_position=True)
+        klive.show(file_out, lyrdb_filename=lyrdb_filename, technology=self.layout().technology().name, keep_position=True)
+        
 
 def plot(self, width = 800, show_labels = True, show_ruler = True, retina = True):
-        '''
-        Generate an image of the layout cell, and display. Useful for Jupyter notebooks
-        
-        Args:
-            self: pya.Cell
-            width: number of pixels
-            show_labels: KLayout display config to show text = True, https://www.klayout.de/doc-qt5/code/class_LayoutView.html#method101
-            show_ruler: KLayout display config to show ruler = True
-            retina: IPython.display.Image configuration for retina display, True
-        '''
-        
-        from io import BytesIO
-        from IPython.display import Image, display
-        
-        # Create a LayoutView, and populate it with the current cell & layout
-        cell = self
-        layout_view = pya.LayoutView()
-        cell_view_index = layout_view.create_layout(True)
-        layout_view.active_cellview_index = cell_view_index
-        cell_view = layout_view.cellview(cell_view_index)
-        layout = cell_view.layout()
-        layout.assign(cell.layout())
-        cell_view.cell = layout.cell(cell.name)
+    '''
+    Generate an image of the layout cell, and display. Useful for Jupyter notebooks
+    
+    Args:
+        self: pya.Cell
+        width: number of pixels
+        show_labels: KLayout display config to show text = True, https://www.klayout.de/doc-qt5/code/class_LayoutView.html#method101
+        show_ruler: KLayout display config to show ruler = True
+        retina: IPython.display.Image configuration for retina display, True
+    '''
+    
+    from io import BytesIO
+    from IPython.display import Image, display
+    
+    # Create a LayoutView, and populate it with the current cell & layout
+    cell = self
+    layout_view = pya.LayoutView()
+    cell_view_index = layout_view.create_layout(True)
+    layout_view.active_cellview_index = cell_view_index
+    cell_view = layout_view.cellview(cell_view_index)
+    layout = cell_view.layout()
+    layout.assign(cell.layout())
+    cell_view.cell = layout.cell(cell.name)
 
-        # Load layer properties from the technology
-        lyp_path=layout.technology().eff_layer_properties_file()
-        if not lyp_path:
-            raise Exception ('SiEPIC.extend.plot: technology not specified.')
-        layout_view.load_layer_props(lyp_path)
-        
-        # Configure the layout view settings
-        # print(layout_view.get_config_names())
-        layout_view.set_config("text-font",3)        
-        layout_view.set_config("background-color", "#ffffff")
-        layout_view.set_config("text-visible", "true" if show_labels else "false")
-        layout_view.set_config("grid-show-ruler", "true" if show_ruler else "false")
+    # Load layer properties from the technology
+    lyp_path=layout.technology().eff_layer_properties_file()
+    if not lyp_path:
+        raise Exception ('SiEPIC.extend.plot: technology not specified.')
+    layout_view.load_layer_props(lyp_path)
+    
+    # Configure the layout view settings
+    # print(layout_view.get_config_names())
+    layout_view.set_config("text-font",3)        
+    layout_view.set_config("background-color", "#ffffff")
+    layout_view.set_config("text-visible", "true" if show_labels else "false")
+    layout_view.set_config("grid-show-ruler", "true" if show_ruler else "false")
 
-        # Zoom out and show all layout details
-        layout_view.max_hier()
-        layout_view.zoom_fit()
+    # Zoom out and show all layout details
+    layout_view.max_hier()
+    layout_view.zoom_fit()
 
-        # Display as a PNG
-        width = width * (2 if retina else 1)
-        pixel_buffer = layout_view.get_pixels(width, cell.bbox().height()/cell.bbox().width()*width)
-        png_data = pixel_buffer.to_png_data()
-        im = Image(png_data, retina=retina)
-        display(im)
+    # Display as a PNG
+    width = width * (2 if retina else 1)
+    pixel_buffer = layout_view.get_pixels(width, cell.bbox().height()/cell.bbox().width()*width)
+    png_data = pixel_buffer.to_png_data()
+    im = Image(png_data, retina=retina)
+    display(im)
+    return im
+
+
+def image(self, file_out = None, file_format = 'PNG', width = 800, show_labels = True, show_ruler = True, retina = True):
+    '''
+    Generate an image of the layout cell, and save
+    
+    Args:
+        self: pya.Cell
+        file_out: os.path to save the image
+        file_format: 'PNG'
+        width: number of pixels
+        show_labels: KLayout display config to show text = True, https://www.klayout.de/doc-qt5/code/class_LayoutView.html#method101
+        show_ruler: KLayout display config to show ruler = True
+        retina: IPython.display.Image configuration for retina display, True
+    '''
+    
+    # Create an image of the layout
+    im = self.plot(width=width, show_labels=show_labels, show_ruler=show_ruler, retina=retina)
+    # save
+    with open(file_out, "wb") as f:
+        f.write(im.data)
+
 
 #################################################################################
 
@@ -1831,6 +1864,7 @@ pya.Cell.spice_netlist_export = spice_netlist_export
 pya.Cell.pinPoint = pinPoint
 pya.Cell.show = show
 pya.Cell.plot = plot
+pya.Cell.image = image
 
 
 #################################################################################
