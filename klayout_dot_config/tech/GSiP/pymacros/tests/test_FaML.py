@@ -101,11 +101,18 @@ def test_FaML_two(show_klive=False):
     num_errors = layout_check(cell = cell, verbose=False, GUI=True, file_rdb=file_lyrdb)
     print('Number of errors: %s' % num_errors)
 
+
+    cell.image(os.path.join(path,'test_FaML_two.png'))
+    
     # Display the layout in KLayout, using KLayout Package "klive", which needs to be installed in the KLayout Application
+    cell.show(file_path = path, lyrdb_filename=file_lyrdb)
+
+    '''
     if show_klive:
         if Python_Env == 'Script':
             from SiEPIC.utils import klive
             klive.show(file_out, lyrdb_filename=file_lyrdb, technology=tech_name)
+    '''
     os.remove(file_out)
 
     if num_errors > 0:
