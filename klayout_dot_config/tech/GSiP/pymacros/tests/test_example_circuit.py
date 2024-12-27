@@ -56,7 +56,7 @@ def example_circuit(show_klive=False):
     waveguide_type='Strip TE 1550 nm'
 
     # Load cells from library
-    cell_ebeam_gc = ly.create_cell('Grating_Coupler_13deg_TE_1550_Oxide', tech_name)
+    cell_ebeam_gc = ly.create_cell2('Grating_Coupler_13deg_TE_1550_Oxide', tech_name)
     cell_ebeam_y = ly.create_cell('YBranch_te1550', tech_name)
 
     # grating couplers, place at absolute positions

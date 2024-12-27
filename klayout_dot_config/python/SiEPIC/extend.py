@@ -8,6 +8,7 @@ pya.Layout:
   - get_technology: get the technology for the specific layout
   - load_Waveguide_types: load the waveguide types from WAVEGUIDES.XML
   - cell_character_replacement: replace forbidden characters
+  - create_cell2: extension to create_cell, with error checking
   
 dbu float-int extension:
   - to_dbu and to_itype, convert float (microns) to integer (nanometers) using dbu
@@ -111,6 +112,13 @@ def cell_character_replacement(self, forbidden_cell_characters = '=', replacemen
             print(" - cell name: %s, replaced with: %s" % (oldname, cell.name)) 
 
 pya.Layout.cell_character_replacement = cell_character_replacement
+
+'''
+Wrapper for KLayout Layout.create_cell(name, library),
+with error handling, and debugging information if unsuccessful. 
+'''
+from .utils import create_cell2
+pya.Layout.create_cell2 =  create_cell2
 
 
 #################################################################################

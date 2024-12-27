@@ -103,6 +103,7 @@ def create_cell2(ly, cell_name, library_name, load_check=True):
         ly: pya.Layout
         cell_name: string name for pya.Cell
         library_name: string name for a pya.Library
+    TO DO: make it work for PCell parameters
     '''
     # check if it is already loaded
     if load_check and ly.cell(cell_name):
