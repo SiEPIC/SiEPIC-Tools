@@ -330,7 +330,6 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
                             # Look for the specific file path
                             potential_paths = [
                                 os.path.join(klayout_salt_dir, 'siepic_ebeam_pdk', 'EBeam', 'pymacros', 'opics_ebeam'),
-                                os.path.join(klayout_salt_dir, 'siepic-ebeam-pdk', 'EBeam', 'pymacros', 'opics_ebeam'),
                             ]
                             
                             for path in potential_paths:
@@ -357,13 +356,7 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
                         libs_comps[each_lib] = opics_lib.component_factory
                         
                     except Exception as e:
-                        debug_str = "\n".join(debug_info + [
-                            f"Second import error: {str(e)}",
-                            f"KLayout salt directory exists: {os.path.exists(klayout_salt_dir) if 'klayout_salt_dir' in locals() else 'Not checked'}",
-                            f"Full sys.path: {sys.path}",
-                            f"Potential opics_ebeam paths checked: {potential_paths if 'potential_paths' in locals() else 'None'}"
-                        ])
-                        raise Exception('Unable to import the library: %s. Please ensure siepic_ebeam_pdk is installed via KLayout package manager. Error: %s\n\nDebug Information:\n%s' % (opics_lib_name, str(e), debug_str))
+                        raise Exception('Unable to import the library: %s. Please ensure siepic_ebeam_pdk is installed via KLayout package manager. Error: %s\n\nDebug Information:\n' % (opics_lib_name, str(e)))
             else:
                 # Original code for other libraries
                 opics_lib_name = "opics_"+each_lib
