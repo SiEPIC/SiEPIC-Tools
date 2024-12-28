@@ -17,6 +17,7 @@ import numpy as np
 from numpy import ndarray
 from pathlib import PosixPath
 from defusedxml.ElementTree import parse
+import os
 
 
 def fromSI(value: str) -> float:
@@ -299,17 +300,82 @@ def NetlistProcessor(spice_filepath, Network, libraries, c_, circuitData, verbos
             # Using the libraries installed within the OPICS folder
             libs_comps[each_lib] = all_libraries[each_lib].component_factory
         else:
-            opics_lib_name = "opics_"+each_lib
-            try:
-                # import the library named opics_xxx where xxx is the library name
-                import importlib
-                opics_lib = importlib.import_module(opics_lib_name)
-                from importlib import reload
-                opics_lib = reload(opics_lib)
-                globals()[opics_lib_name] = opics_lib
-                libs_comps[each_lib] = opics_lib.component_factory
-            except:
-                raise Exception ('Unable to import the library: %s' %opics_lib_name) 
+            if each_lib == "ebeam":
+                try:
+                    # Try importing from siepic_ebeam_pdk first
+                    print(f"Attempting to import from siepic_ebeam_pdk...")
+                    from siepic_ebeam_pdk.EBeam.pymacros.opics_ebeam import component_factory
+                    print(f"Successfully imported component_factory")
+                    libs_comps[each_lib] = component_factory
+                except ImportError as e:
+                    print(f"First import attempt failed with error: {e}")
+                    print(f"Attempting second import method...")
+                    # Fallback to regular opics_ebeam import
+                    opics_lib_name = "opics_"+each_lib
+                    try:
+                        import sys
+                        import os
+                        debug_info = [
+                            f"Python path: {sys.path}",
+                            f"Current working directory: {os.getcwd()}",
+                            f"Attempting to import {opics_lib_name}",
+                            f"First import error: {str(e)}"
+                        ]
+                        
+                        # Try to find the package in the KLayout salt directory
+                        klayout_salt_dir = os.path.join(os.path.expanduser('~'), 'KLayout', 'salt')
+                        if os.path.exists(klayout_salt_dir):
+                            sys.path.append(klayout_salt_dir)
+                            
+                            # Look for the specific file path
+                            potential_paths = [
+                                os.path.join(klayout_salt_dir, 'siepic_ebeam_pdk', 'EBeam', 'pymacros', 'opics_ebeam'),
+                                os.path.join(klayout_salt_dir, 'siepic-ebeam-pdk', 'EBeam', 'pymacros', 'opics_ebeam'),
+                            ]
+                            
+                            for path in potential_paths:
+                                if os.path.exists(path):
+                                    print(f"Found opics_ebeam at: {path}")
+                                    sys.path.append(os.path.dirname(path))
+                                    try:
+                                        from opics_ebeam import component_factory
+                                        libs_comps[each_lib] = component_factory
+                                        break
+                                    except ImportError as e:
+                                        print(f"Found path but import failed: {e}")
+                                        continue
+                            
+                            if each_lib in libs_comps:
+                                continue
+                            
+                        # Try original method as last resort
+                        import importlib
+                        opics_lib = importlib.import_module(opics_lib_name)
+                        from importlib import reload
+                        opics_lib = reload(opics_lib)
+                        globals()[opics_lib_name] = opics_lib
+                        libs_comps[each_lib] = opics_lib.component_factory
+                        
+                    except Exception as e:
+                        debug_str = "\n".join(debug_info + [
+                            f"Second import error: {str(e)}",
+                            f"KLayout salt directory exists: {os.path.exists(klayout_salt_dir) if 'klayout_salt_dir' in locals() else 'Not checked'}",
+                            f"Full sys.path: {sys.path}",
+                            f"Potential opics_ebeam paths checked: {potential_paths if 'potential_paths' in locals() else 'None'}"
+                        ])
+                        raise Exception('Unable to import the library: %s. Please ensure siepic_ebeam_pdk is installed via KLayout package manager. Error: %s\n\nDebug Information:\n%s' % (opics_lib_name, str(e), debug_str))
+            else:
+                # Original code for other libraries
+                opics_lib_name = "opics_"+each_lib
+                try:
+                    import importlib
+                    opics_lib = importlib.import_module(opics_lib_name)
+                    from importlib import reload
+                    opics_lib = reload(opics_lib)
+                    globals()[opics_lib_name] = opics_lib
+                    libs_comps[each_lib] = opics_lib.component_factory
+                except:
+                    raise Exception('Unable to import the library: %s' % opics_lib_name)
 
     # add circuit components
     for i in range(len(circuitData["compModels"])):
