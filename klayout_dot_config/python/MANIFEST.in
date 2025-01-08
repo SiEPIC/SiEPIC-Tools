@@ -1,0 +1,5 @@
+
+# for OPICS
+include SiEPIC/opics/libraries/catalogue.yaml
+
+
