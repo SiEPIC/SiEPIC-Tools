@@ -3711,6 +3711,7 @@ def load_klayout_library(technology, library_name=None, library_description='', 
                     if verbose:
                         for c in self.layout().top_cells():
                             print("   - cell: %s" % c.name )
+                self.path = dir_path
 
             # Create the PCell declarations
             if folder_pcell:
