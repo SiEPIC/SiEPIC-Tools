@@ -160,6 +160,8 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
     '''
 
     # layout information
+    if not type(instanceA) == type(pya.Instance()):
+        raise Exception('instanceA needs to be type pya.Instance')
     ly=instanceA.parent_cell.layout()
     dbu=ly.dbu
     
