@@ -3711,7 +3711,6 @@ def load_klayout_library(technology, library_name=None, library_description='', 
                     if verbose:
                         for c in self.layout().top_cells():
                             print("   - cell: %s" % c.name )
-                self.path = dir_path
 
             # Create the PCell declarations
             if folder_pcell:
@@ -3729,6 +3728,8 @@ def load_klayout_library(technology, library_name=None, library_description='', 
                             
                 if verbose:
                     print(' - done loading pcells')
+
+                self.path = folder_pcell
             
             # Register us the library with the technology name
             # If a library with that name already existed, it will be replaced then.
