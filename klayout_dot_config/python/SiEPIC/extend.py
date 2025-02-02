@@ -957,8 +957,9 @@ def find_pins_component(self, component):
 '''
 Components:
 '''
-from functools import lru_cache
-@lru_cache(maxsize=None)
+# We cannot use a cache, otherwise it won't update the design memory after edits
+#from functools import lru_cache
+#@lru_cache(maxsize=None)
 def find_components(self, cell_selected=None, inst=None, verbose=False, raiseException = True):
     '''
     Function to traverse the cell's hierarchy and find all the components
