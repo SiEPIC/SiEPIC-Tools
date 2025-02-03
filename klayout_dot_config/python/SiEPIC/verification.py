@@ -321,6 +321,27 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
         minimum_radius_check = True
 
     if verification:
+        try:
+            ignore_pins_on_floorplan = eval(
+                verification["verification"]["ignore-pins-on-floorplan"]
+            )
+            layer_floorplan = TECHNOLOGY['FloorPlan']
+            # find the FloorPlan geometry
+            iter = cell.begin_shapes_rec(cell.layout().layer(layer_floorplan))
+            floorplan_boxes = []
+            while not(iter.at_end()):
+                if iter.shape().is_box():
+                    box = iter.shape().box
+                    box2 = iter.shape().box.transformed(iter.itrans())
+                    floorplan_boxes.append(box2)
+                iter.next()
+        except:
+            ignore_pins_on_floorplan = False
+    else:
+        ignore_pins_on_floorplan = False
+        
+
+    if verification:
         # define device-only layers
         try:
             deviceonly_layers = eval(verification['verification']['shapes-inside-components']['deviceonly-layers'])
@@ -442,6 +463,13 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
             if pin.type == _globals.PIN_TYPES.OPTICAL:
                 if pin.net.idx == None:
                     # disconnected optical pin
+                    
+                    # Check if the pin is touching the floorplan; if so assume it is a port to an adjacent layout and ignore
+                    if ignore_pins_on_floorplan and floorplan_boxes:
+                        if pya.Region(pin.path).interacting(pya.Region(floorplan_boxes[0]).edges()):
+                            print(" - pin touching floorplan, skipping error")
+                            continue
+                    
                     if verbose:
                         print(" - Found disconnected pin, type %s, at (%s)" % (pin.type, pin.center))
                         pin.display()
