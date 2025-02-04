@@ -95,9 +95,11 @@ def load_lumapi(verbose=False):
       print('SiEPIC.lumerical.load_api: Lumerical lumapi.py not found')
       warning = pya.QMessageBox()
       warning.setStandardButtons(pya.QMessageBox.Cancel)
-      warning.setText("Lumerical's lumapi.py not found.")
+      warning.setText("Lumerical's lumapi.py not found. Please check the folder: %s, and try again." % path)
       warning.setInformativeText("Some SiEPIC-Tools Lumerical functionality will not be available.")
       pya.QMessageBox_StandardButton(warning.exec_())
+      # Delete the KLayout configuration
+      pya.Application.instance().set_config('siepic_tools_Lumerical_Python_folder', '')
       return
     
   # Save the Lumerical software location to the KLayout configuration
