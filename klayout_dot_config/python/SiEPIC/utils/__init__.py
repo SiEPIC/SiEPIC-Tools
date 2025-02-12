@@ -406,8 +406,8 @@ def load_Waveguides():
 
     return waveguides if waveguides else None
 
-from functools import lru_cache
-@lru_cache(maxsize=None)
+#from functools import lru_cache
+#@lru_cache(maxsize=None)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     '''
     Load Waveguide configuration for specific technology
