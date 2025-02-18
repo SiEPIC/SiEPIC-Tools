@@ -1253,7 +1253,7 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
 
 
 
-def floorplan(topcell, x, y, centered=False):
+def floorplan(topcell, x, y, centered=False, layer_name='FloorPlan'):
     '''Create a FloorPlan, from (0,0) to (x,y), or centered
     by Lukas Chrostowski, 2023, SiEPIC-Tools
     '''
@@ -1264,7 +1264,7 @@ def floorplan(topcell, x, y, centered=False):
         box = pya.Box(0,0,x,y)
     else:
         box = pya.Box(-x/2,-y/2,x/2,y/y)
-    cell.shapes(ly.layer(ly.TECHNOLOGY['FloorPlan'])).insert(box)
+    cell.shapes(ly.layer(ly.TECHNOLOGY[layer_name])).insert(box)
     return inst
 
 def new_layout(tech, topcell_name, GUI=True, overwrite = False):
