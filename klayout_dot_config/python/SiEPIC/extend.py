@@ -1519,9 +1519,7 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
     nets, components = trim_netlist(nets, components, laser_component[0])
 
     if not components:
-        pya.MessageBox.warning("Error: netlist extraction",
-                               "Error: netlist extraction. No components found connected to opt_in label.", pya.MessageBox.Ok)
-        return '', '', 0, []
+        raise Exception(f"Error: netlist extraction. No components found connected to opt_in label {opt_in_selection_text}.")
 
     if verbose:
         print("* Display list of components:")
@@ -1563,12 +1561,14 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
         sch_distances.remove(0.0)
     # scaling based on nearest neighbour:
     Lumerical_schematic_scaling = 0.6 / min(sch_distances)
-    print("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
+    if verbose:
+        print("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
     # but if the layout is too big, limit the size
     MAX_size = 0.05 * 1e3
     if max(sch_distances) * Lumerical_schematic_scaling > MAX_size:
         Lumerical_schematic_scaling = MAX_size / max(sch_distances)
-    print("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
+    if verbose:
+        print("Scaling for Lumerical INTERCONNECT schematic: %s" % Lumerical_schematic_scaling)
 
     # find electrical IO pins
     electricalIO_pins = ""
@@ -1609,7 +1609,8 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
         for p in c.pins:
             if p.type == _globals.PIN_TYPES.OPTICALIO:
                 NetName = ' ' + p.pin_name
-                print(p.pin_name)
+                if verbose:
+                    print(p.pin_name)
                 opticalIO_pins += NetName
 
     circuit_name = self.name.replace('.', '')  # remove "."
@@ -1834,7 +1835,7 @@ def plot(self, width = 800, show_labels = True, show_ruler = True, retina = True
     pixel_buffer = layout_view.get_pixels(width, cell.bbox().height()/cell.bbox().width()*width)
     png_data = pixel_buffer.to_png_data()
     im = Image(png_data, retina=retina)
-    display(im)
+    #display(im)
     return im
 
 
