@@ -597,7 +597,7 @@ def load_Verification(TECHNOLOGY=None, debug=True):
 
 
 
-def load_DFT(TECHNOLOGY=None, debug=True):
+def load_DFT(TECHNOLOGY=None, debug=False):
     '''
     Load Design-for-Test (DFT) rules
     These are technology specific (SiEPIC definition, TECHNOLOGY), and located in the technology's folder, named DFT.xml. 
