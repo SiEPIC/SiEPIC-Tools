@@ -368,7 +368,6 @@ def get_technology(verbose=False, query_activecellview_technology=False):
             return get_technology_by_name(technology_name)
         except:
             lv = None
-            technology_name = 'EBeam'
 
     if lv == None:
         # no layout open; return a default technology
@@ -408,8 +407,8 @@ def load_Waveguides():
 
     return waveguides if waveguides else None
 
-from functools import lru_cache
-@lru_cache(maxsize=None)
+# from functools import lru_cache
+# @lru_cache(maxsize=None)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     '''
     Load Waveguide configuration for specific technology
@@ -1115,8 +1114,8 @@ def arc_bezier(radius, start, stop, bend_parameter, DevRec=None, dbu=0.001):
       N = 100
     L = radius  # effective bend radius / Length of the bend
     diff = 1. / (N - 1)  # convert int to float
-    xp = [0, (1 - bezier)*L, L, L]
-    yp = [0, 0, bezier*L, L]
+    xp = [0, (1 - bezier) * L, L, L]
+    yp = [0, 0, bezier * L, L]
     xA = xp[3] - 3 * xp[2] + 3 * xp[1] - xp[0]
     xB = 3 * xp[2] - 6 * xp[1] + 3 * xp[0]
     xC = 3 * xp[1] - 3 * xp[0]
