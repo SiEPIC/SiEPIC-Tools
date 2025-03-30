@@ -34,6 +34,7 @@ arc
 arc_wg
 arc_wg_xy
 arc_bezier
+euler_bend
 arc_to_waveguide
 translate_from_normal
 pt_intersects_segment
@@ -406,8 +407,8 @@ def load_Waveguides():
 
     return waveguides if waveguides else None
 
-#from functools import lru_cache
-#@lru_cache(maxsize=None)
+# from functools import lru_cache
+# @lru_cache(maxsize=None)
 def load_Waveguides_by_Tech(tech_name, debug=False):
     '''
     Load Waveguide configuration for specific technology
@@ -474,23 +475,46 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
             if 'component' in waveguide.keys():
                 if not isinstance(waveguide['component'], list):
                     waveguide['component'] = [waveguide['component']]
-            if not 'bezier' in waveguide.keys():
-                waveguide['adiabatic'] = False
-                waveguide['bezier'] = ''
+            
+            if not 'bend_parameter' in waveguide.keys():
+                if not 'bezier' in waveguide.keys():
+                    waveguide['adiabatic'] = False
+                    waveguide['bend_parameter'] = ''
+                    waveguide['bezier'] = ''
+                else:
+                    waveguide['adiabatic'] = True
+                    waveguide['bend_parameter'] = waveguide['bezier']
             else:
                 waveguide['adiabatic'] = True
+                waveguide['bezier'] = waveguide['bend_parameter']
+            
+            
+            
+            # if not 'bend_parameter' in waveguide.keys():
+            #     waveguide['adiabatic'] = False
+            #     waveguide['bend_parameter'] = ''
+            # else:
+            #     waveguide['adiabatic'] = True
+                
+            # if not 'bend_parameter' in waveguide.keys():
+            #     waveguide['adiabatic'] = False
+            #     waveguide['bend_parameter'] = ''
+            # else:
+            #     waveguide['adiabatic'] = True    
+                
+                
             if not 'CML' in waveguide.keys():
                 waveguide['CML'] = ''
             if not 'model' in waveguide.keys():
                 waveguide['model'] = ''
+            if not 'bend_type' in waveguide.keys():
+                waveguide['bend_type'] = 'bezier'
     if not(waveguides):
         print('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and WAVEGUIDES.xml file' % (tech_name, tech_name) )
     
     if debug:
         print('- done: load_Waveguides_by_Tech.  Technology: %s' %(tech_name) )
     return waveguides if waveguides else None
-
-
 
 def load_Calibre():
     '''
@@ -595,8 +619,6 @@ def load_Verification(TECHNOLOGY=None, debug=True):
         return None
 
 
-
-
 def load_DFT(TECHNOLOGY=None, debug=False):
     '''
     Load Design-for-Test (DFT) rules
@@ -686,8 +708,6 @@ def load_FDTD_settings():
         return FDTD1
     else:
         return None
-
-
 
 
 def load_GC_settings():
@@ -1078,14 +1098,14 @@ def arc_wg_xy(x, y, r, w, theta_start, theta_stop, DevRec=None, dbu=0.001):
 
 from functools import lru_cache
 @lru_cache(maxsize=None)
-def arc_bezier(radius, start, stop, bezier, DevRec=None, dbu=0.001):
+def arc_bezier(radius, start, stop, bend_parameter, DevRec=None, dbu=0.001):    
     '''Create a bezier curve. While there are parameters for start and stop in
     degrees, this is currently only implemented for 90 degree bends
     Radius in Database units (dbu)'''
     from math import sin, cos, pi
     from SiEPIC.utils import points_per_circle
     N = points_per_circle(radius/1000, dbu=dbu)/4
-    bezier=float(bezier) # in case the input was a string
+    bezier=float(bend_parameter) # in case the input was a string
     if DevRec:
         N = int(N / 3)
     else:
@@ -1104,15 +1124,101 @@ def arc_bezier(radius, start, stop, bezier, DevRec=None, dbu=0.001):
     yB = 3 * yp[2] - 6 * yp[1] + 3 * yp[0]
     yC = 3 * yp[1] - 3 * yp[0]
     yD = yp[0]
-
+    
     pts = [pya.Point(-L, 0) + pya.Point(xD, yD)]
     for i in range(1, N - 1):
         t = i * diff
-        pts.append(pya.Point(-L, 0) + pya.Point(t**3 * xA + t**2 * xB +
-                                                t * xC + xD, t**3 * yA + t**2 * yB + t * yC + yD))
+        pts.append(pya.Point(-L, 0) + pya.Point(t**3 * xA + t**2 * xB + t * xC + xD, t**3 * yA + t**2 * yB + t * yC + yD))
     pts.extend([pya.Point(0, L)])
     return pts
 
+from functools import lru_cache
+@lru_cache(maxsize=None)
+def euler_bend(radius, p=0.25, DevRec=None, dbu=0.001, debug=False):
+    '''Function to create points for a 90 degree euler bend of 
+    optional radius and with a user-specified bend parameter 'p'.
+    Inspired from GDS factory code [1] and the 2019 Vogelbacher et al. paper:
+    'Analysis of silicon nitride partial Euler waveguide bends' [2].
+    
+    [1] https://github.com/gdsfactory/gdsfactory/blob/main/gdsfactory/path.py
+    [2] https://dx.doi.org/10.1364/oe.27.031394
+    
+        INPUTS:
+            radius (float): desired effective radius 
+            p (float): bend parameter, must be between 0.0 and 1.0
+    '''
+    from SiEPIC.utils import points_per_circle
+    import numpy as np
+    import scipy.integrate as integrate
+    
+    N = points_per_circle(radius/1000, dbu=dbu)/4
+    if DevRec:
+        N = int(N / 3)
+    else:
+        N = int(N)
+    if N < 5:
+      N = 100
+
+    # Internal variables
+    angle = 90
+    npoints = 300
+    npoints = int(N)
+    if debug:
+        print("N = {}".format(npoints))
+    R0 = 1
+    alpha = np.radians(angle)
+    Rp = R0 / np.sqrt(p * alpha)
+    sp = R0 * np.sqrt(p * alpha)
+    s0 = 2 * sp + Rp * alpha * (1 - p)
+    
+    # The minimum radius is Rp
+    Rmin = Rp
+
+    # Allocate points for euler-bend and circular sections
+    num_pts_euler = int(np.round(sp / (s0 / 2) * npoints))
+    num_pts_arc = npoints - num_pts_euler
+
+    # Calculate [x,y] of euler-bend by numerically solving fresnel integrals
+    s_euler = np.linspace(0, sp, num_pts_euler)
+    xbend1 = np.zeros(num_pts_euler)
+    ybend1 = np.zeros(num_pts_euler)
+    for i, s_pt in enumerate(s_euler):
+        xbend1[i], _ = integrate.quad(lambda t: np.cos((t/R0)**2 / 2), 0, s_pt)
+        ybend1[i], _ = integrate.quad(lambda t: np.sin((t/R0)**2 / 2), 0, s_pt)
+
+    # Determine the offset for the circular section
+    xp, yp = xbend1[-1], ybend1[-1]
+    dx = xp - Rp * np.sin(p * alpha / 2)
+    dy = yp - Rp * (1 - np.cos(p * alpha / 2))
+
+    # Calculate [x,y] for the circular-bend section
+    s_arc = np.linspace(sp, s0 / 2, num_pts_arc)
+    xbend2 = Rp * np.sin((s_arc - sp) / Rp + p * alpha / 2) + dx
+    ybend2 = Rp * (1 - np.cos((s_arc - sp) / Rp + p * alpha / 2)) + dy
+
+    # Join euler-bend and circular sections
+    x = np.concatenate([xbend1, xbend2[1:]])
+    y = np.concatenate([ybend1, ybend2[1:]])
+
+    # Evaluate effective radius before re-scaling
+    Reff = x[-1] + y[-1]
+
+    # Determine second half of the bend as the a mirror of the first
+    points2 = np.array([np.flipud(Reff - y), np.flipud(Reff - x)]).T
+
+    # Scale the curve to match the desired radius
+    scale = radius / Reff
+    points = np.concatenate([np.array([x, y]).T[:-1], points2]) * scale
+
+    # Create array of "Point" types
+    pts = []
+    for i in range(len(points)):
+        pts.append(pya.Point(points[i,0] - radius, points[i,1]))  
+    
+    if debug:
+        print("Euler pts: {}".format(pts))
+    
+    return pts
 
 def arc_to_waveguide(pts, width):
     '''Take a list of points and create a polygon of width 'width' '''

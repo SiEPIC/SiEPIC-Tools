@@ -34,7 +34,9 @@ from functools import reduce
 from .sampling import sample_function
 from .geometry import rotate90, rotate, bezier_optimal, curve_length
 
-'''
+
+def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
+    '''
 Create a waveguide, in a specific technology
 inputs
 - cell: into which Cell we add the waveguide
@@ -47,10 +49,6 @@ output
 by Lukas Chrostowski
 acknowledgements: Diedrik Vermeulen for the code to place the taper in the correct orientation
 '''
-
-
-def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
-
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide4: ')
         print(' - waveguide_type: %s' % (waveguide_type))
@@ -214,8 +212,6 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
 
 
 
-
-
 def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
     '''
     Create a waveguide, in a specific technology
@@ -248,9 +244,9 @@ def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
     cellName = 'Waveguide'
     if 'CML' not in params.keys():
         params['CML'] = ''
-    if 'bezier' not in params.keys():
+    if 'bend_parameter' not in params.keys():
         params['adiabatic'] = False
-        params['bezier'] = ''
+        params['bend_parameter'] = ''
     if 'waveguide_type' in params.keys():
         waveguide_type = params['waveguide_type']
     else:
@@ -268,7 +264,7 @@ def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
     sbends = params['sbends'].lower() in ['true', '1', 't', 'y', 'yes'] if 'sbends' in params.keys() else False
     waveguide_length = layout_waveguide2(TECHNOLOGY, layout, cell, [wg['layer'] for wg in params['component']], [
                                          wg['width'] for wg in params['component']], [wg['offset'] for wg in params['component']], 
-                                         pts, radius, params['adiabatic'], params['bezier'], sbends)
+                                         pts, radius, params['adiabatic'], params['bend_parameter'], sbends, params['bend_type'])
 
     # Draw the marking layers
     from SiEPIC.utils import angle_vector
@@ -348,9 +344,7 @@ def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
     return waveguide_length
 
 
-
-
-def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bezier, sbends = True):
+def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bend_parameter, sbends = True, bend_type = "bezier"):
     '''
     Create a waveguide, in a specific technology
     inputs
@@ -373,7 +367,7 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
         most useful for TE 
     by Lukas Chrostowski
     '''
-    from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
+    from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal, euler_bend
     from SiEPIC.extend import to_itype
     from SiEPIC.utils.geometry import bezier_parallel
     from pya import Path, Polygon, Trans
@@ -488,8 +482,15 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             # waveguide bends:
             if abs(turn) == 1:
                 if(adiab):
-                    wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), float(bezier), 
-                        DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+                    # Select type of adiabatic bend based on WAVEGUIDES.XML file
+                    if bend_type == "euler":
+                        wg_pts += Path(euler_bend(pt_radius, float(bend_parameter),
+                            DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+                    elif bend_type == "bezier":
+                        wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), float(bend_parameter), 
+                            DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+                    else:
+                        print("no bend_type provided")
                 else:
                     wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), 
                         DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
