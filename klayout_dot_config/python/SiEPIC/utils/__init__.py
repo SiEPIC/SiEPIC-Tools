@@ -472,7 +472,6 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
                         waveguides.append(waveguides1['waveguides']['waveguide'])
                 except:
                     pass
-                print("waveguides1: {}".format(waveguides1))
         for waveguide in waveguides:
             if 'component' in waveguide.keys():
                 if not isinstance(waveguide['component'], list):
@@ -621,9 +620,7 @@ def load_Verification(TECHNOLOGY=None, debug=True):
         return None
 
 
-
-
-def load_DFT(TECHNOLOGY=None, debug=True):
+def load_DFT(TECHNOLOGY=None, debug=False):
     '''
     Load Design-for-Test (DFT) rules
     These are technology specific (SiEPIC definition, TECHNOLOGY), and located in the technology's folder, named DFT.xml. 
@@ -1116,7 +1113,6 @@ def arc_bezier(radius, start, stop, bend_parameter, DevRec=None, dbu=0.001):
         N = int(N)
     if N < 5:
       N = 100
-    print("N = {}".format(N))
     L = radius  # effective bend radius / Length of the bend
     diff = 1. / (N - 1)  # convert int to float
     xp = [0, (1 - bezier)*L, L, L]
@@ -1135,7 +1131,6 @@ def arc_bezier(radius, start, stop, bend_parameter, DevRec=None, dbu=0.001):
         t = i * diff
         pts.append(pya.Point(-L, 0) + pya.Point(t**3 * xA + t**2 * xB + t * xC + xD, t**3 * yA + t**2 * yB + t * yC + yD))
     pts.extend([pya.Point(0, L)])
-    print("Bezier pts: {}".format(pts))
     return pts
 
 from functools import lru_cache
