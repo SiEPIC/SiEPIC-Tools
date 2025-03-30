@@ -399,18 +399,12 @@ class WaveguideGUI():
         waveguide_types = load_Waveguides_by_Tech(tech_name)
         self.waveguides = waveguide_types
         # print ('SiEPIC.core, Waveguide GUI: tech %s, waveguide_types: %s' % (tech_name, waveguide_types) )
-        print('waveguide_types = {}'.format(waveguide_types))
         if 0:
             # keep only simple waveguides (not compound ones)
             waveguide_types_simple = [t for t in waveguide_types if not 'compound_waveguide' in t.keys()]
             self.waveguides = waveguide_types_simple
         try:
             self.options = [waveguide['name'] for waveguide in self.waveguides]
-            try:
-                print(self.waveguides[0])
-            except:
-                print('mm no')
-                pass
         except:
             raise Exception('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and a WAVEGUIDES.xml file in the PDK folder. \n(Error in SiEPIC.core.WaveguideGUI.update)' % (tech_name, tech_name) )
 #            raise Exception("Problem with waveguide configuration. Error in SiEPIC.core.WaveguideGUI.update")
