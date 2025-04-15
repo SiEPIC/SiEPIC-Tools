@@ -213,9 +213,6 @@ def layout_waveguide4(cell, dpath, waveguide_type, debug=False):
     return waveguide_length
 
 
-
-
-
 def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
     '''
     Create a waveguide, in a specific technology
@@ -231,6 +228,9 @@ def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
     - DevRec, PinRec
     by Lukas Chrostowski
     '''
+    if type(pts[0]) != pya.Point:
+        raise Exception ('SiEPIC.utils.layout.layout_waveguide3: error, pts should be type pya.Point')
+
     if debug:
         print('SiEPIC.utils.layout.layout_waveguide3: ')
 
@@ -373,6 +373,10 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
         most useful for TE 
     by Lukas Chrostowski
     '''
+
+    if type(pts[0]) != pya.Point:
+        raise Exception ('SiEPIC.utils.layout.layout_waveguide2: error, pts should be type pya.Point')
+
     from SiEPIC.utils import arc_xy, arc_bezier, angle_vector, angle_b_vectors, inner_angle_b_vectors, translate_from_normal
     from SiEPIC.extend import to_itype
     from SiEPIC.utils.geometry import bezier_parallel
@@ -490,9 +494,11 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                 if(adiab):
                     wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), float(bezier), 
                         DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+#                        DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pya.Vector(pts[i]))).get_points()
                 else:
                     wg_pts += Path(arc_xy(-pt_radius, pt_radius, pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), 
                         DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
+#                        DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pya.Vector(pts[i]))).get_points()
 
         wg_pts += [pts[-1]]
         wg_pts = pya.Path(wg_pts, 0).unique_points().get_points()
