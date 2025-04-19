@@ -1187,6 +1187,8 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
     SBends:
     - the design uses either regular 90 degree bends, or S-bends if the Waveguides.xml allows for it
     '''
+    if tree_depth < 1:
+        raise Exception('y_splitter_tree: tree_depth needs to be > 0')
 
     from SiEPIC.scripts import connect_pins_with_waveguide
     from SiEPIC.extend import to_itype

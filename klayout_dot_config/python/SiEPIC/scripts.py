@@ -262,13 +262,19 @@ def connect_pins_with_waveguide(instanceA, pinA, instanceB, pinB, waveguide = No
                         pass                
         else:
                 parentB=''
-        # find the common parent
-        common_cell = list(set(parentsA).intersection(parentsB))
+                
+        # Find the deepest common cell
+        def deepest_common_cell(parentsA, parentsB):
+            for a in reversed(parentsA):
+                if a in parentsB:
+                    return a
+            return None
+        cell = deepest_common_cell(parentsA, parentsB)
+        if not cell:
+            print('%s, %s: %s' % (parentsA, parentsB, cell))
+            raise Exception ('connect_pins_with_waveguide function could not find a common parent for the two instances.')
         if verbose:
-            print('%s, %s: %s' % (parentsA, parentsB, common_cell))
-        if len(common_cell)==0:
-                raise Exception ('connect_pins_with_waveguide function could not find a common parent for the two instances.')
-        cell=common_cell[0]
+             print(' - common cell %s' % (cell.name))
                 
     else:
         cell=instanceA.parent_cell
