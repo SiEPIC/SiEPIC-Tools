@@ -1388,6 +1388,7 @@ def coupler_array(cell,
              cell_name = 'GC_TE_1550_8degOxide_BB',
              cell_library = 'EBeam',
              cell_params =  {},
+             rotation = pya.Trans.R0,
              ):
     '''
     Create a layout consisting of an array of optical couplers
@@ -1417,12 +1418,13 @@ def coupler_array(cell,
 
     inst_couplers = []
     for i in range(count):
-        t = Trans(Trans.R0, x_offset, y_offset + (count-i-1)*pitch)
+        t = Trans(rotation, x_offset, y_offset + (count-i-1)*pitch)
         inst_couplers.append( 
             cell.insert(CellInstArray(cell_coupler.cell_index(), t))
         )
         if i==label_location-1:
             # automated test label
+            t = Trans(pya.Trans.R0, x_offset, y_offset + (count-i-1)*pitch)
             text = Text (label, t)
             cell.shapes(ly.layer(ly.TECHNOLOGY['Text'])).insert(text).text_size = label_size/ly.dbu
         
