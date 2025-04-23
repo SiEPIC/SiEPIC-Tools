@@ -1271,7 +1271,7 @@ def floorplan(topcell, x, y, centered=False, layer_name='FloorPlan'):
     if centered==False:
         box = pya.Box(0,0,x,y)
     else:
-        box = pya.Box(-x/2,-y/2,x/2,y/y)
+        box = pya.Box(-x/2,-y/2,x/2,y/2)
     cell.shapes(ly.layer(ly.TECHNOLOGY[layer_name])).insert(box)
     return inst
 
