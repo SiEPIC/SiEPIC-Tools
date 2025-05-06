@@ -65,7 +65,7 @@ class componentModel:
             self.componentParameters.append([key, value])
 
     def load_sparameters(self, data_folder: PosixPath, filename: str, 
-            verbose: bool = True) -> ndarray:
+            verbose: bool = False) -> ndarray:
         """
         Loads sparameters either from an npz file or from a raw sparam\
              file using a look-up table.

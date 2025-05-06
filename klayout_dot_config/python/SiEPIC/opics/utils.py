@@ -229,7 +229,8 @@ def LUT_processor(
     start = time.time()
     sparam_file, xml, node = LUT_reader(filedir, lutfilename, lutdata)
 
-    print(' - LUT_processor: file: %s' % sparam_file)
+    if verbose:
+        print(' - LUT_processor: file: %s' % sparam_file)
 
     # read data
     if ".npz" in sparam_file[0] or ".npz" in sparam_file[-1]:

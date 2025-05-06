@@ -2,7 +2,8 @@ import pya
 
 
 def circuit_simulation_opics(
-    verbose=False, opt_in_selection_text=[], require_save=True
+    verbose=False, opt_in_selection_text=[], require_save=True,
+    topcell = None, save_file = None,
 ):
     """Simulate the circuit using OPICS
     Using a netlist extracte from the layout"""
@@ -60,24 +61,35 @@ def circuit_simulation_opics(
         )
         return None
 
-    # obtain the spice file from the layout
-    from SiEPIC.netlist import export_spice_layoutview
-
-    spice_filepath, _ = export_spice_layoutview(
-        verbose=False, opt_in_selection_text=[], require_save=require_save
-    )
+    if topcell:
+        # obtain the spice file from the layout
+        from SiEPIC.netlist import export_spice
+        if verbose:
+            print('export spice: %s' % topcell.name)
+        spice_filepath, _ = export_spice(
+            verbose=False, opt_in_selection_text=opt_in_selection_text, 
+            topcell = topcell)
+        
+    else:    
+        # obtain the spice file from the layout
+        from SiEPIC.netlist import export_spice_layoutview
+        spice_filepath, _ = export_spice_layoutview(
+            verbose=False, opt_in_selection_text=opt_in_selection_text, require_save=require_save
+            )
 
     from SiEPIC.opics import libraries
     from SiEPIC.opics.network import Network
     from SiEPIC.opics.utils import netlistParser, NetlistProcessor
     from SiEPIC.opics.globals import C as c_
 
-    print(spice_filepath)
+    if verbose:
+        print(spice_filepath)
 
     # get netlist data
     circuitData = netlistParser(spice_filepath).readfile()
 
-    print(circuitData)
+    if verbose:
+        print(circuitData)
 
     """
     import numpy as np
@@ -91,7 +103,8 @@ def circuit_simulation_opics(
         spice_filepath, Network, libraries, c_, circuitData, verbose=False
     )
 
-    print(subckt)
+    if verbose:
+        print(subckt)
 
     # simulate network
     subckt.simulate_network()
@@ -122,10 +135,12 @@ def circuit_simulation_opics(
 
     nports = subckt.sim_result.nports
     out = result["S_1_0"]
-    print(out.shape)
+    if verbose:
+        print(out.shape)
     columns = ["Output 1"]
     for i in range(1, nports - 1):
-        print(out.shape)
+        if verbose:
+            print(out.shape)
         out = np.vstack((out, result["S_%s_0" % (i + 1)]))
         columns = columns + ["Output %s" % (i + 1)]
 
@@ -137,4 +152,11 @@ def circuit_simulation_opics(
     fig = px.line(
         df, labels={"index": "Wavelength", "value": "Transmission (dB)"}, markers=True
     )
-    fig.show()
+
+
+    if save_file:
+        # Save to PNG instead of showing
+        fig.write_image(save_file, width=800, height=600, scale=2)
+    else:    
+        # Show in web browser:
+        fig.show()
