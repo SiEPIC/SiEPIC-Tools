@@ -1625,7 +1625,7 @@ def spice_netlist_export(self, verbose=False, opt_in_selection_text=[]):
     text_subckt += '.param MC_resolution_x=100 \n'
     text_subckt += '.param MC_resolution_y=100 \n'
     text_subckt += '.param MC_grid=10e-6 \n'
-    text_subckt += '.param MC_non_uniform=99 \n'
+    text_subckt += '.param MC_non_uniform=0 \n'
 
     for c in components:
         # Check pins to see if explicitly ordered numerically - requires first character in pin name to be a number (Stefan Preble, RIT)
