@@ -2,7 +2,7 @@
 SiEPIC-Tools package for KLayout
 '''
 
-__version__ = "0.5.25"
+__version__ = "0.5.26"
 
 print("KLayout SiEPIC-Tools version %s" %__version__)
 
