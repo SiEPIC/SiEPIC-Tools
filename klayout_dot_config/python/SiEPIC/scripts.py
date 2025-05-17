@@ -1815,12 +1815,19 @@ def connect_cell(instanceA, pinA, cellB, pinB, mirror = False, verbose=False, tr
       raise Exception("instanceA needs to be an Instance, not an index")
 
   # Find the two components:
-  componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA, verbose=verbose)
+  try:
+    componentA = instanceA.parent_cell.find_components(cell_selected=instanceA.cell, inst=instanceA, verbose=verbose)
+  except:
+    componentA = [] 
   componentB = cellB.find_components()
   if componentA==[]:
     if verbose:
       print('*** WARNING: componentA not found, looking lower in the hierarchy')
-    componentA = instanceA.cell.find_components(inst=instanceA, verbose=verbose)
+    for inst in instanceA.cell.each_inst():
+      subcell = inst.cell
+      print(subcell.name)
+      componentA = subcell.find_components(verbose=verbose)
+    #componentA = instanceA.cell.find_components(inst=instanceA, verbose=verbose)
   if componentA==[]:
     if verbose:
       print('*** WARNING: componentA not found, looking higher in the hierarchy which may not work correctly: instanceA.parent_cell.find_components(inst=instanceA)')
