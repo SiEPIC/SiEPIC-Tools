@@ -81,7 +81,7 @@ class Point(object):
 
     def long_edge_length(self):
         '''return the longest segment of a Manhattan distance'''
-        return max(self.x, self.y)
+        return max(abs(self.x), abs(self.y))
 
 class Line(Point):
     """ Defines a line """
