@@ -747,11 +747,19 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     from time import strftime
     if '__version__' in dir(pya):
         # pya.__version__ was introduced in KLayout version 0.28.6
-        version = pya.__version__.split('.')
+        version = pya.__version__
     else:
-        version = pya.Application.instance().version().split('.')
-    text = pya.DText("SiEPIC-Tools verification: %s errors\n%s\nSiEPIC-Tools v%s\ntechnology: %s\n%s\nPython: %s, %s\n%s" % (rdb.num_items(), strftime("%Y-%m-%d %H:%M:%S"),
-                                                                                                                             SiEPIC.__init__.__version__, TECHNOLOGY['technology_name'], sys.platform, sys.version.split('\n')[0], sys.path[0], version), pya.DTrans(cell.dbbox().p1))
+        version = pya.Application.instance().version()
+
+    # Add text on the bottom of the layout, for debugging
+    tech = pya.Technology.technology_by_name(TECHNOLOGY["technology_name"])
+    text = pya.DText(f' SiEPIC-Tools verification: {rdb.num_items()} errors\n \
+{strftime("%Y-%m-%d %H:%M:%S")}\n \
+SiEPIC-Tools v{SiEPIC.__init__.__version__}\n \
+technology: {TECHNOLOGY["technology_name"]} - {tech.description}\n \
+{sys.platform}\n \
+Python: {sys.version}, {sys.path[0]}\n \
+KLayout v{version}\n', pya.DTrans(cell.dbbox().p1) )
     shape = cell.shapes(LayerTextN).insert(text)
     shape.text_size = 0.1 / dbu
 
