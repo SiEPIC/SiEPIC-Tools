@@ -344,7 +344,7 @@ def layout_waveguide3(cell, pts, params, debug=False, drawRec=True):
     return waveguide_length
 
 
-def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bend_parameter, sbends = True, bend_type = "bezier"):
+def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, radius, adiab, bend_parameter, sbends = True, bend_type = "Bezier"):
     '''
     Create a waveguide, in a specific technology
     inputs
@@ -483,10 +483,10 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
             if abs(turn) == 1:
                 if(adiab):
                     # Select type of adiabatic bend based on WAVEGUIDES.XML file
-                    if bend_type == "euler":
+                    if bend_type == "Euler":
                         wg_pts += Path(euler_bend(pt_radius, float(bend_parameter),
                             DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
-                    elif bend_type == "bezier":
+                    elif bend_type == "Bezier":
                         wg_pts += Path(arc_bezier(pt_radius, 270, 270 + inner_angle_b_vectors(pts[i-1]-pts[i], pts[i+1]-pts[i]), float(bend_parameter), 
                             DevRec='DevRec' in layers[lr], dbu=dbu), 0).transformed(Trans(angle, turn < 0, pts[i])).get_points()
                     else:

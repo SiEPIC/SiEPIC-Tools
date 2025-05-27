@@ -508,7 +508,7 @@ def load_Waveguides_by_Tech(tech_name, debug=False):
             if not 'model' in waveguide.keys():
                 waveguide['model'] = ''
             if not 'bend_type' in waveguide.keys():
-                waveguide['bend_type'] = 'bezier'
+                waveguide['bend_type'] = 'Bezier'
     if not(waveguides):
         print('No waveguides found for technology=%s. Check that there exists a technology definition file %s.lyt and WAVEGUIDES.xml file' % (tech_name, tech_name) )
     

@@ -379,17 +379,18 @@ class WaveguideGUI():
         # Button Bindings
         self.window.findChild('ok').clicked(self.ok)
         self.window.findChild('cancel').clicked(self.close)
-        self.window.findChild('adiabatic').toggled(self.enable)
-        self.window.findChild('bend_parameter').setEnabled(False)
+        #self.window.findChild('adiabatic').toggled(self.enable)
+        self.window.findChild('bend_parameter').setEnabled(True)
         self.window.findChild("configuration").currentIndexChanged(self.config_changed)
         self.loaded_technology = ''
         self.clicked = True
 
     def enable(self, val):
-        if self.window.findChild('adiabatic').isChecked():
-            self.window.findChild('bend_parameter').setEnabled(True)
-        else:
-            self.window.findChild('bend_parameter').setEnabled(False)
+        print("function no longer does anything")
+        # if self.window.findChild('adiabatic').isChecked():
+        #     self.window.findChild('bend_parameter').setEnabled(True)
+        # else:
+        #     self.window.findChild('bend_parameter').setEnabled(False)
 
     def update(self):
         from .utils import get_layout_variables, load_Waveguides_by_Tech
@@ -445,7 +446,7 @@ class WaveguideGUI():
             if 'bend_type' in waveguide:
                 self.window.findChild('bend_type').text = waveguide['bend_type']
             else:
-                self.window.findChild('bend_type').text = 'bezier'
+                self.window.findChild('bend_type').text = 'Bezier'
             if 'width' in waveguide:
                 self.window.findChild('width').text = waveguide['width']
             elif 'wg_width' in waveguide:
@@ -457,18 +458,11 @@ class WaveguideGUI():
             else:
                 self.window.findChild('radius').text = '5'
             if waveguide['adiabatic']:
-                self.window.findChild('adiabatic').setChecked(True)
+                #self.window.findChild('adiabatic').setChecked(True)
                 self.window.findChild('bend_parameter').text = str(waveguide['bend_parameter'])
             else:
-                self.window.findChild('adiabatic').setChecked(False)
+                #self.window.findChild('adiabatic').setChecked(False)
                 self.window.findChild('bend_parameter').text = ''
-                
-# in 0.3.77, made the GUI read-only; returning back to editable in 0.3.79 based on user request
-#        self.window.findChild('bezier').setEnabled(False)
-#        self.window.findChild('adiabatic').setEnabled(False)
-#        self.window.findChild('radius').setEnabled(False)
-#        self.window.findChild('width').setEnabled(False)
-#        self.window.findChild('bezier').setEnabled(False)
 
 
     def get_parameters(self, show):
@@ -488,9 +482,16 @@ class WaveguideGUI():
         self.loaded_technology = TECHNOLOGY['technology_name']
         
         bend_parameter = self.window.findChild('bend_parameter').text
+        
+        if self.window.findChild('bend_type').text in ['Euler','Bezier']:
+            adiabatic_status = True
+        else:
+            adiabatic_status = False
+        
         params = {'radius': float(self.window.findChild('radius').text),
                   'width': float(self.window.findChild('width').text),
-                  'adiabatic': self.window.findChild('adiabatic').isChecked(),
+                  #'adiabatic': self.window.findChild('adiabatic').isChecked(),
+                  'adiabatic': adiabatic_status,
                   'bend_type': self.window.findChild('bend_type').text,
                   'bend_parameter': 0 if bend_parameter=='' else float(bend_parameter),
                   'wgs': []}
