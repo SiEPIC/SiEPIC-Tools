@@ -520,7 +520,7 @@ def component_simulation(verbose=False, simulate=True):
 def circuit_simulation_toolbar():
   circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True)
 
-def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True):
+def circuit_simulation(topcell=None, verbose=False,opt_in_selection_text=[], matlab_data_files=[], simulate=True):
   print ('*** circuit_simulation(), opt_in: %s' % opt_in_selection_text)
   if verbose:
     print('*** circuit_simulation()')
@@ -534,17 +534,21 @@ def circuit_simulation(verbose=False,opt_in_selection_text=[], matlab_data_files
     raise Exception("Unsupported operating system: %s" % sys.platform)
   
   from .. import _globals
-  from SiEPIC.utils import get_layout_variables
-  TECHNOLOGY, lv, layout, topcell = get_layout_variables()
-  
-  # Save the layout prior to running simulations, if there are changes.
-  mw = pya.Application.instance().main_window()
-  if mw.manager().has_undo():
-    mw.cm_save()
-  layout_filename = mw.current_view().active_cellview().filename()
-  if len(layout_filename) == 0:
-    raise Exception("Please save your layout before running the simulation")
-    
+  if not topcell:
+    from SiEPIC._globals import Python_Env
+    if Python_Env == 'KLayout_GUI':
+
+        from SiEPIC.utils import get_layout_variables
+        TECHNOLOGY, lv, layout, topcell = get_layout_variables()
+      
+        # Save the layout prior to running simulations, if there are changes.
+        mw = pya.Application.instance().main_window()
+        if mw.manager().has_undo():
+          mw.cm_save()
+        layout_filename = mw.current_view().active_cellview().filename()
+        if len(layout_filename) == 0:
+          raise Exception("Please save your layout before running the simulation")
+        
   # *** todo    
   #   Add the "disconnected" component to all disconnected pins
   #  optical_waveguides, optical_components = terminate_all_disconnected_pins()
