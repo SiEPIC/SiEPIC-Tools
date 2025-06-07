@@ -14,15 +14,9 @@ def registerMenuItems():
     path_flv = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         "files", "flv_icon.png")
 
-    import sys
-    if int(sys.version[0]) > 2:
-        extra = " Py3"
-    else:
-        extra = " Py2"
-
     s1 = "siepic_menu"
     if not(menu.is_menu(s1)):
-        menu.insert_menu("help_menu", s1, "SiEPIC %s" % SiEPIC.__init__.__version__ + extra)
+        menu.insert_menu("help_menu", s1, "SiEPIC %s" % SiEPIC.__init__.__version__)
 
     # begin/end described: https://www.klayout.de/doc/about/macro_in_menu.html
     s2 = "waveguides"
