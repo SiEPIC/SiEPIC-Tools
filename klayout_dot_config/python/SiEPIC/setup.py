@@ -145,6 +145,9 @@ def registerKeyBindings():
     mapping['zoom_menu.zoom_fit_sel'] = "'Shift+F2'"
     mapping['zoom_menu.zoom_in'] = "'Return'"
     mapping['zoom_menu.zoom_out'] = "'Shift+Return'"
+    
+    # XSection
+    mapping['tools_menu.xsection_script_submenu.xsection_for_technology'] = "'Shift+X'"
 
     # turn the hash back into a config string
     config = ''.join('{}:{};'.format(key, val) for key, val in sorted(mapping.items()))[:-1]
