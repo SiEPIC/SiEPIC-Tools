@@ -597,12 +597,13 @@ def load_Verification(TECHNOLOGY=None, debug=True):
 
 
 
-def load_DFT(TECHNOLOGY=None, topcell = None, debug=False):
+def load_DFT(TECHNOLOGY=None, topcell = None, dft_module = None, debug=False):
     '''
     Load Design-for-Test (DFT) rules
     These are technology specific (SiEPIC definition, TECHNOLOGY), and located in the technology's folder, named DFT.xml. 
     Alternatively, there can be a per-design DFT.xml file, filename_DFT.xml, where filename.gds or filename.oas is the design.
     topcell = pya.Cell() -- use it to search for a DFT text label
+    dft_module = text name for the PyPI module
     '''
     from SiEPIC._globals import Python_Env
 
@@ -619,8 +620,30 @@ def load_DFT(TECHNOLOGY=None, topcell = None, debug=False):
 
     matches = None
 
+    def dft_from_module(dft_module):
+        # install / import the module
+        from SiEPIC.install import install
+        install(dft_module)
+        
+        # Find the spec of the module
+        import importlib.util
+        from pathlib import Path
+        spec = importlib.util.find_spec(dft_module)
+        if spec is None or not spec.submodule_search_locations:
+            raise ImportError(f"Cannot find module: {dft_module}")
+        # Build the path to DFT.xml
+        local_DFT_path = Path(spec.submodule_search_locations[0]) / "DFT.xml"
+        return local_DFT_path
+
+    # get DFT from specified module
+    if dft_module and not matches:
+        local_DFT_path = dft_from_module(dft_module)
+        if os.path.exists(local_DFT_path):
+            matches = [local_DFT_path]
+            print(f"Design for Test rules from script: {local_DFT_path}")
+
     # check for DFT label in the layout
-    if topcell:
+    if topcell and not matches:
         dft_module = None
 
         # find a text label in the layout, on layer Text, that starts with "DFT="
@@ -637,21 +660,11 @@ def load_DFT(TECHNOLOGY=None, topcell = None, debug=False):
             iter.next()
         
         if dft_module:
-            # install / import the module
-            from SiEPIC.install import install
-            install(dft_module)
-            
-            # Find the spec of the module
-            import importlib.util
-            from pathlib import Path
-            spec = importlib.util.find_spec(dft_module)
-            if spec is None or not spec.submodule_search_locations:
-                raise ImportError(f"Cannot find module: {dft_module}")
-            # Build the path to DFT.xml
-            local_DFT_path = Path(spec.submodule_search_locations[0]) / "DFT.xml"
+            local_DFT_path = dft_from_module(dft_module)
             if os.path.exists(local_DFT_path):
                 matches = [local_DFT_path]
                 print(f"Design for Test rules from layout label: {local_DFT_path}")
+                
 
     # then check for filename_DFT.xml file in local directory
     if not matches:

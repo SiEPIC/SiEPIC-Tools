@@ -7,10 +7,11 @@ by Lukas Chrostowski, 2016-2023
 '''
 
 
-def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = None, verify_DFT = True):
+def layout_check(cell=None, dft_module=None, verbose=False, GUI=False, timing=False, file_rdb = None, verify_DFT = True):
     '''Functional Verification.
     Input
         cell: pya.Cell
+        dft_module = design for test rules, the name of the PyPI module
         file_rbd: <str> path
         verify_DFT: True for design for test verification, False to skip.
         
@@ -189,7 +190,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     # Design for Test checking
     from SiEPIC.utils import load_DFT
     if verify_DFT:
-        DFT = load_DFT(TECHNOLOGY=TECHNOLOGY, topcell = cell)
+        DFT = load_DFT(TECHNOLOGY=TECHNOLOGY, topcell = cell, dft_module = dft_module)
     else:
         DFT = None
     if DFT:
