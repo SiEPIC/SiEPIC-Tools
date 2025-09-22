@@ -597,11 +597,12 @@ def load_Verification(TECHNOLOGY=None, debug=True):
 
 
 
-def load_DFT(TECHNOLOGY=None, debug=False):
+def load_DFT(TECHNOLOGY=None, topcell = None, debug=False):
     '''
     Load Design-for-Test (DFT) rules
     These are technology specific (SiEPIC definition, TECHNOLOGY), and located in the technology's folder, named DFT.xml. 
     Alternatively, there can be a per-design DFT.xml file, filename_DFT.xml, where filename.gds or filename.oas is the design.
+    topcell = pya.Cell() -- use it to search for a DFT text label
     '''
     from SiEPIC._globals import Python_Env
 
@@ -616,16 +617,52 @@ def load_DFT(TECHNOLOGY=None, debug=False):
 
     import os, fnmatch
 
-    # first check for filename_DFT.xml file in local directory
     matches = None
-    if Python_Env == 'KLayout_GUI':
-        mw = pya.Application.instance().main_window()
-        layout_filename = mw.current_view().active_cellview().filename()
-        filename = os.path.splitext(os.path.basename(layout_filename))[0]
-        local_DFT_path = os.path.join(os.path.dirname(os.path.realpath(layout_filename)), filename+'_DFT.xml')
-        print(' - checking local DFT path: %s' %local_DFT_path ) 
-        if os.path.exists(local_DFT_path):
-            matches = [local_DFT_path]
+
+    # check for DFT label in the layout
+    if topcell:
+        dft_module = None
+
+        # find a text label in the layout, on layer Text, that starts with "DFT="
+        LayerTextN = TECHNOLOGY['Text']
+        if not type(LayerTextN)==int:
+            LayerTextN = topcell.layout().layer(LayerTextN)
+        iter = topcell.begin_shapes_rec(LayerTextN)
+        while not (iter.at_end()):
+            if iter.shape().is_text():
+                text = iter.shape().text
+                if text.string.find("DFT=") > -1:
+                    textlabel = text.string
+                    dft_module = textlabel.split("DFT=")[1].lower()
+            iter.next()
+        
+        if dft_module:
+            # install / import the module
+            from SiEPIC.install import install
+            install(dft_module)
+            
+            # Find the spec of the module
+            import importlib.util
+            from pathlib import Path
+            spec = importlib.util.find_spec(dft_module)
+            if spec is None or not spec.submodule_search_locations:
+                raise ImportError(f"Cannot find module: {dft_module}")
+            # Build the path to DFT.xml
+            local_DFT_path = Path(spec.submodule_search_locations[0]) / "DFT.xml"
+            if os.path.exists(local_DFT_path):
+                matches = [local_DFT_path]
+                print(f"Design for Test rules from layout label: {local_DFT_path}")
+
+    # then check for filename_DFT.xml file in local directory
+    if not matches:
+        if Python_Env == 'KLayout_GUI':
+            mw = pya.Application.instance().main_window()
+            layout_filename = mw.current_view().active_cellview().filename()
+            filename = os.path.splitext(os.path.basename(layout_filename))[0]
+            local_DFT_path = os.path.join(os.path.dirname(os.path.realpath(layout_filename)), filename+'_DFT.xml')
+            if os.path.exists(local_DFT_path):
+                matches = [local_DFT_path]
+                print('Design for Test rules from local layout directory: %s' %local_DFT_path ) 
     
     # then check for DFT.xml in the PDK Technology folder
     if not matches:
@@ -640,6 +677,9 @@ def load_DFT(TECHNOLOGY=None, debug=False):
         for root, dirnames, filenames in os.walk(dir_path, followlinks=True):
             for filename in fnmatch.filter(filenames, search_str):
                 matches.append(os.path.join(root, filename))
+        if matches:
+            print('Design for Test rules from PDK: %s' % matches[0] ) 
+        
     if matches:
         if debug:
             print(' - load_DFT, matches: %s' %matches ) 

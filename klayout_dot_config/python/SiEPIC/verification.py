@@ -189,7 +189,7 @@ def layout_check(cell=None, verbose=False, GUI=False, timing=False, file_rdb = N
     # Design for Test checking
     from SiEPIC.utils import load_DFT
     if verify_DFT:
-        DFT = load_DFT(TECHNOLOGY=TECHNOLOGY)
+        DFT = load_DFT(TECHNOLOGY=TECHNOLOGY, topcell = cell)
     else:
         DFT = None
     if DFT:
