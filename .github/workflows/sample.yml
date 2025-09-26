@@ -2,7 +2,7 @@
 
 name: Sample Github Action 
 
-# Specify this github action to run on (i) a push to master or any branch, and (ii) a pull request to master
+# Specify this github action to run on (i) a push to main or any branch, and (ii) a pull request to main
 # Note: Since this is a sample action we don't want it to run. We cannot leave this empty and have put 
 #       a placeholder to ensure it doesn't run. Delete the current code and uncomment the commented code when you
 #       want this action to run.
@@ -12,7 +12,7 @@ on:
       #- '**'
   #pull_request:
     #branches:
-      #- master
+      #- main
   push:
     branches:
       - v0.1.4
@@ -26,10 +26,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Pull klayout image
-        run:  docker pull ghcr.io/siepic/siepic-tools/klayout:master-latest
+        run:  docker pull ghcr.io/siepic/siepic-tools/klayout:main-latest
 
       - name: Run docker container from image
-        run: docker run -itd --name sample --security-opt label=type:container_runtime_t ghcr.io/siepic/siepic-tools/klayout:master-latest
+        run: docker run -itd --name sample --security-opt label=type:container_runtime_t ghcr.io/siepic/siepic-tools/klayout:main-latest
 
         # input code to run tests in klayout docker container 
 
