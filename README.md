@@ -99,7 +99,7 @@ Thank you to the contributors!
 
 [![Contributors!](https://contrib.rocks/image?repo=SiEPIC/SiEPIC-Tools)](https://github.com/SiEPIC/SiEPIC-Tools/graphs/contributors)
 
-You can download the latest development version (master) of the PDK: <a href="https://github.com/siepic/SiEPIC-Tools/archive/master.zip">Zip file download of the PDK</a>
+You can download the latest development version (main) of the PDK: <a href="https://github.com/siepic/SiEPIC-Tools/archive/main.zip">Zip file download of the PDK</a>
 
 It is posted on GitHub for 1) revision control, 2) so that others can contribute to it, find bugs, 3) easy download of the latest version.
 
@@ -107,7 +107,7 @@ To contribute to the PDK:
  - On the GitHub web page, Fork a copy of the project into your own account.
  - Clone to your Desktop
  - Make edits/contributions.  You can use the KLayout IDE to write Python (or Ruby) scripts; <a href = http://www.klayout.de/doc/about/macro_editor.html>KLayout Python IDE for writing/debugging PCells/scripts/macros</a>.
- - "Commit to master" (your own master)
+ - "Commit to main" (your own main)
  - Create a <a href="https://help.github.com/articles/using-pull-requests/">Pull Request</a> -- this will notify me of your contribution, which I can merge into the main project
 
 You can use <a href="https://desktop.github.com/">GitHub desktop</a> to synchronize  files. [Then create symbolic links to your .klayout folder to point to the local copy of this repository](https://www.youtube.com/watch?v=Y5a9kZVgZns). This is useful to automatically update the local KLayout installation (e.g., multiple computers), as changes are made in GitHub by others.
