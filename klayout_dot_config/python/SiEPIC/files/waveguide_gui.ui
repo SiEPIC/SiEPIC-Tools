@@ -255,6 +255,9 @@
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>           
           </widget>
          </item>
          <item>
@@ -349,6 +352,9 @@
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>                      
           </widget>
          </item>
          <item>
@@ -449,6 +455,9 @@
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>                      
           </widget>
          </item>
          <item>
@@ -474,6 +483,9 @@
            <property name="text">
             <string>Adiabatic</string>
            </property>
+           <property name="enabled">
+            <bool>false</bool>
+           </property>           
           </widget>
          </item>
         </layout>
