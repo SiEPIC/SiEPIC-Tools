@@ -75,15 +75,17 @@ except ImportError:
 
 #ACTIONS = []
 
+# deal with KLayout version, e.g., 0.30.4-1
+import re
 if '__version__' in dir(pya):
     # pya.__version__ was introduced in KLayout version 0.28.6
-    KLAYOUT_VERSION = int(pya.__version__.split('.')[1])
-    KLAYOUT_VERSION_3 = int(pya.__version__.split('.')[2])
+    v = re.split(r'[.-]\s*', pya.__version__)
 else:
-    KLAYOUT_VERSION = int(pya.Application.instance().version().split('.')[1])
-    KLAYOUT_VERSION_3 = int(pya.Application.instance().version().split('.')[2])
+    v = re.split(r'[.-]\s*', pya.Application.instance().version())
+KLAYOUT_VERSION = int(v[1])
+KLAYOUT_VERSION_3 = int(v[2])
 
-# Waveguide DevRec: space between the waveguide and the DevRec polygon
+# Waveguide DevRec: space between the waveguide and the DevRec polygon, default
 WG_DEVREC_SPACE = 1
 
 # Path to Waveguide, path snapping to nearest pin. Search for pin with this distance:
