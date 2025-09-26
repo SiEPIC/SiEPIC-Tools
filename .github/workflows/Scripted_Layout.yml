@@ -8,7 +8,7 @@ on:
       - '**'
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   run-scripted-layout:
@@ -36,7 +36,7 @@ jobs:
         run: docker run -itd --name scripted_layout -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --security-opt label=type:container_runtime_t ghcr.io/jasminabrar/siepic-tools/siepic_klayout:match-ebeam-latest
 
       - name: Fetch changes from main repository
-        run: git fetch https://github.com/SiEPIC/SiEPIC-Tools.git master
+        run: git fetch https://github.com/SiEPIC/SiEPIC-Tools.git main
 
       - name: Find files that are different 
         id: changed-files

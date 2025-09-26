@@ -5,13 +5,13 @@ on:
   schedule:
     - cron: '0 0 * * *'
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
     paths:
       - 'Dockerfile'
   pull_request:
     types:
       - closed
-    branches: [ "master" ]
+    branches: [ "main" ]
     paths:
       - 'Dockerfile'
     
