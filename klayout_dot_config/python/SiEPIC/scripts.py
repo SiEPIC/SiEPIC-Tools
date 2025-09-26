@@ -716,7 +716,10 @@ def path_to_waveguide2(params=None, cell=None, snap=True, lv_commit=True, GUI=Fa
             warning.setInformativeText("Cannot Proceed")
             pya.QMessageBox_StandardButton(warning.exec_())
             return
-        if not path.radius_check(params['radius'] / TECHNOLOGY['dbu']):
+        sbends = params['sbends'].lower() in ['true', '1', 't', 'y', 'yes'] if 'sbends' in params.keys() else False
+        print(f'SBends? {sbends}')
+        print(params)
+        if not path.radius_check(params['radius'] / TECHNOLOGY['dbu'], sbends=sbends):
             warning.setText(
                 "Warning: One of the waveguide segments has insufficient length to accommodate the desired bend radius.")
             warning.setInformativeText("Do you want to Proceed?")

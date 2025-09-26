@@ -184,12 +184,12 @@ def is_manhattan(self):
     return True
 
 
-def radius_check(self, radius, dbu=0.001):
-    def all2(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
+def radius_check(self, radius, sbends=False, dbu=0.001):
+    '''Check if a path can be converted to a waveguide,
+    where there is enough room for bends with specified radius.
+    Optionally allow for S-bends.
+    Input: pya.Path
+    '''    
 
     if type(self) == pya.DPath:
         points = [p.to_itype(dbu) for p in self.get_dpoints() ]
@@ -197,20 +197,69 @@ def radius_check(self, radius, dbu=0.001):
     else:
         points = self.get_points()
     
-    if len(points) > 2:
-    
-      lengths = [points[i].distance(points[i - 1]) for i, pt in enumerate(points) if i > 0]
-  
-      # first and last segment must be >= radius
-      check1 = (lengths[0] >= radius)
-      check2 = (lengths[-1] >= radius)
-      # middle segments must accommodate two bends, hence >= 2 radius
-      check3 = [length >= 2 * radius for length in lengths[1:-1]]
-      if not(check1 and check2 and all(check3)):
-        print('radius check failed')
-      return check1 and check2 and all(check3)
-    else:
+    # Straight line, no bends.  Easy:
+    if len(points) == 2:
       return True
+
+    # Check that all segments accommodate a standard bend:
+    lengths = [points[i].distance(points[i - 1]) for i, pt in enumerate(points) if i > 0]
+    # first and last segment must be >= radius
+    check1 = (lengths[0] >= radius)
+    check2 = (lengths[-1] >= radius)
+    # middle segments must accommodate two bends, hence >= 2 radius
+    check3 = [length >= 2 * radius for length in lengths[1:-1]]
+    if check1 and check2 and all(check3):
+        return True
+
+    def sbend_check(pts, radius): 
+        #determine if waveguide will have an S-band
+        from SiEPIC.utils import angle_vector, angle_b_vectors
+        from math import pi, sin, acos
+        
+        it = iter(range(1, len(pts)-1))
+        for i in it:
+            if i < len(pts)-2:
+                angle = angle_vector(pts[i]-pts[i-1])/90
+                angle2 = angle_vector(pts[i+2]-pts[i+1])/90
+                dis1 = pts[i].distance(pts[i-1]) # before the "jog"
+                dis2 = pts[i].distance(pts[i+1]) # the "jog"
+                if angle == angle2 and dis2<2*radius:  # An SBend may be inserted
+                    dis3 = pts[i+2].distance(pts[i+1]) # after the "jog"
+                    h = pts[i+1].y- pts[i].y if not (angle%2) else pts[i+1].x- pts[i].x
+                    theta = acos(float(radius-abs(h/2))/radius)*180/pi
+                    curved_l = int(2*radius*sin(theta/180.0*pi))  
+                    if (i < 3 and dis1 < curved_l/2) or (i > len(pts)-4 and dis3 < curved_l/2): 
+                        pass    # Check if there is partial clearance for the bend when there is an end near
+                    elif (i >= 3 and (dis1 - radius < curved_l/2)) or (i <= len(pts)-4 and (dis3 - radius < curved_l/2)): 
+                        pass    # Check if there is full clearance for the bend
+                    else:
+                        i = next(it) # skip the step that was replaced by the SBend
+                        continue
+                    
+                if i == 1:
+                    # first corner, limit radius by first edge, or 1/2 of second one
+                    if dis1 < radius:
+                        return False
+                    if dis2/2 < radius:
+                        return False
+                elif i == len(pts)-2:
+                    # last corner, limit radius by second edge, or 1/2 of first one
+                    if dis1/2 < radius:
+                        return False
+                    if dis2 < radius:
+                        return False
+                else:
+                    if dis1/2 < radius:
+                        return False
+                    if dis2/2 < radius:
+                        return False
+        return True
+    
+    if sbends:
+        return sbend_check(points, radius)
+    
+    # checks failed
+    return False
 
 # remove all colinear points (only keep corners)
 def remove_colinear_points(self, verbose=False):

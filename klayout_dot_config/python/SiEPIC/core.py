@@ -512,7 +512,8 @@ class WaveguideGUI():
                     params['model'] = waveguide['model']
                 else:
                     params['model'] = ''
-                    
+                if 'sbends' in waveguide:
+                    params['sbends'] = waveguide['sbends']
                 if 'crossing' in waveguide:
                     params['crossing_cell'] = waveguide['crossing']['crossing_cell']
                     params['crossing_offset'] = waveguide['crossing']['crossing_offset']
