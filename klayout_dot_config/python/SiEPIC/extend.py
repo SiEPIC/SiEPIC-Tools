@@ -1405,7 +1405,7 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
         TECHNOLOGY = self.layout().TECHNOLOGY
     else:
         TECHNOLOGY = get_technology_by_name(self.layout().technology().name)
-    DFT = load_DFT(TECHNOLOGY)
+    DFT = load_DFT(TECHNOLOGY, topcell=self)
     if not DFT:
         if verbose:
             print(' no DFT rules available.')
@@ -1490,6 +1490,8 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     detector_number = 0
     detector_lookuptable = {1: 1, -1: 2, -2: 3}
     detector_list = []
+    processed_GCs = []  # Track which GCs have been processed as detectors
+    
     for d in list(range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']) + 0, 0, -1)) + list(range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1)):
         if pya.DPoint(0, d * float(DFT['design-for-test']['grating-couplers']['gc-pitch']) * 1000) in vect_optin_GCs:
             detector_number += 1
@@ -1502,8 +1504,21 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
             p[0].pin_name += '_detector' + str(detector_number)
             p[0].net = Net(idx=p[0].pin_name, pins=p)
             detectors_info.append(Detector_info(p[0].net, detector_number))
+            processed_GCs.append(detector_GCs[index])  # Mark this GC as processed
             if verbose:
                 print(" - pin_name: %s" % (p[0].pin_name))
+
+    # Find unmatched OPTICALIO components and add them as ports
+    port_number = 1
+    for gc in detector_GCs:
+        if gc not in processed_GCs:
+            p = [p for p in gc.pins if p.type == _globals.PIN_TYPES.OPTICALIO]
+            p[0].pin_name = 'Port_' + str(port_number) # + '_' + p[0].pin_name
+            p[0].net = Net(idx=p[0].pin_name, pins=p)
+            detectors_info.append(Detector_info(p[0].net, detector_number + port_number))
+            if verbose:
+                print(" - pin_name: %s (unmatched OPTICALIO)" % (p[0].pin_name))
+            port_number += 1
 
     # Sort the detectors:
     detectors_info2 = sorted(detectors_info, key=lambda d: d.detector_number)

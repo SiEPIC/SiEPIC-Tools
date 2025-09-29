@@ -555,7 +555,7 @@ def load_Monte_Carlo():
 
 
 
-def load_Verification(TECHNOLOGY=None, debug=True):
+def load_Verification(TECHNOLOGY=None, debug=False):
     '''
     Load Verification rules
     These are technology specific, and located in the tech folder, named Verification.xml

@@ -33,6 +33,7 @@ jobs:
         run: |
           pip install pytest pytest-cov IPython
           pip install -e klayout_dot_config/python
+          pip install dft_aim_siepic_laser_pic_project1, siepic_ebeam_pdk
 
       - name: Test with pytest, python 3.11
         run: pytest --cov=klayout_dot_config/python/SiEPIC --ignore=klayout_dot_config/python/SiEPIC/lumerical --ignore=klayout_dot_config/python/SiEPIC/tidy3d klayout_dot_config --cov-report=xml

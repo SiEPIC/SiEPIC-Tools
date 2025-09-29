@@ -605,6 +605,7 @@ def layout_check(cell=None, dft_module=None, verbose=False, GUI=False, timing=Fa
                 # find the GC closest to the opt_in label.
                 components_sorted = sorted([c for c in components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO]],
                                            key=lambda x: x.trans.disp.to_p().distance(pya.Point(t.x, t.y).to_dtype(1)))
+                                
                 # GC opt_in label too far check:
                 if components_sorted:
                     dist_optin_c = components_sorted[0].trans.disp.to_p(
@@ -629,6 +630,11 @@ def layout_check(cell=None, dft_module=None, verbose=False, GUI=False, timing=Fa
                     components_connected_opt_in = components_connected_opt_in + trimmed_components
                     detector_GCs = [c for c in trimmed_components if [p for p in c.pins if p.type == _globals.PIN_TYPES.OPTICALIO] if (
                         c.trans.disp - components_sorted[0].trans.disp).to_p() != pya.DPoint(0, 0)]
+
+                    # Only consider the same type of grating couplers connected to opt_in, and ignore any other couplers or ports
+                    GC_optin = components_sorted[0]    
+                    detector_GCs = [c for c in detector_GCs if c.basic_name ==  GC_optin.basic_name]
+
                     if verbose:
                         print("   N=%s, detector GCs: %s" %
                               (len(detector_GCs), [c.display() for c in detector_GCs]))
