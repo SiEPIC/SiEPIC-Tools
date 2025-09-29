@@ -1,4 +1,3 @@
-
 import pya # KLayout Python API
 import SiEPIC  # import module for SiEPIC-Tools, helper functions for KLayout
 import siepic_ebeam_pdk  # import module for the SiEPIC-EBeam-PDK technology
@@ -8,7 +7,7 @@ from SiEPIC.utils.layout import new_layout
 tech_name, top_cell_name = 'EBeam', 'Top'
 topcell, ly = new_layout(tech_name, top_cell_name)
 from SiEPIC.utils.layout import floorplan
-floorplan(topcell, 300e3, 160e3)
+floorplan(topcell, 350e3, 450e3)
 
 # Design for Test rules
 t = pya.Trans(pya.Trans.R0, 10, 10)
@@ -24,13 +23,17 @@ TECHNOLOGY = get_technology_by_name(tech_name)
 from SiEPIC.utils import create_cell2
 cell = create_cell2(ly, 'GC_SiN_TE_1310_8degOxide_BB', 'EBeam-SiN')
 # Instantiate it in the layout with position and rotation
-t = pya.Trans(pya.Trans.R180, 180e3, 15e3)
+t = pya.Trans(pya.Trans.R180, 280e3, 15e3)
 inst_gc1 = topcell.insert(
     pya.CellInstArray(cell.cell_index(), t))
-t = pya.Trans(pya.Trans.R180, 180e3,15e3 + 127e3 * 1)
+t = pya.Trans(pya.Trans.R180, 280e3,15e3 + 127e3 * 1)
 inst_gc2 = topcell.insert(pya.CellInstArray(cell.cell_index(), t))
+t = pya.Trans(pya.Trans.R180, 280e3,15e3 + 127e3 * 2)
+inst_gc3 = topcell.insert(pya.CellInstArray(cell.cell_index(), t))
+t = pya.Trans(pya.Trans.R180, 280e3,15e3 + 127e3 * 3)
+inst_gc4 = topcell.insert(pya.CellInstArray(cell.cell_index(), t))
 # Add label for automated testing, on the top grating coupler
-t = pya.Trans(pya.Trans.R0, 180e3,15e3 + 127e3 * 1)
+t = pya.Trans(pya.Trans.R0, 280e3,15e3 + 127e3 * 3)
 optin = "opt_in_TE_1310_device_studentname_MZI"
 text = pya.Text (optin, t)
 s = topcell.shapes(ly.layer(ly.TECHNOLOGY['Text'])).insert(text)
@@ -42,26 +45,18 @@ cell_taper = create_cell2(ly,
 from SiEPIC.scripts import connect_cell
 inst_gc1t = connect_cell(inst_gc1, 'opt1', cell_taper, 'opt2')
 inst_gc2t = connect_cell(inst_gc2, 'opt1', cell_taper, 'opt2')
+inst_gc3t = connect_cell(inst_gc3, 'opt1', cell_taper, 'opt2')
+inst_gc4t = connect_cell(inst_gc4, 'opt1', cell_taper, 'opt2')
 
 
-# Instantiate a Port for the laser input at (0,250)
-from SiEPIC.utils import create_cell2
-cell = create_cell2(ly, 'port_SiN_800', 'EBeam-SiN')
-t = pya.Trans(pya.Trans.R0, pya.Vector(-1e3,20e3) )
-inst_port = topcell.insert(
-    pya.CellInstArray(cell.cell_index(), t))
-
-# Add a Y-Branch
-cell_y = create_cell2(ly, 'ebeam_YBranch_te1310', 'EBeam-SiN')
-from SiEPIC.scripts import connect_cell
-inst_y = connect_cell(inst_port, 'opt1', cell_y, 'opt1')
-
+# Add a splitter
+cell_mmi = create_cell2(ly, 'ebeam_MMI_2x2_5050_te1310', 'EBeam-SiN')
+t = pya.Trans(pya.Trans.R90, 30e3,15e3 + 127e3 * 1)
+inst_mmi = topcell.insert(pya.CellInstArray(cell_mmi.cell_index(), t))
 
 
 from SiEPIC.utils import load_Waveguides_by_Tech
 waveguide_types = load_Waveguides_by_Tech(tech_name)
-
-print('Waveguide types:')
 wg_type = None
 for w in waveguide_types:
     if 'SiN' in w['name']:
@@ -69,14 +64,25 @@ for w in waveguide_types:
             wg_type = w['name']
 
 from SiEPIC.scripts import connect_pins_with_waveguide
-wg = connect_pins_with_waveguide(inst_y, 'opt3',
+wg = connect_pins_with_waveguide(inst_mmi, 'opt1',
                                  inst_gc1t, 'opt1',
                                  waveguide_type=wg_type,
                                 )
-wg = connect_pins_with_waveguide(inst_y, 'opt2',
+wg = connect_pins_with_waveguide(inst_mmi, 'opt2',
                                  inst_gc2t, 'opt1',
                                  waveguide_type=wg_type,
+                                 turtle_A=[60, 90, 120,90,0,0],
                                 )
+wg = connect_pins_with_waveguide(inst_mmi, 'opt4',
+                                 inst_gc3t, 'opt1',
+                                 waveguide_type=wg_type,
+                                )
+wg = connect_pins_with_waveguide(inst_mmi, 'opt3',
+                                 inst_gc4t, 'opt1',
+                                 waveguide_type=wg_type,
+                                )
+
+topcell.show()
 
 if 1:
     # Run verification
@@ -89,31 +95,3 @@ if 1:
 if 1:
     text_subckt, text_main, num_detectors, detector_list = topcell.spice_netlist_export(opt_in_selection_text=[optin])
     print(text_subckt)
-
-
-if 0:
-
-    print(inst_gc1.find_pins())
-    print(inst_port.find_pins())
-    #for c in topcell.find_components():
-    #    c.display()
-
-    import os
-    dirname = os.path.dirname(__file__)
-    from SiEPIC.scripts import export_layout
-    export_type = 'static'
-    filename = 'test_port' # hardcoded filename
-    if export_type == 'static':
-        # Export for fabrication, removing PCells
-        file_out = export_layout(topcell, dirname, filename, format='gds')
-
-
-    components = topcell.find_components()
-    laser_net, detector_nets, wavelength_start, wavelength_stop, wavelength_points, orthogonal_identifier, ignoreOpticalIOs, detector_list = topcell.get_LumericalINTERCONNECT_analyzers_from_opt_in(components, verbose=None, opt_in_selection_text=[optin])
-    print(detector_list)
-    print(detector_nets)
-    for d in detector_nets:
-        d.display()
-    # topcell.show()
-
-

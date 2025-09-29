@@ -1488,7 +1488,21 @@ def get_LumericalINTERCONNECT_analyzers_from_opt_in(self, components, verbose=No
     # find the GCs in the circuit and connect detectors based on DFT rules
     detectors_info = []
     detector_number = 0
-    detector_lookuptable = {1: 1, -1: 2, -2: 3}
+    
+    # Create dynamic detector lookup table based on DFT rules
+    detector_lookuptable = {}
+    detector_index = 1
+    
+    # Add detectors above laser (positive indices)
+    for d in range(int(DFT['design-for-test']['grating-couplers']['detectors-above-laser']), 0, -1):
+        detector_lookuptable[d] = detector_index
+        detector_index += 1
+    
+    # Add detectors below laser (negative indices)
+    for d in range(-1, -int(DFT['design-for-test']['grating-couplers']['detectors-below-laser']) - 1, -1):
+        detector_lookuptable[d] = detector_index
+        detector_index += 1
+    
     detector_list = []
     processed_GCs = []  # Track which GCs have been processed as detectors
     
