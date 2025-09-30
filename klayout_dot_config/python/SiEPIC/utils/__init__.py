@@ -49,6 +49,7 @@ sample_function
 pointlist_to_path
 waveguide_length
 
+
 '''
 
 from SiEPIC._globals import Python_Env
@@ -1661,3 +1662,35 @@ def waveguide_length(cell):
         return float(cell.find_components()[0].params.split('wg_length=')[1].split(' ')[0])*1e6
     else:
         raise Exception ('SiEPIC.utils.waveguide_length: input needs to be a Cell or Instance.')
+
+def top_cell_with_most_subcells_or_shapes(layout, verbose=False):
+   """
+   Returns the top cell that contains the most subcells or the most shapes in a KLayout layout.
+
+   :param layout: pya.Layout object
+   :return: The top cell with the most subcells or shapes
+   
+   by ChatGPT
+   """
+   top_cells = layout.top_cells()
+
+   if not top_cells:
+      return None
+
+   if len(top_cells) == 1:
+      return layout.top_cell()
+
+   max_subcells = -1
+   best_cell = None
+
+   for top_cell in top_cells:
+      subcell_count = sum(1 for _ in top_cell.each_child_cell())  # Count subcells
+
+      # Prioritize by subcells first, then shapes if there's a tie
+      if subcell_count > max_subcells:
+         max_subcells = subcell_count
+         best_cell = top_cell
+   if verbose:
+       print (f' - found multiple top cells: {[c.name for c in top_cells]}, chose {best_cell.name}')
+   
+   return best_cell
