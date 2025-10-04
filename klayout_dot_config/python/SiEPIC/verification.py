@@ -49,7 +49,7 @@ def layout_check(cell=None, dft_module=None, verbose=False, GUI=False, timing=Fa
     Deprecated:
     - Arg GUI is no longer used.
     '''
-
+    # print('************* layout_check() *************')
     if verbose:
         print("*** layout_check()")
 
@@ -104,8 +104,13 @@ def layout_check(cell=None, dft_module=None, verbose=False, GUI=False, timing=Fa
         # get technology from the layout
         TECHNOLOGY = cell.layout().TECHNOLOGY
     else:
-        # get the technology from the presently opened window
-        TECHNOLOGY = get_technology()
+        tech = cell.layout().technology_name
+        if tech:
+            from SiEPIC.utils import get_technology_by_name
+            TECHNOLOGY = get_technology_by_name(tech)
+        else:        
+            # get the technology from the presently opened window
+            TECHNOLOGY = get_technology()
     dbu = TECHNOLOGY['dbu']
 
 
