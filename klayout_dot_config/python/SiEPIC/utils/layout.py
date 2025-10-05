@@ -1264,6 +1264,24 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
     return inst_in, inst_out, cell_tree
 
 
+def add_time_stamp(cell, layerinfo=pya.LayerInfo(10,0), text_stamp=''):
+    '''
+    Add a time stamp to the top cell
+    e.g., text_stamp='timestamp' or text_stamp='merged'
+    '''
+    from pya import Text, CellInstArray, Trans
+    from datetime import datetime
+    now = datetime.now()
+
+    # Create a date	stamp cell, and add a text label with timezone
+    import time
+    tz_name = time.tzname[time.daylight] if time.daylight else time.tzname[0]
+    merge_stamp = f'.{text_stamp}:' + now.strftime("%Y-%m-%d_%H:%M:%S") + f'-{tz_name}'
+    cell_date = cell.layout().create_cell(merge_stamp)
+    text = pya.Text(merge_stamp, pya.Trans(pya.Trans.R0, 0, 0))
+    shape = cell_date.shapes(cell.layout().layer(layerinfo)).insert(text)
+    cell.insert(pya.CellInstArray(cell_date.cell_index(), pya.Trans(pya.Trans.R0, 0, 0)))   
+
 
 def floorplan(topcell, x, y, centered=False, layer_name='FloorPlan'):
     '''Create a FloorPlan, from (0,0) to (x,y), or centered
