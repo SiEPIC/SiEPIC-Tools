@@ -1224,19 +1224,24 @@ def y_splitter_tree(cell, tree_depth=4, y_splitter_cell="y_splitter_1310", libra
     y_wg_offset = (y_splitter.pinPoint("opt2").y-y_splitter.pinPoint("opt3").y)
     if sbends:
         dy = max(y_splitter.bbox().height(), 2 * y_wg_offset)
-        import math as m
-        theta = m.acos(float(wg_radius-abs(dy/2))/wg_radius)*180/m.pi
-        curved_l = int(2*wg_radius*m.sin(theta/180.0*m.pi))  
-        dx = curved_l*1.5
     else:   
         dy = max(y_splitter.bbox().height(), wg_radius*4 + y_wg_offset)
-        dx = y_splitter.bbox().width() + wg_radius*2
     # intialize loop
     inst_out = []
     y0 = 0
     for i in range(0, tree_depth):
         inst = []
         y = y0
+        # calculate the spacing for the y-splitters based on waveguide radius and 90 degree bends
+        if sbends:
+            import math as m
+            const_sbend_factor = 1.25 #
+            theta = m.acos(float(wg_radius-abs(dy/2))/wg_radius)*180/m.pi
+            curved_l = int(2*wg_radius*m.sin(theta/180.0*m.pi))  
+            dx = curved_l*const_sbend_factor
+        else:   
+            dx = y_splitter.bbox().width() + wg_radius*2
+        
         for j in range(0, int(2**(tree_depth-i-1))):
             t = pya.Trans(pya.Trans.R0, x, y)
             inst.append(cell_tree.insert(pya.CellInstArray(y_splitter.cell_index(), t)))
