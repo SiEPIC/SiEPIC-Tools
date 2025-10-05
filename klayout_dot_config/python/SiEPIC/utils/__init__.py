@@ -1683,6 +1683,14 @@ def top_cell_with_most_subcells_or_shapes(layout, verbose=False):
    max_subcells = -1
    best_cell = None
 
+   # check if only one is called "TOP"
+   cell_named_top = []
+   for top_cell in top_cells:
+      if 'top' in top_cell.name.lower():
+         cell_named_top.append (top_cell)
+   if len(cell_named_top) == 1:
+      return cell_named_top[0]
+
    for top_cell in top_cells:
       subcell_count = sum(1 for _ in top_cell.each_child_cell())  # Count subcells
 
