@@ -3266,7 +3266,7 @@ def layout_diff(cell1, cell2, tol = 1, verbose=True):
     return diff_count
     
     
-def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = False, debug = False):
+def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None, cell_y_library=None, cell_ref_bb = None, Exact = True, RequiredCharacter = '$', run_layout_diff = False, debug = False, verbose = False):
     '''
     SiEPIC-Tools: scripts.replace_cell
     Search and replace: cell_x with cell_y
@@ -3408,8 +3408,8 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
                     # Check if the BB cells are the same, by doing an XOR operation
                     # from . import layout_diff
                     if run_layout_diff:
-                        if layout_diff(cell_ref_bb, cell_x, tol=0, verbose=True):
-                            print("    - ERROR: black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
+                        if layout_diff(cell_ref_bb, cell_x, tol=0, verbose=verbose):
+                            print("    - ERROR: black box cells are different: %s vs %s" % (inst.cell.name, cell_ref_bb.name))
                             error = True
                             # raise Exception ("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
                             break;                        
