@@ -3409,7 +3409,8 @@ def replace_cell(layout, cell_x_name = None, cell_y_name=None, cell_y_file=None,
                     # from . import layout_diff
                     if run_layout_diff:
                         if layout_diff(cell_ref_bb, cell_x, tol=0, verbose=verbose):
-                            print("    - ERROR: black box cells are different: %s vs %s" % (inst.cell.name, cell_ref_bb.name))
+                            from SiEPIC.utils import top_cell_with_most_subcells_or_shapes
+                            print(f"    - ERROR: black box cells are different: {inst.cell.name} vs {cell_ref_bb.name}, in cell {top_cell_with_most_subcells_or_shapes(layout).name}")
                             error = True
                             # raise Exception ("    - black box cells are different: %s vs %s" % (inst.cell.name, cell_x.name))
                             break;                        

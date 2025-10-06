@@ -24,26 +24,31 @@ def test_top_cell_with_most_subcells_or_shapes():
     '''
     Create a new layout with a top cell
     '''    
-    cell, ly = new_layout(tech_name, 'top', GUI=True, overwrite = True)
+    cell, ly = new_layout(tech_name, 'example', GUI=True, overwrite = True)
 
 
     from SiEPIC.utils import top_cell_with_most_subcells_or_shapes
 
     topcell = top_cell_with_most_subcells_or_shapes(ly, verbose=True)
 
-    assert topcell.name == 'top'
+    assert topcell.name == 'example'
 
     # add another top cell to the same layout and check the top cell name has changed
     cell = ly.create_cell('cell')
 
     topcell = top_cell_with_most_subcells_or_shapes(ly, verbose=True)
-    assert topcell.name in ['cell', 'top']
+    assert topcell.name in ['cell', 'example']
 
     from SiEPIC.utils.layout import floorplan
     floorplan(cell, 100e3, 100e3)
     
     topcell = top_cell_with_most_subcells_or_shapes(ly, verbose=True)
     assert topcell.name == 'cell'
+
+    # add another top cell to the same layout and check the top cell name has changed
+    cell = ly.create_cell('top')
+    topcell = top_cell_with_most_subcells_or_shapes(ly, verbose=True)
+    assert topcell.name == 'top'
 
 if __name__ == "__main__":
     test_top_cell_with_most_subcells_or_shapes()
