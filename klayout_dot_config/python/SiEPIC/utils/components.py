@@ -9,7 +9,7 @@ Utilities to make SiEPIC-Tools components
 
 import pya
 
-def get_deviceonly_layers(cell, verbose=False):
+def get_deviceonly_layers(cell, verbose=False, TECHNOLOGY=None):
     '''
     Find the device-only layers, as defined by Verification.xml
         EBeam PDK:
@@ -22,7 +22,7 @@ def get_deviceonly_layers(cell, verbose=False):
         print(" - SiEPIC.utils.components.get_deviceonly_layers." )
         
     from SiEPIC.utils import load_Verification
-    verification = load_Verification()
+    verification = load_Verification(TECHNOLOGY=TECHNOLOGY)
 
     if verbose:
         print(" - get_deviceonly_layers, verification: %s" % verification)
@@ -60,7 +60,7 @@ def get_device_bbox(cell, deviceonly_layers_ids, verbose=False):
     
     return bbox
 
-def create_device_DevRec(cell, ports, offset=0.5, verbose=False):
+def create_device_DevRec(cell, ports, offset=0.5, verbose=False, TECHNOLOGY=None):
     '''Create a DevRec layer, with DevRec aligned with ports, and extended elsewhere
     ports: L: Left, R: Right, T: Top, B: Bottom
     offset: increase the DevRec by this amount (in dbu)
@@ -71,7 +71,7 @@ def create_device_DevRec(cell, ports, offset=0.5, verbose=False):
 
     from SiEPIC.extend import to_itype
 
-    deviceonly_layers_ids = get_deviceonly_layers(cell, verbose)
+    deviceonly_layers_ids = get_deviceonly_layers(cell, verbose, TECHNOLOGY=TECHNOLOGY)
     bbox = get_device_bbox(cell, deviceonly_layers_ids, verbose)
     if 'T' not in ports:
         bbox.top = bbox.top + to_itype(offset,cell.layout().dbu)
@@ -87,7 +87,7 @@ def create_device_DevRec(cell, ports, offset=0.5, verbose=False):
 
     return bbox
     
-def create_device_PinRec(cell, ports, devrec, verbose=False):
+def create_device_PinRec(cell, ports, devrec, verbose=False, TECHNOLOGY=None):
     '''Create the Pins
     ports: L: Left, R: Right, T: Top, B: Bottom
     '''
@@ -97,7 +97,7 @@ def create_device_PinRec(cell, ports, devrec, verbose=False):
 
     from SiEPIC.utils.layout import make_pin
 
-    deviceonly_layers_ids = get_deviceonly_layers(cell, verbose)
+    deviceonly_layers_ids = get_deviceonly_layers(cell, verbose, TECHNOLOGY=TECHNOLOGY)
     LayerPinRecN = cell.layout().layer(cell.layout().TECHNOLOGY['PinRec'])
 
     # make Region from all device shapes
@@ -148,7 +148,7 @@ def create_device_PinRec(cell, ports, devrec, verbose=False):
             make_pin(cell, "opt" + str(pinN), [int((e.x1+e.x2)/2),e.y1], abs(e.x1-e.x2), LayerPinRecN, 270)
 
 
-def cell_to_component(cell, ports = ['L','R'], verbose=False):
+def cell_to_component(cell, ports = ['L','R'], verbose=False, TECHNOLOGY=None):
     '''Take a cell with geometries, and turn it into a SiEPIC Component
     as per https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout
     - Add a DevRec box
@@ -166,8 +166,8 @@ def cell_to_component(cell, ports = ['L','R'], verbose=False):
         lv = pya.Application.instance().main_window().current_view()
         lv.transaction("Cell to SiEPIC Component")        
         
-    devrec = create_device_DevRec(cell, ports, verbose)
-    pinrec = create_device_PinRec(cell, ports, devrec, verbose)
+    devrec = create_device_DevRec(cell, ports, verbose=verbose, TECHNOLOGY=TECHNOLOGY)
+    pinrec = create_device_PinRec(cell, ports, devrec, verbose=verbose, TECHNOLOGY=TECHNOLOGY)
 
     if Python_Env == "KLayout_GUI":
         lv.commit()
