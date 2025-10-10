@@ -153,11 +153,46 @@ def cell_to_component(cell, ports = ['L','R'], verbose=False, TECHNOLOGY=None):
     as per https://github.com/SiEPIC/SiEPIC-Tools/wiki/Component-and-PCell-Layout
     - Add a DevRec box
     - Add PinRec paths and text labels
+    
+    Args:
+        cell: pya.Cell object
+        ports: list of port positions ['L', 'R', 'T', 'B'] (Left, Right, Top, Bottom)
+        verbose: bool, print debug information
+        TECHNOLOGY: optional, if not provided, will try to get from:
+                   1) cell.layout().TECHNOLOGY
+                   2) get_technology_by_name(cell.layout().technology_name)
     '''
     if verbose:
         print('SiEPIC.utils.components.cell_to_component')
         print(' cell: %s' % cell.name)
         print(' ports: %s' % ports)
+
+    # Get TECHNOLOGY from layout if not provided as parameter
+    if TECHNOLOGY is None:
+        layout = cell.layout()
+        
+        # Try to get from layout.TECHNOLOGY first
+        if hasattr(layout, 'TECHNOLOGY') and layout.TECHNOLOGY:
+            TECHNOLOGY = layout.TECHNOLOGY
+            if verbose:
+                print(' - TECHNOLOGY loaded from layout.TECHNOLOGY: %s' % TECHNOLOGY.get('technology_name', 'Unknown'))
+        
+        # If not found, try to load from layout.technology_name
+        elif hasattr(layout, 'technology_name') and layout.technology_name:
+            from SiEPIC.utils import get_technology_by_name
+            try:
+                TECHNOLOGY = get_technology_by_name(layout.technology_name)
+                # Also set it on the layout for future use
+                layout.TECHNOLOGY = TECHNOLOGY
+                if verbose:
+                    print(' - TECHNOLOGY loaded from layout.technology_name: %s' % layout.technology_name)
+            except Exception as e:
+                if verbose:
+                    print(' - Warning: Could not load TECHNOLOGY from technology_name: %s' % e)
+        
+        else:
+            if verbose:
+                print(' - Warning: TECHNOLOGY not provided and could not be determined from layout')
 
     # this script can be run inside KLayout's GUI application, or
     # or from the command line: klayout -zz -r H3LoQP.py
