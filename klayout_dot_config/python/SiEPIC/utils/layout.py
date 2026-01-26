@@ -416,9 +416,9 @@ def layout_waveguide2(TECHNOLOGY, layout, cell, layers, widths, offsets, pts, ra
                     h = pts[i+1].y- pts[i].y if not (angle%2) else pts[i+1].x- pts[i].x
                     theta = m.acos(float(pt_radius-abs(h/2))/pt_radius)*180/pi
                     curved_l = int(2*pt_radius*sin(theta/180.0*pi))  
-                    if (i < 3 and dis1 < curved_l/2) or (i > len(pts)-4 and dis3 < curved_l/2): 
+                    if (i < 2 and dis1 < curved_l/2) or (i > len(pts)-4 and dis3 < curved_l/2): 
                         pass    # Check if there is partial clearance for the bend when there is an end near
-                    elif (i >= 3 and (dis1 - pt_radius < curved_l/2)) or (i <= len(pts)-4 and (dis3 - pt_radius < curved_l/2)): 
+                    elif (i >= 2 and (dis1 - pt_radius < curved_l/2)) or (i <= len(pts)-4 and (dis3 - pt_radius < curved_l/2)): 
                         pass    # Check if there is full clearance for the bend
                     else:
                       if not (angle%2):
