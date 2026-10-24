@@ -727,6 +727,33 @@ def layout_check(cell=None, dft_module=None, verbose=False, GUI=False, timing=Fa
         print("*** layout_check(), timing; done pin mismatch ")
         print('    Time elapsed: %s' % (time() - time1))    
 
+
+    '''
+    SEM image requests: shapes on Layer 200/0 must be rectangles with a 4:3 aspect ratio
+    '''
+    layer_SEM = ly.find_layer(200, 0)
+    if layer_SEM is not None and TECHNOLOGY['technology_name'] == 'EBeam':
+        rdb_cat_id_sem = rdb.create_category("SEM")
+        rdb_cat_id_sem_aspect = rdb.create_category(rdb_cat_id_sem, "SEM box aspect ratio")
+        rdb_cat_id_sem_aspect.description = "SEM image requests (Layer 200/0) must be rectangles with a 4:3 aspect ratio (e.g., 4 x 3 microns). Other shapes produce images that do not match the drawn field of view."
+        iter1 = cell.begin_shapes_rec(layer_SEM)
+        while not iter1.at_end():
+            shape = iter1.shape()
+            if shape.is_box() or shape.is_polygon() or shape.is_simple_polygon() or shape.is_path():
+                poly = shape.polygon.transformed(iter1.itrans())
+                bbox = poly.bbox()
+                short_side = min(bbox.width(), bbox.height())
+                long_side = max(bbox.width(), bbox.height())
+                if (not poly.is_box()) or short_side == 0 or not (1.32 <= long_side / short_side <= 1.35):
+                    rdb_item = rdb.create_item(rdb_cell.rdb_id(), rdb_cat_id_sem_aspect.rdb_id())
+                    rdb_item.add_value(pya.RdbItemValue(poly.to_dtype(dbu)))
+            iter1.next()
+
+        if timing:
+            print("*** layout_check(), timing; done SEM boxes ")
+            print('    Time elapsed: %s' % (time() - time1))
+
+
     # displays results in Marker Database Browser, using Results Database (rdb)
     if rdb.num_items() > 0:
         msg = "%s layout errors detected.  \nPlease review errors using the 'Marker Database Browser'." % rdb.num_items()
@@ -788,4 +815,3 @@ if __name__ == "__main__":
     from SiEPIC.utils import get_layout_variables
     TECHNOLOGY, lv, layout, cell = get_layout_variables()  
     num_errors = layout_check(cell=cell, verbose=False)
-    
